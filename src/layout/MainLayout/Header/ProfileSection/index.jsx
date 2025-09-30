@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom';
-=======
-import { useNavigate } from 'react-router-dom'; // Add this import
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -81,7 +77,7 @@ export default function ProfileSection() {
   const theme = useTheme();
   const navigate = useNavigate(); // Add this hook
   const { borderRadius } = useConfig();
-  const navigate = useNavigate();
+
 
   const [open, setOpen] = useState(false);
 const [isedit, SetIsedit] = useState(false)
@@ -133,11 +129,11 @@ console.log(isedit);
   };
 
   // ✅ Old working Logout function
-  const handleLogout = () => {
-    localStorage.clear(); // clears all localStorage items
-    navigate('/pages/login'); // keep your existing login route
-    setOpen(false);
-  };
+  // const handleLogout = () => {
+  //   localStorage.clear(); // clears all localStorage items
+  //   navigate('/pages/login'); // keep your existing login route
+  //   setOpen(false);
+  // };
 
   // Add logout handler
   const handleLogout = () => {
@@ -150,7 +146,7 @@ console.log(isedit);
     setOpen(false);
     
     // Navigate to sign in page
-    navigate('/signin'); // Adjust the path as needed for your app
+    navigate('/login'); // Adjust the path as needed for your app
   };
 
   const prevOpen = useRef(open);
@@ -361,7 +357,6 @@ console.log(isedit);
                             secondary={<Typography variant="caption" color="textSecondary">Update your profile information</Typography>}
                           />
                         </ListItemButton>
-<<<<<<< HEAD
 
                         {/* Business Details */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleBusinessDetails}>
@@ -424,13 +419,6 @@ console.log(isedit);
 
                         {/* ✅ Logout */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleLogout}>
-=======
-                        <ListItemButton 
-                          sx={{ borderRadius: `${borderRadius}px` }} 
-                          selected={selectedIndex === 4}
-                          onClick={handleLogout} // Add onClick handler
-                        >
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
                           <ListItemIcon>
                             <IconLogout stroke={1.5} size="20px" />
                           </ListItemIcon>

@@ -30,12 +30,13 @@ export default function AuthLogin() {
     try {
       const response = await axios.post('https://api.bookmyevent.ae/api/auth/login', { email, password });
       const { token, user } = response.data;
-console.log(response.data.user.role);
+console.log(response.data.profile.module.title);
 
       // ✅ Store token consistently
       if (checked) {
         localStorage.setItem('token', token); // use 'token' key to match ProtectedRoute
-        localStorage.setItem('logRes', response.data.user.role); // use 'token' key to match ProtectedRoute
+        localStorage.setItem('logRes', response.data.profile.module.title); 
+        // use 'token' key to match ProtectedRoute
       } else {
         sessionStorage.setItem('token', token);
       }
@@ -43,7 +44,8 @@ console.log(response.data.user.role);
       localStorage.setItem('user', JSON.stringify(user));
 
       // ✅ Navigate to dashboard
-      navigate('/dashboard/default', { replace: true });
+       window.location.href = '/dashboard/default';
+      // navigate('/dashboard/default', { replace: true });
 
     } catch (err) {
       let errorMessage = 'Invalid email or password';

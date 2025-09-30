@@ -13,8 +13,8 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'; // Explicit import to avoid resolution issues
+import { Search as SearchIcon } from '@mui/icons-material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 const Category = () => {
   const theme = useTheme();
@@ -23,24 +23,31 @@ const Category = () => {
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const moduleId = '68ce96fd8db0c860bfcd67d1'; // From DOCUMENT
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae'; // Fallback to provided API URL
+
+  const moduleId = '68ce96fd8db0c860bfcd67d1';
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
+
+  // Helper: get token from storage
+  const getAuthToken = () => {
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  };
 
   // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        if (!API_BASE_URL) {
-          throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
+        const token = getAuthToken(); 
+        const headers = { Accept: 'application/json' };
+
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/categories/module/${moduleId}`, {
-          headers: {
-            'Accept': 'application/json',
-            // Add authentication headers if required, e.g.:
-            // 'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/api/categories/module/${moduleId}`,
+          { headers }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -54,10 +61,10 @@ const Category = () => {
         const data = await response.json();
 
         if (Array.isArray(data) && data.length > 0) {
-          const formattedCategories = data.map(category => ({
-            id: category.categoryId,
-            name: category.title,
-            image: `${API_BASE_URL}/${category.image}`
+          const formattedCategories = data.map((category) => ({
+            id: category.categoryId || category._id,
+            name: category.title || category.name,
+            image: category.image ? `${API_BASE_URL}/${category.image}` : '',
           }));
           setCategories(formattedCategories);
           setFilteredCategories(formattedCategories);
@@ -66,31 +73,35 @@ const Category = () => {
         }
       } catch (error) {
         console.error('Error fetching categories:', error.message);
-        setError(`Failed to fetch categories: ${error.message}`);
+        setError(error.message);
       }
     };
     fetchCategories();
   }, []);
 
-  // Search functionality
+  // ✅ Search functionality (show all if empty)
   const handleSearch = () => {
-    const filtered = categories.filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!searchTerm.trim()) {
+      setFilteredCategories(categories); // restore full list
+      return;
+    }
+    const filtered = categories.filter((category) =>
+      category.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCategories(filtered);
   };
 
-  // Export functionality
+  // Export menu
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = "SI,Category Id,Category Name\n";
+    let csvContent = 'SI,Category Id,Category Name\n';
     filteredCategories.forEach((category, index) => {
       csvContent += `${index + 1},${category.id},${category.name}\n`;
     });
     const blob = new Blob([csvContent], {
-      type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv'
+      type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv',
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -102,9 +113,31 @@ const Category = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh' }}>
-      <Box sx={{ maxWidth: 'lg', margin: 'auto', backgroundColor: 'white', borderRadius: theme.shape.borderRadius, boxShadow: theme.shadows[1], p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box
+      sx={{
+        p: 3,
+        backgroundColor: theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
+      <Box
+        sx={{
+          maxWidth: 'lg',
+          margin: 'auto',
+          backgroundColor: 'white',
+          borderRadius: theme.shape.borderRadius,
+          boxShadow: theme.shadows[1],
+          p: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" component="h1">
             Category List
           </Typography>
@@ -130,11 +163,7 @@ const Category = () => {
             >
               Export
             </Button>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
               <MenuItem onClick={() => handleExport('excel')}>Excel</MenuItem>
               <MenuItem onClick={() => handleExport('csv')}>CSV</MenuItem>
             </Menu>
@@ -160,7 +189,17 @@ const Category = () => {
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{category.id}</TableCell>
                 <TableCell>
-                  <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                  {category.image ? (
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      style={{ width: 100, height: 50, objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      No Image
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>{category.name}</TableCell>
               </TableRow>

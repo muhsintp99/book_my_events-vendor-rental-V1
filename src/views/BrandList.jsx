@@ -1,8 +1,7 @@
-<<<<<<< HEAD
+
 import React, { useState, useEffect } from 'react';
-=======
-import React, { useState } from 'react';
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
+
+
 import {
   Box,
   Typography,
@@ -15,11 +14,7 @@ import {
   Button,
   useTheme,
   Menu,
-<<<<<<< HEAD
   MenuItem,
-=======
-  MenuItem
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -27,7 +22,6 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const Brandlist = () => {
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-<<<<<<< HEAD
   const [brands, setBrands] = useState([]);
   const [filteredBrands, setFilteredBrands] = useState([]);
   const [error, setError] = useState(null);
@@ -83,17 +77,6 @@ const Brandlist = () => {
     };
     fetchBrands();
   }, []);
-=======
-  const [brands] = useState([
-    { id: 12, image: '/images/porsche.png', name: 'Porsche' },
-    { id: 11, image: '/images/land_rover.png', name: 'Land Rover' },
-    { id: 10, image: '/images/tesla.png', name: 'Tesla' },
-    { id: 9, image: '/images/hyundai.png', name: 'Hyundai' },
-    { id: 8, image: '/images/nissan.png', name: 'Nissan' },
-    { id: 7, image: '/images/chevrolet.png', name: 'Chevrolet' },
-  ]);
-  const [filteredBrands, setFilteredBrands] = useState(brands);
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
 
   // For Export Menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -105,16 +88,8 @@ const Brandlist = () => {
     filteredBrands.forEach((brand, index) => {
       csvContent += `${index + 1},${brand.id},${brand.name}\n`;
     });
-<<<<<<< HEAD
     const blob = new Blob([csvContent], {
       type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv'
-=======
-
-    const blob = new Blob([csvContent], {
-      type: format === 'excel'
-        ? 'application/vnd.ms-excel'
-        : 'text/csv'
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -171,14 +146,11 @@ const Brandlist = () => {
             </Menu>
           </Box>
         </Box>
-<<<<<<< HEAD
         {error && (
           <Typography color="error" sx={{ mb: 2 }}>
             {error}
           </Typography>
         )}
-=======
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
         <Table>
           <TableHead>
             <TableRow>
@@ -205,9 +177,5 @@ const Brandlist = () => {
     </Box>
   );
 };
-<<<<<<< HEAD
 
 export default Brandlist;
-=======
-export default Brandlist;
->>>>>>> 50aee26ee41309eee8d419ec36916c3ef6a9d0fa
