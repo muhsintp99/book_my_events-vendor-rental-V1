@@ -19,7 +19,7 @@ const icons = {
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const Marketingsection = {
-  id: 'provider-management',
+  id: 'market-management',
   title: 'MARKETING SECTION',
   type: 'group',
   children: [

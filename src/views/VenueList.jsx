@@ -26,8 +26,11 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  Snackbar,
+  
 } from "@mui/material";
 import { Visibility, Edit, Delete, Search } from "@mui/icons-material";
+import { Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 export default function VenuesList() {
   const API_BASE_URL = "https://api.bookmyevent.ae/api";
@@ -43,6 +46,14 @@ export default function VenuesList() {
   });
   const [openModal, setOpenModal] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState(null);
+
+  const [openConfirm, setOpenConfirm] = useState(false); // Confirm delete dialog
+  const [venueToDelete, setVenueToDelete] = useState(null); 
+  const [openToast, setOpenToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState("success");
+
+
   const navigate = useNavigate();
   // Fetch venues on component mount
   useEffect(() => {
@@ -52,12 +63,15 @@ export default function VenuesList() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const providerId = userData._id;
+
       if (!token) {
         console.error("No authentication token found");
         setLoading(false);
         return;
       }
-      const response = await fetch(`${API_BASE_URL}/venues/`, {
+      const response = await fetch(`${API_BASE_URL}/venues/provider/${providerId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -100,8 +114,7 @@ export default function VenuesList() {
     ];
     const rows = filteredVenues.map(
       (v, i) =>
-        `${i + 1},${v.venueName},${v.venueAddress},${v.seatingArrangement || "-"},${
-          v.maxGuestsSeated || "-"
+        `${i + 1},${v.venueName},${v.venueAddress},${v.seatingArrangement || "-"},${v.maxGuestsSeated || "-"
         },${v.status}`
     );
     const csv = headers.concat(rows).join("\n");
@@ -127,7 +140,7 @@ export default function VenuesList() {
       });
       const result = await response.json();
       if (result.success) {
-        setVenues(prev => prev.map(v => 
+        setVenues(prev => prev.map(v =>
           v._id === id ? { ...v, status: v.status === "active" ? "inactive" : "active" } : v
         ));
       } else {
@@ -137,32 +150,42 @@ export default function VenuesList() {
       console.error("Error toggling venue status:", error);
     }
   };
+
+  //confim delete
+  const confirmDelete = (id) => {
+    setVenueToDelete(id);
+    setOpenConfirm(true);
+  };
   // Delete venue
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
+    if (!venueToDelete) return;
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No authentication token found");
-        setLoading(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/venues/${id}`, {
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(`${API_BASE_URL}/venues/${venueToDelete}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const result = await response.json();
       if (result.success) {
-        fetchVenues(); // Refresh the list
+        fetchVenues();
+        setToastMessage("Venue deleted successfully ✅");
+        setToastSeverity("success");
       } else {
-        console.error("Failed to delete venue:", result.message);
+        setToastMessage(result.message || "Failed to delete venue ❌");
+        setToastSeverity("error");
       }
     } catch (error) {
-      console.error("Error deleting venue:", error);
+      console.error(error);
+      setToastMessage("Error deleting venue ❌");
+      setToastSeverity("error");
     } finally {
       setLoading(false);
+      setOpenConfirm(false);
+      setVenueToDelete(null);
+      setOpenToast(true);
     }
   };
   // Filtering logic (applied filters only)
@@ -344,17 +367,18 @@ export default function VenuesList() {
                         >
                           <Edit fontSize="small" />
                         </IconButton>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            border: "1px solid #d1d5db",
-                            color: "#dc2626",
-                            borderRadius: "8px",
-                          }}
-                          onClick={() => handleDelete(v._id)}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
+                       <IconButton
+  size="small"
+  sx={{
+    border: "1px solid #d1d5db",
+    color: "#dc2626",
+    borderRadius: "8px",
+  }}
+  onClick={() => confirmDelete(v._id)}   // ✅ FIXED
+>
+  <Delete fontSize="small" />
+</IconButton>
+
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -448,10 +472,10 @@ export default function VenuesList() {
                   {selectedVenue.rentalType === "hourly" && selectedVenue.hourlyPrice
                     ? `Hourly: $${selectedVenue.hourlyPrice}`
                     : selectedVenue.rentalType === "perDay" && selectedVenue.perDayPrice
-                    ? `Per Day: $${selectedVenue.perDayPrice}`
-                    : selectedVenue.rentalType === "distanceWise" && selectedVenue.distanceWisePrice
-                    ? `Distance Wise: $${selectedVenue.distanceWisePrice}`
-                    : "-"}
+                      ? `Per Day: $${selectedVenue.perDayPrice}`
+                      : selectedVenue.rentalType === "distanceWise" && selectedVenue.distanceWisePrice
+                        ? `Distance Wise: $${selectedVenue.distanceWisePrice}`
+                        : "-"}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -502,14 +526,14 @@ export default function VenuesList() {
                 <Typography variant="subtitle1" fontWeight="bold">Elderly Accessibility</Typography>
                 <Typography>{selectedVenue.accessibilityInfo ? "Yes" : "No"}</Typography>
               </Grid>
-            <Grid item xs={12}>
-  <Typography variant="subtitle1" fontWeight="bold">Search Tags</Typography>
-  <Typography>
-    {Array.isArray(selectedVenue?.searchTags)
-      ? selectedVenue.searchTags.join(", ")
-      : selectedVenue?.searchTags || "-"}
-  </Typography>
-</Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="bold">Search Tags</Typography>
+                <Typography>
+                  {Array.isArray(selectedVenue?.searchTags)
+                    ? selectedVenue.searchTags.join(", ")
+                    : selectedVenue?.searchTags || "-"}
+                </Typography>
+              </Grid>
             </Grid>
           )}
         </DialogContent>
@@ -517,6 +541,26 @@ export default function VenuesList() {
           <Button onClick={handleCloseModal}>Close</Button>
         </DialogActions>
       </Dialog>
+      <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+  <DialogTitle>Confirm Delete</DialogTitle>
+  <DialogContent>
+    <Typography>Are you sure you want to delete this venue?</Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setOpenConfirm(false)} color="primary">
+      Cancel
+    </Button>
+    <Button onClick={handleDelete} color="error" variant="contained">
+      Delete
+    </Button>
+  </DialogActions>
+</Dialog>
+ <Snackbar open={openToast} autoHideDuration={4000} onClose={() => setOpenToast(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+        <Alert onClose={() => setOpenToast(false)} severity={toastSeverity} sx={{ width: "100%" }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 }

@@ -4,8 +4,6 @@ import {
   Typography,
   TextField,
   Button,
-  Tabs,
-  Tab,
   Card,
   CardContent,
   IconButton,
@@ -25,37 +23,11 @@ import {
 import {
   CloudUpload as CloudUploadIcon,
   Settings as SettingsIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import { useTheme, useMediaQuery } from '@mui/material';
-import { useParams } from 'react-router-dom';
-
-// Helper component for Tab Panels
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
+import { useParams, useNavigate } from 'react-router-dom';
 
 // Styled component for the upload area
 const UploadDropArea = styled(Box)(({ theme }) => ({
@@ -78,15 +50,13 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   },
 }));
 
-const Createauditorium = () => {
+const CreateAuditorium = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const API_BASE_URL = 'https://api.bookmyevent.ae/api';
   const [viewMode, setViewMode] = useState(id ? 'edit' : 'create');
-  const [venues, setVenues] = useState([]);
-  const [selectedVenueId, setSelectedVenueId] = useState(id || null);
-  const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState({
     venueName: '',
     description: '',
@@ -107,11 +77,9 @@ const Createauditorium = () => {
     dressingRooms: '',
     rentalType: 'hourly',
     hourlyPrice: '',
-    perDayPrice: '',
-    distanceWisePrice: '',
+    dailyPrice: '',
+    distancePrice: '',
     discount: '',
-    customPackages: '',
-    dynamicPricing: false,
     advanceDeposit: '',
     cancellationPolicy: '',
     extraCharges: '',
@@ -122,15 +90,15 @@ const Createauditorium = () => {
     nearbyTransport: '',
     elderlyAccessibility: false,
     searchTags: '',
-    status: 'active', // Default to 'active' for new venues
+    status: 'active',
   });
   const [files, setFiles] = useState({ thumbnail: null, auditoriumImage: null, floorPlan: null });
-  const [existingThumbnail, setExistingThumbnail] = useState('');
-  const [existingAuditoriumImage, setExistingAuditoriumImage] = useState('');
-  const [existingFloorPlan, setExistingFloorPlan] = useState('');
-  const [openToast, setOpenToast] = useState(false);
-  const [alertSeverity, setAlertSeverity] = useState('success');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [existingImages, setExistingImages] = useState({
+    thumbnail: '',
+    auditoriumImage: '',
+    floorPlan: '',
+  });
+  const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
 
   // Fetch venue data if in edit mode
@@ -141,8 +109,6 @@ const Createauditorium = () => {
   }, [id]);
 
   // Handlers
-  const handleTabChange = (event, newValue) => setTabValue(newValue);
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -153,13 +119,17 @@ const Createauditorium = () => {
 
   const handleFileChange = (key) => (event) => {
     const file = event.target.files[0];
-    setFiles((prev) => ({ ...prev, [key]: file }));
+    if (file) {
+      setFiles((prev) => ({ ...prev, [key]: file }));
+    }
   };
 
   const handleDrop = (key) => (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
-    setFiles((prev) => ({ ...prev, [key]: file }));
+    if (file) {
+      setFiles((prev) => ({ ...prev, [key]: file }));
+    }
   };
 
   const handleDragOver = (event) => event.preventDefault();
@@ -185,11 +155,9 @@ const Createauditorium = () => {
       dressingRooms: '',
       rentalType: 'hourly',
       hourlyPrice: '',
-      perDayPrice: '',
-      distanceWisePrice: '',
+      dailyPrice: '',
+      distancePrice: '',
       discount: '',
-      customPackages: '',
-      dynamicPricing: false,
       advanceDeposit: '',
       cancellationPolicy: '',
       extraCharges: '',
@@ -200,16 +168,12 @@ const Createauditorium = () => {
       nearbyTransport: '',
       elderlyAccessibility: false,
       searchTags: '',
-      status: 'active', // Reset to 'active'
+      status: 'active',
     });
     setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null });
-    setExistingThumbnail('');
-    setExistingAuditoriumImage('');
-    setExistingFloorPlan('');
-    setTabValue(0);
-    setErrorMessage('');
+    setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '' });
+    setToast({ open: false, message: '', severity: 'success' });
     setViewMode('create');
-    setSelectedVenueId(null);
   };
 
   const validateForm = () => {
@@ -219,8 +183,8 @@ const Createauditorium = () => {
     if (!formData.seatingArrangement) errors.push('Seating arrangement is required');
     if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
     if (formData.rentalType === 'hourly' && !formData.hourlyPrice) errors.push('Hourly price is required');
-    if (formData.rentalType === 'perDay' && !formData.perDayPrice) errors.push('Per day price is required');
-    if (formData.rentalType === 'distanceWise' && !formData.distanceWisePrice) errors.push('Distance wise price is required');
+    if (formData.rentalType === 'daily' && !formData.dailyPrice) errors.push('Daily price is required');
+    if (formData.rentalType === 'distance' && !formData.distancePrice) errors.push('Distance price is required');
     return errors;
   };
 
@@ -229,82 +193,70 @@ const Createauditorium = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setErrorMessage('No authentication token found. Please log in.');
-        setAlertSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
+        throw new Error('No authentication token found. Please log in.');
       }
       const response = await fetch(`${API_BASE_URL}/venues/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const result = await response.json();
-      console.log('fetchVenue response:', result);
-      if (result.success) {
-        setFormData({
-          venueName: result.data.venueName || '',
-          description: result.data.shortDescription || '',
-          venueAddress: result.data.venueAddress || '',
-          latitude: result.data.latitude || '',
-          longitude: result.data.longitude || '',
-          openingHours: result.data.openingHours || '',
-          closingHours: result.data.closingHours || '',
-          holidayScheduling: result.data.holidaySchedule || '',
-          parkingAvailability: result.data.parkingAvailability || false,
-          parkingCapacity: result.data.parkingCapacity || '',
-          foodCateringAvailability: result.data.foodCateringAvailability || false,
-          stageLightingAudio: result.data.stageLightingAudio || false,
-          wheelchairAccessibility: result.data.wheelchairAccessibility || false,
-          securityArrangements: result.data.securityArrangements || false,
-          wifiAvailability: result.data.wifiAvailability || false,
-          washroomsInfo: result.data.washroomsInfo || '',
-          dressingRooms: result.data.dressingRooms || '',
-          rentalType: result.data.rentalType || 'hourly',
-          hourlyPrice: result.data.hourlyPrice || '',
-          perDayPrice: result.data.perDayPrice || '',
-          distanceWisePrice: result.data.distanceWisePrice || '',
-          discount: result.data.discount || '',
-          customPackages: result.data.customPackages || '',
-          dynamicPricing: result.data.dynamicPricing || false,
-          advanceDeposit: result.data.advanceDeposit || '',
-          cancellationPolicy: result.data.cancellationPolicy || '',
-          extraCharges: result.data.extraCharges || '',
-          seatingArrangement: result.data.seatingArrangement || '',
-          maxGuestsSeated: result.data.maxGuestsSeated || '',
-          maxGuestsStanding: result.data.maxGuestsStanding || '',
-          multipleHalls: result.data.multipleHalls || false,
-          nearbyTransport: result.data.nearbyTransport || '',
-          elderlyAccessibility: result.data.accessibilityInfo || false,
-          searchTags: Array.isArray(result.data.searchTags)
-            ? result.data.searchTags.join(', ')
-            : result.data.searchTags || '',
-          status: result.data.status || 'active', // Include status
-        });
-        setExistingThumbnail(result.data.thumbnail || '');
-        if (result.data.images && result.data.images.length > 0) {
-          setExistingAuditoriumImage(result.data.images[0]);
-          if (result.data.images.length > 1) {
-            setExistingFloorPlan(result.data.images[1]);
-          }
-        }
-        setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null });
-        setViewMode('edit');
-        setSelectedVenueId(id);
-      } else {
+      if (!result.success) {
         throw new Error(result.message || 'Failed to fetch venue');
       }
+      setFormData({
+        venueName: result.data.venueName || '',
+        description: result.data.shortDescription || '',
+        venueAddress: result.data.venueAddress || '',
+        latitude: result.data.latitude || '',
+        longitude: result.data.longitude || '',
+        openingHours: result.data.openingHours || '',
+        closingHours: result.data.closingHours || '',
+        holidayScheduling: result.data.holidaySchedule || '',
+        parkingAvailability: !!result.data.parkingAvailability,
+        parkingCapacity: result.data.parkingCapacity || '',
+        foodCateringAvailability: !!result.data.foodCateringAvailability,
+        stageLightingAudio: !!result.data.stageLightingAudio,
+        wheelchairAccessibility: !!result.data.wheelchairAccessibility,
+        securityArrangements: !!result.data.securityArrangements,
+        wifiAvailability: !!result.data.wifiAvailability,
+        washroomsInfo: result.data.washroomsInfo || '',
+        dressingRooms: result.data.dressingRooms || '',
+        rentalType: result.data.rentalType || 'hourly',
+        hourlyPrice: result.data.hourlyPrice || '',
+        dailyPrice: result.data.dailyPrice || '',
+        distancePrice: result.data.distancePrice || '',
+        discount: result.data.discount || '',
+        advanceDeposit: result.data.advanceDeposit || '',
+        cancellationPolicy: result.data.cancellationPolicy || '',
+        extraCharges: result.data.extraCharges || '',
+        seatingArrangement: result.data.seatingArrangement || '',
+        maxGuestsSeated: result.data.maxGuestsSeated || '',
+        maxGuestsStanding: result.data.maxGuestsStanding || '',
+        multipleHalls: !!result.data.multipleHalls,
+        nearbyTransport: result.data.nearbyTransport || '',
+        elderlyAccessibility: !!result.data.accessibilityInfo,
+        searchTags: Array.isArray(result.data.searchTags)
+          ? result.data.searchTags.join(', ')
+          : result.data.searchTags || '',
+        status: result.data.status || 'active',
+      });
+      setExistingImages({
+        thumbnail: result.data.thumbnail || '',
+        auditoriumImage: result.data.images?.[0] || '',
+        floorPlan: result.data.images?.[1] || '',
+      });
+      setViewMode('edit');
     } catch (error) {
       console.error('Error fetching venue:', error);
+      setToast({
+        open: true,
+        message: error.message.includes('expired')
+          ? 'Session expired. Please log in again.'
+          : `Error fetching venue: ${error.message}`,
+        severity: 'error',
+      });
       if (error.message.includes('expired')) {
-        setErrorMessage('Session expired. Please log in again.');
-        window.location.href = '/login';
-      } else {
-        setErrorMessage('Error fetching venue: ' + error.message);
+        navigate('/login');
       }
-      setAlertSeverity('error');
-      setOpenToast(true);
     } finally {
       setLoading(false);
     }
@@ -313,35 +265,41 @@ const Createauditorium = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
-    setErrorMessage('');
+    setToast({ open: false, message: '', severity: 'success' });
+
     const token = localStorage.getItem('token');
     if (!token) {
-      setErrorMessage('No authentication token found. Please log in.');
-      setAlertSeverity('error');
-      setOpenToast(true);
+      setToast({
+        open: true,
+        message: 'No authentication token found. Please log in.',
+        severity: 'error',
+      });
       setLoading(false);
       return;
     }
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
-      setErrorMessage(validationErrors.join(', '));
-      setAlertSeverity('error');
-      setOpenToast(true);
+      setToast({
+        open: true,
+        message: validationErrors.join(', '),
+        severity: 'error',
+      });
       setLoading(false);
       return;
     }
+
     const data = new FormData();
     const booleanFields = [
-  'parkingAvailability',
-  'foodCateringAvailability',
-  'stageLightingAudio',
-  'wheelchairAccessibility',
-  'securityArrangements',
-  'wifiAvailability',
-  'dynamicPricing',
-  'multipleHalls',
-  'accessibilityInfo',
-];
+      'parkingAvailability',
+      'foodCateringAvailability',
+      'stageLightingAudio',
+      'wheelchairAccessibility',
+      'securityArrangements',
+      'wifiAvailability',
+      'multipleHalls',
+      'elderlyAccessibility',
+    ];
 
     const payload = {
       ...formData,
@@ -352,6 +310,7 @@ const Createauditorium = () => {
     delete payload.description;
     delete payload.holidayScheduling;
     delete payload.elderlyAccessibility;
+
     Object.entries(payload).forEach(([key, value]) => {
       if (key === 'searchTags' && value) {
         data.append(key, value.split(',').map((tag) => tag.trim()));
@@ -361,14 +320,13 @@ const Createauditorium = () => {
         data.append(key, value || '');
       }
     });
+
     if (files.thumbnail) data.append('thumbnail', files.thumbnail);
     if (files.auditoriumImage) data.append('images', files.auditoriumImage);
     if (files.floorPlan) data.append('images', files.floorPlan);
-    for (let [key, value] of data.entries()) {
-      console.log(`FormData: ${key} = ${value}`);
-    }
+
     try {
-      const url = viewMode === 'edit' ? `${API_BASE_URL}/venues/${selectedVenueId}` : `${API_BASE_URL}/venues/`;
+      const url = viewMode === 'edit' ? `${API_BASE_URL}/venues/${id}` : `${API_BASE_URL}/venues/`;
       const method = viewMode === 'edit' ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
@@ -378,25 +336,31 @@ const Createauditorium = () => {
         },
       });
       const result = await response.json();
-      console.log('handleSubmit response:', result);
       if (result.success) {
-        setErrorMessage(viewMode === 'edit' ? 'Venue updated successfully' : 'Venue created successfully');
-        setAlertSeverity('success');
-        setOpenToast(true);
+        setToast({
+          open: true,
+          message: viewMode === 'edit' ? 'Venue updated successfully' : 'Venue created successfully',
+          severity: 'success',
+        });
         handleReset();
+        if (viewMode === 'create') {
+          navigate('/venue-setup/lists');
+        }
       } else {
         throw new Error(result.message || `Failed to ${viewMode === 'edit' ? 'update' : 'create'} venue`);
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+      setToast({
+        open: true,
+        message: error.message.includes('expired')
+          ? 'Session expired. Please log in again.'
+          : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
+        severity: 'error',
+      });
       if (error.message.includes('expired')) {
-        setErrorMessage('Session expired. Please log in again.');
-        window.location.href = '/login';
-      } else {
-        setErrorMessage(`Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ` + error.message);
+        navigate('/login');
       }
-      setAlertSeverity('error');
-      setOpenToast(true);
     } finally {
       setLoading(false);
     }
@@ -404,8 +368,7 @@ const Createauditorium = () => {
 
   const handleCloseToast = (event, reason) => {
     if (reason === 'clickaway') return;
-    setOpenToast(false);
-    setErrorMessage('');
+    setToast({ open: false, message: '', severity: 'success' });
   };
 
   return (
@@ -421,7 +384,12 @@ const Createauditorium = () => {
       }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h5" component="h1">{viewMode === 'edit' ? 'Edit Venue' : 'Add New Venue'}</Typography>
+            {viewMode === 'edit' && (
+              <IconButton onClick={() => navigate('/venue-setup/lists')} color="primary">
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+            <Typography variant="h4" component="h1">{viewMode === 'edit' ? 'Edit Venue' : 'Add New Venue'}</Typography>
           </Box>
           <Tooltip title="Settings">
             <IconButton color="primary" sx={{ backgroundColor: 'white', border: `1px solid ${theme.palette.grey[300]}` }}>
@@ -433,27 +401,20 @@ const Createauditorium = () => {
           Insert the venue details
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
-          
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                <Typography variant="h6" gutterBottom>Venue Name</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Enter venue name in different languages
-                </Typography>
-                <TabPanel value={tabValue} index={0}>
-                  <TextField
-                    fullWidth
-                    label="Venue name (Default)*"
-                    name="venueName"
-                    value={formData.venueName}
-                    onChange={handleInputChange}
-                    placeholder="Type venue name"
-                    sx={{ mb: 2 }}
-                    required
-                  />
-                </TabPanel>
-                
+                <Typography variant="h6" gutterBottom>Venue Details</Typography>
+                <TextField
+                  fullWidth
+                  label="Venue Name*"
+                  name="venueName"
+                  value={formData.venueName}
+                  onChange={handleInputChange}
+                  placeholder="Type venue name"
+                  sx={{ mb: 2 }}
+                  required
+                />
                 <TextField
                   fullWidth
                   label="Description"
@@ -485,7 +446,8 @@ const Createauditorium = () => {
                     value={formData.latitude}
                     onChange={handleInputChange}
                     placeholder="e.g., 12.9716"
-                    sx={{ mb: 2 }}
+                    type="number"
+                    inputProps={{ step: '0.0001' }}
                   />
                   <TextField
                     fullWidth
@@ -494,65 +456,56 @@ const Createauditorium = () => {
                     value={formData.longitude}
                     onChange={handleInputChange}
                     placeholder="e.g., 77.5946"
-                    sx={{ mb: 2 }}
+                    type="number"
+                    inputProps={{ step: '0.0001' }}
                   />
                 </Box>
                 <Box sx={{ mb: 4 }}>
-                  <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-                    <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                      <Typography variant="h6" gutterBottom>Operating Hours</Typography>
-                      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                        <TextField
-                          fullWidth
-                          label="Opening Hours"
-                          name="openingHours"
-                          value={formData.openingHours}
-                          onChange={handleInputChange}
-                          placeholder="e.g., 09:00"
-                          sx={{ mb: 2 }}
-                        />
-                        <TextField
-                          fullWidth
-                          label="Closing Hours"
-                          name="closingHours"
-                          value={formData.closingHours}
-                          onChange={handleInputChange}
-                          placeholder="e.g., 11:00 P.M."
-                          sx={{ mb: 2 }}
-                        />
-                      </Box>
-                      <TextField
-                        fullWidth
-                        label="Holiday Scheduling"
-                        name="holidayScheduling"
-                        value={formData.holidayScheduling}
-                        onChange={handleInputChange}
-                        placeholder="Describe holiday hours or closures"
-                        multiline
-                        rows={2}
-                        sx={{ mb: 2 }}
-                      />
-                    </CardContent>
-                  </Card>
+                  <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Opening Hours"
+                      name="openingHours"
+                      value={formData.openingHours}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 09:00 AM"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Closing Hours"
+                      name="closingHours"
+                      value={formData.closingHours}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 11:00 PM"
+                    />
+                  </Box>
+                  <TextField
+                    fullWidth
+                    label="Holiday Scheduling"
+                    name="holidayScheduling"
+                    value={formData.holidayScheduling}
+                    onChange={handleInputChange}
+                    placeholder="Describe holiday hours or closures"
+                    multiline
+                    rows={2}
+                  />
                 </Box>
-                <Box sx={{ mb: 2 }}>
-                  <FormControlLabel
-  control={
-    <Switch
-      name="status"
-      checked={formData.status === 'active'}
-      onChange={(e) =>
-        setFormData((prev) => ({
-          ...prev,
-          status: e.target.checked ? 'active' : 'inactive',
-        }))
-      }
-    />
-  }
-  label="Venue Status (Active/Inactive)"
-/>
-
-                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="status"
+                      checked={formData.status === 'active'}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          status: e.target.checked ? 'active' : 'inactive',
+                        }))
+                      }
+                    />
+                  }
+                  label="Venue Status (Active/Inactive)"
+                />
               </CardContent>
             </Card>
           </Box>
@@ -561,7 +514,7 @@ const Createauditorium = () => {
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="h6" gutterBottom>Venue Thumbnail*</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  JPG, JPEG, PNG Less Than 1MB (Ratio 2:1)
+                  Choose the main image that represents your venue.
                 </Typography>
                 <UploadDropArea
                   onDragOver={handleDragOver}
@@ -577,10 +530,10 @@ const Createauditorium = () => {
                       />
                       <Typography variant="body2" color="text.secondary">{files.thumbnail.name}</Typography>
                     </Box>
-                  ) : existingThumbnail ? (
+                  ) : existingImages.thumbnail ? (
                     <Box>
                       <img
-                        src={existingThumbnail}
+                        src={existingImages.thumbnail}
                         alt="Existing thumbnail"
                         style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
                       />
@@ -603,13 +556,11 @@ const Createauditorium = () => {
                 </UploadDropArea>
               </CardContent>
             </Card>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
             <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="h6" gutterBottom>Auditorium Image*</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  JPG, JPEG, PNG Less Than 2MB (Ratio 3:2)
+                  JPG, JPEG, PNG Less Than 2MB
                 </Typography>
                 <UploadDropArea
                   onDragOver={handleDragOver}
@@ -625,10 +576,10 @@ const Createauditorium = () => {
                       />
                       <Typography variant="body2" color="text.secondary">{files.auditoriumImage.name}</Typography>
                     </Box>
-                  ) : existingAuditoriumImage ? (
+                  ) : existingImages.auditoriumImage ? (
                     <Box>
                       <img
-                        src={existingAuditoriumImage}
+                        src={existingImages.auditoriumImage}
                         alt="Existing auditorium image"
                         style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
                       />
@@ -663,6 +614,14 @@ const Createauditorium = () => {
                       control={<Switch name="parkingAvailability" checked={formData.parkingAvailability} onChange={handleInputChange} />}
                       label="Parking Availability"
                     />
+                    <FormControlLabel
+                      control={<Switch name="foodCateringAvailability" checked={formData.foodCateringAvailability} onChange={handleInputChange} />}
+                      label="Food & Catering Availability"
+                    />
+                    <FormControlLabel
+                      control={<Switch name="stageLightingAudio" checked={formData.stageLightingAudio} onChange={handleInputChange} />}
+                      label="Stage / Lighting / Audio System"
+                    />
                     <TextField
                       fullWidth
                       label="Parking Capacity"
@@ -672,13 +631,13 @@ const Createauditorium = () => {
                       placeholder="Number of spots"
                       type="number"
                     />
-                    <FormControlLabel
-                      control={<Switch name="foodCateringAvailability" checked={formData.foodCateringAvailability} onChange={handleInputChange} />}
-                      label="Food & Catering Availability"
-                    />
-                    <FormControlLabel
-                      control={<Switch name="stageLightingAudio" checked={formData.stageLightingAudio} onChange={handleInputChange} />}
-                      label="Stage / Lighting / Audio System"
+                    <TextField
+                      fullWidth
+                      label="Dressing Rooms/Green Rooms"
+                      name="dressingRooms"
+                      value={formData.dressingRooms}
+                      onChange={handleInputChange}
+                      placeholder="Details about dressing rooms"
                     />
                   </Stack>
                   <Stack spacing={2}>
@@ -702,14 +661,6 @@ const Createauditorium = () => {
                       onChange={handleInputChange}
                       placeholder="Details about washrooms"
                     />
-                    <TextField
-                      fullWidth
-                      label="Dressing Rooms/Green Rooms"
-                      name="dressingRooms"
-                      value={formData.dressingRooms}
-                      onChange={handleInputChange}
-                      placeholder="Details about dressing rooms"
-                    />
                   </Stack>
                 </Box>
               </CardContent>
@@ -719,7 +670,7 @@ const Createauditorium = () => {
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="h6" gutterBottom>Pricing & Booking Options</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Insert The Pricing & Discount Informations</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Insert The Pricing & Discount Information</Typography>
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle1" gutterBottom>Rental Type</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Choose the rental type you prefer.</Typography>
@@ -739,16 +690,16 @@ const Createauditorium = () => {
                     </Card>
                     <Card
                       variant="outlined"
-                      sx={{ p: 2, cursor: 'pointer', borderColor: formData.rentalType === 'perDay' ? theme.palette.primary.main : undefined, borderWidth: formData.rentalType === 'perDay' ? 2 : 1 }}
-                      onClick={() => setFormData((prev) => ({ ...prev, rentalType: 'perDay' }))}
+                      sx={{ p: 2, cursor: 'pointer', borderColor: formData.rentalType === 'daily' ? theme.palette.primary.main : undefined, borderWidth: formData.rentalType === 'daily' ? 2 : 1 }}
+                      onClick={() => setFormData((prev) => ({ ...prev, rentalType: 'daily' }))}
                     >
                       <FormControlLabel
-                        control={<Radio name="rentalType" checked={formData.rentalType === 'perDay'} onChange={() => setFormData((prev) => ({ ...prev, rentalType: 'perDay' }))} />}
-                        label="Per Day"
+                        control={<Radio name="rentalType" checked={formData.rentalType === 'daily'} onChange={() => setFormData((prev) => ({ ...prev, rentalType: 'daily' }))} />}
+                        label="Daily"
                         labelPlacement="start"
                         sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
                       />
-                      <Typography variant="body2" color="text.secondary">Set your per day rental price.</Typography>
+                      <Typography variant="body2" color="text.secondary">Set your daily rental price.</Typography>
                     </Card>
                     <Card
                       variant="outlined"
@@ -757,11 +708,11 @@ const Createauditorium = () => {
                     >
                       <FormControlLabel
                         control={<Radio name="rentalType" checked={formData.rentalType === 'distanceWise'} onChange={() => setFormData((prev) => ({ ...prev, rentalType: 'distanceWise' }))} />}
-                        label="Distance Wise"
+                        label="Distance"
                         labelPlacement="start"
                         sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
                       />
-                      <Typography variant="body2" color="text.secondary">Set your distance wise rental price.</Typography>
+                      <Typography variant="body2" color="text.secondary">Set your distance-based rental price.</Typography>
                     </Card>
                   </Box>
                 </Box>
@@ -780,13 +731,13 @@ const Createauditorium = () => {
                     />
                   </Box>
                 )}
-                {formData.rentalType === 'perDay' && (
+                {formData.rentalType === 'daily' && (
                   <Box sx={{ mb: 3 }}>
                     <TextField
                       fullWidth
-                      label="Per Day Price ($/per day)*"
-                      name="perDayPrice"
-                      value={formData.perDayPrice}
+                      label="Daily Price ($/per day)*"
+                      name="dailyPrice"
+                      value={formData.dailyPrice}
                       onChange={handleInputChange}
                       placeholder="Ex: 250.00"
                       type="number"
@@ -799,9 +750,9 @@ const Createauditorium = () => {
                   <Box sx={{ mb: 3 }}>
                     <TextField
                       fullWidth
-                      label="Distance Wise Price ($/per km)*"
-                      name="distanceWisePrice"
-                      value={formData.distanceWisePrice}
+                      label="Distance Price ($/per km)*"
+                      name="distancePrice"
+                      value={formData.distancePrice}
                       onChange={handleInputChange}
                       placeholder="Ex: 1.50"
                       type="number"
@@ -817,7 +768,7 @@ const Createauditorium = () => {
                   </Typography>
                   <TextField
                     fullWidth
-                    label="Discount"
+                    label="Discount (%)"
                     name="discount"
                     value={formData.discount}
                     onChange={handleInputChange}
@@ -828,23 +779,7 @@ const Createauditorium = () => {
                 </Box>
                 <TextField
                   fullWidth
-                  label="Custom Packages (e.g., Wedding, Corporate)"
-                  name="customPackages"
-                  value={formData.customPackages}
-                  onChange={handleInputChange}
-                  placeholder="Describe custom packages"
-                  multiline
-                  rows={2}
-                  sx={{ mb: 2 }}
-                />
-                <FormControlLabel
-                  control={<Switch name="dynamicPricing" checked={formData.dynamicPricing} onChange={handleInputChange} />}
-                  label="Enable Dynamic Pricing (Weekend/Holiday higher rates)"
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Advance Payment / Deposit %"
+                  label="Advance Payment / Deposit (%)"
                   name="advanceDeposit"
                   value={formData.advanceDeposit}
                   onChange={handleInputChange}
@@ -886,7 +821,6 @@ const Createauditorium = () => {
                   <InputLabel id="seating-arrangement-label">Seating Arrangement*</InputLabel>
                   <Select
                     labelId="seating-arrangement-label"
-                    id="seating-arrangement-select"
                     name="seatingArrangement"
                     value={formData.seatingArrangement}
                     label="Seating Arrangement"
@@ -929,16 +863,16 @@ const Createauditorium = () => {
                     <Box>
                       <Typography variant="body2" color="text.secondary">{files.floorPlan.name}</Typography>
                     </Box>
-                  ) : existingFloorPlan ? (
+                  ) : existingImages.floorPlan ? (
                     <Box>
-                      {existingFloorPlan.endsWith('.pdf') ? (
+                      {existingImages.floorPlan.endsWith('.pdf') ? (
                         <Box>
-                          <Typography variant="body2" color="text.secondary">Existing floor plan (PDF): {existingFloorPlan.split('/').pop()}</Typography>
-                          <a href={existingFloorPlan} target="_blank" rel="noopener noreferrer">View PDF</a>
+                          <Typography variant="body2" color="text.secondary">Existing floor plan (PDF): {existingImages.floorPlan.split('/').pop()}</Typography>
+                          <a href={existingImages.floorPlan} target="_blank" rel="noopener noreferrer">View PDF</a>
                         </Box>
                       ) : (
                         <img
-                          src={existingFloorPlan}
+                          src={existingImages.floorPlan}
                           alt="Existing floor plan"
                           style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
                         />
@@ -985,7 +919,7 @@ const Createauditorium = () => {
                   label="Accessibility for Elderly & Differently Abled"
                   sx={{ mb: 3 }}
                 />
-                <Typography variant="subtitle1" gutterBottom># Search Tags</Typography>
+                <Typography variant="subtitle1" gutterBottom>Search Tags</Typography>
                 <TextField
                   fullWidth
                   label="Search Tags"
@@ -1023,17 +957,32 @@ const Createauditorium = () => {
           </Box>
         </Box>
         <Snackbar
-          open={openToast}
-          autoHideDuration={3000}
+          open={toast.open}
+          autoHideDuration={6000}
           onClose={handleCloseToast}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{
+            '& .MuiSnackbarContent-root': {
+              minWidth: '600px',
+              maxWidth: '600px',
+              width: 'auto',
+            },
+          }}
         >
           <Alert
             onClose={handleCloseToast}
-            severity={alertSeverity}
-            sx={{ width: '100%' }}
+            severity={toast.severity}
+            sx={{
+              width: '100%',
+              '& .MuiAlert-message': {
+                whiteSpace: 'pre-line',
+                wordBreak: 'break-word',
+                fontSize: '1rem',
+                lineHeight: 1.5,
+              },
+            }}
           >
-            {errorMessage}
+            {toast.message}
           </Alert>
         </Snackbar>
       </Box>
@@ -1041,4 +990,4 @@ const Createauditorium = () => {
   );
 };
 
-export default Createauditorium;
+export default CreateAuditorium;

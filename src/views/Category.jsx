@@ -23,7 +23,7 @@ const Category = () => {
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const moduleId = '68ce96fd8db0c860bfcd67d1'; // From DOCUMENT
+  const moduleId = localStorage.getItem('moduleId');
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae'; // Fallback to provided API URL
 
   // Fetch categories from API
@@ -34,7 +34,7 @@ const Category = () => {
           throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/categories/module/${moduleId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/categories/modules/${moduleId}`, {
           headers: {
             'Accept': 'application/json',
             // Add authentication headers if required, e.g.:

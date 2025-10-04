@@ -5,7 +5,7 @@
 
 // assets
 import {
-  IconVenus,
+  IconBuilding,
   IconCategory,
   IconTrademark,
   IconPlus,
@@ -19,7 +19,7 @@ import {
 
 // constants
 const icons = {
-  IconVenus,
+  IconBuilding,
   IconCategory,
   IconTrademark,
   IconPlus,
@@ -42,7 +42,7 @@ const venuemanagement = {
       id: 'venue-setup',
       title: 'Venue Setup',
       type: 'collapse',
-      icon: icons.IconVenus, // updated icon
+      icon: icons.IconBuilding, // updated icon
       children: [
         {
           id: 'create-new',
@@ -60,13 +60,13 @@ const venuemanagement = {
           id: 'bulk-import',
           title: 'Bulk Import',
           type: 'item',
-          url: '/venue-setup/bulk-import'
+          url: '/page-not-found'
         },
         {
           id: 'bulk-export',
           title: 'Bulk Export',
           type: 'item',
-          url: '/venue-setup/bulk-export'
+          url: '/page-not-found'
         }
       ]
     },

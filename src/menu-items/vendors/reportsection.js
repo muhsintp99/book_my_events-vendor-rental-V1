@@ -19,7 +19,7 @@ const icons = {
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const Reportsection = {
-  id: 'provider-management',
+  id: 'report-management',
   title: 'REPORT SECTION',
   type: 'group',
   children: [
@@ -59,7 +59,7 @@ const Reportsection = {
       id: 'bulk-export',
       title: 'Bulk Export',
       type: 'item',
-      url: '/providers/export',
+      url: '/page-not-found',
       icon: icons.IconDownload,
       breadcrumbs: false
     }

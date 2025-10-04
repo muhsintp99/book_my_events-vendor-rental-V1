@@ -19,7 +19,7 @@ const icons = {
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const Driversection = {
-  id: 'provider-management',
+  id: 'driver-management',
   title: 'DRIVER SECTION',
   type: 'group',
   children: [

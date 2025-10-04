@@ -55,13 +55,13 @@ const vehiclemanagement = {
           id: 'bulk-import',
           title: 'Bulk Import',
           type: 'item',
-          url: '/vehicle-setup/bulk-import'
+          url: '/page-not-found'
         },
         {
           id: 'bulk-export',
           title: 'Bulk Export',
           type: 'item',
-          url: '/vehicle-setup/bulk-export'
+          url: '/page-not-found'
         }
       ]
     },

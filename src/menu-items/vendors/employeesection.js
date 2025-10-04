@@ -19,7 +19,7 @@ const icons = {
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const Employeesection = {
-  id: 'provider-management',
+  id: 'employee-management',
   title: 'EMPLOYEE SECTION',
   type: 'group',
   children: [

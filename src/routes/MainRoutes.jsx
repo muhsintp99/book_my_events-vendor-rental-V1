@@ -298,12 +298,14 @@ import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import ProtectedRoute from './ProtectedRoute';
 import Schedules from '../views/Schedules';
+import Register from '../views/pages/authentication/Register';
 
 // auth pages
 const Login = Loadable(lazy(() => import('views/pages/authentication/Login')));
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
+const PageNotFound = Loadable(lazy(()=> import('views/PageNotFound')));
 
 // trips
 const AllTrips = Loadable(lazy(() => import('views/Alltrips')));
@@ -375,6 +377,11 @@ const MainRoutes = {
       path: 'login',
       element: <Login />
     },
+    {
+      path: 'register',
+      element: <Register />
+    },
+    
 
     // ✅ Protected dashboard + all child routes
     {
@@ -392,6 +399,7 @@ const MainRoutes = {
             { path: 'default', element: <DashboardDefault /> }
           ]
         },
+        
         {
           path: 'trips',
           children: [
@@ -504,6 +512,10 @@ const MainRoutes = {
           element: <PaymentFailed />
         }
       ]
+    },
+    {
+      path: '/page-not-found',
+      element: <PageNotFound />
     },
     {
       path: 'venue-setup',

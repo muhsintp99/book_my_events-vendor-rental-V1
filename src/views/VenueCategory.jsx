@@ -24,7 +24,7 @@ const Category = () => {
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const moduleId = '68ce96fd8db0c860bfcd67d1';
+  const moduleId = localStorage.getItem('moduleId');
   const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
 
@@ -45,7 +45,7 @@ const Category = () => {
         }
 
         const response = await fetch(
-          `${API_BASE_URL}/api/categories/module/${moduleId}`,
+          `${API_BASE_URL}/api/categories/modules/${moduleId}`,
           { headers }
         );
 

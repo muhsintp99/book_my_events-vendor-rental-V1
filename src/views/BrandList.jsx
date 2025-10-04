@@ -25,7 +25,7 @@ const Brandlist = () => {
   const [brands, setBrands] = useState([]);
   const [filteredBrands, setFilteredBrands] = useState([]);
   const [error, setError] = useState(null);
-  const moduleId = '68ce96fd8db0c860bfcd67d1'; // From DOCUMENT
+  const moduleId = localStorage.getItem('moduleId');
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae'; // Fallback URL
 
   // Fetch brands from API
