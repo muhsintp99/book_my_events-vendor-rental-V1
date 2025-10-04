@@ -588,21 +588,26 @@ export default function Vehicles() {
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
 
   // Fetch vehicles data
-  const fetchVehicles = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/vehicles`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setVehicles(Array.isArray(response.data.data) ? response.data.data : []);
-      setError("");
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch vehicles");
-      console.error("Error fetching vehicles:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch vehicles data
+const fetchVehicles = async () => {
+  try {
+    setLoading(true);
+    const response = await axios.get(`${API_BASE_URL}/vehicles`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    // Corrected fix: Access the nested 'vehicles' array
+    const data = response.data.data?.vehicles || response.data.vehicles || response.data.data || response.data || [];
+    setVehicles(Array.isArray(data) ? data : []);
+    setError("");
+    console.log("Fetched vehicles array:", data); // This should now log the actual array of 2 vehicles
+    console.log("Vehicles length after set:", Array.isArray(data) ? data.length : 0);
+  } catch (error) {
+    setError(error.response?.data?.message || "Failed to fetch vehicles");
+    console.error("Error fetching vehicles:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Initial data load
   useEffect(() => {
