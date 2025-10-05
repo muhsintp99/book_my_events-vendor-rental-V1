@@ -570,6 +570,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  InputAdornment,
 } from "@mui/material";
 import { Visibility, Edit, Delete, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -584,6 +585,7 @@ export default function Vehicles() {
   const [toastSeverity, setToastSeverity] = useState("success");
   const [filters, setFilters] = useState({ brand: "", category: "", type: "", search: "" });
   const [pendingFilters, setPendingFilters] = useState({ brand: "", category: "", type: "", search: "" });
+  const [localSearch, setLocalSearch] = useState('');
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
 
@@ -616,14 +618,31 @@ const fetchVehicles = async () => {
 
   // Apply filters
   const handleApplyFilters = () => {
-    setFilters(pendingFilters);
-  };
+  setFilters({ 
+    ...filters, 
+    brand: pendingFilters.brand, 
+    category: pendingFilters.category, 
+    type: pendingFilters.type 
+  });
+};
 
   // Reset filters
   const handleReset = () => {
     setFilters({ brand: "", category: "", type: "", search: "" });
     setPendingFilters({ brand: "", category: "", type: "", search: "" });
+    setLocalSearch('');
   };
+
+  // Handle search click
+const handleSearch = () => {
+  setFilters(prev => ({ ...prev, search: localSearch }));
+};
+
+// Handle clear search
+const handleClear = () => {
+  setLocalSearch('');
+  setFilters(prev => ({ ...prev, search: '' }));
+};
 
   // Export CSV
   const handleExport = () => {
@@ -709,14 +728,13 @@ const fetchVehicles = async () => {
   };
 
   // Filtering logic
-  const filteredVehicles = vehicles.filter((v) => {
-    return (
-      (filters.brand ? v.brand?._id === filters.brand : true) &&
-      (filters.category ? v.category?._id === filters.category : true) &&
-      (filters.type ? v.type === filters.type : true) &&
-      (filters.search ? v.name?.toLowerCase().includes(filters.search.toLowerCase()) : true)
-    );
-  });
+ const filteredVehicles = vehicles.filter((v) => {
+  return (
+    (filters.brand ? v.brand?._id === filters.brand : true) &&
+    (filters.category ? v.category?._id === filters.category : true) &&
+    (filters.type ? v.type === filters.type : true) &&
+(filters.search ? (v.name || '').toLowerCase().includes(filters.search.toLowerCase()) : true)  );
+});
 
   // Get unique brands, categories, and types from vehicles
   const uniqueBrands = [
@@ -847,24 +865,42 @@ const fetchVehicles = async () => {
             Total Vehicles <Chip label={filteredVehicles.length} color="success" size="small" sx={{ ml: 1 }} />
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            <TextField
-              size="small"
-              placeholder="Search by vehicle name"
-              value={pendingFilters.search}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, search: e.target.value })}
-              InputProps={{ endAdornment: <Search fontSize="small" /> }}
-            />
-            <Button variant="outlined" onClick={handleExport}>
-              Export
-            </Button>
-            <Button
-              variant="contained"
-              sx={{ bgcolor: "#2563eb" }}
-              onClick={() => navigate("/vehicle-setup/leads")}
-            >
-              New Vehicle
-            </Button>
-          </Stack>
+  <TextField
+    size="small"
+    placeholder="Search by vehicle name"
+    value={localSearch}
+    onChange={(e) => setLocalSearch(e.target.value)}
+    InputProps={{
+      endAdornment: (
+        <InputAdornment position="end">
+          <IconButton 
+            onClick={handleSearch} 
+            size="small" 
+            disabled={!localSearch}
+            sx={{ color: localSearch ? 'inherit' : 'action' }}
+          >
+            <Search fontSize="small" />
+          </IconButton>
+          {localSearch && (
+            <IconButton onClick={handleClear} size="small">
+              <Clear fontSize="small" />
+            </IconButton>
+          )}
+        </InputAdornment>
+      ),
+    }}
+  />
+  <Button variant="outlined" onClick={handleExport}>
+    Export
+  </Button>
+  <Button
+    variant="contained"
+    sx={{ bgcolor: "#2563eb" }}
+    onClick={() => navigate("/vehicle-setup/leads")}
+  >
+    New Vehicle
+  </Button>
+</Stack>
         </Stack>
         <TableContainer>
           <Table>

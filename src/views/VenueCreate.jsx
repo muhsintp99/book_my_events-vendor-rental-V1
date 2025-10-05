@@ -90,7 +90,6 @@ const CreateAuditorium = () => {
     nearbyTransport: '',
     elderlyAccessibility: false,
     searchTags: '',
-    status: 'active',
   });
   const [files, setFiles] = useState({ thumbnail: null, auditoriumImage: null, floorPlan: null });
   const [existingImages, setExistingImages] = useState({
@@ -168,7 +167,6 @@ const CreateAuditorium = () => {
       nearbyTransport: '',
       elderlyAccessibility: false,
       searchTags: '',
-      status: 'active',
     });
     setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null });
     setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '' });
@@ -184,7 +182,7 @@ const CreateAuditorium = () => {
     if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
     if (formData.rentalType === 'hourly' && !formData.hourlyPrice) errors.push('Hourly price is required');
     if (formData.rentalType === 'daily' && !formData.dailyPrice) errors.push('Daily price is required');
-    if (formData.rentalType === 'distance' && !formData.distancePrice) errors.push('Distance price is required');
+    if (formData.rentalType === 'distanceWise' && !formData.distancePrice) errors.push('Distance price is required');
     return errors;
   };
 
@@ -222,8 +220,10 @@ const CreateAuditorium = () => {
         dressingRooms: result.data.dressingRooms || '',
         rentalType: result.data.rentalType || 'hourly',
         hourlyPrice: result.data.hourlyPrice || '',
-        dailyPrice: result.data.dailyPrice || '',
-        distancePrice: result.data.distancePrice || '',
+        // dailyPrice: result.data.dailyPrice || '',
+        // distancePrice: result.data.distancePrice || '',
+        dailyPrice: result.data.perDayPrice || '',  // Map perDayPrice to dailyPrice
+  distancePrice: result.data.distanceWisePrice || '',
         discount: result.data.discount || '',
         advanceDeposit: result.data.advanceDeposit || '',
         cancellationPolicy: result.data.cancellationPolicy || '',
@@ -237,7 +237,6 @@ const CreateAuditorium = () => {
         searchTags: Array.isArray(result.data.searchTags)
           ? result.data.searchTags.join(', ')
           : result.data.searchTags || '',
-        status: result.data.status || 'active',
       });
       setExistingImages({
         thumbnail: result.data.thumbnail || '',
@@ -306,10 +305,14 @@ const CreateAuditorium = () => {
       shortDescription: formData.description || '',
       holidaySchedule: formData.holidayScheduling || '',
       accessibilityInfo: formData.elderlyAccessibility,
+      perDayPrice: formData.dailyPrice,  // Map dailyPrice to perDayPrice
+  distanceWisePrice: formData.distancePrice,
     };
     delete payload.description;
     delete payload.holidayScheduling;
     delete payload.elderlyAccessibility;
+    delete payload.dailyPrice;  // Remove unmapped fields
+delete payload.distancePrice;
 
     Object.entries(payload).forEach(([key, value]) => {
       if (key === 'searchTags' && value) {
@@ -343,9 +346,9 @@ const CreateAuditorium = () => {
           severity: 'success',
         });
         handleReset();
-        if (viewMode === 'create') {
+        
           navigate('/venue-setup/lists');
-        }
+      
       } else {
         throw new Error(result.message || `Failed to ${viewMode === 'edit' ? 'update' : 'create'} venue`);
       }
@@ -491,21 +494,7 @@ const CreateAuditorium = () => {
                     rows={2}
                   />
                 </Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      name="status"
-                      checked={formData.status === 'active'}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          status: e.target.checked ? 'active' : 'inactive',
-                        }))
-                      }
-                    />
-                  }
-                  label="Venue Status (Active/Inactive)"
-                />
+                
               </CardContent>
             </Card>
           </Box>
@@ -882,7 +871,7 @@ const CreateAuditorium = () => {
                   ) : (
                     <Box>
                       <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                      <Typography variant="body2" color="primary" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload Floor Plan (PDF/Image)</Typography>
+                      <Typography variant="body2" color="primary" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload Floor Plan (Image/jpg)</Typography>
                       <Typography variant="body2" color="text.secondary">Or drag and drop</Typography>
                     </Box>
                   )}
