@@ -571,6 +571,8 @@ import {
   Alert,
   Snackbar,
   InputAdornment,
+  Dialog,
+  DialogTitle,DialogContent,DialogActions
 } from "@mui/material";
 import { Visibility, Edit, Delete, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -586,6 +588,8 @@ export default function Vehicles() {
   const [filters, setFilters] = useState({ brand: "", category: "", type: "", search: "" });
   const [pendingFilters, setPendingFilters] = useState({ brand: "", category: "", type: "", search: "" });
   const [localSearch, setLocalSearch] = useState('');
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+const [vehicleToDelete, setVehicleToDelete] = useState(null);
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
 
@@ -598,7 +602,9 @@ const fetchVehicles = async () => {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     // Corrected fix: Access the nested 'vehicles' array
-    const data = response.data.data?.vehicles || response.data.vehicles || response.data.data || response.data || [];
+const data = Array.isArray(response.data.data)
+  ? response.data.data
+  : response.data.data?.vehicles || response.data.vehicles || response.data.data || response.data || [];
     setVehicles(Array.isArray(data) ? data : []);
     setError("");
     console.log("Fetched vehicles array:", data); // This should now log the actual array of 2 vehicles
@@ -642,6 +648,10 @@ const handleSearch = () => {
 const handleClear = () => {
   setLocalSearch('');
   setFilters(prev => ({ ...prev, search: '' }));
+};
+const confirmDelete = (vehicleId) => {
+  setVehicleToDelete(vehicleId);
+  setOpenDeleteDialog(true);
 };
 
   // Export CSV
@@ -694,21 +704,26 @@ const handleClear = () => {
   };
 
   // Handle vehicle deletion
-  const handleDelete = async (vehicleId) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/vehicles/${vehicleId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setVehicles((prev) => prev.filter((v) => v._id !== vehicleId));
-      setToastMessage("Vehicle deleted successfully");
-      setToastSeverity("success");
-      setOpenToast(true);
-    } catch (error) {
-      setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
-      setToastSeverity("error");
-      setOpenToast(true);
-    }
-  };
+  const handleDelete = async () => {
+  if (!vehicleToDelete) return;
+  try {
+    await axios.delete(`${API_BASE_URL}/vehicles/${vehicleToDelete}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    setVehicles((prev) => prev.filter((v) => v._id !== vehicleToDelete));
+    setToastMessage("Vehicle deleted successfully");
+    setToastSeverity("success");
+    setOpenToast(true);
+  } catch (error) {
+    setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
+    setToastSeverity("error");
+    setOpenToast(true);
+  } finally {
+    setOpenDeleteDialog(false);
+    setVehicleToDelete(null);
+  }
+};
+
 
   // Handle edit vehicle
   const handleEdit = async (vehicleId) => {
@@ -995,8 +1010,7 @@ const handleClear = () => {
                       <IconButton
                         size="small"
                         sx={{ border: "1px solid #d1d5db", color: "#dc2626", borderRadius: "8px" }}
-                        onClick={() => handleDelete(v._id)}
-                      >
+onClick={() => confirmDelete(v._id)}                      >
                         <Delete fontSize="small" />
                       </IconButton>
                     </Stack>
@@ -1017,6 +1031,29 @@ const handleClear = () => {
         </TableContainer>
       </Paper>
       {/* Toast Message */}
+      {/* Confirm Delete Dialog */}
+<Dialog
+  open={openDeleteDialog}
+  onClose={() => setOpenDeleteDialog(false)}
+>
+  <DialogTitle>Confirm Deletion</DialogTitle>
+  <DialogContent>
+    <Typography>
+      Are you sure you want to delete this vehicle? This action cannot be undone.
+    </Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+    <Button
+      onClick={handleDelete}
+      variant="contained"
+      color="error"
+    >
+      Delete
+    </Button>
+  </DialogActions>
+</Dialog>
+
       <Snackbar
         open={openToast}
         autoHideDuration={3000}

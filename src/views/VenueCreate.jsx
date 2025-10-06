@@ -78,7 +78,6 @@ const CreateAuditorium = () => {
     rentalType: 'hourly',
     hourlyPrice: '',
     dailyPrice: '',
-    distancePrice: '',
     discount: '',
     advanceDeposit: '',
     cancellationPolicy: '',
@@ -155,7 +154,6 @@ const CreateAuditorium = () => {
       rentalType: 'hourly',
       hourlyPrice: '',
       dailyPrice: '',
-      distancePrice: '',
       discount: '',
       advanceDeposit: '',
       cancellationPolicy: '',
@@ -182,7 +180,6 @@ const CreateAuditorium = () => {
     if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
     if (formData.rentalType === 'hourly' && !formData.hourlyPrice) errors.push('Hourly price is required');
     if (formData.rentalType === 'daily' && !formData.dailyPrice) errors.push('Daily price is required');
-    if (formData.rentalType === 'distanceWise' && !formData.distancePrice) errors.push('Distance price is required');
     return errors;
   };
 
@@ -223,7 +220,6 @@ const CreateAuditorium = () => {
         // dailyPrice: result.data.dailyPrice || '',
         // distancePrice: result.data.distancePrice || '',
         dailyPrice: result.data.perDayPrice || '',  // Map perDayPrice to dailyPrice
-  distancePrice: result.data.distanceWisePrice || '',
         discount: result.data.discount || '',
         advanceDeposit: result.data.advanceDeposit || '',
         cancellationPolicy: result.data.cancellationPolicy || '',
@@ -306,13 +302,11 @@ const CreateAuditorium = () => {
       holidaySchedule: formData.holidayScheduling || '',
       accessibilityInfo: formData.elderlyAccessibility,
       perDayPrice: formData.dailyPrice,  // Map dailyPrice to perDayPrice
-  distanceWisePrice: formData.distancePrice,
     };
     delete payload.description;
     delete payload.holidayScheduling;
     delete payload.elderlyAccessibility;
     delete payload.dailyPrice;  // Remove unmapped fields
-delete payload.distancePrice;
 
     Object.entries(payload).forEach(([key, value]) => {
       if (key === 'searchTags' && value) {
@@ -346,8 +340,9 @@ delete payload.distancePrice;
           severity: 'success',
         });
         handleReset();
-        
+          if (viewMode === 'edit') {
           navigate('/venue-setup/lists');
+          }
       
       } else {
         throw new Error(result.message || `Failed to ${viewMode === 'edit' ? 'update' : 'create'} venue`);
@@ -690,19 +685,9 @@ delete payload.distancePrice;
                       />
                       <Typography variant="body2" color="text.secondary">Set your daily rental price.</Typography>
                     </Card>
-                    <Card
-                      variant="outlined"
-                      sx={{ p: 2, cursor: 'pointer', borderColor: formData.rentalType === 'distanceWise' ? theme.palette.primary.main : undefined, borderWidth: formData.rentalType === 'distanceWise' ? 2 : 1 }}
-                      onClick={() => setFormData((prev) => ({ ...prev, rentalType: 'distanceWise' }))}
-                    >
-                      <FormControlLabel
-                        control={<Radio name="rentalType" checked={formData.rentalType === 'distanceWise'} onChange={() => setFormData((prev) => ({ ...prev, rentalType: 'distanceWise' }))} />}
-                        label="Distance"
-                        labelPlacement="start"
-                        sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
-                      />
-                      <Typography variant="body2" color="text.secondary">Set your distance-based rental price.</Typography>
-                    </Card>
+                    
+                      
+                     
                   </Box>
                 </Box>
                 {formData.rentalType === 'hourly' && (
@@ -735,21 +720,7 @@ delete payload.distancePrice;
                     />
                   </Box>
                 )}
-                {formData.rentalType === 'distanceWise' && (
-                  <Box sx={{ mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      label="Distance Price ($/per km)*"
-                      name="distancePrice"
-                      value={formData.distancePrice}
-                      onChange={handleInputChange}
-                      placeholder="Ex: 1.50"
-                      type="number"
-                      inputProps={{ step: '0.01' }}
-                      required
-                    />
-                  </Box>
-                )}
+                
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle1" gutterBottom>Give Discount</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

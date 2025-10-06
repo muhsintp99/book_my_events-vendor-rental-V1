@@ -414,7 +414,7 @@ const MainRoutes = {
           ]
         },
         {
-          path: '-svehicleetup',
+          path: 'vehicle-setup',
           children: [
             { path: 'leads', element: <CreateNew /> },
             { path: 'listview/:vehicleId', element: <ListView/> },
