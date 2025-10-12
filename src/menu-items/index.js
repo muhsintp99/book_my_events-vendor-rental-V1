@@ -103,6 +103,7 @@ import Reportsection from './vendors/reportsection';
 
 // Other specific modules
 import photographymanagement from './photography/photomanagement';
+import picmanagement from './photography/picmanagement'; 
 import eventmanagement from './Event/eventmanagement';
 import mehandimanagement from './mehandi/mehandimanagement';
 import cateringmanagement from './catering/cateringmanagement';
@@ -127,7 +128,7 @@ if (logRes === 'rental') {
 } else if (logRes === 'mehandi') {
   specificSections = [mehandimanagement];
 } else if (logRes === 'photography') {
-  specificSections = [photographymanagement];
+  specificSections = [photographymanagement, picmanagement];
 } else if (logRes === 'catering') {
   specificSections = [cateringmanagement];
 } else if (logRes === 'makeup') {

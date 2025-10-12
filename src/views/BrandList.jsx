@@ -155,20 +155,22 @@ const Brandlist = () => {
           <TableHead>
             <TableRow>
               <TableCell>Sr</TableCell>
+              <TableCell>Brand Name</TableCell>
+
               <TableCell>Brand Id</TableCell>
               <TableCell>Brand Image</TableCell>
-              <TableCell>Brand Name</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredBrands.map((brand, index) => (
               <TableRow key={brand.id}>
                 <TableCell>{index + 1}</TableCell>
+                                <TableCell>{brand.name}</TableCell>
+
                 <TableCell>{brand.id}</TableCell>
                 <TableCell>
                   <img src={brand.image} alt={brand.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
                 </TableCell>
-                <TableCell>{brand.name}</TableCell>
               </TableRow>
             ))}
           </TableBody>

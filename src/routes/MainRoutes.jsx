@@ -419,7 +419,7 @@ const MainRoutes = {
             { path: 'leads', element: <CreateNew /> },
             { path: 'listview/:vehicleId', element: <ListView/> },
             { path: 'lists', element: <List /> },
-            { path: 'leads/:id', element: <CreateNew /> },
+            { path: 'leads/:vehicleId', element: <CreateNew /> },
             { path: 'listview', element: <ListView /> }
           ]
         },

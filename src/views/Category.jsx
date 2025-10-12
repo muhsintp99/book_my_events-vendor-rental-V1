@@ -149,20 +149,20 @@ const Category = () => {
           <TableHead>
             <TableRow>
               <TableCell>SI</TableCell>
+              <TableCell>Category Name</TableCell>
               <TableCell>Category Id</TableCell>
               <TableCell>Category Image</TableCell>
-              <TableCell>Category Name</TableCell>
-            </TableRow>
+              </TableRow>
           </TableHead>
           <TableBody>
             {filteredCategories.map((category, index) => (
               <TableRow key={category.id}>
                 <TableCell>{index + 1}</TableCell>
+                <TableCell>{category.name}</TableCell>
                 <TableCell>{category.id}</TableCell>
                 <TableCell>
-                  <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
                 </TableCell>
-                <TableCell>{category.name}</TableCell>
               </TableRow>
             ))}
           </TableBody>

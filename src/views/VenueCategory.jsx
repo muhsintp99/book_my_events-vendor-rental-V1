@@ -37,7 +37,7 @@ const Category = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const token = getAuthToken(); 
+        const token = getAuthToken();
         const headers = { Accept: 'application/json' };
 
         if (token) {
@@ -60,11 +60,12 @@ const Category = () => {
 
         const data = await response.json();
 
-        if (Array.isArray(data) && data.length > 0) {
-          const formattedCategories = data.map((category) => ({
+        // Check if response has success and data properties
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const formattedCategories = data.data.map((category) => ({
             id: category.categoryId || category._id,
             name: category.title || category.name,
-            image: category.image ? `${API_BASE_URL}/${category.image}` : '',
+            image: category.image ? `${API_BASE_URL}${category.image}` : '',
           }));
           setCategories(formattedCategories);
           setFilteredCategories(formattedCategories);
@@ -77,12 +78,12 @@ const Category = () => {
       }
     };
     fetchCategories();
-  }, []);
+  }, [moduleId, API_BASE_URL]);
 
-  // ✅ Search functionality (show all if empty)
+  // Search functionality
   const handleSearch = () => {
     if (!searchTerm.trim()) {
-      setFilteredCategories(categories); // restore full list
+      setFilteredCategories(categories);
       return;
     }
     const filtered = categories.filter((category) =>
