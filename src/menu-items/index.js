@@ -119,9 +119,9 @@ const commonSections = [Marketingsection, Reportsection];
 let specificSections = [];
 
 // handle conditions
-if (logRes === 'rental') {
+if (logRes === 'transport') {
   specificSections = [Tripmanagement, vehiclemanagement, Employeesection, Businesssection];
-} else if (logRes === 'auditorium') {
+} else if (logRes === 'venues') {
   specificSections = [bookingmanagement, venuemanagement, Businessection];
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
