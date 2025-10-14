@@ -2642,6 +2642,9 @@ const CreateAuditorium = () => {
     wheelchairAccessibility: false,
     securityArrangements: false,
     wifiAvailability: false,
+    acAvailable: false,
+  nonAcAvailable: false,
+  acType: 'Not Specified',
     washroomsInfo: '',
     dressingRooms: '',
     venueType: '',
@@ -2729,6 +2732,9 @@ useEffect(() => {
       wheelchairAccessibility: false,
       securityArrangements: false,
       wifiAvailability: false,
+      acAvailable: false,
+      nonAcAvailable: false,
+      acType: 'Not Specified',
       washroomsInfo: '',
       dressingRooms: '',
       venueType: '',
@@ -2750,22 +2756,29 @@ useEffect(() => {
     // setToast({ open: false, message: '', severity: 'success' });
     setViewMode('create');
   };
-  const validateForm = () => {
-    const errors = [];
-    if (!formData.venueName.trim()) errors.push('Venue name is required');
-    if (!formData.venueAddress.trim()) errors.push('Venue address is required');
-    if (!formData.categoryId) errors.push('Category is required');
-    if (!formData.seatingArrangement) errors.push('Seating arrangement is required');
-    if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
-    if (!formData.venueType) errors.push('Venue type is required');
-    const hasPricing = Object.values(timeSlots).some(day =>
-      (day.morning.enabled && day.morning.price) || (day.evening.enabled && day.evening.price)
-    );
-    if (!hasPricing) {
-      errors.push('At least one time slot with price is required');
-    }
-    return errors;
-  };
+ const validateForm = () => {
+  const errors = [];
+  if (!formData.venueName.trim()) errors.push('Venue name is required');
+  if (!formData.venueAddress.trim()) errors.push('Venue address is required');
+  if (!formData.categoryId) errors.push('Category is required');
+  if (!formData.seatingArrangement) errors.push('Seating arrangement is required');
+  if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
+  if (!formData.venueType) errors.push('Venue type is required');
+  if (viewMode === 'create') {
+    if (!files.thumbnail) errors.push('Thumbnail image is required');
+    if (!files.auditoriumImage) errors.push('Auditorium image is required');
+  } else {
+    if (!files.thumbnail && !existingImages.thumbnail) errors.push('Thumbnail image is required');
+    if (!files.auditoriumImage && !existingImages.auditoriumImage) errors.push('Auditorium image is required');
+  }
+  const hasPricing = Object.values(timeSlots).some(day =>
+    (day.morning.enabled && day.morning.price.trim()) || (day.evening.enabled && day.evening.price.trim())
+  );
+  if (!hasPricing) {
+    errors.push('At least one time slot with price is required');
+  }
+  return errors;
+};
 
 const fetchCategories = async () => {
   try {
@@ -2799,7 +2812,7 @@ const fetchCategories = async () => {
     if (result.success && Array.isArray(result.data)) {
       const formattedCategories = result.data.map((category) => ({
         id: category.categoryId || category._id || '',
-        name: category.title || category.name || 'Unnamed Category',
+        name: category?.title || category.name || 'Unnamed Category',
       }));
       setCategories(formattedCategories);
     } else {
@@ -2835,11 +2848,14 @@ const fetchCategories = async () => {
       if (!result.success) {
         throw new Error(result.message || 'Failed to fetch venue');
       }
+      // console.log(result.data.categories[0].title);
+      
       setFormData({
         venueName: result.data.venueName || '',
         description: result.data.shortDescription || '',
         venueAddress: result.data.venueAddress || '',
-        categoryId: result.data.categoryId || '',
+      categoryId: result?.data?.categories?.[0]?.categoryId || '',
+
         latitude: result.data.latitude || '',
         longitude: result.data.longitude || '',
         openingHours: result.data.openingHours || '',
@@ -2852,6 +2868,9 @@ const fetchCategories = async () => {
         wheelchairAccessibility: !!result.data.wheelchairAccessibility,
         securityArrangements: !!result.data.securityArrangements,
         wifiAvailability: !!result.data.wifiAvailability,
+        acAvailable: !!result.data.acAvailable,
+        nonAcAvailable: !!result.data.nonAcAvailable,
+        acType: result.data.acType || 'Not Specified',
         washroomsInfo: result.data.washroomsInfo || '',
         dressingRooms: result.data.dressingRooms || '',
         venueType: result.data.venueType || '',
@@ -2869,6 +2888,8 @@ const fetchCategories = async () => {
          ? result.data.searchTags.join(', ')
          : result.data.searchTags || '',
       });
+      console.log("hello" ,formData?.categoryId);
+      
       setTimeSlots(transformToTimeSlots(result.data.pricingSchedule) || defaultTimeSlots);
       setExistingImages({
         thumbnail: result.data.thumbnail || '',
@@ -2896,7 +2917,32 @@ const fetchCategories = async () => {
   const pricingData = new FormData();
   pricingData.append('venueId', venueId);
   pricingData.append('venueType', venueType);
-  pricingData.append('pricingSchedule', JSON.stringify(pricingSchedule));
+// 🧩 Convert pricingSchedule to include perDay, perHour, perPerson
+const formattedPricing = {};
+Object.entries(pricingSchedule).forEach(([day, slots]) => {
+  formattedPricing[day] = {};
+
+  Object.entries(slots).forEach(([slotType, slot]) => {
+    if (slot) {
+      formattedPricing[day][slotType] = {
+        startTime: slot.startTime || "",
+        startAmpm: slot.startAmpm || "AM",
+        endTime: slot.endTime || "",
+        endAmpm: slot.endAmpm || "PM",
+        perDay:
+          formData.priceType === "perDay" ? Number(slot.price || 0) : 0,
+        perHour:
+          formData.priceType === "perHour" ? Number(slot.price || 0) : 0,
+        perPerson:
+          formData.priceType === "perPerson" ? Number(slot.price || 0) : 0,
+      };
+    } else {
+      formattedPricing[day][slotType] = null;
+    }
+  });
+});
+
+data.append("pricingSchedule", JSON.stringify(formattedPricing));
 
   const response = await fetch(`${API_BASE_URL}/venues/${venueId}/pricing`, {
     method: 'PUT',
@@ -2944,9 +2990,12 @@ const fetchCategories = async () => {
       'wheelchairAccessibility',
       'securityArrangements',
       'wifiAvailability',
+      'acAvailable',
+      'nonAcAvailable',
       'multipleHalls',
       'elderlyAccessibility',
     ];
+    
     const payload = {
       ...formData,
       shortDescription: formData.description || '',
@@ -2991,6 +3040,7 @@ const fetchCategories = async () => {
         if (files.thumbnail) data.append('thumbnail', files.thumbnail);
         if (files.auditoriumImage) data.append('images', files.auditoriumImage);
         if (files.floorPlan) data.append('images', files.floorPlan);
+        data.append('venueType', formData.venueType || '');
         data.append('pricingSchedule', JSON.stringify(pricingSchedule));
         const url = `${API_BASE_URL}/venues/${id}`;
         const response = await fetch(url, {
@@ -3298,6 +3348,28 @@ const fetchCategories = async () => {
                       control={<Switch name="stageLightingAudio" checked={formData.stageLightingAudio} onChange={handleInputChange} />}
                       label="Stage / Lighting / Audio System"
                     />
+                       <FormControlLabel
+    control={<Switch name="acAvailable" checked={formData.acAvailable} onChange={handleInputChange} />}
+    label="AC Available"
+  />
+  {formData.acAvailable && (
+    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+      <InputLabel id="ac-type-label">AC Type</InputLabel>
+      <Select
+        labelId="ac-type-label"
+        name="acType"
+        value={formData.acType}
+        label="AC Type"
+        onChange={handleInputChange}
+      >
+        <MenuItem value="Not Specified">Not Specified</MenuItem>
+        <MenuItem value="Central AC">Central AC</MenuItem>
+        <MenuItem value="Split AC">Split AC</MenuItem>
+        <MenuItem value="Window AC">Window AC</MenuItem>
+        <MenuItem value="Coolers">Coolers</MenuItem>
+      </Select>
+    </FormControl>
+  )}
                     <TextField
                       fullWidth
                       label="Parking Capacity"
@@ -3329,6 +3401,12 @@ const fetchCategories = async () => {
                       control={<Switch name="wifiAvailability" checked={formData.wifiAvailability} onChange={handleInputChange} />}
                       label="Wi-Fi Availability"
                     />
+                 
+  <FormControlLabel
+    control={<Switch name="nonAcAvailable" checked={formData.nonAcAvailable} onChange={handleInputChange} />}
+    label="Non AC Available"
+  />
+  
                     <TextField
                       fullWidth
                       label="Washrooms/Restrooms Info"
