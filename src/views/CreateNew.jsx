@@ -2315,25 +2315,20 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
 const Createnew = ({ vehicleId }) => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
-  const location = useLocation(); // Access navigation state
-  const navigate = useNavigate(); // For navigation after update
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Memo for vehicle key from state
   const vehicleKeyFromState = useMemo(() => location.state?.vehicle?._id, [location.state]);
 
-  // Effective vehicle ID from prop or state
   const effectiveVehicleId = useMemo(() => {
     return vehicleId || location.state?.vehicle?._id || '';
   }, [vehicleId, vehicleKeyFromState]);
 
-  // Initial view mode based on effective ID
   const initialViewMode = useMemo(() => {
     return effectiveVehicleId ? 'edit' : 'create';
   }, [effectiveVehicleId]);
 
   const [viewMode, setViewMode] = useState(initialViewMode);
-
-  // State for form fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -2363,35 +2358,29 @@ const Createnew = ({ vehicleId }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
   const [brands, setBrands] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]); // Initialize as empty array
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [existingThumbnail, setExistingThumbnail] = useState('');
   const [existingImages, setExistingImages] = useState([]);
   const [existingDocs, setExistingDocs] = useState([]);
 
-  // API base URL
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
-  // Module ID for rental
   const moduleId = localStorage.getItem('moduleId');
 
-  // Function to set vehicle data, enhancing brands/categories if necessary
   const setVehicleData = useCallback((vehicle) => {
-    // Enhance brands only if needed (avoid unnecessary setState)
     if (vehicle.brand && vehicle.brand._id && !brands.some((b) => b._id === vehicle.brand._id)) {
       setBrands((prev) => [...prev, {
         _id: vehicle.brand._id,
         title: vehicle.brand.title || vehicle.brand.name || 'Unknown Brand',
       }]);
     }
-    // Enhance categories only if needed (avoid unnecessary setState)
     if (vehicle.category && vehicle.category._id && !categories.some((c) => c._id === vehicle.category._id)) {
       setCategories((prev) => [...prev, {
         _id: vehicle.category._id,
         title: vehicle.category.title || vehicle.category.name || 'Unknown Category',
       }]);
     }
-    // Set other states
     setName(vehicle.name || '');
     setDescription(vehicle.description || '');
     setBrand(vehicle.brand?._id || '');
@@ -2416,7 +2405,6 @@ const Createnew = ({ vehicleId }) => {
     setDiscount(vehicle.discount?.toString() || '');
   }, [brands, categories]);
 
-  // Fetch brands and categories
   useEffect(() => {
     const fetchBrandsAndCategories = async () => {
       try {
@@ -2424,35 +2412,34 @@ const Createnew = ({ vehicleId }) => {
           axios.get(`${API_BASE_URL}/brands/module/${moduleId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }),
-          axios.get(`${API_BASE_URL}/categories/modules/${moduleId}`, {
+          axios.get(`${API_BASE_URL}/vehicle-categories`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }),
         ]);
-        // Fix: Use .data directly (array), not .data.data
-        setBrands(brandsResponse.data || []);
-        setCategories(categoriesResponse.data || []);
-        console.log('Brands fetched:', brandsResponse.data);
-        console.log('Categories fetched:', categoriesResponse.data);
+        const brandsData = Array.isArray(brandsResponse.data) ? brandsResponse.data : [];
+        const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+        setBrands(brandsData);
+        setCategories(categoriesData);
+        console.log('Brands fetched:', brandsData);
+        console.log('Categories fetched:', categoriesData);
         setIsDataLoaded(true);
       } catch (error) {
+        console.error('Error fetching brands/categories:', error.response?.data || error);
         setBrands([]);
-        setCategories([]);
+        setCategories([]); // Ensure categories is an array on error
         setIsDataLoaded(true);
         setToastMessage(error.response?.data?.message || 'Failed to fetch brands or categories');
         setToastSeverity('error');
         setOpenToast(true);
-        console.error('Error fetching brands/categories:', error.response?.data || error);
       }
     };
     fetchBrandsAndCategories();
   }, []);
 
-  // Handle vehicle data from navigation state or fetch if effectiveVehicleId is provided
   useEffect(() => {
     if (!isDataLoaded) return;
     const vehicleData = location.state?.vehicle;
     if (vehicleData) {
-      // console.log('Vehicle data from navigation state:', vehicleData); // Removed to stop spam; add back with useRef if needed for one-time debug
       setVehicleData(vehicleData);
       setExistingThumbnail(vehicleData.thumbnail || '');
       setExistingImages(vehicleData.images || []);
@@ -2466,7 +2453,7 @@ const Createnew = ({ vehicleId }) => {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           });
           const vehicle = response.data.data || response.data;
-          console.log('Vehicle data fetched for edit:', vehicle); // Debug log
+          console.log('Vehicle data fetched for edit:', vehicle);
           setVehicleData(vehicle);
           setExistingThumbnail(vehicle.thumbnail || '');
           setExistingImages(vehicle.images || []);
@@ -2483,10 +2470,8 @@ const Createnew = ({ vehicleId }) => {
       };
       fetchVehicle();
     }
-    // Removed setVehicleData from deps to avoid function-reference sensitivity (it's stable via useCallback)
-  }, [isDataLoaded, effectiveVehicleId, vehicleKeyFromState]);
+  }, [isDataLoaded, effectiveVehicleId, vehicleKeyFromState, setVehicleData]);
 
-  // Handlers for file uploads
   const handleThumbnailFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -2529,7 +2514,6 @@ const Createnew = ({ vehicleId }) => {
       setVehicleDoc(files);
     }
   };
-  // Handle search tags
   const handleTagInputChange = (event) => {
     setCurrentTag(event.target.value);
   };
@@ -2543,7 +2527,6 @@ const Createnew = ({ vehicleId }) => {
   const handleRemoveTag = (tagToRemove) => {
     setSearchTags(searchTags.filter((tag) => tag !== tagToRemove));
   };
-  // Validate license plate number
   const validateLicensePlate = (value) => {
     const regex = /^[A-Z0-9]{6,8}$/;
     if (!regex.test(value)) {
@@ -2553,7 +2536,6 @@ const Createnew = ({ vehicleId }) => {
     setLicensePlateError('');
     return true;
   };
-  // Reset form
   const handleReset = () => {
     setName('');
     setDescription('');
@@ -2585,13 +2567,10 @@ const Createnew = ({ vehicleId }) => {
     setExistingDocs([]);
     setViewMode('create');
   };
-  // Submit handler
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isEdit = viewMode === 'edit';
-    console.log('Debug - effectiveVehicleId:', effectiveVehicleId, 'viewMode:', viewMode, 'URL:', window.location.pathname);
     setLoading(true);
-    // Validation
     if (
       !name ||
       !brand ||
@@ -2652,7 +2631,6 @@ const Createnew = ({ vehicleId }) => {
       setLoading(false);
       return;
     }
-    // Prepare FormData
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', description);
@@ -2668,14 +2646,13 @@ const Createnew = ({ vehicleId }) => {
     formData.append('transmissionType', transmissionType.toLowerCase());
     formData.append('vinNumber', vinNumber);
     formData.append('licensePlateNumber', licensePlateNumber);
-    formData.append('totalTrips', 0); // Initialize totalTrips
+    formData.append('totalTrips', 0);
     const pricing = {
       type: tripType,
       hourly: tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0,
       perDay: tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0,
       distance: tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0,
     };
-    // Append pricing as nested fields instead of JSON string
     formData.append('pricing[type]', pricing.type);
     formData.append('pricing[hourly]', pricing.hourly);
     formData.append('pricing[perDay]', pricing.perDay);
@@ -2684,7 +2661,6 @@ const Createnew = ({ vehicleId }) => {
       formData.append('discount', parseFloat(discount));
     }
     searchTags.forEach((tag) => formData.append('searchTags[]', tag));
-    // Append files
     if (thumbnailFile) {
       formData.append('thumbnail', thumbnailFile);
     }
@@ -2694,7 +2670,6 @@ const Createnew = ({ vehicleId }) => {
     vehicleDoc.forEach((file) => {
       formData.append('documents', file);
     });
-    // Debug FormData
     const formDataEntries = {};
     for (let [key, value] of formData.entries()) {
       formDataEntries[key] = value instanceof File ? value.name : value;
@@ -2704,7 +2679,6 @@ const Createnew = ({ vehicleId }) => {
       let response;
       let newOrUpdatedVehicle;
       if (isEdit) {
-        // Update vehicle
         if (!effectiveVehicleId) {
           throw new Error('Invalid vehicle ID for update');
         }
@@ -2716,7 +2690,6 @@ const Createnew = ({ vehicleId }) => {
         });
         newOrUpdatedVehicle = response.data.data || response.data;
       } else {
-        // Create vehicle
         response = await axios.post(`${API_BASE_URL}/vehicles`, formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -2725,13 +2698,12 @@ const Createnew = ({ vehicleId }) => {
         });
         newOrUpdatedVehicle = response.data.data || response.data;
       }
-      console.log('API Response:', response.data); // Debug response
+      console.log('API Response:', response.data);
       setToastMessage(isEdit ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
       setToastSeverity('success');
       setOpenToast(true);
       handleReset();
       if (isEdit) {
-        // Pass the new/updated vehicle via navigation state for immediate list update
         navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
       }
     } catch (error) {
@@ -2770,7 +2742,6 @@ const Createnew = ({ vehicleId }) => {
           overflowX: 'hidden',
         }}
       >
-        {/* Header Section */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {isEdit && (
@@ -2793,7 +2764,6 @@ const Createnew = ({ vehicleId }) => {
           Insert the basic information of the vehicle
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
-          {/* General Information & Vehicle Thumbnail */}
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
             <Card sx={{ flex: isSmallScreen ? 'auto' : 2, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -2882,7 +2852,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Images Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -2948,7 +2917,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Vehicle Information Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3054,55 +3022,56 @@ const Createnew = ({ vehicleId }) => {
                     </FormControl>
                   </Stack>
                   <Stack spacing={2}>
-                    <FormControl fullWidth variant="outlined" required>
-                      <InputLabel id="category-label">Category*</InputLabel>
-                      <Select
-                        labelId="category-label"
-                        id="category-select"
-                        value={category}
-                        label="Category"
-                        onChange={(e) => setCategory(e.target.value)}
-                      >
-                        <MenuItem value="">Select vehicle category</MenuItem>
-                        {categories.map((c) => (
-                          <MenuItem key={c._id} value={c._id}>
-                            {c.title}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <TextField
-                      fullWidth
-                      label="Engine Power (hp)*"
-                      variant="outlined"
-                      value={enginePower}
-                      onChange={(e) => setEnginePower(e.target.value)}
-                      placeholder="Ex: 150"
-                      type="number"
-                      required
-                    />
-                    <FormControl fullWidth variant="outlined" required>
-                      <InputLabel id="fuel-type-label">Fuel type*</InputLabel>
-                      <Select
-                        labelId="fuel-type-label"
-                        id="fuel-type-select"
-                        value={fuelType}
-                        label="Fuel type"
-                        onChange={(e) => setFuelType(e.target.value)}
-                      >
-                        <MenuItem value="">Select fuel type</MenuItem>
-                        <MenuItem value="petrol">Petrol</MenuItem>
-                        <MenuItem value="diesel">Diesel</MenuItem>
-                        <MenuItem value="electric">Electric</MenuItem>
-                        <MenuItem value="hybrid">Hybrid</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Stack>
+  <FormControl fullWidth variant="outlined" required>
+    <InputLabel id="category-label">Category*</InputLabel>
+    <Select
+      labelId="category-label"
+      id="category-select"
+      value={category}
+      label="Category"
+      onChange={(e) => setCategory(e.target.value)}
+    >
+      <MenuItem value="">Select vehicle category</MenuItem>
+      {Array.isArray(categories) && categories.length > 0 ? (
+        categories.map((c) => (
+          <MenuItem key={c._id} value={c._id}>
+            {c.title}
+          </MenuItem>
+        ))
+      ) : null}
+    </Select>
+  </FormControl>
+  <TextField
+    fullWidth
+    label="Engine Power (hp)*"
+    variant="outlined"
+    value={enginePower}
+    onChange={(e) => setEnginePower(e.target.value)}
+    placeholder="Ex: 150"
+    type="number"
+    required
+  />
+  <FormControl fullWidth variant="outlined" required>
+    <InputLabel id="fuel-type-label">Fuel type*</InputLabel>
+    <Select
+      labelId="fuel-type-label"
+      id="fuel-type-select"
+      value={fuelType}
+      label="Fuel type"
+      onChange={(e) => setFuelType(e.target.value)}
+    >
+      <MenuItem value="">Select fuel type</MenuItem>
+      <MenuItem value="petrol">Petrol</MenuItem>
+      <MenuItem value="diesel">Diesel</MenuItem>
+      <MenuItem value="electric">Electric</MenuItem>
+      <MenuItem value="hybrid">Hybrid</MenuItem>
+    </Select>
+  </FormControl>
+</Stack>
                 </Box>
               </CardContent>
             </Card>
           </Box>
-          {/* Vehicle Identity Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3140,7 +3109,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Pricing & Discounts Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3286,7 +3254,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Search Tags Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3329,7 +3296,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Vehicle Document Section */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3392,7 +3358,6 @@ const Createnew = ({ vehicleId }) => {
               </CardContent>
             </Card>
           </Box>
-          {/* Action Buttons */}
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="outlined" color="inherit" size="large" onClick={handleReset}>
               {isEdit ? 'Cancel' : 'Reset'}

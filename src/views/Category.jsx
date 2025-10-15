@@ -27,50 +27,44 @@ const Category = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae'; // Fallback to provided API URL
 
   // Fetch categories from API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        if (!API_BASE_URL) {
-          throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/categories/modules/${moduleId}`, {
-          headers: {
-            'Accept': 'application/json',
-            // Add authentication headers if required, e.g.:
-            // 'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Response is not JSON');
-        }
-
-        const data = await response.json();
-
-        if (Array.isArray(data) && data.length > 0) {
-          const formattedCategories = data.map(category => ({
-            id: category.categoryId,
-            name: category.title,
-            image: `${API_BASE_URL}/${category.image}`
-          }));
-          setCategories(formattedCategories);
-          setFilteredCategories(formattedCategories);
-        } else {
-          setError('No categories found for this module');
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error.message);
-        setError(`Failed to fetch categories: ${error.message}`);
+ useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      if (!API_BASE_URL) {
+        throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
       }
-    };
-    fetchCategories();
-  }, []);
+
+      const response = await fetch(`${API_BASE_URL}/api/vehicle-categories`, {
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // ✅ Access `data.data` instead of `data`
+      if (data.success && Array.isArray(data.data)) {
+        const formattedCategories = data.data.map(category => ({
+          id: category.vehicleCategoryId || category._id,
+          name: category.title,
+          image: category.image ? `${API_BASE_URL}${category.image}` : '',
+        }));
+        setCategories(formattedCategories);
+        setFilteredCategories(formattedCategories);
+      } else {
+        setError('No categories found for this module');
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error.message);
+      setError(`Failed to fetch categories: ${error.message}`);
+    }
+  };
+  fetchCategories();
+}, []);
 
   // Search functionality
   const handleSearch = () => {

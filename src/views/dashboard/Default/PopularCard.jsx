@@ -47,7 +47,7 @@ export default function PopularCard({ isLoading }) {
               <Grid size={12}>
                 <Grid container sx={{ alignContent: 'center', justifyContent: 'space-between' }}>
                   <Grid>
-                    <Typography variant="h4">Popular Stocks</Typography>
+                    <Typography variant="h4">Popular Venues</Typography>
                   </Grid>
                   <Grid>
                     <IconButton size="small" sx={{ mt: -0.625 }}>
@@ -85,7 +85,7 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                          Bajaj Finery
+                            Grand Mirage Palace
                         </Typography>
                       </Grid>
                       <Grid>
@@ -126,8 +126,7 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                          TTML
-                        </Typography>
+  The Loft Studio                        </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -167,8 +166,7 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                          Reliance
-                        </Typography>
+  Serene Meadows                        </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -208,7 +206,7 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                          TTML
+                            Aurora Event Palace
                         </Typography>
                       </Grid>
                       <Grid>

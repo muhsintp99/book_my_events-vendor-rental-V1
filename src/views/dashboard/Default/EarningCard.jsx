@@ -46,7 +46,7 @@ export default function EarningCard({ isLoading }) {
           border={false}
           content={false}
           sx={{
-            bgcolor: 'secondary.dark',
+            bgcolor: ' #E15B65',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
@@ -55,7 +55,7 @@ export default function EarningCard({ isLoading }) {
               position: 'absolute',
               width: 210,
               height: 210,
-              background: theme.palette.secondary[800],
+              background: '#C2444E',
               borderRadius: '50%',
               top: { xs: -85 },
               right: { xs: -95 }
@@ -65,7 +65,7 @@ export default function EarningCard({ isLoading }) {
               position: 'absolute',
               width: 210,
               height: 210,
-              background: theme.palette.secondary[800],
+              background: '#fba7adff',
               borderRadius: '50%',
               top: { xs: -125 },
               right: { xs: -15 },
@@ -83,7 +83,7 @@ export default function EarningCard({ isLoading }) {
                       sx={{
                         ...theme.typography.commonAvatar,
                         ...theme.typography.largeAvatar,
-                        bgcolor: 'secondary.800',
+                        bgcolor: '#cf2836ff',
                         mt: 1
                       }}
                     >
@@ -96,7 +96,7 @@ export default function EarningCard({ isLoading }) {
                       sx={{
                         ...theme.typography.commonAvatar,
                         ...theme.typography.mediumAvatar,
-                        bgcolor: 'secondary.dark',
+                        bgcolor: '#ad2430ff',
                         color: 'secondary.200',
                         zIndex: 1
                       }}
@@ -148,7 +148,7 @@ export default function EarningCard({ isLoading }) {
                       sx={{
                         cursor: 'pointer',
                         ...theme.typography.smallAvatar,
-                        bgcolor: 'secondary.200',
+                        bgcolor: '#f0c4c8ff',
                         color: 'secondary.dark'
                       }}
                     >
@@ -162,7 +162,7 @@ export default function EarningCard({ isLoading }) {
                   sx={{
                     fontSize: '1rem',
                     fontWeight: 500,
-                    color: 'secondary.200'
+                    color: 'white'
                   }}
                 >
                   Total Earning

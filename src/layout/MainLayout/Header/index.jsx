@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 // project imports
 import LogoSection from '../LogoSection';
 import ProfileSection from './ProfileSection';
-import NotificationSection from './NotificationSection';
+// import NotificationSection from './NotificationSection';
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 
 // icons
@@ -101,7 +101,7 @@ export default function Header() {
         </Button> */}
 
         {/* Notifications + Profile */}
-        <NotificationSection />
+        {/* <NotificationSection /> */}
         <ProfileSection />
       </Box>
     </>

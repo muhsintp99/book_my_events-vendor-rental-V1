@@ -2566,44 +2566,89 @@ const resetTimeSlots = {
     evening: { enabled: true, startTime: '08:00', startPeriod: 'Am', endTime: '03:00', endPeriod: 'Pm', price: '' }
   }
 };
-const transformToArray = (timeSlots) => {
-  const schedule = [];
+
+const transformToArray = (timeSlots, venueType) => {
+  const schedule = {};
   ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(dayLower => {
-    const day = dayLower.charAt(0).toUpperCase() + dayLower.slice(1);
+    schedule[dayLower] = {
+      morning: null,
+      evening: null
+    };
+    
     const morning = timeSlots[dayLower]?.morning;
     if (morning?.enabled && morning.price.trim()) {
-      schedule.push({
-        day,
-        slotType: 'morning',
+      const priceValue = parseFloat(morning.price) || 0;
+      schedule[dayLower].morning = {
         startTime: morning.startTime,
         startAmpm: morning.startPeriod.toUpperCase(),
         endTime: morning.endTime,
         endAmpm: morning.endPeriod.toUpperCase(),
-        price: parseFloat(morning.price) || 0
-      });
+        perDay: venueType === 'per_function' ? priceValue : 0,
+        perHour: venueType === 'per_hour' ? priceValue : 0,
+        perPerson: venueType === 'per_person' ? priceValue : 0
+      };
     }
+    
     const evening = timeSlots[dayLower]?.evening;
     if (evening?.enabled && evening.price.trim()) {
-      schedule.push({
-        day,
-        slotType: 'evening',
+      const priceValue = parseFloat(evening.price) || 0;
+      schedule[dayLower].evening = {
         startTime: evening.startTime,
         startAmpm: evening.startPeriod.toUpperCase(),
         endTime: evening.endTime,
         endAmpm: evening.endPeriod.toUpperCase(),
-        price: parseFloat(evening.price) || 0
-      });
+        perDay: venueType === 'per_function' ? priceValue : 0,
+        perHour: venueType === 'per_hour' ? priceValue : 0,
+        perPerson: venueType === 'per_person' ? priceValue : 0
+      };
     }
   });
   return schedule;
 };
+
+// Also update the transformToTimeSlots function to handle the new structure:
+
 const transformToTimeSlots = (pricingSchedule) => {
   const timeSlots = { ...defaultTimeSlots };
-  if (Array.isArray(pricingSchedule)) {
+  
+  if (typeof pricingSchedule === 'object' && !Array.isArray(pricingSchedule)) {
+    // Handle new format (object with days)
+    Object.entries(pricingSchedule).forEach(([day, slots]) => {
+      const dayLower = day.toLowerCase();
+      if (timeSlots[dayLower]) {
+        // Morning slot
+        if (slots.morning) {
+          const price = slots.morning.perDay || slots.morning.perHour || slots.morning.perPerson || 0;
+          timeSlots[dayLower].morning = {
+            enabled: true,
+            startTime: slots.morning.startTime || '08:00',
+            startPeriod: (slots.morning.startAmpm || 'AM').toLowerCase(),
+            endTime: slots.morning.endTime || '03:00',
+            endPeriod: (slots.morning.endAmpm || 'PM').toLowerCase(),
+            price: price.toString()
+          };
+        }
+        // Evening slot
+        if (slots.evening) {
+          const price = slots.evening.perDay || slots.evening.perHour || slots.evening.perPerson || 0;
+          timeSlots[dayLower].evening = {
+            enabled: true,
+            startTime: slots.evening.startTime || '08:00',
+            startPeriod: (slots.evening.startAmpm || 'PM').toLowerCase(),
+            endTime: slots.evening.endTime || '12:00',
+            endPeriod: (slots.evening.endAmpm || 'AM').toLowerCase(),
+            price: price.toString()
+          };
+        }
+      }
+    });
+  } else if (Array.isArray(pricingSchedule)) {
+    // Handle old format (array)
     pricingSchedule.forEach(slot => {
       const dayLower = slot.day.toLowerCase();
       const slotType = slot.slotType;
       if (timeSlots[dayLower] && timeSlots[dayLower][slotType]) {
+        const price = slot.perDay || slot.perHour || slot.perPerson || slot.price || 0;
         timeSlots[dayLower][slotType] = {
           ...timeSlots[dayLower][slotType],
           enabled: true,
@@ -2611,11 +2656,12 @@ const transformToTimeSlots = (pricingSchedule) => {
           startPeriod: slot.startAmpm.toLowerCase(),
           endTime: slot.endTime,
           endPeriod: slot.endAmpm.toLowerCase(),
-          price: slot.price.toString()
+          price: price.toString()
         };
       }
     });
   }
+  
   return timeSlots;
 };
 const CreateAuditorium = () => {
@@ -2629,7 +2675,7 @@ const CreateAuditorium = () => {
     venueName: '',
     description: '',
     venueAddress: '',
-    categoryId: '',
+    categories: '',
     latitude: '',
     longitude: '',
     openingHours: '',
@@ -2719,7 +2765,7 @@ useEffect(() => {
       venueName: '',
       description: '',
       venueAddress: '',
-      categoryId: '',
+      categories: '',
       latitude: '',
       longitude: '',
       openingHours: '',
@@ -2760,7 +2806,7 @@ useEffect(() => {
   const errors = [];
   if (!formData.venueName.trim()) errors.push('Venue name is required');
   if (!formData.venueAddress.trim()) errors.push('Venue address is required');
-  if (!formData.categoryId) errors.push('Category is required');
+  if (!formData.categories) errors.push('Category is required');
   if (!formData.seatingArrangement) errors.push('Seating arrangement is required');
   if (!formData.maxGuestsSeated) errors.push('Max guests seated is required');
   if (!formData.venueType) errors.push('Venue type is required');
@@ -2811,7 +2857,7 @@ const fetchCategories = async () => {
 
     if (result.success && Array.isArray(result.data)) {
       const formattedCategories = result.data.map((category) => ({
-        id: category.categoryId || category._id || '',
+        id: category.categories || category._id || '',
         name: category?.title || category.name || 'Unnamed Category',
       }));
       setCategories(formattedCategories);
@@ -2854,8 +2900,7 @@ const fetchCategories = async () => {
         venueName: result.data.venueName || '',
         description: result.data.shortDescription || '',
         venueAddress: result.data.venueAddress || '',
-      categoryId: result?.data?.categories?.[0]?.categoryId || '',
-
+      categories: result?.data?.categories?.[0]?._id || '',
         latitude: result.data.latitude || '',
         longitude: result.data.longitude || '',
         openingHours: result.data.openingHours || '',
@@ -2888,7 +2933,7 @@ const fetchCategories = async () => {
          ? result.data.searchTags.join(', ')
          : result.data.searchTags || '',
       });
-      console.log("hello" ,formData?.categoryId);
+      console.log("hello" ,formData?.categories);
       
       setTimeSlots(transformToTimeSlots(result.data.pricingSchedule) || defaultTimeSlots);
       setExistingImages({
@@ -3000,7 +3045,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
       ...formData,
       shortDescription: formData.description || '',
       holidaySchedule: formData.holidayScheduling || '',
-      categoryId: formData.categoryId || '',
+      categories: formData.categories || '',
       // accessibilityInfo: formData.elderlyAccessibility,
     };
     delete payload.description;
@@ -3018,7 +3063,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
         data.append(key, value || '');
       }
     });
-    const pricingSchedule = transformToArray(timeSlots);
+    const pricingSchedule = transformToArray(timeSlots, formData.venueType);
     try {
       let mainResult;
       if (viewMode === 'create') {
@@ -3164,8 +3209,8 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
   <InputLabel id="category-label">Category*</InputLabel>
   <Select
     labelId="category-label"
-    name="categoryId"
-    value={formData.categoryId}
+    name="categories"
+    value={formData.categories}
     label="Category"
     onChange={handleInputChange}
   >

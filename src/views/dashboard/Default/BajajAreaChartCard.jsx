@@ -12,11 +12,15 @@ import Chart from 'react-apexcharts';
 // project imports
 import chartData from './chart-data/bajaj-area-chart';
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD ||=========================== //
+// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
 
 export default function BajajAreaChartCard() {
   const theme = useTheme();
-  const orangeDark = theme.palette.secondary[800];
+
+  // Custom coral-red color theme
+  const coralMain = '#dd666eff';
+  const coralDark = '#A33A43';
+  const coralLight = '#FF8A92';
 
   const [chartConfig, setChartConfig] = useState(chartData);
 
@@ -25,35 +29,58 @@ export default function BajajAreaChartCard() {
       ...prevState,
       options: {
         ...prevState.options,
-        colors: [orangeDark],
-        tooltip: { ...prevState?.options?.tooltip, theme: 'light' }
+        colors: [coralMain],
+        tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.7,
+            opacityTo: 0.2,
+            stops: [0, 90, 100],
+            colorStops: [
+              { offset: 0, color: coralLight, opacity: 0.8 },
+              { offset: 50, color: coralMain, opacity: 0.6 },
+              { offset: 100, color: coralDark, opacity: 0.3 }
+            ]
+          }
+        }
       }
     }));
-  }, [orangeDark]);
+  }, []);
 
   return (
-    <Card sx={{ bgcolor: 'secondary.light' }}>
+    <Card
+      sx={{
+        bgcolor: coralLight,
+        border: `1px solid ${coralMain}`,
+        boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
+        borderRadius: 3
+      }}
+    >
       <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-        <Grid size={12}>
+        <Grid item xs={12}>
           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid>
-              <Typography variant="subtitle1" sx={{ color: 'secondary.dark' }}>
-                Bajaj Finery
+            <Grid item>
+              <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
+                Venue
               </Typography>
             </Grid>
-            <Grid>
-              <Typography variant="h4" sx={{ color: 'grey.800' }}>
+            <Grid item>
+              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
                 $1839.00
               </Typography>
             </Grid>
           </Grid>
         </Grid>
-        <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ color: 'grey.800' }}>
+        {/* <Grid item xs={12}>
+          <Typography variant="subtitle2" sx={{ color: coralMain }}>
             10% Profit
           </Typography>
-        </Grid>
+        </Grid> */}
       </Grid>
+
+      {/* Chart */}
       <Chart {...chartConfig} />
     </Card>
   );

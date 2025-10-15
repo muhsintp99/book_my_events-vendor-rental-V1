@@ -39,7 +39,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
           border={false}
           content={false}
           sx={{
-            bgcolor: 'primary.dark',
+            bgcolor: ' #E15B65',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
@@ -52,7 +52,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
               position: 'absolute',
               width: 210,
               height: 210,
-              background: theme.palette.primary[800],
+              background: '#C2444E',
               borderRadius: '50%',
               top: { xs: -85 },
               right: { xs: -95 }
@@ -62,7 +62,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
               position: 'absolute',
               width: 210,
               height: 210,
-              background: theme.palette.primary[800],
+              background: '#FF8A8A',
               borderRadius: '50%',
               top: { xs: -125 },
               right: { xs: -15 },
@@ -80,7 +80,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                       sx={{
                         ...theme.typography.commonAvatar,
                         ...theme.typography.largeAvatar,
-                        bgcolor: 'primary.800',
+                        bgcolor: '#C41E3A',
                         color: '#fff',
                         mt: 1
                       }}
@@ -102,7 +102,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                       disableElevation
                       variant={!timeValue ? 'contained' : 'text'}
                       size="small"
-                      sx={{ color: 'inherit' }}
+                      sx={{ color: '#A33A43', backgroundColor: '#F1C6C6'}}
                       onClick={(e) => handleChangeTime(e, false)}
                     >
                       Year
@@ -126,7 +126,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                           sx={{
                             ...theme.typography.smallAvatar,
                             cursor: 'pointer',
-                            bgcolor: 'primary.200',
+                            bgcolor: '#FAEBEB',
                             color: 'primary.dark'
                           }}
                         >
@@ -138,10 +138,10 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                           sx={{
                             fontSize: '1rem',
                             fontWeight: 500,
-                            color: 'primary.200'
+                            color: 'white'
                           }}
                         >
-                          Total Order
+                          Total Bookings
                         </Typography>
                       </Grid>
                     </Grid>

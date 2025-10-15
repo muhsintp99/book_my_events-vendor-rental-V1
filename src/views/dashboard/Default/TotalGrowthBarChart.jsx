@@ -50,7 +50,7 @@ export default function TotalGrowthBarChart({ isLoading }) {
   useEffect(() => {
     setChartOptions((prev) => ({
       ...prev,
-      colors: [primary200, primaryDark, secondaryMain, secondaryLight],
+      colors: ['#C2444E', '#F09898', '#ff7f87ff', '#FCE9E9'],
       xaxis: {
         ...prev.xaxis,
         labels: { style: { colors: primary } }

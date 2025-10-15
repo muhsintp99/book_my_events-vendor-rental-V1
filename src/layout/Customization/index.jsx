@@ -34,7 +34,7 @@ export default function Customization() {
   return (
     <>
       {/* toggle button */}
-      <Tooltip title="Live Customize">
+      {/* <Tooltip title="Live Customize">
         <Fab
           component="div"
           onClick={handleToggle}
@@ -53,14 +53,14 @@ export default function Customization() {
             zIndex: 1200,
             boxShadow: theme.customShadows.secondary
           }}
-        >
-          <AnimateButton type="rotate">
+        > */}
+          {/* <AnimateButton type="rotate">
             <IconButton color="inherit" size="large" disableRipple aria-label="live customize">
               <IconSettings />
             </IconButton>
-          </AnimateButton>
-        </Fab>
-      </Tooltip>
+          </AnimateButton> */}
+        {/* </Fab>
+      </Tooltip> */}
       <Drawer anchor="right" onClose={handleToggle} open={open} slotProps={{ paper: { sx: { width: 280 } } }}>
         <PerfectScrollbar>
           <Grid container spacing={2}>
