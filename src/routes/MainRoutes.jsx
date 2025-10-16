@@ -365,6 +365,7 @@ const EmployeeList = Loadable(lazy(()=> import('views/EmployeeList')));
 // sample page
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 
+const VenueMyShop = Loadable(lazy(()=> import('views/VenueMyShop')))
 
 
 // ==============================|| MAIN ROUTING ||============================== //
@@ -548,6 +549,15 @@ const MainRoutes = {
         {
           path: '/venue/schedules',
           element: <Schedules/>
+        }
+      ]
+    },
+     {
+      path: 'business',
+      children: [
+        {
+          path: '/business/myshop',
+          element: <VenueMyShop/>
         }
       ]
     },

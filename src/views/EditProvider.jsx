@@ -29,9 +29,9 @@ function a11yProps(index) {
 
 const EditProvider = () => {
   const [tabValue, setTabValue] = useState(0);
-  const [nameDefault, setNameDefault] = useState('CityRide Rentals');
-  const [addressDefault, setAddressDefault] = useState('Andhra Pradesh');
-  const [contactNumber, setContactNumber] = useState('+1 959-252-4064');
+  const [nameDefault, setNameDefault] = useState('Email');
+  const [addressDefault, setAddressDefault] = useState('Address');
+  const [contactNumber, setContactNumber] = useState('Ph Number');
   const [logoFile, setLogoFile] = useState(null);
   const [coverPhotoFile, setCoverPhotoFile] = useState(null);
   const [openToast, setOpenToast] = useState(false);

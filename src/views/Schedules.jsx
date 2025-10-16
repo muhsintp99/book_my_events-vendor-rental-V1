@@ -423,8 +423,21 @@
 // export default BookingCalendar;
 
 import React, { useState } from 'react';
-import { Button, Dialog, DialogTitle, DialogContent, TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from '@mui/material';
+import { Button, Dialog, DialogTitle, DialogContent, TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, FormGroup, Checkbox, Select, MenuItem, InputLabel, InputAdornment, Box, Typography, Avatar } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import DescriptionIcon from '@mui/icons-material/Description';
+import DoorFrontIcon from '@mui/icons-material/DoorFront';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import EditIcon from '@mui/icons-material/Edit';
 
 function BookingCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 15));
@@ -845,6 +858,22 @@ function BookingCalendar() {
     setOpenDialog(false);
   };
 
+  const sectionHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    mb: 2,
+    color: '#ef5350',
+    fontWeight: 600
+  };
+
+  const iconStyle = {
+    color: '#ef5350',
+    fontSize: 24
+  };
+
+  const defaultDate = selectedDate ? new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
   return (
     <div style={styles.container}>
 
@@ -967,90 +996,222 @@ function BookingCalendar() {
         </svg>
       </Button>
 
-      <StyledDialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Add Booking</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Select Booking Date"
-            type="date"
-            fullWidth
-            variant="outlined"
-            defaultValue="2025-10-15"
-          />
-          <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+      <Dialog fullScreen open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1} >
+            <Button onClick={handleCloseDialog} variant="text" size="small">←</Button>
+            Add Booking
+          </Box>
+        </DialogTitle>
+        <div style={{alignSelf:"center"}}>
+        <DialogContent sx={{ p: 3, backgroundColor: '#fafafa' ,width:'500px' ,position:''}}>
+          {/* Booking Details Section */}
+          <Box mb={4}>
+            <Typography variant="h6" sx={sectionHeaderStyle}>
+              <EditIcon sx={iconStyle} />
+              Booking Details
+            </Typography>
             <TextField
-              margin="dense"
-              label="Start Time"
-              type="time"
               fullWidth
+              label="Full Name"
               variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
             />
             <TextField
-              margin="dense"
-              label="End Time"
-              type="time"
               fullWidth
+              label="Contact Number"
               variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PhoneIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
             />
-          </div>
-          <TextField
-            margin="dense"
-            label="Full Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: '16px' }}
-          />
-          <TextField
-            margin="dense"
-            label="Contact Number"
-            type="tel"
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: '16px' }}
-          />
-          <TextField
-            margin="dense"
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: '16px' }}
-          />
-          <TextField
-            margin="dense"
-            label="Address"
-            type="text"
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: '16px' }}
-          />
-          <TextField
-            margin="dense"
-            label="Additional Notes (Optional)"
-            type="text"
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: '16px' }}
-          />
-          <FormControl component="fieldset" style={{ marginTop: '16px' }}>
-            <FormLabel component="legend">Payment Method</FormLabel>
-            <RadioGroup
-              name="payment-method"
-              defaultValue="full"
+            <TextField
+              fullWidth
+              label="Email Address"
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Address"
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <HomeIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Number of Guests"
+              type="number"
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PeopleIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Additional Notes (Optional)"
+              multiline
+              rows={3}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <DescriptionIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+
+          {/* Auditorium and Date/Time Section */}
+          <Box mb={4}>
+            <Typography variant="h6" sx={sectionHeaderStyle}>
+              <DoorFrontIcon sx={iconStyle} />
+              Select Auditorium
+            </Typography>
+            <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+              <InputLabel>Select Auditorium</InputLabel>
+              <Select label="Select Auditorium">
+                <MenuItem value="">Select Auditorium</MenuItem>
+                <MenuItem value="auditorium-a">Royal Events</MenuItem>
+                <MenuItem value="auditorium-b">violet auditorium</MenuItem>
+                                <MenuItem value="auditorium-b">florzia auditorium</MenuItem>
+
+              </Select>
+            </FormControl>
+
+            <Typography variant="h6" sx={sectionHeaderStyle}>
+              <CalendarMonthIcon sx={iconStyle} />
+              Select Booking Date
+            </Typography>
+            <TextField
+              fullWidth
+              type="date"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              defaultValue={defaultDate}
+              sx={{ mb: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <CalendarMonthIcon sx={iconStyle} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Typography variant="h6" sx={sectionHeaderStyle}>
+              <AccessTimeIcon sx={iconStyle} />
+              Select Time Slots
+            </Typography>
+            <FormGroup>
+              <FormControlLabel
+                control={<Checkbox />}
+                label="Morning Slot 9:00 AM - 1:00 PM"
+              />
+              <FormControlLabel
+                control={<Checkbox />}
+                label="Evening Slot 6:00 PM - 10:00 PM"
+              />
+            </FormGroup>
+          </Box>
+
+          {/* Payment Method Section */}
+          <Box>
+            <Typography variant="h6" sx={sectionHeaderStyle}>
+              <PaymentIcon sx={iconStyle} />
+              Payment Method
+            </Typography>
+            <FormControl component="fieldset" sx={{ mb: 2 }}>
+              <RadioGroup defaultValue="full">
+                <FormControlLabel
+                  value="full"
+                  control={<Radio />}
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <PaymentIcon sx={iconStyle} />
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>Pay Full Amount</Typography>
+                        <Typography variant="body2" color="textSecondary">Pay the complete amount now</Typography>
+                      </Box>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  value="advance"
+                  control={<Radio />}
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <AttachMoneyIcon sx={iconStyle} />
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>Pay Advance Amount</Typography>
+                        <Typography variant="body2" color="textSecondary">Pay 50% now, rest later</Typography>
+                      </Box>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  value="cash"
+                  control={<Radio />}
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <AccountBalanceWalletIcon sx={iconStyle} />
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>Pay As Cash</Typography>
+                        <Typography variant="body2" color="textSecondary">Pay at the venue</Typography>
+                      </Box>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </FormControl>
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{
+                backgroundColor: '#ef5350',
+                color: 'white',
+                fontWeight: 600,
+                py: 1.5,
+                borderRadius: 2
+              }}
             >
-              <FormControlLabel value="full" control={<Radio />} label="Pay Full Amount (Pay the complete amount now)" />
-              <FormControlLabel value="advance" control={<Radio />} label="Pay Advance Amount (Pay 50% now, rest later)" />
-              <FormControlLabel value="cash" control={<Radio />} label="Pay As Cash (Pay at the venue)" />
-            </RadioGroup>
-          </FormControl>
-          <Button variant="contained" color="primary" style={{ marginTop: '16px' }}>
-            Submit
-          </Button>
+              Submit
+            </Button>
+          </Box>
         </DialogContent>
-      </StyledDialog>
+        </div>
+      </Dialog>
     </div>
   );
 }

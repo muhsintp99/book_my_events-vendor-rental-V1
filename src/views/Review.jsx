@@ -230,7 +230,7 @@ const Review = () => {
               variant="contained"
               color="primary"
               onClick={handleUpdateReply}
-              sx={{ alignSelf: 'flex-end', textTransform: 'none' }}
+              sx={{ alignSelf: 'flex-end', textTransform: 'none', backgroundColor:'#E15B65' }}
             >
               Update Reply
             </Button>

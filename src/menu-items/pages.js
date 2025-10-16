@@ -1,7 +1,5 @@
-// assets
 import { IconKey } from '@tabler/icons-react';
 
-// constant
 const icons = {
   IconKey
 };

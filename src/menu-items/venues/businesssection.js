@@ -22,38 +22,38 @@ const Businessection = {
   title: 'BUSINESS SECTION',
   type: 'group',
   children: [
+    // {
+    //   id: 'Provider-Config',
+    //   title: 'Provider Config',
+    //   type: 'item',
+    //   url: '/business/new',
+    //   icon: icons.IconUserPlus,
+    //   breadcrumbs: false
+    // },
+    // {
+    //   id: 'Notification-SetUP',
+    //   title: 'Notification Set UP',
+    //   type: 'item',
+    //   url: '/business/add',
+    //   icon: icons.IconUserCheck,
+    //   breadcrumbs: false
+    // },
     {
-      id: 'Provider-Config',
-      title: 'Provider Config',
+      id: 'My-venue',
+      title: 'My Venue',
       type: 'item',
-      url: '/business/new',
-      icon: icons.IconUserPlus,
-      breadcrumbs: false
-    },
-    {
-      id: 'Notification-SetUP',
-      title: 'Notification Set UP',
-      type: 'item',
-      url: '/business/add',
-      icon: icons.IconUserCheck,
-      breadcrumbs: false
-    },
-    {
-      id: 'My-Shop',
-      title: 'My Shop',
-      type: 'item',
-      url: '/business/list',
+      url: '/business/myshop',
       icon: icons.IconUsers,
       breadcrumbs: false
     },
-    {
-      id: 'My-Business-Plan',
-      title: 'My Business Plan',
-      type: 'item',
-      url: '/business/plan',
-      icon: icons.IconUpload,
-      breadcrumbs: false
-    },
+    // {
+    //   id: 'My-Business-Plan',
+    //   title: 'My Business Plan',
+    //   type: 'item',
+    //   url: '/business/plan',
+    //   icon: icons.IconUpload,
+    //   breadcrumbs: false
+    // },
     // {
     //   id: 'My-Wallet',
     //   title: 'My Wallet',

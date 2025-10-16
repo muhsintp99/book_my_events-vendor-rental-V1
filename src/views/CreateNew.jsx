@@ -2365,7 +2365,7 @@ const Createnew = ({ vehicleId }) => {
   const [existingImages, setExistingImages] = useState([]);
   const [existingDocs, setExistingDocs] = useState([]);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae';
   const moduleId = localStorage.getItem('moduleId');
 
   const setVehicleData = useCallback((vehicle) => {
@@ -2406,35 +2406,54 @@ const Createnew = ({ vehicleId }) => {
   }, [brands, categories]);
 
   useEffect(() => {
-    const fetchBrandsAndCategories = async () => {
-      try {
-        const [brandsResponse, categoriesResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/brands/module/${moduleId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }),
-          axios.get(`${API_BASE_URL}/vehicle-categories`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }),
-        ]);
-        const brandsData = Array.isArray(brandsResponse.data) ? brandsResponse.data : [];
-        const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-        setBrands(brandsData);
-        setCategories(categoriesData);
-        console.log('Brands fetched:', brandsData);
-        console.log('Categories fetched:', categoriesData);
-        setIsDataLoaded(true);
-      } catch (error) {
-        console.error('Error fetching brands/categories:', error.response?.data || error);
-        setBrands([]);
-        setCategories([]); // Ensure categories is an array on error
-        setIsDataLoaded(true);
-        setToastMessage(error.response?.data?.message || 'Failed to fetch brands or categories');
-        setToastSeverity('error');
-        setOpenToast(true);
+  const fetchBrandsAndCategories = async () => {
+    try {
+      if (!moduleId) {
+        throw new Error('Module ID is not defined. Please log in or set moduleId in localStorage.');
       }
-    };
-    fetchBrandsAndCategories();
-  }, []);
+      const [brandsResponse, categoriesResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/brands/module/${moduleId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }),
+        axios.get(`${API_BASE_URL}/api/vehicle-categories`, {
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Accept: 'application/json',
+          },
+        }),
+      ]);
+      const brandsData = Array.isArray(brandsResponse.data) ? brandsResponse.data : [];
+      let categoriesData = [];
+      if (categoriesResponse.data.success && Array.isArray(categoriesResponse.data.data)) {
+        const rawCategories = categoriesResponse.data.data;
+        categoriesData = rawCategories
+          .filter(cat => cat.module?._id === moduleId)
+          .map(cat => ({
+            _id: cat._id,
+            title: cat.title,
+          }));
+        setCategories(categoriesData);
+      } else {
+        setCategories([]);
+      }
+      setBrands(brandsData);
+      console.log('Module ID:', moduleId);
+      console.log('Raw categories:', categoriesResponse.data.data);
+      console.log('Brands fetched:', brandsData);
+      console.log('Categories fetched:', categoriesData);
+      setIsDataLoaded(true);
+    } catch (error) {
+      console.error('Error fetching brands/categories:', error.response?.data || error);
+      setBrands([]);
+      setCategories([]);
+      setIsDataLoaded(true);
+      setToastMessage(error.response?.data?.message || 'Failed to fetch brands or categories');
+      setToastSeverity('error');
+      setOpenToast(true);
+    }
+  };
+  fetchBrandsAndCategories();
+}, [moduleId]);
 
   useEffect(() => {
     if (!isDataLoaded) return;

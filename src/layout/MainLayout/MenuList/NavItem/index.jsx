@@ -66,7 +66,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
     }
   };
 
-  const iconSelectedColor = 'secondary.main';
+  const iconSelectedColor = 'white';
 
   return (
     <>
@@ -85,27 +85,29 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           ...(drawerOpen &&
             level === 1 && {
               '&:hover': {
-                bgcolor: 'secondary.light'
+                bgcolor: ' #e77f86ff'
               },
               '&.Mui-selected': {
-                bgcolor: 'secondary.light',
-                color: iconSelectedColor,
+                bgcolor: ' #E15B65',
+                color: 'white',
                 '&:hover': {
-                  color: iconSelectedColor,
-                  bgcolor: 'secondary.light'
+                  color: 'white',
+                  bgcolor: ' #f9767fff'
                 }
               }
             }),
           ...((!drawerOpen || level !== 1) && {
             py: level === 1 ? 0 : 1,
             '&:hover': {
-              bgcolor: 'transparent'
+              bgcolor: ' #e77f86ff'
             },
             '&.Mui-selected': {
               '&:hover': {
-                bgcolor: 'transparent'
+                color: 'white',
+                bgcolor: ' #E15B65'
               },
-              bgcolor: 'transparent'
+              color: 'white',
+              bgcolor: '#f9767fff'
             }
           })
         }}
@@ -125,12 +127,12 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                   alignItems: 'center',
                   justifyContent: 'center',
                   '&:hover': {
-                    bgcolor: 'secondary.light'
+                    bgcolor: '#e77f86ff'
                   },
                   ...(isSelected && {
-                    bgcolor: 'secondary.light',
+                    bgcolor: '#E15B65',
                     '&:hover': {
-                      bgcolor: 'secondary.light'
+                      bgcolor: '#f9767fff'
                     }
                   })
                 })
