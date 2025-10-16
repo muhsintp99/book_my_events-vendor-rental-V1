@@ -1421,16 +1421,16 @@ export default function VenuesList() {
       {/* Navbar */}
       <AppBar position="static" color="default" elevation={0}>
         <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, color: "#333" }}>
-            🏛️ Venue Management
+          <Typography variant="h4" sx={{ flexGrow: 1, color: "#080303ff" }}>
+             Venue Management
           </Typography>
         </Toolbar>
       </AppBar>
       {/* Filters */}
       <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} flexWrap="wrap">
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <Select
+        <Stack direction="row" spacing={2} flexWrap="wrap" >
+          <FormControl sx={{ minWidth: 200}} size="small" >
+            <Select 
               displayEmpty
               value={pendingFilters.seatingArrangement}
               onChange={(e) =>
@@ -1439,8 +1439,16 @@ export default function VenuesList() {
                   seatingArrangement: e.target.value,
                 })
               }
+              sx={{
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+    }}
             >
-              <MenuItem value="">Select seating arrangement</MenuItem>
+              <MenuItem value="" >Select seating arrangement</MenuItem>
               {[...new Set(venues.map((v) => v.seatingArrangement))]
                 .filter(Boolean)
                 .map((s) => (
@@ -1451,15 +1459,15 @@ export default function VenuesList() {
             </Select>
           </FormControl>
           <Button
-            variant="outlined"
-            sx={{ bgcolor: "#f3f4f6", borderRadius: "8px" }}
+            variant="outlined" color="#E15B65"
+            sx={{ color:'#E15B65',borderRadius: "8px" }}
             onClick={handleReset}
           >
             Reset
           </Button>
           <Button
             variant="contained"
-            sx={{ bgcolor: "#2b68bdff", borderRadius: "8px" }}
+            sx={{ bgcolor: "#E15B65", borderRadius: "8px" }}
             onClick={handleApplyFilters}
           >
             Filter
@@ -1485,27 +1493,34 @@ export default function VenuesList() {
               sx={{ ml: 1 }}
             />
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} flexWrap="wrap" >
             <TextField
-              size="small"
-              placeholder="Search by venue name"
-              value={pendingFilters.search}
+              size="small" 
+              placeholder="Search by venue name" variant="outlined" color="#E15B65"  bgcolor="#E15B65"
+              value={pendingFilters.search}  
               onChange={(e) =>
                 setPendingFilters({ ...pendingFilters, search: e.target.value })
               }
               InputProps={{
                 endAdornment: <Search fontSize="small" />,
               }}
-            />
-            <Button variant="outlined" onClick={handleExport}>
+               sx={{
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+    }}/>
+            <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }} onClick={handleExport}>
               Export
             </Button>
-            <Button variant="outlined" onClick={fetchVenues} disabled={loading}>
+            <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }}  onClick={fetchVenues} disabled={loading}>
               Refresh
             </Button>
             <Button
               variant="contained"
-              sx={{ bgcolor: "#2563eb" }}
+              sx={{ bgcolor: "#E15B65" }}
               onClick={() => navigate("/venue-setup/new")}
             >
               New Venue
@@ -1545,19 +1560,30 @@ export default function VenuesList() {
                     <TableCell>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 600, color: "#2563eb" }}
+                        sx={{ fontWeight: 600, color: "#396becff" }}
                       >
                         {v.venueName}
                       </Typography>
                     </TableCell>
                     <TableCell>{v.venueAddress}</TableCell>
-                    <TableCell>{v.seatingArrangement || "-"}</TableCell>
+                    <TableCell >{v.seatingArrangement || "-"}</TableCell>
                     <TableCell>{v.maxGuestsSeated || "-"}</TableCell>
                     <TableCell>
-                      <Switch
-                        checked={v.isActive}
+                      <Switch 
+                        checked={v.isActive} 
                         onChange={() => handleToggleStatus(v._id)}
                         disabled={loading}
+                         sx={{
+    '& .MuiSwitch-switchBase.Mui-checked': {
+      color: '#E15B65',
+    },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+      backgroundColor: '#E15B65',
+    },
+    '& .MuiSwitch-track': {
+      backgroundColor: '#ccc',
+    }
+  }}
                       />
                     </TableCell>
                     <TableCell>
@@ -1566,7 +1592,7 @@ export default function VenuesList() {
                           size="small"
                           sx={{
                             border: "1px solid #d1d5db",
-                            color: "#2563eb",
+                            color: "#2e79bbff",
                             borderRadius: "8px",
                           }}
                           onClick={() => handleViewVenue(v)}
@@ -1797,6 +1823,10 @@ export default function VenuesList() {
                 <Typography variant="subtitle1" fontWeight="bold">Elderly Accessibility</Typography>
                 <Typography>{selectedVenue.accessibilityInfo ? "Yes" : "No"}</Typography>
               </Grid>
+              <Grid item xs={12}>
+          <Typography variant="subtitle1" fontWeight="bold">Accessibility Information</Typography>
+          <Typography>{selectedVenue.accessibilityInfo || "-"}</Typography>
+        </Grid>
               <Grid item xs={12}>
                 <Typography variant="subtitle1" fontWeight="bold">Search Tags</Typography>
                 <Typography>
