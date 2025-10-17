@@ -1103,13 +1103,18 @@ import {
   Snackbar,
   InputAdornment,
   Dialog,
-  DialogTitle,DialogContent,DialogActions
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { Visibility, Edit, Delete, Search, Clear } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openToast, setOpenToast] = useState(false);
@@ -1117,69 +1122,118 @@ export default function Vehicles() {
   const [toastSeverity, setToastSeverity] = useState("success");
   const [filters, setFilters] = useState({ brand: "", category: "", type: "", search: "" });
   const [pendingFilters, setPendingFilters] = useState({ brand: "", category: "", type: "", search: "" });
-  const [localSearch, setLocalSearch] = useState('');
+  const [localSearch, setLocalSearch] = useState("");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-const [vehicleToDelete, setVehicleToDelete] = useState(null);
+  const [vehicleToDelete, setVehicleToDelete] = useState(null);
+
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
-  // Fetch vehicles data
-  // Fetch vehicles data
-const fetchVehicles = async () => {
+  const moduleId = localStorage.getItem("moduleId");
+  const providerId = localStorage.getItem("providerId"); // ✅ ensure provider ID is stored in localStorage after login
+
+  // Fetch options for filters
+  const fetchOptions = async () => {
+    try {
+      if (!moduleId) return;
+      const token = localStorage.getItem("token");
+      const [brandsRes, catsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/brands/module/${moduleId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE_URL}/vehicle-categories`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        }),
+      ]);
+
+      setBrands(Array.isArray(brandsRes.data) ? brandsRes.data : []);
+
+      let cats = [];
+      if (catsRes.data.success && Array.isArray(catsRes.data.data)) {
+        cats = catsRes.data.data
+          .filter((cat) => cat.module?._id === moduleId)
+          .map((cat) => ({ _id: cat._id, title: cat.title }));
+      }
+      setCategories(cats);
+    } catch (err) {
+      console.error("Error fetching options:", err);
+    }
+  };
+
+  // ✅ Fetch vehicles for the logged-in provider
+  const fetchVehicles = async () => {
+  setLoading(true);
   try {
-    setLoading(true);
-    const response = await axios.get(`${API_BASE_URL}/vehicles`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      params: { limit: 1000 }
-    });
-    // Corrected fix: Access the nested 'vehicles' array
-const data = Array.isArray(response.data.data)
-  ? response.data.data
-  : response.data.data?.vehicles || response.data.vehicles || response.data.data || response.data || [];
-    setVehicles(Array.isArray(data) ? data : []);
-    console.log("Raw vehicle pricing data:", data.map(v => ({ id: v._id, pricing: v.pricing }))); // Log just pricing for each
-    setError("");
-    console.log("Fetched vehicles array:", data); 
-    console.log("Vehicles length after set:", Array.isArray(data) ? data.length : 0);
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    const providerId = userData?._id;
+
+    if (!token || !providerId) {
+      console.error("Provider ID or token missing");
+      setToastMessage("Provider authentication missing. Please log in again.");
+      setToastSeverity("error");
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Fetch only vehicles added by this provider
+    const res = await axios.get(
+      `${API_BASE_URL}/vehicles/provider/${providerId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.data?.success) {
+      setVehicles(res.data.data || []);
+    } else {
+      console.error("Error fetching vehicles:", res.data.message);
+    }
   } catch (error) {
-    setError(error.response?.data?.message || "Failed to fetch vehicles");
     console.error("Error fetching vehicles:", error);
+    setToastMessage("Failed to load vehicles ❌");
+    setToastSeverity("error");
+    setOpenToast(true);
   } finally {
     setLoading(false);
   }
 };
-  // Initial data load
-  useEffect(() => {
-    fetchVehicles();
-  }, []);
-  // Apply filters
+
+ useEffect(() => {
+  fetchVehicles();
+}, []);
+
   const handleApplyFilters = () => {
-  setFilters({
-    ...filters,
-    brand: pendingFilters.brand,
-    category: pendingFilters.category,
-    type: pendingFilters.type
-  });
-};
-  // Reset filters
+    setFilters({
+      ...filters,
+      brand: pendingFilters.brand,
+      category: pendingFilters.category,
+      type: pendingFilters.type,
+    });
+  };
+
   const handleReset = () => {
     setFilters({ brand: "", category: "", type: "", search: "" });
     setPendingFilters({ brand: "", category: "", type: "", search: "" });
-    setLocalSearch('');
+    setLocalSearch("");
   };
-  // Handle search click
-const handleSearch = () => {
-  setFilters(prev => ({ ...prev, search: localSearch }));
-};
-// Handle clear search
-const handleClear = () => {
-  setLocalSearch('');
-  setFilters(prev => ({ ...prev, search: '' }));
-};
-const confirmDelete = (vehicleId) => {
-  setVehicleToDelete(vehicleId);
-  setOpenDeleteDialog(true);
-};
-  // Export CSV
+
+  const handleSearch = () => {
+    setFilters((prev) => ({ ...prev, search: localSearch }));
+  };
+
+  const handleClear = () => {
+    setLocalSearch("");
+    setFilters((prev) => ({ ...prev, search: "" }));
+  };
+
+  const confirmDelete = (vehicleId) => {
+    setVehicleToDelete(vehicleId);
+    setOpenDeleteDialog(true);
+  };
+
   const handleExport = () => {
     const headers = [
       "Sl,Name,Code,Category,Brand,Type,Total Trip,Hourly,Distance,Daily,New,Active",
@@ -1190,7 +1244,9 @@ const confirmDelete = (vehicleId) => {
           v.brand?.title || ""
         },${v.type || ""},${v.totalTrips || 0},${v.pricing?.hourly || "-"},${
           v.pricing?.distance || "-"
-        },${v.pricing?.perDay || "-"},${v.isNew ? "Yes" : "No"},${v.isActive ? "Active" : "Inactive"}`
+        },${v.pricing?.perDay || "-"},${v.isNew ? "Yes" : "No"},${
+          v.isActive ? "Active" : "Inactive"
+        }`
     );
     const csv = headers.concat(rows).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -1203,91 +1259,97 @@ const confirmDelete = (vehicleId) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  // Handle status toggle
+
   const handleStatusToggle = async (vehicleId, field, currentValue) => {
-    try {
-      const endpoint = field === "isActive" ? (currentValue ? "block" : "reactivate") : "toggle-new-tag";
-      await axios.patch(
-        `${API_BASE_URL}/vehicles/${vehicleId}/${endpoint}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.put(
+      `${API_BASE_URL}/vehicles/${vehicleId}`,
+      { [field]: !currentValue }, // send updated field (like isActive)
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.data.success) {
       setVehicles((prev) =>
-        prev.map((v) => (v._id === vehicleId ? { ...v, [field]: !currentValue } : v))
+        prev.map((v) =>
+          v._id === vehicleId ? { ...v, [field]: !currentValue } : v
+        )
       );
-      setToastMessage(
-        `Vehicle ${field === "isActive" ? "status" : "new tag"} updated successfully`
-      );
+      setToastMessage("Vehicle status updated successfully ");
       setToastSeverity("success");
-      setOpenToast(true);
-    } catch (error) {
-      setToastMessage(error.response?.data?.message || "Failed to update vehicle");
+    } else {
+      setToastMessage("Failed to update vehicle status ");
       setToastSeverity("error");
-      setOpenToast(true);
     }
-  };
-  // Handle vehicle deletion
+  } catch (error) {
+    console.error("Error toggling status:", error);
+    setToastMessage(error.response?.data?.message || "Error updating vehicle");
+    setToastSeverity("error");
+  } finally {
+    setOpenToast(true);
+  }
+};
+
+
   const handleDelete = async () => {
   if (!vehicleToDelete) return;
   try {
+    const token = localStorage.getItem("token");
+
     await axios.delete(`${API_BASE_URL}/vehicles/${vehicleToDelete}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
+
+    // ✅ Remove deleted vehicle from state
     setVehicles((prev) => prev.filter((v) => v._id !== vehicleToDelete));
+
     setToastMessage("Vehicle deleted successfully");
     setToastSeverity("success");
-    setOpenToast(true);
   } catch (error) {
     setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
     setToastSeverity("error");
-    setOpenToast(true);
   } finally {
+    setOpenToast(true);
     setOpenDeleteDialog(false);
     setVehicleToDelete(null);
   }
 };
-  // Handle edit vehicle
+
+
   const handleEdit = async (vehicleId) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/vehicles/${vehicleId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const vehicleData = response.data.data || response.data;
-      console.log("Navigating with vehicle data:", vehicleData); // Debug log
-      navigate(`/vehicle-setup/leads/${vehicleId}`, { state: { vehicle: vehicles.find(v => v._id === vehicleId) } });
+      navigate(`/vehicle-setup/leads/${vehicleId}`, { state: { vehicle: vehicleData } });
     } catch (error) {
       setToastMessage(error.response?.data?.message || "Failed to fetch vehicle data");
       setToastSeverity("error");
       setOpenToast(true);
-      console.error("Error fetching vehicle for edit:", error);
     }
   };
-  // Filtering logic
+
   const filteredVehicles = vehicles.filter((v) => {
   return (
     (filters.brand ? v.brand?._id === filters.brand : true) &&
     (filters.category ? v.category?._id === filters.category : true) &&
     (filters.type ? v.type === filters.type : true) &&
-(filters.search ? (v.name || '').toLowerCase().includes(filters.search.toLowerCase()) : true)  );
+    (filters.search
+      ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase())
+      : true)
+  );
 });
-  // Get unique brands, categories, and types from vehicles
-  const uniqueBrands = [
-    ...new Set(vehicles.map((v) => JSON.stringify({ _id: v.brand?._id, title: v.brand?.title }))),
-  ]
-    .map((str) => JSON.parse(str))
-    .filter((b) => b._id && b.title);
-  const uniqueCategories = [
-    ...new Set(vehicles.map((v) => JSON.stringify({ _id: v.category?._id, title: v.category?.title }))),
-  ]
-    .map((str) => JSON.parse(str))
-    .filter((c) => c._id && c.title);
-  const uniqueTypes = [...new Set(vehicles.map((v) => v.type).filter(Boolean))];
   const handleCloseToast = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+    if (reason === "clickaway") return;
     setOpenToast(false);
   };
+
   if (loading) {
     return (
       <Box
@@ -1304,21 +1366,23 @@ const confirmDelete = (vehicleId) => {
       </Box>
     );
   }
+
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh", p: 2 }}>
-      {/* Navbar */}
       <AppBar position="static" color="default" elevation={0}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, color: "#333" }}>
-            🚗 CityRide Rentals
+            VEHICLES
           </Typography>
         </Toolbar>
       </AppBar>
+
       {error && (
         <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError("")}>
           {error}
         </Alert>
       )}
+
       {/* Filters */}
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" spacing={2} flexWrap="wrap">
@@ -1329,29 +1393,29 @@ const confirmDelete = (vehicleId) => {
               onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })}
             >
               <MenuItem value="">Select vehicle brand</MenuItem>
-              {uniqueBrands.map((brand) => (
+              {brands.map((brand) => (
                 <MenuItem key={brand._id} value={brand._id}>
                   {brand.title}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
           <FormControl sx={{ minWidth: 200 }} size="small">
             <Select
               displayEmpty
               value={pendingFilters.category}
-              onChange={(e) =>
-                setPendingFilters({ ...pendingFilters, category: e.target.value })
-              }
+              onChange={(e) => setPendingFilters({ ...pendingFilters, category: e.target.value })}
             >
               <MenuItem value="">Select vehicle category</MenuItem>
-              {uniqueCategories.map((category) => (
+              {categories.map((category) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.title}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
           <FormControl sx={{ minWidth: 200 }} size="small">
             <Select
               displayEmpty
@@ -1359,80 +1423,73 @@ const confirmDelete = (vehicleId) => {
               onChange={(e) => setPendingFilters({ ...pendingFilters, type: e.target.value })}
             >
               <MenuItem value="">Select vehicle type</MenuItem>
-              {uniqueTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
+              <MenuItem value="sedan">Sedan</MenuItem>
+              <MenuItem value="suv">SUV</MenuItem>
+              <MenuItem value="hatchback">Hatchback</MenuItem>
+              <MenuItem value="coupe">Coupe</MenuItem>
+              <MenuItem value="convertible">Convertible</MenuItem>
+              <MenuItem value="truck">Truck</MenuItem>
+              <MenuItem value="van">Van</MenuItem>
+              <MenuItem value="motorcycle">Motorcycle</MenuItem>
             </Select>
           </FormControl>
-          <Button
-            variant="outlined"
-            sx={{ bgcolor: "#f3f4f6", borderRadius: "8px" }}
-            onClick={handleReset}
-          >
+
+          <Button variant="outlined" sx={{ bgcolor: "#f3f4f6", borderRadius: "8px" }} onClick={handleReset}>
             Reset
           </Button>
-          <Button
-            variant="contained"
-            sx={{ bgcolor: "#2b68bdff", borderRadius: "8px" }}
-            onClick={handleApplyFilters}
-          >
+          <Button variant="contained" sx={{ bgcolor: "#2b68bdff", borderRadius: "8px" }} onClick={handleApplyFilters}>
             Filter
           </Button>
         </Stack>
       </Paper>
+
       {/* Table */}
       <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="wrap"
-          spacing={2}
-          mb={2}
-        >
+        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2} mb={2}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Total Vehicles <Chip label={filteredVehicles.length} color="success" size="small" sx={{ ml: 1 }} />
+            Total Vehicles{" "}
+            <Chip label={filteredVehicles.length} color="success" size="small" sx={{ ml: 1 }} />
           </Typography>
+
           <Stack direction="row" spacing={1} flexWrap="wrap">
-          <TextField
-            size="small"
-            placeholder="Search by vehicle name"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleSearch}
-                    size="small"
-                    disabled={!localSearch}
-                    sx={{ color: localSearch ? 'inherit' : 'action' }}
-                  >
-                    <Search fontSize="small" />
-                  </IconButton>
-                  {localSearch && (
-                    <IconButton onClick={handleClear} size="small">
-                      <Clear fontSize="small" />
+            <TextField
+              size="small"
+              placeholder="Search by vehicle name"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleSearch}
+                      size="small"
+                      disabled={!localSearch}
+                      sx={{ color: localSearch ? "inherit" : "action" }}
+                    >
+                      <Search fontSize="small" />
                     </IconButton>
-                  )}
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button variant="outlined" onClick={handleExport}>
-            Export
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ bgcolor: "#2563eb" }}
-            onClick={() => navigate("/vehicle-setup/leads")}
-          >
-            New Vehicle
-          </Button>
-</Stack>
+                    {localSearch && (
+                      <IconButton onClick={handleClear} size="small">
+                        <Clear fontSize="small" />
+                      </IconButton>
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button variant="outlined" onClick={handleExport}>
+              Export
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ bgcolor: "#2563eb" }}
+              onClick={() => navigate("/vehicle-setup/leads")}
+            >
+              New Vehicle
+            </Button>
+          </Stack>
         </Stack>
+
         <TableContainer>
           <Table>
             <TableHead sx={{ bgcolor: "#f9fafb" }}>
@@ -1449,6 +1506,7 @@ const confirmDelete = (vehicleId) => {
                 <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {filteredVehicles.map((v, i) => (
                 <TableRow key={v._id}>
@@ -1457,26 +1515,28 @@ const confirmDelete = (vehicleId) => {
                     <Typography variant="body2" sx={{ fontWeight: 600, color: "#2563eb" }}>
                       {v.name || "N/A"}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      VIN: {v.vinNumber || "N/A"}
-                    </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       License: {v.licensePlateNumber || "N/A"}
                     </Typography>
                   </TableCell>
-                  <TableCell>{v.category?.title || "N/A"}</TableCell>
+
+                  {/* ✅ category fix */}
+                  <TableCell>{v.category?.title || v.categoryName || "N/A"}</TableCell>
+
                   <TableCell>{v.brand?.title || "N/A"}</TableCell>
                   <TableCell>{v.type || "N/A"}</TableCell>
                   <TableCell>{v.totalTrips || 0}</TableCell>
+
+                  {/* ✅ ₹ price fix */}
                   <TableCell>
                     {v.pricing?.hourly && (
-                      <Typography variant="body2">Hourly: ${v.pricing.hourly}</Typography>
+                      <Typography variant="body2">Hourly: ₹{v.pricing.hourly}</Typography>
                     )}
                     {v.pricing?.distance && (
-                      <Typography variant="body2">Distance: ${v.pricing.distance}/km</Typography>
+                      <Typography variant="body2">Distance: ₹{v.pricing.distance}/km</Typography>
                     )}
                     {v.pricing?.perDay && (
-                      <Typography variant="body2">Daily: ${v.pricing.perDay}</Typography>
+                      <Typography variant="body2">Daily: ₹{v.pricing.perDay}</Typography>
                     )}
                     {!v.pricing?.hourly && !v.pricing?.distance && !v.pricing?.perDay && (
                       <Typography variant="body2" color="text.secondary">
@@ -1489,6 +1549,7 @@ const confirmDelete = (vehicleId) => {
                       </Typography>
                     )}
                   </TableCell>
+
                   <TableCell>
                     <Typography variant="body2">
                       Engine: {v.engineCapacity || "N/A"}cc, {v.enginePower || "N/A"}hp
@@ -1500,6 +1561,7 @@ const confirmDelete = (vehicleId) => {
                     </Typography>
                     <Typography variant="body2">A/C: {v.airCondition ? "Yes" : "No"}</Typography>
                   </TableCell>
+
                   <TableCell>
                     <Switch
                       checked={v.isActive !== false}
@@ -1507,6 +1569,7 @@ const confirmDelete = (vehicleId) => {
                     />
                     {v.isNew && <Chip label="New" color="primary" size="small" />}
                   </TableCell>
+
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <IconButton
@@ -1526,13 +1589,15 @@ const confirmDelete = (vehicleId) => {
                       <IconButton
                         size="small"
                         sx={{ border: "1px solid #d1d5db", color: "#dc2626", borderRadius: "8px" }}
-onClick={() => confirmDelete(v._id)}                       >
+                        onClick={() => confirmDelete(v._id)}
+                      >
                         <Delete fontSize="small" />
                       </IconButton>
                     </Stack>
                   </TableCell>
                 </TableRow>
               ))}
+
               {filteredVehicles.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
@@ -1546,29 +1611,23 @@ onClick={() => confirmDelete(v._id)}                       >
           </Table>
         </TableContainer>
       </Paper>
-      {/* Toast Message */}
-      {/* Confirm Delete Dialog */}
-<Dialog
-  open={openDeleteDialog}
-  onClose={() => setOpenDeleteDialog(false)}
->
-  <DialogTitle>Confirm Deletion</DialogTitle>
-  <DialogContent>
-    <Typography>
-      Are you sure you want to delete this vehicle? This action cannot be undone.
-    </Typography>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-    <Button
-      onClick={handleDelete}
-      variant="contained"
-      color="error"
-    >
-      Delete
-    </Button>
-  </DialogActions>
-</Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this vehicle? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+          <Button onClick={handleDelete} variant="contained" color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={openToast}
         autoHideDuration={3000}

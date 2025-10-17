@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -12,7 +12,13 @@ import {
   Divider,
   Tab,
   Tabs,
-  Paper
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -21,6 +27,8 @@ import {
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 // Styled components for custom styling
 const StyledTabs = styled(Tabs)(({ theme }) => ({
@@ -63,19 +71,136 @@ const ThumbnailImage = styled('img')(({ theme, active }) => ({
 }));
 
 const CarListingView = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const [newTagEnabled, setNewTagEnabled] = useState(true);
-  const [statusEnabled, setStatusEnabled] = useState(true);
+  const [newTagEnabled, setNewTagEnabled] = useState(false);
+  const [statusEnabled, setStatusEnabled] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [vehicle, setVehicle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      if (!id) {
+        setError("No vehicle ID provided");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        console.log('Fetching vehicle with ID:', id); // Debug log
+        console.log('Token exists?', !!localStorage.getItem('token')); // Debug log
+        const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        console.log('API Response:', response.data); // Debug log
+        const vehicleData = response.data.data || response.data;
+        setVehicle(vehicleData);
+        setNewTagEnabled(vehicleData.isNew || false);
+        setStatusEnabled(vehicleData.isActive !== false);
+        setError("");
+      } catch (error) {
+        console.error('Fetch error details:', error.response?.status, error.response?.data); // Debug log
+        setError(error.response?.data?.message || "Failed to fetch vehicle details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicle();
+  }, [id]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const images = [
-    'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-  ];
+  const handleStatusToggle = async (field, currentValue) => {
+    try {
+      const endpoint = field === "isActive" ? (currentValue ? "block" : "reactivate") : "toggle-new-tag";
+      await axios.patch(
+        `${API_BASE_URL}/vehicles/${id}/${endpoint}`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      if (field === "isActive") {
+        setStatusEnabled(!currentValue);
+        setVehicle(prev => prev ? { ...prev, isActive: !currentValue } : prev);
+      } else {
+        setNewTagEnabled(!currentValue);
+        setVehicle(prev => prev ? { ...prev, isNew: !currentValue } : prev);
+      }
+    } catch (error) {
+      console.error("Failed to update vehicle:", error);
+      setError(error.response?.data?.message || "Failed to update vehicle status");
+    }
+  };
+
+  const confirmDelete = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${API_BASE_URL}/vehicles/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      navigate("/vehicle-setup/leads");
+    } catch (error) {
+      console.error("Failed to delete vehicle:", error);
+      setError(error.response?.data?.message || "Failed to delete vehicle");
+    } finally {
+      setOpenDeleteDialog(false);
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/vehicle-setup/leads/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        maxWidth: 1400, 
+        mx: 'auto', 
+        p: 3, 
+        bgcolor: '#f8f9fa', 
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error || !vehicle) {
+    return (
+      <Box sx={{ 
+        maxWidth: 1400, 
+        mx: 'auto', 
+        p: 3, 
+        bgcolor: '#f8f9fa', 
+        minHeight: '100vh'
+      }}>
+        <Alert severity="error" sx={{ maxWidth: 600, mx: 'auto' }}>
+          {error || "Vehicle not found"}
+        </Alert>
+      </Box>
+    );
+  }
+
+  const images = vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
+    ? vehicle.images 
+    : [
+        'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+      ];
 
   return (
     <Box sx={{ 
@@ -101,7 +226,7 @@ const CarListingView = () => {
             <CarIcon />
           </Avatar>
           <Typography variant="h4" fontWeight="600" color="#2c3e50" sx={{ fontSize: '28px' }}>
-            Audi A6
+            {vehicle.name || "N/A"}
           </Typography>
         </Box>
         
@@ -109,6 +234,7 @@ const CarListingView = () => {
           <Button
             variant="outlined"
             startIcon={<DeleteIcon />}
+            onClick={confirmDelete}
             sx={{
               color: '#f48fb1',
               borderColor: '#f48fb1',
@@ -132,7 +258,7 @@ const CarListingView = () => {
             </Typography>
             <StyledSwitch
               checked={newTagEnabled}
-              onChange={(e) => setNewTagEnabled(e.target.checked)}
+              onChange={(e) => handleStatusToggle("isNew", newTagEnabled)}
               size="small"
             />
           </Box>
@@ -143,7 +269,7 @@ const CarListingView = () => {
             </Typography>
             <StyledSwitch
               checked={statusEnabled}
-              onChange={(e) => setStatusEnabled(e.target.checked)}
+              onChange={(e) => handleStatusToggle("isActive", statusEnabled)}
               size="small"
             />
           </Box>
@@ -151,6 +277,7 @@ const CarListingView = () => {
           <Button
             variant="contained"
             startIcon={<EditIcon />}
+            onClick={handleEdit}
             sx={{
               bgcolor: '#00695c',
               textTransform: 'none',
@@ -212,8 +339,8 @@ const CarListingView = () => {
               <Box>
                 <Box
                   component="img"
-                  src={images[activeImage]}
-                  alt="Audi A6"
+                  src={images[activeImage] || images[0]}
+                  alt={vehicle.name || "Vehicle"}
                   sx={{
                     width: '100%',
                     height: 280,
@@ -223,11 +350,11 @@ const CarListingView = () => {
                   }}
                 />
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  {images.map((img, index) => (
+                  {images.slice(0, 4).map((img, index) => ( // Limit to 4 thumbnails for layout
                     <ThumbnailImage
                       key={index}
                       src={img}
-                      alt={`Audi A6 view ${index + 1}`}
+                      alt={`${vehicle.name || "Vehicle"} view ${index + 1}`}
                       active={activeImage === index}
                       onClick={() => setActiveImage(index)}
                     />
@@ -239,7 +366,7 @@ const CarListingView = () => {
             {/* Right Side - Details */}
             <Grid item xs={12} md={7}>
               <Typography variant="h4" fontWeight="600" mb={2} color="#2c3e50" sx={{ fontSize: '32px' }}>
-                Audi A6
+                {vehicle.name || "N/A"}
               </Typography>
               
               <Typography variant="h6" color="#666" mb={1} fontWeight="600" sx={{ fontSize: '16px' }}>
@@ -247,7 +374,7 @@ const CarListingView = () => {
               </Typography>
               
               <Typography variant="body1" color="#666" mb={1} lineHeight={1.6} sx={{ fontSize: '14px' }}>
-                The Audi A6 Series is a luxury sports sedan known for its dynamic performance, premium craftsmanship, and cutting-edge technology.
+                The {vehicle.brand?.title || "Vehicle"} {vehicle.name || "Series"} is a luxury sports sedan known for its dynamic performance, premium craftsmanship, and cutting-edge technology.
               </Typography>
               
               <Typography variant="body1" color="#666" mb={3} lineHeight={1.6} sx={{ fontSize: '14px' }}>
@@ -288,9 +415,9 @@ const CarListingView = () => {
               
               <Box sx={{ mb: 3 }}>
                 {[
-                  { label: 'Brand', value: 'Audi' },
-                  { label: 'Category', value: 'Luxury Sedan' },
-                  { label: 'Type', value: 'family' }
+                  { label: 'Brand', value: vehicle.brand?.title || 'N/A' },
+                  { label: 'Category', value: vehicle.category?.title || 'N/A' },
+                  { label: 'Type', value: vehicle.type || 'N/A' }
                 ].map((item, index) => (
                   <Box key={index} sx={{ 
                     display: 'flex', 
@@ -329,8 +456,10 @@ const CarListingView = () => {
               
               <Box>
                 {[
-                  { label: 'Hourly', value: '$ 5.00' },
-                  { label: 'Discount', value: '5 %' }
+                  ...(vehicle.pricing?.hourly ? [{ label: 'Hourly', value: `$${vehicle.pricing.hourly}` }] : []),
+                  ...(vehicle.pricing?.distance ? [{ label: 'Distance', value: `$${vehicle.pricing.distance}/km` }] : []),
+                  ...(vehicle.pricing?.perDay ? [{ label: 'Daily', value: `$${vehicle.pricing.perDay}` }] : []),
+                  ...(vehicle.discount ? [{ label: 'Discount', value: `${vehicle.discount} %` }] : [])
                 ].map((item, index) => (
                   <Box key={index} sx={{ 
                     display: 'flex', 
@@ -342,6 +471,9 @@ const CarListingView = () => {
                     <Typography fontWeight="500" sx={{ fontSize: '14px' }}>: {item.value}</Typography>
                   </Box>
                 ))}
+                {(!vehicle.pricing?.hourly && !vehicle.pricing?.distance && !vehicle.pricing?.perDay) && (
+                  <Typography color="text.secondary" sx={{ fontSize: '14px' }}>No pricing set</Typography>
+                )}
               </Box>
             </Grid>
 
@@ -357,9 +489,9 @@ const CarListingView = () => {
               <Grid container spacing={0}>
                 <Grid item xs={6}>
                   {[
-                    { label: 'Air Condition', value: 'Yes' },
-                    { label: 'Transmission', value: 'Automatic' },
-                    { label: 'Fuel Type', value: 'octan' }
+                    { label: 'Air Condition', value: vehicle.airCondition ? 'Yes' : 'No' },
+                    { label: 'Transmission', value: vehicle.transmissionType || 'N/A' },
+                    { label: 'Fuel Type', value: vehicle.fuelType || 'N/A' }
                   ].map((item, index) => (
                     <Box key={index} sx={{ 
                       display: 'flex', 
@@ -379,9 +511,9 @@ const CarListingView = () => {
                 </Grid>
                 <Grid item xs={6}>
                   {[
-                    { label: 'Engine Capacity', value: '6576' },
-                    { label: 'Seating Capacity', value: '4' },
-                    { label: 'Engine Power', value: '500' }
+                    { label: 'Engine Capacity', value: `${vehicle.engineCapacity || 'N/A'}cc` },
+                    { label: 'Seating Capacity', value: vehicle.seatingCapacity || 'N/A' },
+                    { label: 'Engine Power', value: `${vehicle.enginePower || 'N/A'}hp` }
                   ].map((item, index) => (
                     <Box key={index} sx={{ 
                       display: 'flex', 
@@ -404,6 +536,29 @@ const CarListingView = () => {
           </Grid>
         </CardContent>
       </Card>
+
+      {/* Confirm Delete Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this vehicle? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleDelete}
+            variant="contained"
+            color="error"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

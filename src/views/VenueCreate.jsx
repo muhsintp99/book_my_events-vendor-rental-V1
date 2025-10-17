@@ -2251,45 +2251,87 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
 
  {/* Radio Buttons for Pricing Type */}
  <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+    <Button
+    variant={formData.venueType === 'per_person' ? 'contained' : 'outlined'}
+    onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_person' }))}
+    startIcon={
+      <Radio
+        checked={formData.venueType === 'per_person'}
+        sx={{
+          color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
+          '&.Mui-checked': { color: formData.venueType === 'per_person' ? '#fff' : '#E15B65' }
+        }}
+      />
+    }
+    sx={{
+      borderRadius: 2,
+      textTransform: 'none',
+      px: 3,
+      color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
+      backgroundColor: formData.venueType === 'per_person' ? '#E15B65' : 'transparent',
+      borderColor: '#E15B65',
+      '&:hover': {
+        backgroundColor: formData.venueType === 'per_person' ? '#c94a57' : 'rgba(225,91,101,0.08)',
+        borderColor: '#E15B65'
+      }
+    }}
+  >
+    Per Person
+  </Button>
    <Button
-     variant={formData.venueType === 'per_person' ? 'contained' : 'outlined'}
-     onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_person' }))}
-     startIcon={<Radio checked={formData.venueType === 'per_person'} />}
-     sx={{
-       borderRadius: 2,
-       textTransform: 'none',
-       px: 3,
-       color:'#E15B65'
-     }}
-   >
-     Per Person
-   </Button>
-   <Button
-     variant={formData.venueType === 'per_hour' ? 'contained' : 'outlined'}
-     onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_hour' }))}
-     startIcon={<Radio checked={formData.venueType === 'per_hour'} />}
-     sx={{
-       borderRadius: 2,
-       textTransform: 'none',
-       px: 3,
-       color:'#E15B65'
-     }}
-   >
-     Per Hour
-   </Button>
-   <Button
-     variant={formData.venueType === 'per_function' ? 'contained' : 'outlined'}
-     onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_function' }))}
-     startIcon={<Radio checked={formData.venueType === 'per_function'} />}
-     sx={{
-       borderRadius: 2,
-       textTransform: 'none',
-       px: 3,
-       color:'#E15B65'
-     }}
-   >
-     Per Function
-   </Button>
+    variant={formData.venueType === 'per_hour' ? 'contained' : 'outlined'}
+    onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_hour' }))}
+    startIcon={
+      <Radio
+        checked={formData.venueType === 'per_hour'}
+        sx={{
+          color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65',
+          '&.Mui-checked': { color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65' }
+        }}
+      />
+    }
+    sx={{
+      borderRadius: 2,
+      textTransform: 'none',
+      px: 3,
+      color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65',
+      backgroundColor: formData.venueType === 'per_hour' ? '#E15B65' : 'transparent',
+      borderColor: '#E15B65',
+      '&:hover': {
+        backgroundColor: formData.venueType === 'per_hour' ? '#c94a57' : 'rgba(225,91,101,0.08)',
+        borderColor: '#E15B65'
+      }
+    }}
+  >
+    Per Hour
+  </Button>
+  <Button
+  variant={formData.venueType === 'per_function' ? 'contained' : 'outlined'}
+  onClick={() => setFormData((prev) => ({ ...prev, venueType: 'per_function' }))}
+  startIcon={
+    <Radio
+      checked={formData.venueType === 'per_function'}
+      sx={{
+        color: formData.venueType === 'per_function' ? '#fff' : '#E15B65',
+        '&.Mui-checked': { color: formData.venueType === 'per_function' ? '#fff' : '#E15B65' }
+      }}
+    />
+  }
+  sx={{
+    borderRadius: 2,
+    textTransform: 'none',
+    px: 3,
+    color: formData.venueType === 'per_function' ? '#fff' : '#E15B65',
+    backgroundColor: formData.venueType === 'per_function' ? '#E15B65' : 'transparent',
+    borderColor: '#E15B65',
+    '&:hover': {
+      backgroundColor: formData.venueType === 'per_function' ? '#c94a57' : 'rgba(225,91,101,0.08)',
+      borderColor: '#E15B65'
+    }
+  }}
+>
+  Per Function
+</Button>
  </Box>
  {/* Table */}
  {formData.venueType && (

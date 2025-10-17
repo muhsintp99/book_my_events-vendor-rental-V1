@@ -1430,16 +1430,16 @@ export default function VenuesList() {
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" spacing={2} flexWrap="wrap" >
           <FormControl sx={{ minWidth: 200}} size="small" >
-            <Select 
-              displayEmpty
-              value={pendingFilters.seatingArrangement}
-              onChange={(e) =>
-                setPendingFilters({
-                  ...pendingFilters,
-                  seatingArrangement: e.target.value,
-                })
-              }
-              sx={{
+  <Select 
+    displayEmpty
+    value={pendingFilters.seatingArrangement}
+    onChange={(e) =>
+      setPendingFilters({
+        ...pendingFilters,
+        seatingArrangement: e.target.value,
+      })
+    }
+    sx={{
       '& .MuiOutlinedInput-notchedOutline': {
         borderColor: '#E15B65',
       },
@@ -1447,17 +1447,13 @@ export default function VenuesList() {
         borderColor: '#E15B65',
       },
     }}
-            >
-              <MenuItem value="" >Select seating arrangement</MenuItem>
-              {[...new Set(venues.map((v) => v.seatingArrangement))]
-                .filter(Boolean)
-                .map((s) => (
-                  <MenuItem key={s} value={s}>
-                    {s}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
+  >
+    <MenuItem value="" >Select seating arrangement</MenuItem>
+    <MenuItem value="Amphitheater">Amphitheater</MenuItem>
+    <MenuItem value="Balcony auditorium">Balcony auditorium</MenuItem>
+    <MenuItem value="Flat floor auditorium">Flat floor auditorium</MenuItem>
+  </Select>
+</FormControl>
           <Button
             variant="outlined" color="#E15B65"
             sx={{ color:'#E15B65',borderRadius: "8px" }}
