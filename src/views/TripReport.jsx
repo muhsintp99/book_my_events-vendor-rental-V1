@@ -221,16 +221,17 @@ const TripReport = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.totalFare.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.discount.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.couponDiscount.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.referralDiscount.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.totalDiscounted.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.tax.toFixed(2)}</TableCell>
-                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>${trip.additionalCharge.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.totalFare.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.discount.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.couponDiscount.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.couponDiscount.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.referralDiscount.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.totalDiscounted.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.tax.toFixed(2)}</TableCell>
+                  <TableCell sx={{ fontSize: '12px', padding: '8px' }}>₹{trip.additionalCharge.toFixed(2)}</TableCell>
                   <TableCell sx={{ fontSize: '12px', padding: '8px' }}>
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      ${trip.totalTripAmount.toFixed(2)}
+                      ₹{trip.totalTripAmount.toFixed(2)}
                     </Typography>
                     <Chip
                       label={trip.totalAmountReceivedBy === 'Not Received Yet' ? 'Unpaid' : 'Paid'}

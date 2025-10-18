@@ -17,7 +17,7 @@ import {
 
 // Payment methods with logo URLs
 const paymentMethods = [
-  { label: "Wallet", value: "wallet", extra: "$160.32", logo: "https://img.icons8.com/ios-filled/50/000000/wallet-app.png" },
+  { label: "Wallet", value: "wallet", extra: "160.32", logo: "https://img.icons8.com/ios-filled/50/000000/wallet-app.png" },
   { label: "Paypal", value: "paypal", logo: "https://www.logo.wine/a/logo/PayPal/PayPal-Logo.wine.svg" },
   { label: "Bkash", value: "bkash", logo: "/images/bkash.png" },
   { label: "Stripe", value: "stripe", logo: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" },
@@ -95,7 +95,7 @@ const ShiftPlan = ({ open: controlledOpen, onClose }) => {
             }}
           >
             <Typography variant="h3">Regular</Typography>
-            <Typography variant="h4" fontWeight="bold">$ 500.00</Typography>
+            <Typography variant="h4" fontWeight="bold">₹500.00</Typography>
             <Typography variant="body2">365 Days</Typography>
           </Card>
         </Box>

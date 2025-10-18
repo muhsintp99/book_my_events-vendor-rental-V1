@@ -139,12 +139,12 @@ const VatReport = () => {
         </StyledCard>
         <StyledCard sx={{ backgroundColor: '#E3F2FD' }}>
           <img src="https://img.icons8.com/ios-filled/50/000000/money.png" alt="Amount Icon" />
-          <Typography variant="h6">$0.00</Typography>
+          <Typography variant="h6">₹0.00</Typography>
           <Typography variant="body2">Total Trip Amount</Typography>
         </StyledCard>
         <StyledCard sx={{ backgroundColor: '#F1F8E9' }}>
           <img src="https://img.icons8.com/ios-filled/50/000000/tax.png" alt="Tax Icon" />
-          <Typography variant="h6">$0.00</Typography>
+          <Typography variant="h6">₹0.00</Typography>
           <Typography variant="body2">Total Tax Amount</Typography>
         </StyledCard>
       </Box>

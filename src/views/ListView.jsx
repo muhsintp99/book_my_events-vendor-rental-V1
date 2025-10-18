@@ -5,30 +5,30 @@ import {
   CardContent,
   Typography,
   Button,
-  Switch,
   Grid,
   Avatar,
   IconButton,
   Divider,
   Tab,
   Tabs,
-  Paper,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   CircularProgress,
-  Alert
+  Alert,
+  Snackbar
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   DirectionsCar as CarIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from 'axios';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 // Styled components for custom styling
 const StyledTabs = styled(Tabs)(({ theme }) => ({
@@ -44,15 +44,6 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
       color: '#26a69a',
       fontWeight: 500,
     },
-  },
-}));
-
-const StyledSwitch = styled(Switch)(({ theme }) => ({
-  '& .MuiSwitch-switchBase.Mui-checked': {
-    color: '#26a69a',
-  },
-  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-    backgroundColor: '#26a69a',
   },
 }));
 
@@ -73,106 +64,131 @@ const ThumbnailImage = styled('img')(({ theme, active }) => ({
 const CarListingView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+  
   const [activeTab, setActiveTab] = useState(0);
-  const [newTagEnabled, setNewTagEnabled] = useState(false);
-  const [statusEnabled, setStatusEnabled] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
+  const [openToast, setOpenToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState('success');
+  // ✅ NEW: Delete Dialog
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
-
   useEffect(() => {
-    const fetchVehicle = async () => {
-      if (!id) {
-        setError("No vehicle ID provided");
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        console.log('Fetching vehicle with ID:', id); // Debug log
-        console.log('Token exists?', !!localStorage.getItem('token')); // Debug log
-        const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        console.log('API Response:', response.data); // Debug log
-        const vehicleData = response.data.data || response.data;
-        setVehicle(vehicleData);
-        setNewTagEnabled(vehicleData.isNew || false);
-        setStatusEnabled(vehicleData.isActive !== false);
-        setError("");
-      } catch (error) {
-        console.error('Fetch error details:', error.response?.status, error.response?.data); // Debug log
-        setError(error.response?.data?.message || "Failed to fetch vehicle details");
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Check if vehicle data is passed via location state
+    if (location.state?.vehicle) {
+      const vehicleData = location.state.vehicle;
+      setVehicle(vehicleData);
+      setLoading(false);
+    } else if (id && id !== 'undefined') {
+      fetchVehicle();
+    } else {
+      setError('No vehicle ID provided');
+      setLoading(false);
+    }
+  }, [id, location.state]);
 
-    fetchVehicle();
-  }, [id]);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
-
-  const handleStatusToggle = async (field, currentValue) => {
+  const fetchVehicle = async () => {
+    setLoading(true);
     try {
-      const endpoint = field === "isActive" ? (currentValue ? "block" : "reactivate") : "toggle-new-tag";
-      await axios.patch(
-        `${API_BASE_URL}/vehicles/${id}/${endpoint}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      if (field === "isActive") {
-        setStatusEnabled(!currentValue);
-        setVehicle(prev => prev ? { ...prev, isActive: !currentValue } : prev);
-      } else {
-        setNewTagEnabled(!currentValue);
-        setVehicle(prev => prev ? { ...prev, isNew: !currentValue } : prev);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
       }
+
+      console.log('Fetching vehicle with ID:', id);
+      
+      const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const vehicleData = response.data.data || response.data;
+      console.log('Vehicle data received:', vehicleData);
+      
+      setVehicle(vehicleData);
+      setError('');
     } catch (error) {
-      console.error("Failed to update vehicle:", error);
-      setError(error.response?.data?.message || "Failed to update vehicle status");
+      console.error('Error fetching vehicle:', error);
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load vehicle data';
+      setError(errorMessage);
+      setToastMessage(errorMessage);
+      setToastSeverity('error');
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ✅ NEW: Confirm Delete Function
   const confirmDelete = () => {
     setOpenDeleteDialog(true);
   };
 
   const handleDelete = async () => {
+    if (!vehicle?._id) {
+      setToastMessage('Vehicle ID not found');
+      setToastSeverity('error');
+      setOpenToast(true);
+      return;
+    }
+
     try {
-      await axios.delete(`${API_BASE_URL}/vehicles/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/vehicles/${vehicle._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      navigate("/vehicle-setup/leads");
+      setToastMessage('Vehicle deleted successfully');
+      setToastSeverity('success');
+      setOpenToast(true);
+      setTimeout(() => navigate('/vehicle-setup/lists'), 1500);
     } catch (error) {
-      console.error("Failed to delete vehicle:", error);
-      setError(error.response?.data?.message || "Failed to delete vehicle");
+      console.error('Error deleting vehicle:', error);
+      setToastMessage(error.response?.data?.message || 'Failed to delete vehicle');
+      setToastSeverity('error');
+      setOpenToast(true);
     } finally {
-      setOpenDeleteDialog(false);
+      setOpenDeleteDialog(false); // ✅ Close dialog
     }
   };
 
   const handleEdit = () => {
-    navigate(`/vehicle-setup/leads/${id}`);
+    if (!vehicle?._id) {
+      setToastMessage('Vehicle ID not found');
+      setToastSeverity('error');
+      setOpenToast(true);
+      return;
+    }
+    navigate(`/vehicle-setup/leads/${vehicle._id}`, { state: { vehicle } });
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const handleCloseToast = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setOpenToast(false);
+  };
+
+  const handleBack = () => {
+    navigate('/vehicle-setup/lists');
   };
 
   if (loading) {
     return (
       <Box sx={{ 
-        maxWidth: 1400, 
-        mx: 'auto', 
-        p: 3, 
-        bgcolor: '#f8f9fa', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
         minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
+        bgcolor: '#f8f9fa'
       }}>
         <CircularProgress />
       </Box>
@@ -186,36 +202,61 @@ const CarListingView = () => {
         mx: 'auto', 
         p: 3, 
         bgcolor: '#f8f9fa', 
-        minHeight: '100vh'
+        minHeight: '100vh' 
       }}>
-        <Alert severity="error" sx={{ maxWidth: 600, mx: 'auto' }}>
-          {error || "Vehicle not found"}
+        <Box sx={{ mb: 2 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBack}
+            sx={{ mb: 2 }}
+          >
+            Back to Vehicles
+          </Button>
+        </Box>
+        <Alert severity="error">
+          {error || 'Vehicle not found'}
+          <br />
+          <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+            Vehicle ID: {id || 'Not provided'}
+          </Typography>
         </Alert>
       </Box>
     );
   }
 
-  const images = vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
+  const images = vehicle.images && vehicle.images.length > 0 
     ? vehicle.images 
-    : [
-        'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-      ];
+    : vehicle.thumbnail 
+    ? [vehicle.thumbnail] 
+    : ['https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'];
 
   return (
     <Box sx={{ 
-      maxWidth: 1400, 
+      width: '100%', 
       mx: 'auto', 
       p: 3, 
       bgcolor: '#f8f9fa', 
       minHeight: '100vh' 
     }}>
-      {/* Header Section */}
+      {/* Back Button */}
+      <Box sx={{ mb: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={handleBack}
+          sx={{ color: '#666' }}
+        >
+          Back to Vehicles
+        </Button>
+      </Box>
+
+      {/* Header Section - ✅ TOGGLES REMOVED */}
       <Box sx={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
-        mb: 2 
+        mb: 2,
+        flexWrap: 'wrap',
+        gap: 2
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ 
@@ -226,15 +267,15 @@ const CarListingView = () => {
             <CarIcon />
           </Avatar>
           <Typography variant="h4" fontWeight="600" color="#2c3e50" sx={{ fontSize: '28px' }}>
-            {vehicle.name || "N/A"}
+            {vehicle.name || 'Vehicle Details'}
           </Typography>
         </Box>
         
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             startIcon={<DeleteIcon />}
-            onClick={confirmDelete}
+            onClick={confirmDelete}  
             sx={{
               color: '#f48fb1',
               borderColor: '#f48fb1',
@@ -251,28 +292,6 @@ const CarListingView = () => {
           >
             Delete
           </Button>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="#666" sx={{ fontSize: '14px' }}>
-              New Tag
-            </Typography>
-            <StyledSwitch
-              checked={newTagEnabled}
-              onChange={(e) => handleStatusToggle("isNew", newTagEnabled)}
-              size="small"
-            />
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="#666" sx={{ fontSize: '14px' }}>
-              Status
-            </Typography>
-            <StyledSwitch
-              checked={statusEnabled}
-              onChange={(e) => handleStatusToggle("isActive", statusEnabled)}
-              size="small"
-            />
-          </Box>
           
           <Button
             variant="contained"
@@ -294,53 +313,30 @@ const CarListingView = () => {
         </Box>
       </Box>
 
-      {/* Main Content Card */}
       <Card sx={{ 
         borderRadius: 2, 
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         bgcolor: '#ffffff'
       }}>
         <CardContent sx={{ p: 4 }}>
-          {/* Language Tabs and Rating Section */}
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            mb: 3 
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2
           }}>
-            <StyledTabs
-              value={activeTab}
-              onChange={handleTabChange}
-            >
-              <Tab label="Default" />
-              <Tab label="English(EN)" />
-              <Tab label="Arabic - العربية(AR)" />
-            </StyledTabs>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="h6" color="#ff9800" fontWeight="600" sx={{ fontSize: '18px' }}>
-                  0.0
-                </Typography>
-                <Typography variant="body2" color="#666" sx={{ fontSize: '14px' }}>/5</Typography>
-                <Typography variant="body2" color="#666" sx={{ fontSize: '14px', ml: 1 }}>
-                  0 Reviews
-                </Typography>
-              </Box>
-              <IconButton sx={{ color: '#666', p: 1 }}>
-                <SettingsIcon fontSize="small" />
-              </IconButton>
-            </Box>
           </Box>
 
           <Grid container spacing={4}>
-            {/* Left Side - Images */}
             <Grid item xs={12} md={5}>
               <Box>
                 <Box
                   component="img"
-                  src={images[activeImage] || images[0]}
-                  alt={vehicle.name || "Vehicle"}
+                  src={images[activeImage]}
+                  alt={vehicle.name || 'Vehicle'}
                   sx={{
                     width: '100%',
                     height: 280,
@@ -349,12 +345,12 @@ const CarListingView = () => {
                     mb: 2
                   }}
                 />
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  {images.slice(0, 4).map((img, index) => ( // Limit to 4 thumbnails for layout
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {images.map((img, index) => (
                     <ThumbnailImage
                       key={index}
                       src={img}
-                      alt={`${vehicle.name || "Vehicle"} view ${index + 1}`}
+                      alt={`${vehicle.name} view ${index + 1}`}
                       active={activeImage === index}
                       onClick={() => setActiveImage(index)}
                     />
@@ -363,51 +359,53 @@ const CarListingView = () => {
               </Box>
             </Grid>
 
-            {/* Right Side - Details */}
             <Grid item xs={12} md={7}>
               <Typography variant="h4" fontWeight="600" mb={2} color="#2c3e50" sx={{ fontSize: '32px' }}>
-                {vehicle.name || "N/A"}
+                {vehicle.name || 'Vehicle Name'}
               </Typography>
               
               <Typography variant="h6" color="#666" mb={1} fontWeight="600" sx={{ fontSize: '16px' }}>
                 Description:
               </Typography>
               
-              <Typography variant="body1" color="#666" mb={1} lineHeight={1.6} sx={{ fontSize: '14px' }}>
-                The {vehicle.brand?.title || "Vehicle"} {vehicle.name || "Series"} is a luxury sports sedan known for its dynamic performance, premium craftsmanship, and cutting-edge technology.
-              </Typography>
-              
               <Typography variant="body1" color="#666" mb={3} lineHeight={1.6} sx={{ fontSize: '14px' }}>
-                Key Features: 1. Engine & Performance 2. Transmission 3. Interior 4. Technology 5. Safety & Assistance 6. Driving Experience{' '}
-                <Typography 
-                  component="span" 
-                  sx={{ 
-                    color: '#26a69a', 
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    '&:hover': {
-                      textDecoration: 'underline'
-                    }
-                  }}
-                >
-                  See more
-                </Typography>
+                {vehicle.description || 'No description available.'}
               </Typography>
+
+              {vehicle.searchTags && vehicle.searchTags.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6" color="#666" mb={1} fontWeight="600" sx={{ fontSize: '16px' }}>
+                    Search Tags:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {vehicle.searchTags.map((tag, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          px: 2,
+                          py: 0.5,
+                          bgcolor: '#e0f2f1',
+                          color: '#00695c',
+                          borderRadius: 1,
+                          fontSize: '12px',
+                          fontWeight: 500
+                        }}
+                      >
+                        {tag}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Grid>
           </Grid>
 
           <Divider sx={{ my: 4, bgcolor: '#eee' }} />
 
-          {/* Bottom Information Grid */}
           <Grid container spacing={4}>
-            {/* General Info */}
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CarIcon sx={{ 
-                  fontSize: 40, 
-                  color: '#f44336', 
-                  mb: 1 
-                }} />
+                <CarIcon sx={{ fontSize: 40, color: '#f44336', mb: 1 }} />
                 <Typography variant="h6" fontWeight="600" mb={3} sx={{ fontSize: '16px', textAlign: 'center' }}>
                   General Info
                 </Typography>
@@ -416,73 +414,61 @@ const CarListingView = () => {
               <Box sx={{ mb: 3 }}>
                 {[
                   { label: 'Brand', value: vehicle.brand?.title || 'N/A' },
+                  { label: 'Model', value: vehicle.model || 'N/A' },
                   { label: 'Category', value: vehicle.category?.title || 'N/A' },
-                  { label: 'Type', value: vehicle.type || 'N/A' }
+                  { label: 'Type', value: vehicle.type || 'N/A' },
+                  { label: 'License Plate', value: vehicle.licensePlateNumber || 'N/A' }
                 ].map((item, index) => (
-                  <Box key={index} sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    mb: 1.5,
-                    alignItems: 'center'
-                  }}>
+                  <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}>
                     <Typography color="#666" sx={{ fontSize: '14px' }}>{item.label}</Typography>
                     <Typography fontWeight="500" sx={{ fontSize: '14px' }}>: {item.value}</Typography>
                   </Box>
                 ))}
               </Box>
               
-              <Box sx={{ 
-                mt: 3, 
-                pt: 2, 
-                borderTop: '1px solid #eee'
-              }}>
+              <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
                 <Typography variant="h6" fontWeight="600" color="#2c3e50" sx={{ fontSize: '16px', mb: 0.5 }}>
-                  CityRide Rentals
+                  Zone
                 </Typography>
                 <Typography variant="body2" color="#26a69a" sx={{ fontSize: '14px' }}>
-                  Andhra Pradesh
+                  {vehicle.zone?.name || 'N/A'}
                 </Typography>
               </Box>
             </Grid>
 
-            {/* Fare & Discounts */}
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" fontWeight="600" mb={3} sx={{ 
-                fontSize: '16px', 
-                textAlign: 'center' 
-              }}>
+              <Typography variant="h6" fontWeight="600" mb={3} sx={{ fontSize: '16px', textAlign: 'center' }}>
                 Fare & Discounts
               </Typography>
               
               <Box>
                 {[
-                  ...(vehicle.pricing?.hourly ? [{ label: 'Hourly', value: `$${vehicle.pricing.hourly}` }] : []),
-                  ...(vehicle.pricing?.distance ? [{ label: 'Distance', value: `$${vehicle.pricing.distance}/km` }] : []),
-                  ...(vehicle.pricing?.perDay ? [{ label: 'Daily', value: `$${vehicle.pricing.perDay}` }] : []),
-                  ...(vehicle.discount ? [{ label: 'Discount', value: `${vehicle.discount} %` }] : [])
+                  { label: 'Hourly', value: vehicle.pricing?.hourly ? `₹ ${vehicle.pricing.hourly}` : 'N/A' },
+                  { label: 'Per Day', value: vehicle.pricing?.perDay ? `₹ ${vehicle.pricing.perDay}` : 'N/A' },
+                  { label: 'Distance', value: vehicle.pricing?.distance ? `₹ ${vehicle.pricing.distance}/km` : 'N/A' },
+                  { label: 'Discount', value: vehicle.discount ? `${vehicle.discount} %` : 'N/A' }
                 ].map((item, index) => (
-                  <Box key={index} sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    mb: 1.5,
-                    alignItems: 'center'
-                  }}>
+                  <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}>
                     <Typography color="#666" sx={{ fontSize: '14px' }}>{item.label}</Typography>
                     <Typography fontWeight="500" sx={{ fontSize: '14px' }}>: {item.value}</Typography>
                   </Box>
                 ))}
-                {(!vehicle.pricing?.hourly && !vehicle.pricing?.distance && !vehicle.pricing?.perDay) && (
-                  <Typography color="text.secondary" sx={{ fontSize: '14px' }}>No pricing set</Typography>
-                )}
               </Box>
+
+              {vehicle.pricing?.type && (
+                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
+                  <Typography variant="body2" color="#666" sx={{ fontSize: '14px' }}>
+                    Pricing Type:
+                  </Typography>
+                  <Typography fontWeight="500" color="#26a69a" sx={{ fontSize: '14px', textTransform: 'capitalize' }}>
+                    {vehicle.pricing.type}
+                  </Typography>
+                </Box>
+              )}
             </Grid>
 
-            {/* Other Features */}
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" fontWeight="600" mb={3} sx={{ 
-                fontSize: '16px', 
-                textAlign: 'center' 
-              }}>
+              <Typography variant="h6" fontWeight="600" mb={3} sx={{ fontSize: '16px', textAlign: 'center' }}>
                 Other Features
               </Typography>
               
@@ -490,75 +476,99 @@ const CarListingView = () => {
                 <Grid item xs={6}>
                   {[
                     { label: 'Air Condition', value: vehicle.airCondition ? 'Yes' : 'No' },
-                    { label: 'Transmission', value: vehicle.transmissionType || 'N/A' },
-                    { label: 'Fuel Type', value: vehicle.fuelType || 'N/A' }
+                    { label: 'Transmission', value: vehicle.transmissionType ? vehicle.transmissionType.charAt(0).toUpperCase() + vehicle.transmissionType.slice(1) : 'N/A' },
+                    { label: 'Fuel Type', value: vehicle.fuelType ? vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1) : 'N/A' }
                   ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      mb: 1.5,
-                      pr: 1,
-                      alignItems: 'center'
-                    }}>
-                      <Typography variant="body2" color="#666" sx={{ fontSize: '12px' }}>
-                        {item.label}
-                      </Typography>
-                      <Typography variant="body2" fontWeight="500" sx={{ fontSize: '12px' }}>
-                        : {item.value}
-                      </Typography>
+                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, pr: 1, alignItems: 'center' }}>
+                      <Typography variant="body2" color="#666" sx={{ fontSize: '12px' }}>{item.label}</Typography>
+                      <Typography variant="body2" fontWeight="500" sx={{ fontSize: '12px' }}>: {item.value}</Typography>
                     </Box>
                   ))}
                 </Grid>
                 <Grid item xs={6}>
                   {[
-                    { label: 'Engine Capacity', value: `${vehicle.engineCapacity || 'N/A'}cc` },
+                    { label: 'Engine Capacity', value: vehicle.engineCapacity ? `${vehicle.engineCapacity} cc` : 'N/A' },
                     { label: 'Seating Capacity', value: vehicle.seatingCapacity || 'N/A' },
-                    { label: 'Engine Power', value: `${vehicle.enginePower || 'N/A'}hp` }
+                    { label: 'Engine Power', value: vehicle.enginePower ? `${vehicle.enginePower} hp` : 'N/A' }
                   ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      mb: 1.5,
-                      pl: 1,
-                      alignItems: 'center'
-                    }}>
-                      <Typography variant="body2" color="#666" sx={{ fontSize: '12px' }}>
-                        {item.label}
-                      </Typography>
-                      <Typography variant="body2" fontWeight="500" sx={{ fontSize: '12px' }}>
-                        : {item.value}
-                      </Typography>
+                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, pl: 1, alignItems: 'center' }}>
+                      <Typography variant="body2" color="#666" sx={{ fontSize: '12px' }}>{item.label}</Typography>
+                      <Typography variant="body2" fontWeight="500" sx={{ fontSize: '12px' }}>: {item.value}</Typography>
                     </Box>
                   ))}
                 </Grid>
               </Grid>
+
+              <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
+                <Typography variant="body2" color="#666" sx={{ fontSize: '14px', mb: 0.5 }}>
+                  Total Trips:
+                </Typography>
+                <Typography fontWeight="600" color="#26a69a" sx={{ fontSize: '18px' }}>
+                  {vehicle.totalTrips || 0}
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
-      {/* Confirm Delete Dialog */}
+      {/* ✅ NEW: Confirm Delete Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
+        maxWidth="sm"
+        fullWidth
       >
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle sx={{ color: '#dc2626', fontWeight: 600 }}>
+          Delete Vehicle
+        </DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to delete this vehicle? This action cannot be undone.
+          <Typography sx={{ mb: 2 }}>
+            Are you sure you want to delete <strong>"{vehicle.name}"</strong>?
+          </Typography>
+          <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
+            This action cannot be undone. All vehicle data will be permanently removed.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button 
+            onClick={() => setOpenDeleteDialog(false)}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleDelete}
             variant="contained"
             color="error"
+            sx={{ 
+              textTransform: 'none',
+              bgcolor: '#dc2626',
+              '&:hover': { bgcolor: '#b91c1c' }
+            }}
           >
-            Delete
+            Delete Vehicle
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={openToast}
+        autoHideDuration={3000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toastSeverity}
+          sx={{
+            backgroundColor: toastSeverity === 'success' ? '#1976d2' : '#d32f2f',
+            color: 'white',
+          }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

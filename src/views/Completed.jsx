@@ -51,7 +51,7 @@ const Completed = () => {
       driverInfo: "Unassigned", 
       vehicleInfo: "Unassigned", 
       tripType: "Hourly\nInstant", 
-      tripAmount: "$247.50", 
+      tripAmount: "247.50", 
       tripStatus: "Pending\nUnpaid" 
     },
     { 
@@ -63,7 +63,7 @@ const Completed = () => {
       driverInfo: "Unassigned", 
       vehicleInfo: "Unassigned", 
       tripType: "Hourly\nInstant", 
-      tripAmount: "$33.75", 
+      tripAmount: "33.75", 
       tripStatus: "Confirmed\nUnpaid" 
     },
     { 
@@ -75,7 +75,7 @@ const Completed = () => {
       driverInfo: "Unassigned", 
       vehicleInfo: "Unassigned", 
       tripType: "Distance wise\nInstant", 
-      tripAmount: "$180.60", 
+      tripAmount: "180.60", 
       tripStatus: "Pending\nUnpaid" 
     },
     { 
@@ -87,7 +87,7 @@ const Completed = () => {
       driverInfo: "Ruth Kerry kuzo****@gmail.com", 
       vehicleInfo: "1 Vehicles", 
       tripType: "Distance wise\nInstant", 
-      tripAmount: "$180.60", 
+      tripAmount: "180.60", 
       tripStatus: "Completed\nPaid" 
     },
   ];

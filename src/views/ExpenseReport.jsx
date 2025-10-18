@@ -14,7 +14,7 @@ const ExpenseReport = () => {
   };
 
   const handleExport = (format) => {
-    const data = 'Sl,Trip Id,Date & Time,Expense Type,Customer Name,Expense Amount%0A1,100031,2025-02-06 05:23pm,Discount On Trip,Jonathon Jack,$17.06';
+    const data = 'Sl,Trip Id,Date & Time,Expense Type,Customer Name,Expense Amount%0A1,100031,2025-02-06 05:23pm,Discount On Trip,Jonathon Jack,₹17.06';
     const blob = new Blob([data], { type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -97,7 +97,7 @@ const ExpenseReport = () => {
             <TableCell>2025-02-06 05:23pm</TableCell>
             <TableCell>Discount On Trip</TableCell>
             <TableCell>Jonathon Jack</TableCell>
-            <TableCell>$17.06</TableCell>
+            <TableCell>17.06</TableCell>
           </TableRow>
         </TableBody>
       </Table>

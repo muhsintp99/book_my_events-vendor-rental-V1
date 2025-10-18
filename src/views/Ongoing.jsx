@@ -40,7 +40,7 @@ const OngoingTrips = () => {
       driverInfo: "Unassigned",
       vehicleInfo: "Unassigned",
       tripType: "Hourly Instant",
-      tripAmount: "$247.50",
+      tripAmount: "247.50",
       tripStatus: "Pending",
     },
     {
@@ -52,7 +52,7 @@ const OngoingTrips = () => {
       driverInfo: "Unassigned",
       vehicleInfo: "Unassigned",
       tripType: "Hourly Instant",
-      tripAmount: "$33.75",
+      tripAmount: "33.75",
       tripStatus: "Confirmed",
     },
   ]);

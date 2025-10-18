@@ -44,7 +44,7 @@ const DisbursementMethodSetup = () => {
   const handleSubmitModal = () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length === 0) {
-      setDisbursementMethods([...disbursementMethods, { id: Date.now(), name: paymentMethodName, info: `${accountName ? `Account Name: ${accountName}\n` : ''}${accountNumber ? `Account Number: ${accountNumber}\n` : ''}${email ? `Email: ${email.replace(/(.{2}).*?(?=@)/, '$1****')}\n` : ''}`.trim(), default: false }]);
+      setDisbursementMethods([...disbursementMethods, { id: Date.now(), name: paymentMethodName, info: `${accountName ? `Account Name: ${accountName}\n` : ''}${accountNumber ? `Account Number: ${accountNumber}\n` : ''}${email ? `Email: ${email.replace(/(.{2}).*?(?=@)/, '₹1****')}\n` : ''}`.trim(), default: false }]);
       handleCloseModal();
     } else {
       setErrors(validationErrors);

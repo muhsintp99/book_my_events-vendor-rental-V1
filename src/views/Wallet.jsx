@@ -94,7 +94,7 @@ const Wallet = () => {
             Cash in Hand <span style={{ fontSize: '0.75rem', color: '#757575' }}>i</span>
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#d32f2f">
-            $0.00
+            ₹0.00
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, width: '32%', textAlign: 'center', backgroundColor: '#fff', borderRadius: 2 }}>
@@ -102,7 +102,7 @@ const Wallet = () => {
             Withdraw able balance
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#388e3c">
-            ${payableBalance}
+            ₹{payableBalance}
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, width: '32%', textAlign: 'center', backgroundColor: '#fff', borderRadius: 2 }}>
@@ -110,7 +110,7 @@ const Wallet = () => {
             Payable Balance
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#388e3c">
-            ${payableBalance}
+            ₹{payableBalance}
           </Typography>
           <Button
             variant="contained"
@@ -128,7 +128,7 @@ const Wallet = () => {
             Pending withdraw
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#d32f2f">
-            $0.00
+            ₹0.00
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, width: '32%', textAlign: 'center', backgroundColor: '#e8f5e9', borderRadius: 2 }}>
@@ -136,7 +136,7 @@ const Wallet = () => {
             Total Withdrawn
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#5fade1ff">
-            $0.00
+            ₹0.00
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, width: '32%', textAlign: 'center', backgroundColor: '#e0f7fa', borderRadius: 2 }}>
@@ -144,7 +144,7 @@ const Wallet = () => {
             Total earning
           </Typography>
           <Typography variant="h3" fontWeight="600" color="#0288d1">
-            $160.32
+            ₹160.32
           </Typography>
         </Paper>
       </Box>

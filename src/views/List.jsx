@@ -1129,7 +1129,7 @@ export default function Vehicles() {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
   const moduleId = localStorage.getItem("moduleId");
-  const providerId = localStorage.getItem("providerId"); // ✅ ensure provider ID is stored in localStorage after login
+  const providerId = localStorage.getItem("providerId"); 
 
   // Fetch options for filters
   const fetchOptions = async () => {
@@ -1159,51 +1159,133 @@ export default function Vehicles() {
     }
   };
 
-  // ✅ Fetch vehicles for the logged-in provider
-  const fetchVehicles = async () => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    const userData = JSON.parse(localStorage.getItem("user") || "{}");
-    const providerId = userData?._id;
+  // Helper function to get category title - handles both array and object/string
+  const getCategoryTitle = (categoryData) => {
+    console.log("getCategoryTitle called with:", categoryData);
+    console.log("Type:", typeof categoryData);
+    console.log("Is Array:", Array.isArray(categoryData));
+    
+    if (!categoryData) {
+      console.log("Category data is null/undefined");
+      return "N/A";
+    }
+    
+    // If it's an array, get the first element
+    if (Array.isArray(categoryData)) {
+      console.log("Category is array, length:", categoryData.length);
+      if (categoryData.length === 0) return "N/A";
+      const firstCategory = categoryData[0];
+      console.log("First category element:", firstCategory);
+      console.log("First category type:", typeof firstCategory);
+      
+      // If the array element is an object with title, return it
+      if (typeof firstCategory === 'object' && firstCategory !== null && firstCategory.title) {
+        console.log("Returning title from object:", firstCategory.title);
+        return firstCategory.title;
+      }
+      // If it's a string ID, look it up
+      if (typeof firstCategory === 'string') {
+        const category = categories.find(cat => cat._id === firstCategory);
+        console.log("Looking up category by ID:", firstCategory, "Found:", category);
+        return category ? category.title : "N/A";
+      }
+    }
+    
+    // If it's an object with title
+    if (typeof categoryData === 'object' && categoryData !== null && categoryData.title) {
+      console.log("Returning title from single object:", categoryData.title);
+      return categoryData.title;
+    }
+    
+    // If it's a string ID
+    if (typeof categoryData === 'string') {
+      const category = categories.find(cat => cat._id === categoryData);
+      console.log("Looking up single category by ID:", categoryData, "Found:", category);
+      return category ? category.title : "N/A";
+    }
+    
+    console.log("No match found, returning N/A");
+    return "N/A";
+  };
 
-    if (!token || !providerId) {
-      console.error("Provider ID or token missing");
-      setToastMessage("Provider authentication missing. Please log in again.");
+  // Helper function to get brand title by ID
+  const getBrandTitle = (brandData) => {
+    if (!brandData) return "N/A";
+    
+    // If it's an object with title
+    if (typeof brandData === 'object' && brandData.title) {
+      return brandData.title;
+    }
+    
+    // If it's a string ID
+    if (typeof brandData === 'string') {
+      const brand = brands.find(b => b._id === brandData);
+      return brand ? brand.title : "N/A";
+    }
+    
+    return "N/A";
+  };
+
+  const fetchVehicles = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const providerId = userData?._id;
+
+      if (!token || !providerId) {
+        console.error("Provider ID or token missing");
+        setToastMessage("Provider authentication missing. Please log in again.");
+        setToastSeverity("error");
+        setOpenToast(true);
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.get(
+        `${API_BASE_URL}/vehicles/provider/${providerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        console.log("Fetched vehicles:", res.data.data);
+        console.log("Available categories:", categories);
+        console.log("Available brands:", brands);
+        
+        // Log the first vehicle to see its structure
+        if (res.data.data && res.data.data.length > 0) {
+          console.log("First vehicle structure:", res.data.data[0]);
+          console.log("First vehicle category:", res.data.data[0].category);
+          console.log("First vehicle brand:", res.data.data[0].brand);
+        }
+        
+        setVehicles(res.data.data || []);
+      } else {
+        console.error("Error fetching vehicles:", res.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      setToastMessage("Failed to load vehicles ❌");
       setToastSeverity("error");
       setOpenToast(true);
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    // ✅ Fetch only vehicles added by this provider
-    const res = await axios.get(
-      `${API_BASE_URL}/vehicles/provider/${providerId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+  useEffect(() => {
+    fetchOptions();
+  }, []);
 
-    if (res.data?.success) {
-      setVehicles(res.data.data || []);
-    } else {
-      console.error("Error fetching vehicles:", res.data.message);
+  useEffect(() => {
+    if (categories.length > 0 && brands.length > 0) {
+      fetchVehicles();
     }
-  } catch (error) {
-    console.error("Error fetching vehicles:", error);
-    setToastMessage("Failed to load vehicles ❌");
-    setToastSeverity("error");
-    setOpenToast(true);
-  } finally {
-    setLoading(false);
-  }
-};
-
- useEffect(() => {
-  fetchVehicles();
-}, []);
+  }, [categories, brands]);
 
   const handleApplyFilters = () => {
     setFilters({
@@ -1236,13 +1318,14 @@ export default function Vehicles() {
 
   const handleExport = () => {
     const headers = [
-      "Sl,Name,Code,Category,Brand,Type,Total Trip,Hourly,Distance,Daily,New,Active",
+      "Sl,Name,Code,Category,Brand,Type,Hourly,Distance,Daily,New,Active",
     ];
     const rows = filteredVehicles.map(
       (v, i) =>
-        `${i + 1},${v.name || ""},${v.vinNumber || ""},${v.category?.title || ""},${
-          v.brand?.title || ""
-        },${v.type || ""},${v.totalTrips || 0},${v.pricing?.hourly || "-"},${
+        `${i + 1},${v.name || ""},${v.vinNumber || ""},${getCategoryTitle(v.category)},${
+          getBrandTitle(v.brand)
+        },${v.type || ""},${v.pricing?.hourly || "-"},
+        ${
           v.pricing?.distance || "-"
         },${v.pricing?.perDay || "-"},${v.isNew ? "Yes" : "No"},${
           v.isActive ? "Active" : "Inactive"
@@ -1261,90 +1344,87 @@ export default function Vehicles() {
   };
 
   const handleStatusToggle = async (vehicleId, field, currentValue) => {
-  try {
-    const token = localStorage.getItem("token");
-
-    const response = await axios.put(
-      `${API_BASE_URL}/vehicles/${vehicleId}`,
-      { [field]: !currentValue }, // send updated field (like isActive)
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data.success) {
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v._id === vehicleId ? { ...v, [field]: !currentValue } : v
-        )
-      );
-      setToastMessage("Vehicle status updated successfully ");
-      setToastSeverity("success");
-    } else {
-      setToastMessage("Failed to update vehicle status ");
-      setToastSeverity("error");
-    }
-  } catch (error) {
-    console.error("Error toggling status:", error);
-    setToastMessage(error.response?.data?.message || "Error updating vehicle");
-    setToastSeverity("error");
-  } finally {
-    setOpenToast(true);
-  }
-};
-
-
-  const handleDelete = async () => {
-  if (!vehicleToDelete) return;
-  try {
-    const token = localStorage.getItem("token");
-
-    await axios.delete(`${API_BASE_URL}/vehicles/${vehicleToDelete}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // ✅ Remove deleted vehicle from state
-    setVehicles((prev) => prev.filter((v) => v._id !== vehicleToDelete));
-
-    setToastMessage("Vehicle deleted successfully");
-    setToastSeverity("success");
-  } catch (error) {
-    setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
-    setToastSeverity("error");
-  } finally {
-    setOpenToast(true);
-    setOpenDeleteDialog(false);
-    setVehicleToDelete(null);
-  }
-};
-
-
-  const handleEdit = async (vehicleId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/vehicles/${vehicleId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      const vehicleData = response.data.data || response.data;
-      navigate(`/vehicle-setup/leads/${vehicleId}`, { state: { vehicle: vehicleData } });
+      const token = localStorage.getItem("token");
+
+      const response = await axios.put(
+        `${API_BASE_URL}/vehicles/${vehicleId}`,
+        { [field]: !currentValue },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setVehicles((prev) =>
+          prev.map((v) =>
+            v._id === vehicleId ? { ...v, [field]: !currentValue } : v
+          )
+        );
+        setToastMessage("Vehicle status updated successfully ");
+        setToastSeverity("success");
+      } else {
+        setToastMessage("Failed to update vehicle status ");
+        setToastSeverity("error");
+      }
     } catch (error) {
-      setToastMessage(error.response?.data?.message || "Failed to fetch vehicle data");
+      console.error("Error toggling status:", error);
+      setToastMessage(error.response?.data?.message || "Error updating vehicle");
       setToastSeverity("error");
+    } finally {
       setOpenToast(true);
     }
   };
 
+  const handleDelete = async () => {
+    if (!vehicleToDelete) return;
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(`${API_BASE_URL}/vehicles/${vehicleToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVehicles((prev) => prev.filter((v) => v._id !== vehicleToDelete));
+
+      setToastMessage("Vehicle deleted successfully");
+      setToastSeverity("success");
+    } catch (error) {
+      setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
+      setToastSeverity("error");
+    } finally {
+      setOpenToast(true);
+      setOpenDeleteDialog(false);
+      setVehicleToDelete(null);
+    }
+  };
+
+  const handleEdit = (vehicle) => {
+    navigate(`/vehicle-setup/leads/${vehicle._id}`, { state: { vehicle } });
+  };
+
   const filteredVehicles = vehicles.filter((v) => {
-  return (
-    (filters.brand ? v.brand?._id === filters.brand : true) &&
-    (filters.category ? v.category?._id === filters.category : true) &&
-    (filters.type ? v.type === filters.type : true) &&
-    (filters.search
-      ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase())
-      : true)
-  );
-});
+    // Extract category ID - handle array format
+    let vehicleCategoryId = null;
+    if (Array.isArray(v.category) && v.category.length > 0) {
+      vehicleCategoryId = v.category[0]._id || v.category[0];
+    } else if (v.category) {
+      vehicleCategoryId = v.category._id || v.category;
+    }
+    
+    const vehicleBrandId = v.brand?._id || v.brand;
+    
+    return (
+      (filters.brand ? vehicleBrandId === filters.brand : true) &&
+      (filters.category ? vehicleCategoryId === filters.category : true) &&
+      (filters.type ? v.type === filters.type : true) &&
+      (filters.search
+        ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase())
+        : true)
+    );
+  });
+
   const handleCloseToast = (event, reason) => {
     if (reason === "clickaway") return;
     setOpenToast(false);
@@ -1434,10 +1514,10 @@ export default function Vehicles() {
             </Select>
           </FormControl>
 
-          <Button variant="outlined" sx={{ bgcolor: "#f3f4f6", borderRadius: "8px" }} onClick={handleReset}>
+          <Button variant="outlined" sx={{ bgcolor: "white", borderRadius: "8px" }} onClick={handleReset}>
             Reset
           </Button>
-          <Button variant="contained" sx={{ bgcolor: "#2b68bdff", borderRadius: "8px" }} onClick={handleApplyFilters}>
+          <Button variant="contained" sx={{ bgcolor: "#E15B65", borderRadius: "8px" }} onClick={handleApplyFilters}>
             Filter
           </Button>
         </Stack>
@@ -1482,7 +1562,7 @@ export default function Vehicles() {
             </Button>
             <Button
               variant="contained"
-              sx={{ bgcolor: "#2563eb" }}
+              sx={{ bgcolor: "#E15B65" }}
               onClick={() => navigate("/vehicle-setup/leads")}
             >
               New Vehicle
@@ -1499,7 +1579,6 @@ export default function Vehicles() {
                 <TableCell>Category</TableCell>
                 <TableCell>Brand</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell>Total Trips</TableCell>
                 <TableCell>Trip Fare</TableCell>
                 <TableCell>Details</TableCell>
                 <TableCell>Status</TableCell>
@@ -1508,95 +1587,92 @@ export default function Vehicles() {
             </TableHead>
 
             <TableBody>
-              {filteredVehicles.map((v, i) => (
-                <TableRow key={v._id}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#2563eb" }}>
-                      {v.name || "N/A"}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      License: {v.licensePlateNumber || "N/A"}
-                    </Typography>
-                  </TableCell>
-
-                  {/* ✅ category fix */}
-                  <TableCell>{v.category?.title || v.categoryName || "N/A"}</TableCell>
-
-                  <TableCell>{v.brand?.title || "N/A"}</TableCell>
-                  <TableCell>{v.type || "N/A"}</TableCell>
-                  <TableCell>{v.totalTrips || 0}</TableCell>
-
-                  {/* ✅ ₹ price fix */}
-                  <TableCell>
-                    {v.pricing?.hourly && (
-                      <Typography variant="body2">Hourly: ₹{v.pricing.hourly}</Typography>
-                    )}
-                    {v.pricing?.distance && (
-                      <Typography variant="body2">Distance: ₹{v.pricing.distance}/km</Typography>
-                    )}
-                    {v.pricing?.perDay && (
-                      <Typography variant="body2">Daily: ₹{v.pricing.perDay}</Typography>
-                    )}
-                    {!v.pricing?.hourly && !v.pricing?.distance && !v.pricing?.perDay && (
-                      <Typography variant="body2" color="text.secondary">
-                        No pricing set
+              {filteredVehicles.map((v, i) => {
+                return (
+                  <TableRow key={v._id}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: "#2563eb" }}>
+                        {v.name || "N/A"}
                       </Typography>
-                    )}
-                    {v.discount && (
-                      <Typography variant="body2" color="success.main">
-                        Discount: {v.discount}%
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        License: {v.licensePlateNumber || "N/A"}
                       </Typography>
-                    )}
-                  </TableCell>
+                    </TableCell>                  
+                    <TableCell>{getCategoryTitle(v.category)}</TableCell>
+                    <TableCell>{getBrandTitle(v.brand)}</TableCell>
+                    <TableCell>{v.type || "N/A"}</TableCell>
 
-                  <TableCell>
-                    <Typography variant="body2">
-                      Engine: {v.engineCapacity || "N/A"}cc, {v.enginePower || "N/A"}hp
-                    </Typography>
-                    <Typography variant="body2">Seats: {v.seatingCapacity || "N/A"}</Typography>
-                    <Typography variant="body2">Fuel: {v.fuelType || "N/A"}</Typography>
-                    <Typography variant="body2">
-                      Transmission: {v.transmissionType || "N/A"}
-                    </Typography>
-                    <Typography variant="body2">A/C: {v.airCondition ? "Yes" : "No"}</Typography>
-                  </TableCell>
+                    <TableCell>
+                      {v.pricing?.hourly && (
+                        <Typography variant="body2">Hourly: ₹{v.pricing.hourly}</Typography>
+                      )}
+                      {v.pricing?.distanceWise && (
+                        <Typography variant="body2">Distance: ₹{v.pricing.distanceWise}/km</Typography>
+                      )}
+                      {v.pricing?.perDay && (
+                        <Typography variant="body2">Daily: ₹{v.pricing.perDay}</Typography>
+                      )}
+                      {!v.pricing?.hourly && !v.pricing?.distanceWise && !v.pricing?.perDay && (
+                        <Typography variant="body2" color="text.secondary">
+                          No pricing set
+                        </Typography>
+                      )}
+                      {v.discount && (
+                        <Typography variant="body2" color="success.main">
+                          Discount: {v.discount}%
+                        </Typography>
+                      )}
+                    </TableCell>
 
-                  <TableCell>
-                    <Switch
-                      checked={v.isActive !== false}
-                      onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
-                    />
-                    {v.isNew && <Chip label="New" color="primary" size="small" />}
-                  </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        Engine: {v.engineCapacity || "N/A"}cc, {v.enginePower || "N/A"}hp
+                      </Typography>
+                      <Typography variant="body2">Seats: {v.seatingCapacity || "N/A"}</Typography>
+                      <Typography variant="body2">Fuel: {v.fuelType || "N/A"}</Typography>
+                      <Typography variant="body2">
+                        Transmission: {v.transmissionType || "N/A"}
+                      </Typography>
+                      <Typography variant="body2">A/C: {v.airCondition ? "Yes" : "No"}</Typography>
+                    </TableCell>
 
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <IconButton
-                        size="small"
-                        sx={{ border: "1px solid #d1d5db", color: "#2563eb", borderRadius: "8px" }}
-                        onClick={() => navigate(`/vehicle-setup/listview/${v._id}`)}
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ border: "1px solid #d1d5db", color: "#065f46", borderRadius: "8px" }}
-                        onClick={() => handleEdit(v._id)}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ border: "1px solid #d1d5db", color: "#dc2626", borderRadius: "8px" }}
-                        onClick={() => confirmDelete(v._id)}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <Switch
+                        checked={v.isActive !== false}
+                        onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
+                      />
+                      {v.isNew && <Chip label="New" color="primary" size="small" />}
+                    </TableCell>
+
+                    <TableCell>
+                      <Stack direction="row" spacing={1}>
+                        <IconButton
+                          size="small"
+                          sx={{ border: "1px solid #d1d5db", color: "#2563eb", borderRadius: "8px" }}
+                          onClick={() => navigate(`/vehicle-setup/listview/${v._id}`)}
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          sx={{ border: "1px solid #d1d5db", color: "#065f46", borderRadius: "8px" }}
+                          onClick={() => handleEdit(v)}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          sx={{ border: "1px solid #d1d5db", color: "#dc2626", borderRadius: "8px" }}
+                          onClick={() => confirmDelete(v._id)}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
 
               {filteredVehicles.length === 0 && (
                 <TableRow>

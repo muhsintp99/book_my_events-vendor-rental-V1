@@ -59,10 +59,10 @@ const TripDetail = () => {
                 <Typography variant="body2">Brand: BMW</Typography>
               </Box>
               <Box sx={{ marginLeft: 'auto' }}>
-                <Typography variant="body2">Unit Fair: $50.00 /Hr</Typography>
+                <Typography variant="body2">Unit Fair: 50.00 /Hr</Typography>
                 <Typography variant="body2">Quantity: 1</Typography>
                 <Typography variant="body2">Total Hour/Km/Day: 5 Hrs</Typography>
-                <Typography variant="body2">Fare: $250.00</Typography>
+                <Typography variant="body2">Fare: 250.00</Typography>
               </Box>
             </VehicleCard>
           </StyledPaper>
@@ -71,28 +71,28 @@ const TripDetail = () => {
             <Divider sx={{ my: 2 }} /> {/* Increased margin */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body1">Trip Fare</Typography>
-              <Typography variant="body1">$250.00</Typography>
+              <Typography variant="body1">250.00</Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body1">Subtotal (TAX Included)</Typography>
-              <Typography variant="body1">$250.00</Typography>
+              <Typography variant="body1">250.00</Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body1">Discount</Typography>
-              <Typography variant="body1">-$12.50</Typography>
+              <Typography variant="body1">-12.50</Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body1">Coupon Discount</Typography>
-              <Typography variant="body1">-$0.00</Typography>
+              <Typography variant="body1">-0.00</Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body1">Additional Charge</Typography>
-              <Typography variant="body1">+$10.00</Typography>
+              <Typography variant="body1">10.00</Typography>
             </Box>
             <Divider sx={{ my: 2 }} /> {/* Increased margin */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="h6">Total</Typography>
-              <Typography variant="h6">$247.50</Typography>
+              <Typography variant="h6">247.50</Typography>
             </Box>
           </StyledPaper>
         </Grid>

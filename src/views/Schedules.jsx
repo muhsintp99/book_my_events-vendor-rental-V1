@@ -1004,7 +1004,7 @@ function BookingCalendar() {
           </Box>
         </DialogTitle>
         <div style={{alignSelf:"center"}}>
-        <DialogContent sx={{ p: 3, backgroundColor: '#fafafa' ,width:'500px' ,position:''}}>
+        <DialogContent sx={{ p: 3, backgroundColor: 'white' ,width:'500px' ,position:''}}>
           {/* Booking Details Section */}
           <Box mb={4}>
             <Typography variant="h6" sx={sectionHeaderStyle}>
@@ -1148,11 +1148,11 @@ function BookingCalendar() {
 
           {/* Payment Method Section */}
           <Box>
-            <Typography variant="h6" sx={sectionHeaderStyle}>
+            {/* <Typography variant="h6" sx={sectionHeaderStyle}>
               <PaymentIcon sx={iconStyle} />
               Payment Method
-            </Typography>
-            <FormControl component="fieldset" sx={{ mb: 2 }}>
+            </Typography> */}
+            {/* <FormControl component="fieldset" sx={{ mb: 2 }}>
               <RadioGroup defaultValue="full">
                 <FormControlLabel
                   value="full"
@@ -1194,7 +1194,7 @@ function BookingCalendar() {
                   }
                 />
               </RadioGroup>
-            </FormControl>
+            </FormControl> */}
             <Button
               variant="contained"
               fullWidth

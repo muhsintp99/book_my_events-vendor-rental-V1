@@ -69,7 +69,7 @@ const ChangePlan = () => {
                 Regular
               </Typography>
               <Typography variant="h4" gutterBottom>
-                $500.00
+                ₹500.00
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 365 Days
@@ -121,7 +121,7 @@ const ChangePlan = () => {
                 Pro
               </Typography>
               <Typography variant="h4" gutterBottom>
-                $1,136
+                1,136
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 36 Months

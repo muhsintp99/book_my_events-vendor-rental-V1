@@ -1180,23 +1180,28 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   },
 }));
 
-const Createnew = ({ vehicleId }) => {
+const Createnew = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Environment variables
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae';
-  const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || ''; // Empty by default, adjust if needed (e.g., '/api/v1')
-  const FULL_API_URL = `${API_BASE_URL}${API_BASE_PATH}`;
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
   const moduleId = localStorage.getItem('moduleId');
 
   // Memoized values
-  const initialViewMode = useMemo(() => (id ? 'edit' : 'create'), [id]);
+const locationState = useMemo(() => location.state?.vehicle, [location.state]);
 
-  // State variables
+  const vehicleKeyFromState = useMemo(() => location.state?.vehicle?._id, [location.state]);
+  const effectiveVehicleId = useMemo(() => {
+    return id || location.state?.vehicle?._id || '';
+  }, [id, vehicleKeyFromState]);
+
+  const initialViewMode = useMemo(() => {
+    return effectiveVehicleId ? 'edit' : 'create';
+  }, [effectiveVehicleId]);
+
   const [viewMode, setViewMode] = useState(initialViewMode);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -1233,7 +1238,7 @@ const Createnew = ({ vehicleId }) => {
   const [existingThumbnail, setExistingThumbnail] = useState('');
   const [existingImages, setExistingImages] = useState([]);
 
-  // Set vehicle data from API response
+  // Set vehicle data from API response or location state - UPDATED TO MATCH REFERENCE
   const setVehicleData = useCallback((vehicle) => {
     if (vehicle.brand && vehicle.brand._id && !brands.some((b) => b._id === vehicle.brand._id)) {
       setBrands((prev) => [...prev, {
@@ -1247,6 +1252,7 @@ const Createnew = ({ vehicleId }) => {
         title: vehicle.category.title || vehicle.category.name || 'Unknown Category',
       }]);
     }
+    
     if (vehicle.zone && vehicle.zone._id && !zones.some((z) => z._id === vehicle.zone._id)) {
       setZones((prev) => [...prev, {
         _id: vehicle.zone._id,
@@ -1256,7 +1262,7 @@ const Createnew = ({ vehicleId }) => {
     setName(vehicle.name || '');
     setDescription(vehicle.description || '');
     setBrand(vehicle.brand?._id || '');
-    setCategory(vehicle.category?._id || '');
+setCategory(vehicle.category?._id || vehicle.category || '');
     setZone(vehicle.zone?._id || '');
     setModel(vehicle.model || '');
     setType(vehicle.type || '');
@@ -1277,27 +1283,26 @@ const Createnew = ({ vehicleId }) => {
     setDiscount(vehicle.discount?.toString() || '');
   }, [brands, categories, zones]);
 
-  // Fetch brands, categories, and zones (unchanged)
+  // Fetch brands, categories, and zones - EXACTLY LIKE REFERENCE
   useEffect(() => {
     const fetchBrandsCategoriesAndZones = async () => {
       try {
         if (!moduleId) {
           throw new Error('Module ID is not defined. Please log in or set moduleId in localStorage.');
         }
-        const token = localStorage.getItem('token');
         const [brandsResponse, categoriesResponse, zonesResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/brands/module/${moduleId}`, {
-            headers: { Authorization: `Bearer ${token}` },
+          axios.get(`${API_BASE_URL}/brands/module/${moduleId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }),
-          axios.get(`${API_BASE_URL}/api/vehicle-categories`, {
+          axios.get(`${API_BASE_URL}/vehicle-categories`, {
             headers: { 
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
               Accept: 'application/json',
             },
           }),
-          axios.get(`${API_BASE_URL}/api/zones`, {
+          axios.get(`${API_BASE_URL}/zones`, {
             headers: { 
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
               Accept: 'application/json',
             },
           }),
@@ -1348,37 +1353,43 @@ const Createnew = ({ vehicleId }) => {
       }
     };
     fetchBrandsCategoriesAndZones();
-  }, [moduleId]);
+  }, [moduleId, API_BASE_URL]);
 
-  // Fetch vehicle data for edit mode
-  useEffect(() => {
-    if (!isDataLoaded || !id) return;
+  // Fetch or use location state for vehicle data in edit mode - EXACTLY LIKE REFERENCE
+  // REPLACE ONLY THIS useEffect (keep everything else EXACTLY the same)
+useEffect(() => {
+  if (!isDataLoaded) return;
+  const vehicleData = location.state?.vehicle;
+  if (vehicleData) {
+    setVehicleData(vehicleData);
+    setExistingThumbnail(vehicleData.thumbnail || '');
+    setExistingImages(vehicleData.images || []);
+    setViewMode('edit');
+  } else if (id) {
     const fetchVehicle = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No authentication token found. Please log in.');
-        }
-        const response = await axios.get(`${API_BASE_URL}/api/vehicles/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const vehicle = response.data.data || response.data;
+        console.log('Vehicle data fetched for edit:', vehicle);
         setVehicleData(vehicle);
         setExistingThumbnail(vehicle.thumbnail || '');
         setExistingImages(vehicle.images || []);
         setViewMode('edit');
       } catch (error) {
-        console.error('Error fetching vehicle:', error.response?.data || error);
         setToastMessage(error.response?.data?.message || 'Failed to fetch vehicle data');
         setToastSeverity('error');
         setOpenToast(true);
+        console.error('Error fetching vehicle:', error.response?.data || error);
       } finally {
         setLoading(false);
       }
     };
     fetchVehicle();
-  }, [isDataLoaded, id, setVehicleData, API_BASE_URL]);
+  }
+}, [isDataLoaded, id, setVehicleData]);
 
   // File handling
   const handleThumbnailFileChange = useCallback((event) => {
@@ -1466,7 +1477,7 @@ const Createnew = ({ vehicleId }) => {
     setViewMode('create');
   }, []);
 
-  // Form submission
+  // Form submission - UPDATED TO USE effectiveVehicleId LIKE REFERENCE
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
     const isEdit = viewMode === 'edit';
@@ -1542,12 +1553,11 @@ const Createnew = ({ vehicleId }) => {
     formData.append('fuelType', fuelType.toLowerCase());
     formData.append('transmissionType', transmissionType.toLowerCase());
     formData.append('licensePlateNumber', licensePlateNumber);
-    formData.append('totalTrips', 0);
     formData.append('pricing[type]', tripType);
     formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
     formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
-    formData.append('pricing[distance]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
-    if (discount) formData.append('discount', parseFloat(discount));
+formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0); 
+   if (discount) formData.append('discount', parseFloat(discount));
     searchTags.forEach(tag => formData.append('searchTags[]', tag));
     if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
     vehicleImages.forEach(file => formData.append('images', file));
@@ -1558,17 +1568,15 @@ const Createnew = ({ vehicleId }) => {
       formDataEntries[key] = value instanceof File ? value.name : value;
     }
     console.log('FormData:', formDataEntries);
-    console.log('Request URL:', `${API_BASE_URL}/api/vehicles`);
-    console.log('Authorization Token:', token);
 
     try {
       let response;
       let newOrUpdatedVehicle;
       if (isEdit) {
-        if (!id) {
+        if (!effectiveVehicleId) {
           throw new Error('Invalid vehicle ID for update');
         }
-        response = await axios.put(`${API_BASE_URL}/api/vehicles/${id}`, formData, {
+        response = await axios.put(`${API_BASE_URL}/vehicles/${effectiveVehicleId}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -1576,7 +1584,7 @@ const Createnew = ({ vehicleId }) => {
         });
         newOrUpdatedVehicle = response.data.data || response.data;
       } else {
-        response = await axios.post(`${API_BASE_URL}/api/vehicles`, formData, {
+        response = await axios.post(`${API_BASE_URL}/vehicles`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -1584,11 +1592,14 @@ const Createnew = ({ vehicleId }) => {
         });
         newOrUpdatedVehicle = response.data.data || response.data;
       }
+      console.log('API Response:', response.data);
       setToastMessage(isEdit ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
       setToastSeverity('success');
       setOpenToast(true);
       handleReset();
-      // navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
+      if (isEdit) {
+        navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
+      }
     } catch (error) {
       console.error('API Error:', {
         status: error.response?.status,
@@ -1608,11 +1619,11 @@ const Createnew = ({ vehicleId }) => {
       setLoading(false);
     }
   }, [
-    viewMode, id, name, brand, model, category, zone, type, engineCapacity, enginePower,
+    viewMode, effectiveVehicleId, name, brand, model, category, zone, type, engineCapacity, enginePower,
     seatingCapacity, airCondition, fuelType, transmissionType, licensePlateNumber, tripType,
     hourlyWisePrice, perDayPrice, distanceWisePrice, discount, searchTags, thumbnailFile,
     vehicleImages, existingThumbnail, existingImages, validateLicensePlate, handleReset, navigate,
-    API_BASE_URL,
+    API_BASE_URL, moduleId, isDataLoaded, vehicleKeyFromState, setVehicleData,
   ]);
 
   const handleCloseToast = useCallback((event, reason) => {
@@ -1657,6 +1668,7 @@ const Createnew = ({ vehicleId }) => {
           </Box>
         )}
         <Box component="form" onSubmit={handleSubmit}>
+          {/* ALL EXISTING FORM FIELDS REMAIN EXACTLY THE SAME */}
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
             <Card sx={{ flex: isSmallScreen ? 'auto' : 2, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -2091,7 +2103,7 @@ const Createnew = ({ vehicleId }) => {
                       <FormControlLabel
                         control={<Radio checked={tripType === 'distanceWise'} onChange={() => setTripType('distanceWise')} 
                         sx={{ color: '#E15B65', '&.Mui-checked': { color: '#E15B65' }}} />}
-                        label="Distance Wise"
+                        label="DistanceWise"
                         labelPlacement="start"
                         sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
                       />
@@ -2213,8 +2225,14 @@ const Createnew = ({ vehicleId }) => {
             <Button variant="outlined" color="inherit" size="large" onClick={handleReset}>
               {isEdit ? 'Cancel' : 'Reset'}
             </Button>
-            <Button variant="contained" type="submit" size="large" disabled={loading}>
-              {loading ? <CircularProgress size={20} color="inherit" /> : isEdit ? 'Update' : 'Submit'}
+            <Button 
+              variant="contained" 
+              type="submit" 
+              size="large" 
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+            >
+              {loading ? 'Submitting...' : isEdit ? 'Update' : 'Submit'}
             </Button>
           </Box>
         </Box>

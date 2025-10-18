@@ -68,7 +68,7 @@ export default function BajajAreaChartCard() {
             </Grid>
             <Grid item>
               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                $1839.00
+                ₹1839.00
               </Typography>
             </Grid>
           </Grid>

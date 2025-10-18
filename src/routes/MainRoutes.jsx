@@ -418,10 +418,10 @@ const MainRoutes = {
           path: 'vehicle-setup',
           children: [
             { path: 'leads', element: <CreateNew /> },
-            { path: 'listview/:vehicleId', element: <ListView/> },
             { path: 'lists', element: <List /> },
             { path: 'leads/:vehicleId', element: <CreateNew /> },
-            { path: 'listview', element: <ListView /> }
+            { path: 'listview', element: <ListView /> },
+            { path:"listview/:id" ,element: <ListView/>}  
           ]
         },
         {
