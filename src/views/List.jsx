@@ -1269,7 +1269,7 @@ export default function Vehicles() {
       }
     } catch (error) {
       console.error("Error fetching vehicles:", error);
-      setToastMessage("Failed to load vehicles ❌");
+      setToastMessage("Failed to load vehicles ");
       setToastSeverity("error");
       setOpenToast(true);
     } finally {
@@ -1466,12 +1466,11 @@ export default function Vehicles() {
       {/* Filters */}
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" spacing={2} flexWrap="wrap">
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <Select
+          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E15B65',borderWidth: '2px'},}} size="small">
+            <Select 
               displayEmpty
               value={pendingFilters.brand}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })}
-            >
+              onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })  }>
               <MenuItem value="">Select vehicle brand</MenuItem>
               {brands.map((brand) => (
                 <MenuItem key={brand._id} value={brand._id}>
@@ -1481,7 +1480,7 @@ export default function Vehicles() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 200 }} size="small">
+          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': {borderColor: '#E15B65',borderWidth: '2px'},}} size="small">
             <Select
               displayEmpty
               value={pendingFilters.category}
@@ -1496,7 +1495,7 @@ export default function Vehicles() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 200 }} size="small">
+          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': {borderColor: '#E15B65',borderWidth: '2px'}}} size="small">
             <Select
               displayEmpty
               value={pendingFilters.type}
@@ -1514,7 +1513,7 @@ export default function Vehicles() {
             </Select>
           </FormControl>
 
-          <Button variant="outlined" sx={{ bgcolor: "white", borderRadius: "8px" }} onClick={handleReset}>
+          <Button variant="outlined"  color="#E15B65" sx={{ color:'#E15B65', bgcolor: "white", borderRadius: "8px" }} onClick={handleReset}>
             Reset
           </Button>
           <Button variant="contained" sx={{ bgcolor: "#E15B65", borderRadius: "8px" }} onClick={handleApplyFilters}>
@@ -1557,11 +1556,11 @@ export default function Vehicles() {
                 ),
               }}
             />
-            <Button variant="outlined" onClick={handleExport}>
+            <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }} onClick={handleExport}>
               Export
             </Button>
             <Button
-              variant="contained"
+              variant="contained" 
               sx={{ bgcolor: "#E15B65" }}
               onClick={() => navigate("/vehicle-setup/leads")}
             >
@@ -1641,7 +1640,17 @@ export default function Vehicles() {
                       <Switch
                         checked={v.isActive !== false}
                         onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
-                      />
+                     sx={{
+    '& .MuiSwitch-switchBase.Mui-checked': {
+      color: '#E15B65',
+    },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+      backgroundColor: '#E15B65',
+    },
+    '& .MuiSwitch-track': {
+      backgroundColor: '#ccc',
+    }
+  }}/>
                       {v.isNew && <Chip label="New" color="primary" size="small" />}
                     </TableCell>
 

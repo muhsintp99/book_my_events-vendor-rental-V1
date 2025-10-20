@@ -3,21 +3,13 @@ import { useEffect, useState } from 'react';
 // material-ui
 import Grid from '@mui/material/Grid';
 
-// vicheledashboard imports
-import EarningCard from './EarningCard';
-import PopularCard from './PopularCard';
-import TotalOrderLineChartCard from './TotalOrderLineChartCard';
-import TotalIncomeDarkCard from '../../../ui-component/cards/TotalIncomeDarkCard';
-import TotalIncomeLightCard from '../../../ui-component/cards/TotalIncomeLightCard';
-import TotalGrowthBarChart from './TotalGrowthBarChart';
-
-
-import VehicleIndex from '../../../vehicledashboard/index'
-
-
-// venuedashboard import
-
-
+// project imports
+import VehicleEarningCard from './VehicleEarningCard';
+import VehiclePopularCard from './VehiclePopularCard';
+import VehicleTotalRentChart from './vehicleTotalRentChart';
+import VehicleTotalIncomeDarkCard from '../vehicledashboard/cards.jsx/VehicleTotalIncomeDarkCard';
+import VehicleIncomeLightCard from '../vehicledashboard/cards.jsx/VehicleIncomeLightCard';
+import VehicleTotalGrowthBarChart from './VehicleTotalGrowthBarChart';
 
 import { gridSpacing } from 'store/constant';
 
@@ -29,18 +21,6 @@ import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
 
-  const Module = localStorage.getItem('logRes');
-  console.log("logRes in module:", Module);
-
-  switch (Module) {
-    case "Transport":
-      return (
-        <VehicleIndex isLoading={isLoading} />
-      );
-      break;
-  }
-
-
   useEffect(() => {
     setLoading(false);
   }, []);
@@ -50,18 +30,18 @@ export default function Dashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <EarningCard isLoading={isLoading} />
+            <VehicleEarningCard isLoading={isLoading} />
           </Grid>
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <TotalOrderLineChartCard isLoading={isLoading} />
+            <VehicleTotalRentChart isLoading={isLoading} />
           </Grid>
           <Grid size={{ lg: 4, md: 12, sm: 12, xs: 12 }}>
             <Grid container spacing={gridSpacing}>
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <TotalIncomeDarkCard isLoading={isLoading} />
+                <VehicleTotalIncomeDarkCard isLoading={isLoading} />
               </Grid>
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <TotalIncomeLightCard
+                <VehicleIncomeLightCard
                   {...{
                     isLoading: isLoading,
                     total: 203,
@@ -77,10 +57,10 @@ export default function Dashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <TotalGrowthBarChart isLoading={isLoading} />
+            <VehicleTotalGrowthBarChart isLoading={isLoading} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <PopularCard isLoading={isLoading} />
+            <VehiclePopularCard isLoading={isLoading} />
           </Grid>
         </Grid>
       </Grid>

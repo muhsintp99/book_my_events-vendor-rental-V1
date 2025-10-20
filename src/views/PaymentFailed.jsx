@@ -81,7 +81,7 @@ const PaymentFailed = () => {
             onChange={handleSearchChange}
             sx={{ maxWidth: { sm: 300 } }}
           />
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="#E15B65" sx={{color:'white',bgcolor:'#E15B65'}}> 
             Export
           </Button>
         </Stack>
@@ -114,10 +114,10 @@ const PaymentFailed = () => {
                   <TableCell>{payment.reason}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" size="small">
+                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>
                         Retry
                       </Button>
-                      <Button variant="outlined" size="small">
+                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>
                         View
                       </Button>
                     </Stack>

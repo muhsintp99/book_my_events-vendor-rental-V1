@@ -140,7 +140,7 @@ const Schedule = () => {
           alignItems={{ xs: "stretch", sm: "center" }}
           p={2}
         >
-          <Button variant="contained" onClick={handleOpen}>
+          <Button variant="contained" color="#E15B65" onClick={handleOpen} sx={{color:'white', bgcolor:"#E15B65"}}>
             Add New Schedule
           </Button>
           <TextField
@@ -151,7 +151,7 @@ const Schedule = () => {
             onChange={handleSearchChange}
             sx={{ maxWidth: { sm: 300 } }}
           />
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="#E15B65" sx={{color:'white',bgcolor:'#E15B65'}}>
             Export
           </Button>
         </Stack>
@@ -185,13 +185,13 @@ const Schedule = () => {
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button
-                        variant="outlined"
+                        variant="outlined" color="#E15B65"
                         size="small"
                         onClick={() => handleEdit(schedule)}
-                      >
+                        sx={{color:'white', bgcolor:'#E15B65'}}>
                         Edit
                       </Button>
-                      <Button variant="outlined" size="small">
+                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>
                         View
                       </Button>
                       <Button
@@ -279,8 +279,8 @@ const Schedule = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveSchedule}>
+          <Button sx={{color:'#E15B65'}} onClick={handleClose}>Cancel</Button>
+          <Button variant="contained" color="#E15B65"onClick={handleSaveSchedule} sx={{color:'white',bgcolor:"#E15B65"}}>
             {editingId ? "Update" : "Save"}
           </Button>
         </DialogActions>

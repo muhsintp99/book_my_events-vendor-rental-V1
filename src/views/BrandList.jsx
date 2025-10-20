@@ -115,24 +115,24 @@ const Brandlist = () => {
             Brand List
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <TextField
-              variant="outlined"
+            <TextField 
+              variant="outlined"  color='#E15B65'
               placeholder="Search by brand name"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
+              onChange={(e) => setSearchTerm(e.target.value)}  
+              size="small" 
             />
             <Button
-              variant="outlined"
+              variant="outlined" color='#E15B65'
               startIcon={<SearchIcon />}
-              onClick={handleSearch}
+              onClick={handleSearch} sx={{ color:'#E15B65'}}
             >
               Search
             </Button>
             <Button
-              variant="outlined"
+              variant="outlined"  color='#E15B65'
               endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick}
+              onClick={handleClick} sx={{color:'#E15B65'}}
             >
               Export
             </Button>

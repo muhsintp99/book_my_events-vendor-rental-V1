@@ -1131,7 +1131,7 @@
 
 
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -1154,7 +1154,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon } from '@mui/icons-material';
+import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -1186,8 +1186,12 @@ const Createnew = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
   const moduleId = localStorage.getItem('moduleId');
 
   // Memoized values
@@ -1211,6 +1215,7 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
   const [model, setModel] = useState('');
   const [category, setCategory] = useState('');
   const [zone, setZone] = useState('');
+  const [selectedZoneName, setSelectedZoneName] = useState('');
   const [type, setType] = useState('');
   const [engineCapacity, setEngineCapacity] = useState('');
   const [enginePower, setEnginePower] = useState('');
@@ -1237,6 +1242,187 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
   const [loading, setLoading] = useState(false);
   const [existingThumbnail, setExistingThumbnail] = useState('');
   const [existingImages, setExistingImages] = useState([]);
+  const [venueAddress, setVenueAddress] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [operatingHours, setOperatingHours] = useState('');
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [map, setMap] = useState(null);
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      console.warn('Google Maps API key not provided');
+      setToastMessage('Google Maps API key is required for map features.');
+      setToastSeverity('warning');
+      setOpenToast(true);
+      return;
+    }
+
+    if (window.google && window.google.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setMapsLoaded(true);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [GOOGLE_MAPS_API_KEY]);
+
+  // Initialize map when mapsLoaded becomes true
+  useEffect(() => {
+    if (mapsLoaded && window.google && window.google.maps) {
+      initMap();
+    }
+  }, [mapsLoaded]);
+
+  const initMap = useCallback(() => {
+    if (!window.google || !mapRef.current || !mapsLoaded) return;
+
+    const centerLat = latitude && longitude ? parseFloat(latitude) : 25.2048;
+    const centerLng = latitude && longitude ? parseFloat(longitude) : 55.2708;
+    const center = { lat: centerLat, lng: centerLng };
+
+    const newMap = new window.google.maps.Map(mapRef.current, {
+      zoom: 12,
+      center,
+    });
+
+    // Add click listener
+    newMap.addListener('click', (event) => {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      setLatitude(lat.toString());
+      setLongitude(lng.toString());
+
+      // Remove existing marker
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+      }
+
+      // Add new marker
+      markerRef.current = new window.google.maps.Marker({
+        position: { lat, lng },
+        map: newMap,
+      });
+
+      // Reverse geocode to get address
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          setVenueAddress(results[0].formatted_address);
+          setToastMessage('Location set and address auto-filled!');
+          setToastSeverity('success');
+          setOpenToast(true);
+        } else {
+          setToastMessage('Location set, but could not determine address.');
+          setToastSeverity('info');
+          setOpenToast(true);
+        }
+      });
+    });
+
+    setMap(newMap);
+  }, [mapsLoaded, latitude, longitude]);
+
+  // Initialize Places Autocomplete
+  useEffect(() => {
+    if (!mapsLoaded || !map || !searchInputRef.current || !window.google) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+      fields: ["place_id", "geometry", "name", "formatted_address"],
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry || !place.geometry.location) return;
+
+      const loc = place.geometry.location;
+
+      if (place.geometry.viewport) {
+        map.fitBounds(place.geometry.viewport);
+      } else {
+        map.setCenter(loc);
+        map.setZoom(17);
+      }
+
+      // Remove existing marker
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+      }
+
+      // Add new marker
+      markerRef.current = new window.google.maps.Marker({
+        position: loc,
+        map,
+      });
+
+      setLatitude(loc.lat().toString());
+      setLongitude(loc.lng().toString());
+      setVenueAddress(place.formatted_address || place.name);
+      setToastMessage('Location selected!');
+      setToastSeverity('success');
+      setOpenToast(true);
+    });
+
+    return () => {
+      if (window.google && window.google.maps.event) {
+        window.google.maps.event.removeListener(listener);
+      }
+    };
+  }, [mapsLoaded, map]);
+
+  // Update map center and marker when lat/long change
+  useEffect(() => {
+    if (!map || !latitude || !longitude) return;
+
+    const pos = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+
+    map.setCenter(pos);
+
+    if (!markerRef.current) {
+      markerRef.current = new window.google.maps.Marker({
+        position: pos,
+        map,
+      });
+    } else {
+      markerRef.current.setPosition(pos);
+    }
+  }, [latitude, longitude, map]);
+
+  // Geocode zone when selected and no lat/long set
+  useEffect(() => {
+    if (!selectedZoneName || (latitude && longitude)) return;
+    if (!mapsLoaded || !window.google || !window.google.maps) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address: `${selectedZoneName}, UAE` }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const loc = results[0].geometry.location;
+        setLatitude(loc.lat().toString());
+        setLongitude(loc.lng().toString());
+        setVenueAddress(results[0].formatted_address);
+        setToastMessage(`Location set for ${selectedZoneName}!`);
+        setToastSeverity('success');
+        setOpenToast(true);
+      } else {
+        setToastMessage(`Could not find location for ${selectedZoneName}`);
+        setToastSeverity('warning');
+        setOpenToast(true);
+      }
+    });
+  }, [selectedZoneName, latitude, longitude, mapsLoaded]);
 
   // Set vehicle data from API response or location state - UPDATED TO MATCH REFERENCE
   const setVehicleData = useCallback((vehicle) => {
@@ -1263,7 +1449,10 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
     setDescription(vehicle.description || '');
     setBrand(vehicle.brand?._id || '');
 setCategory(vehicle.category?._id || vehicle.category || '');
-    setZone(vehicle.zone?._id || '');
+    const zoneId = vehicle.zone?._id || '';
+    setZone(zoneId);
+    const zoneObj = zones.find(z => z._id === zoneId) || (vehicle.zone && { name: vehicle.zone.name });
+    setSelectedZoneName(zoneObj ? zoneObj.name : '');
     setModel(vehicle.model || '');
     setType(vehicle.type || '');
     setEngineCapacity(vehicle.engineCapacity?.toString() || '');
@@ -1274,11 +1463,15 @@ setCategory(vehicle.category?._id || vehicle.category || '');
     setTransmissionType(vehicle.transmissionType || '');
     setLicensePlateNumber(vehicle.licensePlateNumber || '');
     setSearchTags(vehicle.searchTags || []);
+    setVenueAddress(vehicle.venueAddress || '');
+    setLatitude(vehicle.latitude?.toString() || '');
+    setLongitude(vehicle.longitude?.toString() || '');
+    setOperatingHours(vehicle.operatingHours || '');
     if (vehicle.pricing) {
       setTripType(vehicle.pricing.type || 'hourly');
       setHourlyWisePrice(vehicle.pricing.hourly?.toString() || '');
       setPerDayPrice(vehicle.pricing.perDay?.toString() || '');
-      setDistanceWisePrice(vehicle.pricing.distance?.toString() || '');
+      setDistanceWisePrice(vehicle.pricing.distanceWise?.toString() || '');
     }
     setDiscount(vehicle.discount?.toString() || '');
   }, [brands, categories, zones]);
@@ -1446,16 +1639,24 @@ useEffect(() => {
     return true;
   }, []);
 
+  // Open map link
+  const handleOpenMap = useCallback(() => {
+    const query = selectedZoneName || venueAddress.trim() || 'Dubai, UAE';
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+  }, [selectedZoneName, venueAddress]);
+
   // Reset form
   const handleReset = useCallback(() => {
     setName('');
     setDescription('');
+    setVenueAddress('');
     setThumbnailFile(null);
     setVehicleImages([]);
     setBrand('');
     setModel('');
     setCategory('');
     setZone('');
+    setSelectedZoneName('');
     setType('');
     setEngineCapacity('');
     setEnginePower('');
@@ -1474,7 +1675,17 @@ useEffect(() => {
     setCurrentTag('');
     setExistingThumbnail('');
     setExistingImages([]);
+    setLatitude('');
+    setLongitude('');
+    setOperatingHours('');
     setViewMode('create');
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+      markerRef.current = null;
+    }
+    if (map) {
+      setMap(null);
+    }
   }, []);
 
   // Form submission - UPDATED TO USE effectiveVehicleId LIKE REFERENCE
@@ -1485,7 +1696,7 @@ useEffect(() => {
 
     // Validate required fields
     if (!name || !brand || !model || !category || !zone || !type || !engineCapacity || !enginePower ||
-        !seatingCapacity || !fuelType || !transmissionType || !licensePlateNumber || !tripType) {
+        !seatingCapacity || !fuelType || !transmissionType || !licensePlateNumber || !tripType || !venueAddress || !latitude || !longitude) {
       setToastMessage('Please fill all required fields.');
       setToastSeverity('error');
       setOpenToast(true);
@@ -1553,10 +1764,14 @@ useEffect(() => {
     formData.append('fuelType', fuelType.toLowerCase());
     formData.append('transmissionType', transmissionType.toLowerCase());
     formData.append('licensePlateNumber', licensePlateNumber);
+    formData.append('venueAddress', venueAddress);
+    formData.append('latitude', parseFloat(latitude));
+    formData.append('longitude', parseFloat(longitude));
+    if (operatingHours) formData.append('operatingHours', operatingHours);
     formData.append('pricing[type]', tripType);
     formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
     formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
-formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0); 
+    formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0); 
    if (discount) formData.append('discount', parseFloat(discount));
     searchTags.forEach(tag => formData.append('searchTags[]', tag));
     if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
@@ -1623,7 +1838,7 @@ formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloa
     seatingCapacity, airCondition, fuelType, transmissionType, licensePlateNumber, tripType,
     hourlyWisePrice, perDayPrice, distanceWisePrice, discount, searchTags, thumbnailFile,
     vehicleImages, existingThumbnail, existingImages, validateLicensePlate, handleReset, navigate,
-    API_BASE_URL, moduleId, isDataLoaded, vehicleKeyFromState, setVehicleData,
+    API_BASE_URL, moduleId, isDataLoaded, vehicleKeyFromState, setVehicleData, venueAddress, latitude, longitude, operatingHours
   ]);
 
   const handleCloseToast = useCallback((event, reason) => {
@@ -1632,6 +1847,13 @@ formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloa
   }, []);
 
   const isEdit = viewMode === 'edit';
+
+  const handleZoneChange = useCallback((e) => {
+    const zoneId = e.target.value;
+    setZone(zoneId);
+    const zoneObj = zones.find(z => z._id === zoneId);
+    setSelectedZoneName(zoneObj ? zoneObj.name : '');
+  }, [zones]);
 
   return (
     <Box sx={{ p: isSmallScreen ? 2 : 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
@@ -1697,6 +1919,16 @@ formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloa
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Type short description"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Venue Address*"
+                  variant="outlined"
+                  value={venueAddress}
+                  onChange={(e) => setVenueAddress(e.target.value)}
+                  placeholder="Enter venue address"
+                  required
                 />
               </CardContent>
             </Card>
@@ -1987,7 +2219,7 @@ formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloa
                       id="zone-select"
                       value={zone}
                       label="Zone"
-                      onChange={(e) => setZone(e.target.value)}
+                      onChange={handleZoneChange}
                     >
                       <MenuItem value="">Select zone</MenuItem>
                       {zones.length > 0 ? (
@@ -2001,6 +2233,80 @@ formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloa
                       )}
                     </Select>
                   </FormControl>
+                </Box>
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom>Location and Operating Hours</Typography>
+                  <TextField
+                    fullWidth
+                    label="Search Location"
+                    inputRef={searchInputRef}
+                    variant="outlined"
+                    placeholder="Enter a location"
+                    sx={{ mb: 2 }}
+                  />
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <Button
+                      variant="text"
+                      onClick={handleOpenMap}
+                      sx={{ flex: 1 }}
+                      startIcon={<LocationOnIcon />}
+                    >
+                      Open Full Map
+                    </Button>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                      sx={{ flex: 1 }}
+                      label="Latitude*"
+                      variant="outlined"
+                      value={latitude}
+                      onChange={(e) => setLatitude(e.target.value)}
+                      placeholder="e.g., 25.2048"
+                      required
+                    />
+                    <TextField
+                      sx={{ flex: 1 }}
+                      label="Longitude*"
+                      variant="outlined"
+                      value={longitude}
+                      onChange={(e) => setLongitude(e.target.value)}
+                      placeholder="e.g., 55.2708"
+                      required
+                    />
+                  </Box>
+                  {mapsLoaded && GOOGLE_MAPS_API_KEY ? (
+                    <>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Click on the map below to select a location
+                      </Typography>
+                      <Box
+                        ref={mapRef}
+                        sx={{
+                          height: 300,
+                          width: '100%',
+                          borderRadius: theme.shape.borderRadius,
+                          border: `1px solid ${theme.palette.grey[300]}`,
+                          mb: 2,
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[300]}`, borderRadius: theme.shape.borderRadius, mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Map loading...
+                      </Typography>
+                    </Box>
+                  )}
+                  <TextField
+                    fullWidth
+                    label="Operating Hours"
+                    variant="outlined"
+                    value={operatingHours}
+                    onChange={(e) => setOperatingHours(e.target.value)}
+                    placeholder="e.g., 9:00 AM - 6:00 PM"
+                    multiline
+                    rows={2}
+                  />
                 </Box>
               </CardContent>
             </Card>

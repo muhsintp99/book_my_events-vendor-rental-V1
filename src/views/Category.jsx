@@ -111,16 +111,16 @@ const Category = () => {
               size="small"
             />
             <Button
-              variant="outlined"
+              variant="outlined" color='#E15B65'
               startIcon={<SearchIcon />}
-              onClick={handleSearch}
+              onClick={handleSearch} sx={{color:'#E15B65'}}
             >
               Search
             </Button>
             <Button
-              variant="outlined"
+              variant="outlined" color='#E15B65'
               endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick}
+              onClick={handleClick} sx={{color:'#E15B65'}}
             >
               Export
             </Button>

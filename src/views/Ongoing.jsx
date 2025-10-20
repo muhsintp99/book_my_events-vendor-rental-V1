@@ -131,7 +131,7 @@ const OngoingTrips = () => {
             onChange={handleSearchChange}
             sx={{ maxWidth: { sm: 300 } }}
           />
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="#E15B65" sx={{color:'white',bgcolor:'#E15B65'}}>
             Export
           </Button>
         </Stack>

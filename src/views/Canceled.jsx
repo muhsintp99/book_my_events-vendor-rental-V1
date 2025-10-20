@@ -153,7 +153,7 @@ const CanceledTrips = () => {
           alignItems={{ xs: "stretch", sm: "center" }}
           p={2}
         >
-          <Button variant="contained" onClick={handleOpen}>
+          <Button variant="contained" onClick={handleOpen} sx={{color:'white',bgcolor:'#E15B65'}}>
             Add New Trip
           </Button>
           <TextField
@@ -164,7 +164,7 @@ const CanceledTrips = () => {
             onChange={handleSearchChange}
             sx={{ maxWidth: { sm: 300 } }}
           />
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="primary" sx={{color:'white',bgcolor:'#E15B65'}}>
             Export
           </Button>
         </Stack>
@@ -201,8 +201,8 @@ const CanceledTrips = () => {
                   <TableCell>{trip.tripStatus}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" size="small">Download</Button>
-                      <Button variant="outlined" size="small">View</Button>
+                      <Button variant="outlined" color="#E15B65"size="small" sx={{color:'#E15B65'}}>Download</Button>
+                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>View</Button>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -295,8 +295,8 @@ const CanceledTrips = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleClose}>Save</Button>
+          <Button sx={{color:"#E15B65"}} onClick={handleClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleClose}  sx={{color:'white',bgcolor:'#E15B65'}}>Save</Button>
         </DialogActions>
       </Dialog>
     </Box>

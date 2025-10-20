@@ -149,18 +149,19 @@ const AllTrips = () => {
           alignItems={{ xs: "stretch", sm: "center" }}
           p={2}
         >
-          <Button variant="contained" onClick={handleOpen}>
+          <Button variant="contained" color="#E15B65" 
+          onClick={handleOpen} sx={{bgcolor:'#E15B65', color:'white'}}>
             Add New Trip
           </Button>
-          <TextField
+          <TextField 
             label="Search by trip ID, customer name, email"
-            variant="outlined"
+            variant="outlined" color="#E15B65"
             size="small"
             value={search}
             onChange={handleSearchChange}
-            sx={{ maxWidth: { sm: 300 } }}
+            sx={{ maxWidth: { sm: 300 }}}
           />
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="#E15B65" sx={{color:'white',bgcolor:'#E15B65'}}>
             Export
           </Button>
         </Stack>
@@ -199,10 +200,10 @@ const AllTrips = () => {
                   <TableCell>{trip.tripStatus}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" size="small">
+                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65' }}>
                         Download
                       </Button>
-                      <Button variant="outlined" size="small">
+                      <Button variant="outlined" size="small" color="#E15B65" sx={{color:'#E15B65'}}>
                         View
                       </Button>
                     </Stack>
@@ -311,7 +312,8 @@ const AllTrips = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveTrip}>
+          <Button variant="contained" color="#E15B65"
+          onClick={handleSaveTrip} sx={{color:'white', bgcolor:'#E15B65'}}> 
             Save
           </Button>
         </DialogActions>

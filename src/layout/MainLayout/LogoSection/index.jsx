@@ -11,7 +11,7 @@ export default function LogoSection() {
       <img
         src={bookLogo}
         alt="Book Logo"
-        style={{ width: 110, height: 50 }} // adjust size as needed
+        style={{ width: 180, height: 50 }} // adjust size as needed
       />
     </Link>
   );
