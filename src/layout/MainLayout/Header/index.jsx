@@ -48,9 +48,9 @@ export default function Header() {
             ...theme.typography.mediumAvatar,
             overflow: 'hidden',
             transition: 'all .2s ease-in-out',
-            bgcolor: 'secondary.light',
-            color: 'secondary.dark',
-            '&:hover': { bgcolor: 'secondary.dark', color: 'secondary.light' },
+            bgcolor: '#db787fff',
+            color: 'white',
+            '&:hover': { bgcolor: '#E15B65', color: 'white' },
           }}
           onClick={() => handlerDrawerOpen(!drawerOpen)}
           color="inherit"

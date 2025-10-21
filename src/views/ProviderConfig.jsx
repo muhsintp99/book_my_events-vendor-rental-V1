@@ -31,7 +31,7 @@ import { CloudUpload as CloudUploadIcon } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/system";
 
-const zones = ["Main Demo Zone", "سوبر ماركت", "Dhaka"];
+const zones = ["Main Demo Zone", "Dhaka"];
 
 // --- Tab Panel helper ---
 function TabPanel(props) {
@@ -70,7 +70,7 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   justifyContent: "center",
   minHeight: "150px",
   "&:hover": {
-    borderColor: theme.palette.primary.main,
+    borderColor: '#E15B65',
   },
   "& input[type='file']": {
     display: "none",
@@ -90,7 +90,7 @@ const ProviderConfig = () => {
     second: "50",
     unit: "Minutes",
   });
-  const [pickupZones, setPickupZones] = useState(["Main Demo Zone", "سوبر ماركت"]);
+  const [pickupZones, setPickupZones] = useState(["Main Demo Zone", ]);
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   
@@ -296,11 +296,11 @@ const ProviderConfig = () => {
             <Grid item xs={12} sm={6}>
               <Typography gutterBottom display="flex" alignItems="center">
                 Scheduled Trip
-                <InfoOutlinedIcon fontSize="small" sx={{ ml: 0.5, color: "text.secondary" }} />
+                <InfoOutlinedIcon fontSize="small" sx={{ ml: 0.5, color: "#E15B65" }} />
               </Typography>
               <Box display="flex" alignItems="center" sx={{ border: "1px solid #ddd", borderRadius: 1, px: 2, height: 45 }}>
                 <Typography sx={{ flex: 1 }}>Scheduled Order</Typography>
-                <Switch checked={scheduledOrder} onChange={(e) => setScheduledOrder(e.target.checked)} />
+                <Switch  checked={scheduledOrder} onChange={(e) => setScheduledOrder(e.target.checked)} />
               </Box>
             </Grid>
 
@@ -308,7 +308,7 @@ const ProviderConfig = () => {
             <Grid item xs={12} sm={6}>
               <Typography gutterBottom display="flex" alignItems="center">
                 GST
-                <InfoOutlinedIcon fontSize="small" sx={{ ml: 0.5, color: "text.secondary" }} />
+                <InfoOutlinedIcon fontSize="small" sx={{ ml: 0.5, color: "#E15B65" }} />
               </Typography>
               <Box display="flex" alignItems="center" sx={{ border: "1px solid #ddd", borderRadius: 1, px: 1, height: 45 }}>
                 <TextField
@@ -381,7 +381,7 @@ const ProviderConfig = () => {
 
           {/* Action buttons */}
           <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" sx={{ width: 120, height: 40, fontWeight: 500 }} onClick={handleReset}>
+            <Button variant="outlined" color="#E15B65" sx={{ width: 120, height: 40, fontWeight: 500, color:"#E15B65" }} onClick={handleReset}>
               Reset
             </Button>
             <Button
@@ -389,8 +389,8 @@ const ProviderConfig = () => {
               sx={{
                 width: 120,
                 height: 40,
-                backgroundColor: "#1c78cfff",
-                "&:hover": { backgroundColor: "#317dd4ff" },
+                backgroundColor: "#E15B65",
+                "&:hover": { backgroundColor: "#f28b92ff" },
                 fontWeight: 500,
               }}
               onClick={(e) => handleSubmit(e, "update")}
@@ -522,7 +522,7 @@ const ProviderConfig = () => {
               ) : (
                 <Box>
                   <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                  <Typography variant="body2" color="primary" sx={{ mb: 0.5, fontWeight: "medium" }}>
+                  <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: "medium" }}>
                     Click to upload
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -544,8 +544,8 @@ const ProviderConfig = () => {
                 sx={{
                   width: 120,
                   height: 40,
-                  backgroundColor: "#338bddff",
-                  "&:hover": { backgroundColor: "#2682c9ff" },
+                  backgroundColor: "#E15B65",
+                  "&:hover": { backgroundColor: "#e23b46ff" },
                   fontWeight: 500,
                 }}
                 onClick={(e) => handleSubmit(e, "save")}

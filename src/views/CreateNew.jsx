@@ -1154,7 +1154,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
+import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -1195,7 +1195,7 @@ const Createnew = () => {
   const moduleId = localStorage.getItem('moduleId');
 
   // Memoized values
-const locationState = useMemo(() => location.state?.vehicle, [location.state]);
+  const locationState = useMemo(() => location.state?.vehicle, [location.state]);
 
   const vehicleKeyFromState = useMemo(() => location.state?.vehicle?._id, [location.state]);
   const effectiveVehicleId = useMemo(() => {
@@ -1290,8 +1290,8 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
   const initMap = useCallback(() => {
     if (!window.google || !mapRef.current || !mapsLoaded) return;
 
-    const centerLat = latitude && longitude ? parseFloat(latitude) : 25.2048;
-    const centerLng = latitude && longitude ? parseFloat(longitude) : 55.2708;
+    const centerLat = latitude && longitude ? parseFloat(latitude) : 20.5937;
+    const centerLng = latitude && longitude ? parseFloat(longitude) : 78.9629;
     const center = { lat: centerLat, lng: centerLng };
 
     const newMap = new window.google.maps.Map(mapRef.current, {
@@ -1390,6 +1390,7 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
     const pos = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
 
     map.setCenter(pos);
+    map.setZoom(12);
 
     if (!markerRef.current) {
       markerRef.current = new window.google.maps.Marker({
@@ -1401,18 +1402,35 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
     }
   }, [latitude, longitude, map]);
 
-  // Geocode zone when selected and no lat/long set
+  // Geocode zone when selected
   useEffect(() => {
-    if (!selectedZoneName || (latitude && longitude)) return;
+    if (!selectedZoneName) return;
     if (!mapsLoaded || !window.google || !window.google.maps) return;
 
     const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address: `${selectedZoneName}, UAE` }, (results, status) => {
+    geocoder.geocode({ address: selectedZoneName }, (results, status) => {
       if (status === 'OK' && results[0]) {
         const loc = results[0].geometry.location;
-        setLatitude(loc.lat().toString());
-        setLongitude(loc.lng().toString());
+        const newLat = loc.lat().toString();
+        const newLng = loc.lng().toString();
+        setLatitude(newLat);
+        setLongitude(newLng);
         setVenueAddress(results[0].formatted_address);
+        
+        // Update map center and marker
+        if (map) {
+          map.setCenter({ lat: loc.lat(), lng: loc.lng() });
+          map.setZoom(12);
+          
+          if (markerRef.current) {
+            markerRef.current.setMap(null);
+          }
+          markerRef.current = new window.google.maps.Marker({
+            position: { lat: loc.lat(), lng: loc.lng() },
+            map: map,
+          });
+        }
+        
         setToastMessage(`Location set for ${selectedZoneName}!`);
         setToastSeverity('success');
         setOpenToast(true);
@@ -1422,21 +1440,39 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
         setOpenToast(true);
       }
     });
-  }, [selectedZoneName, latitude, longitude, mapsLoaded]);
+  }, [selectedZoneName, mapsLoaded, map]);
 
-  // Set vehicle data from API response or location state - UPDATED TO MATCH REFERENCE
+  // Set vehicle data from API response or location state
   const setVehicleData = useCallback((vehicle) => {
+    console.log('Setting vehicle data:', vehicle);
+    
     if (vehicle.brand && vehicle.brand._id && !brands.some((b) => b._id === vehicle.brand._id)) {
       setBrands((prev) => [...prev, {
         _id: vehicle.brand._id,
         title: vehicle.brand.title || vehicle.brand.name || 'Unknown Brand',
       }]);
     }
-    if (vehicle.category && vehicle.category._id && !categories.some((c) => c._id === vehicle.category._id)) {
-      setCategories((prev) => [...prev, {
-        _id: vehicle.category._id,
-        title: vehicle.category.title || vehicle.category.name || 'Unknown Category',
-      }]);
+    
+    // Handle category - it comes as an array from API
+    let categoryId = '';
+    if (Array.isArray(vehicle.category) && vehicle.category.length > 0) {
+      categoryId = vehicle.category[0]._id;
+      if (!categories.some((c) => c._id === categoryId)) {
+        setCategories((prev) => [...prev, {
+          _id: categoryId,
+          title: vehicle.category[0].title || 'Unknown Category',
+        }]);
+      }
+    } else if (vehicle.category && typeof vehicle.category === 'object' && vehicle.category._id) {
+      categoryId = vehicle.category._id;
+      if (!categories.some((c) => c._id === categoryId)) {
+        setCategories((prev) => [...prev, {
+          _id: categoryId,
+          title: vehicle.category.title || 'Unknown Category',
+        }]);
+      }
+    } else if (typeof vehicle.category === 'string') {
+      categoryId = vehicle.category;
     }
     
     if (vehicle.zone && vehicle.zone._id && !zones.some((z) => z._id === vehicle.zone._id)) {
@@ -1448,7 +1484,9 @@ const locationState = useMemo(() => location.state?.vehicle, [location.state]);
     setName(vehicle.name || '');
     setDescription(vehicle.description || '');
     setBrand(vehicle.brand?._id || '');
-setCategory(vehicle.category?._id || vehicle.category || '');
+    setCategory(categoryId);
+    console.log('Category ID being set:', categoryId);
+    
     const zoneId = vehicle.zone?._id || '';
     setZone(zoneId);
     const zoneObj = zones.find(z => z._id === zoneId) || (vehicle.zone && { name: vehicle.zone.name });
@@ -1466,7 +1504,10 @@ setCategory(vehicle.category?._id || vehicle.category || '');
     setVenueAddress(vehicle.venueAddress || '');
     setLatitude(vehicle.latitude?.toString() || '');
     setLongitude(vehicle.longitude?.toString() || '');
+    
     setOperatingHours(vehicle.operatingHours || '');
+    console.log('Operating hours being set:', vehicle.operatingHours);
+    
     if (vehicle.pricing) {
       setTripType(vehicle.pricing.type || 'hourly');
       setHourlyWisePrice(vehicle.pricing.hourly?.toString() || '');
@@ -1476,7 +1517,7 @@ setCategory(vehicle.category?._id || vehicle.category || '');
     setDiscount(vehicle.discount?.toString() || '');
   }, [brands, categories, zones]);
 
-  // Fetch brands, categories, and zones - EXACTLY LIKE REFERENCE
+  // Fetch brands, categories, and zones
   useEffect(() => {
     const fetchBrandsCategoriesAndZones = async () => {
       try {
@@ -1548,41 +1589,40 @@ setCategory(vehicle.category?._id || vehicle.category || '');
     fetchBrandsCategoriesAndZones();
   }, [moduleId, API_BASE_URL]);
 
-  // Fetch or use location state for vehicle data in edit mode - EXACTLY LIKE REFERENCE
-  // REPLACE ONLY THIS useEffect (keep everything else EXACTLY the same)
-useEffect(() => {
-  if (!isDataLoaded) return;
-  const vehicleData = location.state?.vehicle;
-  if (vehicleData) {
-    setVehicleData(vehicleData);
-    setExistingThumbnail(vehicleData.thumbnail || '');
-    setExistingImages(vehicleData.images || []);
-    setViewMode('edit');
-  } else if (id) {
-    const fetchVehicle = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        const vehicle = response.data.data || response.data;
-        console.log('Vehicle data fetched for edit:', vehicle);
-        setVehicleData(vehicle);
-        setExistingThumbnail(vehicle.thumbnail || '');
-        setExistingImages(vehicle.images || []);
-        setViewMode('edit');
-      } catch (error) {
-        setToastMessage(error.response?.data?.message || 'Failed to fetch vehicle data');
-        setToastSeverity('error');
-        setOpenToast(true);
-        console.error('Error fetching vehicle:', error.response?.data || error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVehicle();
-  }
-}, [isDataLoaded, id, setVehicleData]);
+  // Fetch or use location state for vehicle data in edit mode
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    const vehicleData = location.state?.vehicle;
+    if (vehicleData) {
+      setVehicleData(vehicleData);
+      setExistingThumbnail(vehicleData.thumbnail || '');
+      setExistingImages(vehicleData.images || []);
+      setViewMode('edit');
+    } else if (id) {
+      const fetchVehicle = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          });
+          const vehicle = response.data.data || response.data;
+          console.log('Vehicle data fetched for edit:', vehicle);
+          setVehicleData(vehicle);
+          setExistingThumbnail(vehicle.thumbnail || '');
+          setExistingImages(vehicle.images || []);
+          setViewMode('edit');
+        } catch (error) {
+          setToastMessage(error.response?.data?.message || 'Failed to fetch vehicle data');
+          setToastSeverity('error');
+          setOpenToast(true);
+          console.error('Error fetching vehicle:', error.response?.data || error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchVehicle();
+    }
+  }, [isDataLoaded, id, setVehicleData]);
 
   // File handling
   const handleThumbnailFileChange = useCallback((event) => {
@@ -1639,12 +1679,6 @@ useEffect(() => {
     return true;
   }, []);
 
-  // Open map link
-  const handleOpenMap = useCallback(() => {
-    const query = selectedZoneName || venueAddress.trim() || 'Dubai, UAE';
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
-  }, [selectedZoneName, venueAddress]);
-
   // Reset form
   const handleReset = useCallback(() => {
     setName('');
@@ -1688,7 +1722,7 @@ useEffect(() => {
     }
   }, []);
 
-  // Form submission - UPDATED TO USE effectiveVehicleId LIKE REFERENCE
+  // Form submission
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
     const isEdit = viewMode === 'edit';
@@ -1772,7 +1806,7 @@ useEffect(() => {
     formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
     formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
     formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0); 
-   if (discount) formData.append('discount', parseFloat(discount));
+    if (discount) formData.append('discount', parseFloat(discount));
     searchTags.forEach(tag => formData.append('searchTags[]', tag));
     if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
     vehicleImages.forEach(file => formData.append('images', file));
@@ -1890,7 +1924,6 @@ useEffect(() => {
           </Box>
         )}
         <Box component="form" onSubmit={handleSubmit}>
-          {/* ALL EXISTING FORM FIELDS REMAIN EXACTLY THE SAME */}
           <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
             <Card sx={{ flex: isSmallScreen ? 'auto' : 2, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -1921,15 +1954,6 @@ useEffect(() => {
                   placeholder="Type short description"
                   sx={{ mb: 2 }}
                 />
-                <TextField
-                  fullWidth
-                  label="Venue Address*"
-                  variant="outlined"
-                  value={venueAddress}
-                  onChange={(e) => setVenueAddress(e.target.value)}
-                  placeholder="Enter venue address"
-                  required
-                />
               </CardContent>
             </Card>
             <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
@@ -1942,8 +1966,8 @@ useEffect(() => {
                 </Typography>
                 <UploadDropArea
                   onDragOver={handleDragOver}
-                  onDrop={handleDropThumbnail}
-                  onClick={() => document.getElementById('thumbnail-upload').click()}
+                  onDrop={handleDropThumbnail} 
+                  onClick={() => document.getElementById('thumbnail-upload').click()} 
                 >
                   {thumbnailFile ? (
                     <Box>
@@ -1961,7 +1985,7 @@ useEffect(() => {
                       <img
                         src={existingThumbnail}
                         alt="Existing thumbnail"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) , borderColor:'#E15B65'}}
                       />
                       <Typography variant="body2" color="text.secondary">
                         Existing thumbnail. Upload to replace.
@@ -2235,6 +2259,16 @@ useEffect(() => {
                   </FormControl>
                 </Box>
                 <Box sx={{ mt: 3 }}>
+                 <TextField
+                  fullWidth
+                  label="Venue Address*"
+                  variant="outlined"
+                  value={venueAddress}
+                  onChange={(e) => setVenueAddress(e.target.value)}
+                  placeholder="Enter venue address"
+                  required
+                /></Box>
+                <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" gutterBottom>Location and Operating Hours</Typography>
                   <TextField
                     fullWidth
@@ -2244,16 +2278,6 @@ useEffect(() => {
                     placeholder="Enter a location"
                     sx={{ mb: 2 }}
                   />
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Button
-                      variant="text"
-                      onClick={handleOpenMap}
-                      sx={{ flex: 1 }}
-                      startIcon={<LocationOnIcon />}
-                    >
-                      Open Full Map
-                    </Button>
-                  </Box>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                     <TextField
                       sx={{ flex: 1 }}

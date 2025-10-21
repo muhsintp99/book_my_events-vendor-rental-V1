@@ -132,20 +132,7 @@ const AddCoupon = () => {
         <Box component="form" onSubmit={handleSubmit}>
           <Card sx={{ p: 2, boxShadow: "none", border: `1px solid #e0e0e0` }}>
             <CardContent sx={{ "&:last-child": { pb: 2 } }}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Typography variant="body2" sx={{ mr: 1 }}>
-                  Default
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  English(EN)
-                </Typography>
-                <Typography variant="body2" sx={{ ml: 2, mr: 1 }}>
-                  Arabic
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  -عربي-(AR)
-                </Typography>
-              </Box>
+             
               <TextField
                 fullWidth
                 label="Title (Default)"
@@ -233,10 +220,10 @@ const AddCoupon = () => {
             </CardContent>
           </Card>
           <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <Button variant="outlined" onClick={handleReset} size="large">
+            <Button variant="outlined" color="#E15B65" onClick={handleReset} size="large" sx={{ color: "#E15B65" }}>
               Reset
             </Button>
-            <Button variant="contained" type="submit" size="large">
+            <Button variant="contained" type="submit" size="large" sx={{ bgcolor: "#E15B65", color: "white", "&:hover": { bgcolor: "#d63640ff" } }}>
               Submit
             </Button>
           </Box>

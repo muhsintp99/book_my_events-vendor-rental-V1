@@ -204,8 +204,6 @@ const EmployeeRole = () => {
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
             <Tabs value={tabValue} onChange={handleTabChange} aria-label="language tabs">
               <Tab label="Default" {...a11yProps(0)} />
-              <Tab label="English(EN)" {...a11yProps(1)} />
-              <Tab label="العربية - Arabic (AR)" {...a11yProps(2)} />
             </Tabs>
           </Box>
         </Box>
@@ -315,10 +313,10 @@ const EmployeeRole = () => {
         </FormGroup>
         {/* Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button variant="outlined" onClick={handleReset}>
+          <Button variant="outlined" color='#E15B65' onClick={handleReset} sx={{color:'#E15B65'}}>
             Reset
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
+          <Button variant="contained" color="primary" onClick={handleSubmit} sx={{color:'white', bgcolor:"#E15B65"}}>
             Submit
           </Button>
         </Box>

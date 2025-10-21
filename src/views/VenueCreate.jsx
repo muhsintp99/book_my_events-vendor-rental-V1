@@ -1223,7 +1223,7 @@
 // };
 // export default CreateAuditorium;
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -1270,7 +1270,7 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   minHeight: '150px',
   '&:hover': {
-    borderColor: theme.palette.primary.main,
+    borderColor: '#E15B65',
   },
   '& input[type="file"]': {
     display: 'none',
@@ -1437,6 +1437,10 @@ const CreateAuditorium = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const API_BASE_URL = 'https://api.bookmyevent.ae/api';
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState(id ? 'edit' : 'create');
   const [formData, setFormData] = useState({
     venueName: '',
@@ -1486,9 +1490,26 @@ const CreateAuditorium = () => {
   const [timeSlots, setTimeSlots] = useState(defaultTimeSlots);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
+  // Map states
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [map, setMap] = useState(null);
   // Fetch venue data if in edit mode
   const [openPreview, setOpenPreview] = useState(false);
 const [previewSrc, setPreviewSrc] = useState('');
+const inputSx = {
+  '& .MuiOutlinedInput-root': {
+    '&.Mui-focused': {
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+    },
+    '&:hover': {
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#E15B65',
+      },
+    },
+  },
+};
 useEffect(() => {
     fetchCategories();
   }, []);
@@ -1496,7 +1517,156 @@ useEffect(() => {
     if (id) {
       fetchVenue(id);
     }
-  }, [id]);  // Handlers
+  }, [id]);
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      console.warn('Google Maps API key not provided');
+      setToast({ open: true, message: 'Google Maps API key is required for map features.', severity: 'warning' });
+      return;
+    }
+
+    if (window.google && window.google.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setMapsLoaded(true);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [GOOGLE_MAPS_API_KEY]);
+
+  // Initialize map when mapsLoaded becomes true
+  useEffect(() => {
+    if (mapsLoaded && window.google && window.google.maps) {
+      initMap();
+    }
+  }, [mapsLoaded]);
+
+  const initMap = useCallback(() => {
+    if (!window.google || !mapRef.current || !mapsLoaded) return;
+
+    const centerLat = formData.latitude && formData.longitude ? parseFloat(formData.latitude) : 20.5937;
+    const centerLng = formData.latitude && formData.longitude ? parseFloat(formData.longitude) : 78.9629;
+    const center = { lat: centerLat, lng: centerLng };
+
+    const newMap = new window.google.maps.Map(mapRef.current, {
+      zoom: 12,
+      center,
+    });
+
+    // Add click listener
+    newMap.addListener('click', (event) => {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      setFormData(prev => ({ ...prev, latitude: lat.toString(), longitude: lng.toString() }));
+
+      // Remove existing marker
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+      }
+
+      // Add new marker
+      markerRef.current = new window.google.maps.Marker({
+        position: { lat, lng },
+        map: newMap,
+      });
+
+      // Reverse geocode to get address
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          setFormData(prev => ({ ...prev, venueAddress: results[0].formatted_address }));
+          setToast({ open: true, message: 'Location set and address auto-filled!', severity: 'success' });
+        } else {
+          setToast({ open: true, message: 'Location set, but could not determine address.', severity: 'info' });
+        }
+      });
+    });
+
+    setMap(newMap);
+  }, [mapsLoaded, formData.latitude, formData.longitude]);
+
+  // Initialize Places Autocomplete
+  useEffect(() => {
+    if (!mapsLoaded || !map || !searchInputRef.current || !window.google) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+      fields: ["place_id", "geometry", "name", "formatted_address"],
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry || !place.geometry.location) return;
+
+      const loc = place.geometry.location;
+
+      if (place.geometry.viewport) {
+        map.fitBounds(place.geometry.viewport);
+      } else {
+        map.setCenter(loc);
+        map.setZoom(17);
+      }
+
+      // Remove existing marker
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+      }
+
+      // Add new marker
+      markerRef.current = new window.google.maps.Marker({
+        position: loc,
+        map,
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        latitude: loc.lat().toString(),
+        longitude: loc.lng().toString(),
+        venueAddress: place.formatted_address || place.name
+      }));
+      setToast({ open: true, message: 'Location selected!', severity: 'success' });
+    });
+
+    return () => {
+      if (window.google && window.google.maps.event) {
+        window.google.maps.event.removeListener(listener);
+      }
+    };
+  }, [mapsLoaded, map]);
+
+  // Update map center and marker when lat/long change
+  useEffect(() => {
+    if (!map || !formData.latitude || !formData.longitude) return;
+
+    const pos = { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) };
+
+    map.setCenter(pos);
+    map.setZoom(12);
+
+    if (!markerRef.current) {
+      markerRef.current = new window.google.maps.Marker({
+        position: pos,
+        map,
+      });
+    } else {
+      markerRef.current.setPosition(pos);
+    }
+  }, [formData.latitude, formData.longitude, map]);
+
+  // Handlers
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -1573,6 +1743,13 @@ useEffect(() => {
     setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '' });
     // setToast({ open: false, message: '', severity: 'success' });
     setViewMode('create');
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+      markerRef.current = null;
+    }
+    if (map) {
+      setMap(null);
+    }
   };
  const validateForm = () => {
   const errors = [];
@@ -1673,8 +1850,8 @@ const fetchCategories = async () => {
         description: result.data.shortDescription || '',
         venueAddress: result.data.venueAddress || '',
       categories: result?.data?.categories?.[0]?._id || '',
-        latitude: result.data.latitude || '',
-        longitude: result.data.longitude || '',
+        latitude: result.data.latitude?.toString() || '',
+        longitude: result.data.longitude?.toString() || '',
         openingHours: result.data.openingHours || '',
         closingHours: result.data.closingHours || '',
         holidayScheduling: result.data.holidaySchedule || '',
@@ -1948,7 +2125,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.venueName}
                   onChange={handleInputChange}
                   placeholder="Type venue name"
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                   required
                 />
                 <TextField
@@ -1960,7 +2137,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Describe your auditorium"
                   multiline
                   rows={4}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                 />
                 <TextField
                   fullWidth
@@ -1971,11 +2148,11 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Enter complete address"
                   multiline
                   rows={2}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                   required
                 />
 
-              <FormControl fullWidth variant="outlined" required sx={{ mb: 2 }}>
+              <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
   <InputLabel id="category-label">Category*</InputLabel>
   <Select
     labelId="category-label"
@@ -1995,26 +2172,59 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
 
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                   <TextField
-                    fullWidth
-                    label="Latitude"
+                    sx={{ flex: 1, ...inputSx }}
+                    label="Latitude*"
                     name="latitude"
                     value={formData.latitude}
                     onChange={handleInputChange}
-                    placeholder="e.g., 12.9716"
+                    placeholder="e.g., 25.2048"
                     type="number"
                     inputProps={{ step: '0.0001' }}
+                    required
                   />
                   <TextField
-                    fullWidth
-                    label="Longitude"
+                    sx={{ flex: 1, ...inputSx }}
+                    label="Longitude*"
                     name="longitude"
                     value={formData.longitude}
                     onChange={handleInputChange}
-                    placeholder="e.g., 77.5946"
+                    placeholder="e.g., 55.2708"
                     type="number"
                     inputProps={{ step: '0.0001' }}
+                    required
                   />
                 </Box>
+                <TextField
+                    fullWidth
+                    label="Search Location"
+                    inputRef={searchInputRef}
+                    variant="outlined"
+                    placeholder="Enter a location"
+                    sx={{ mb: 2, ...inputSx }}
+                  />
+                {mapsLoaded && GOOGLE_MAPS_API_KEY ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Click on the map below to select a location
+                    </Typography>
+                    <Box
+                      ref={mapRef}
+                      sx={{
+                        height: 300,
+                        width: '100%',
+                        borderRadius: theme.shape.borderRadius,
+                        border: `1px solid ${theme.palette.grey[300]}`,
+                        mb: 2,
+                      }}
+                    />
+                  </>
+                ) : (
+                  <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[300]}`, borderRadius: theme.shape.borderRadius, mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Map loading...
+                    </Typography>
+                  </Box>
+                )}
                 <Box sx={{ mb: 4 }}>
                   <Typography variant="h6" gutterBottom>Operating Hours</Typography>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -2025,6 +2235,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       value={formData.openingHours}
                       onChange={handleInputChange}
                       placeholder="e.g., 09:00 AM"
+                      sx={inputSx}
                     />
                     <TextField
                       fullWidth
@@ -2033,6 +2244,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       value={formData.closingHours}
                       onChange={handleInputChange}
                       placeholder="e.g., 11:00 PM"
+                      sx={inputSx}
                     />
                   </Box>
                   <TextField
@@ -2044,6 +2256,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     placeholder="Describe holiday hours or closures"
                     multiline
                     rows={2}
+                    sx={inputSx}
                   />
                 </Box>
               
@@ -2168,7 +2381,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
     label="AC Available"
   />
   {formData.acAvailable && (
-    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+    <FormControl fullWidth variant="outlined" sx={{ mt: 1, ...inputSx }}>
       <InputLabel id="ac-type-label">AC Type</InputLabel>
       <Select
         labelId="ac-type-label"
@@ -2193,6 +2406,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       onChange={handleInputChange}
                       placeholder="Number of spots"
                       type="number"
+                      sx={inputSx}
                     />
                     <TextField
                       fullWidth
@@ -2201,6 +2415,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       value={formData.dressingRooms}
                       onChange={handleInputChange}
                       placeholder="Details about dressing rooms"
+                      sx={inputSx}
                     />
                   </Stack>
                   <Stack spacing={2}>
@@ -2229,6 +2444,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       value={formData.washroomsInfo}
                       onChange={handleInputChange}
                       placeholder="Details about washrooms"
+                      sx={inputSx}
                     />
                   </Stack>
                 </Box>
@@ -2317,19 +2533,8 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
       }}
     />
   }
-  sx={{
-    borderRadius: 2,
-    textTransform: 'none',
-    px: 3,
-    color: formData.venueType === 'per_function' ? '#fff' : '#E15B65',
-    backgroundColor: formData.venueType === 'per_function' ? '#E15B65' : 'transparent',
-    borderColor: '#E15B65',
-    '&:hover': {
-      backgroundColor: formData.venueType === 'per_function' ? '#c94a57' : 'rgba(225,91,101,0.08)',
-      borderColor: '#E15B65'
-    }
-  }}
->
+  sx={{borderRadius: 2,textTransform: 'none',px: 3,color: formData.venueType === 'per_function' ? '#fff' : '#E15B65',backgroundColor: formData.venueType === 'per_function' ? '#E15B65' : 'transparent',borderColor: '#E15B65',
+    '&:hover': {backgroundColor: formData.venueType === 'per_function' ? '#c94a57' : 'rgba(225,91,101,0.08)',borderColor: '#E15B65'}}}>
   Per Function
 </Button>
  </Box>
@@ -2411,7 +2616,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                  value={timeSlots[day].morning.startTime}
                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'startTime', e.target.value)}
                  disabled={!timeSlots[day].morning.enabled}
-                 sx={{ width: '80px' }}
+                 sx={{ width: '80px', ...inputSx }}
                  inputProps={{ style: { textAlign: 'center' } }}
                />
                <Select
@@ -2430,7 +2635,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                  value={timeSlots[day].morning.endTime}
                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'endTime', e.target.value)}
                  disabled={!timeSlots[day].morning.enabled}
-                 sx={{ width: '80px' }}
+                 sx={{ width: '80px', ...inputSx }}
                  inputProps={{ style: { textAlign: 'center' } }}
                />
                <Select
@@ -2460,6 +2665,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                placeholder="Enter price"
                type="number"
                inputProps={{ step: '0.01', min: '0' }}
+               sx={inputSx}
              />
            </Box>
          </Box>
@@ -2501,7 +2707,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                  value={timeSlots[day].evening.startTime}
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'startTime', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
-                 sx={{ width: '80px' }}
+                 sx={{ width: '80px', ...inputSx }}
                  inputProps={{ style: { textAlign: 'center' } }}
                />
                <Select
@@ -2520,7 +2726,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                  value={timeSlots[day].evening.endTime}
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'endTime', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
-                 sx={{ width: '80px' }}
+                 sx={{ width: '80px', ...inputSx }}
                  inputProps={{ style: { textAlign: 'center' } }}
                />
                <Select
@@ -2547,6 +2753,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                placeholder="Enter price"
                type="number"
                inputProps={{ step: '0.01', min: '0' }}
+               sx={inputSx}
              />
            </Box>
          </Box>
@@ -2574,6 +2781,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     placeholder="Ex: 10"
                     type="number"
                     inputProps={{ min: 0, max: 100 }}
+                    sx={inputSx}
                   />
                 </Box>
                 <TextField
@@ -2585,7 +2793,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Ex: 20"
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                 />
                 <TextField
                   fullWidth
@@ -2596,7 +2804,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="e.g., Free cancellation 48 hours before"
                   multiline
                   rows={2}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                 />
                 <TextField
                   fullWidth
@@ -2607,6 +2815,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Describe extra charges"
                   multiline
                   rows={2}
+                  sx={inputSx}
                 />
               </CardContent>
             </Card>
@@ -2616,7 +2825,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="h6" gutterBottom>Capacity & Layout</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Specify capacity and layout details</Typography>
-                <FormControl fullWidth variant="outlined" required sx={{ mb: 2 }}>
+                <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
                   <InputLabel id="seating-arrangement-label">Seating Arrangement*</InputLabel>
                   <Select
                     labelId="seating-arrangement-label"
@@ -2641,6 +2850,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     placeholder="e.g., 200"
                     type="number"
                     required
+                    sx={inputSx}
                   />
                   <TextField
                     fullWidth
@@ -2650,6 +2860,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     onChange={handleInputChange}
                     placeholder="e.g., 300"
                     type="number"
+                    sx={inputSx}
                   />
                 </Box>
                 <UploadDropArea
@@ -2711,7 +2922,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.nearbyTransport}
                   onChange={handleInputChange}
                   placeholder="Describe nearby metro, bus stops, etc."
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                 />
                 <TextField
                   fullWidth
@@ -2720,7 +2931,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.accessibilityInfo}
                   onChange={handleInputChange}
                   placeholder="Describe accessibility features"
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 2, ...inputSx }}
                 />
                 <FormControlLabel
                   control={<Switch name="elderlyAccessibility" checked={formData.elderlyAccessibility} onChange={handleInputChange} />}
@@ -2824,7 +3035,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.searchTags}
                   onChange={handleInputChange}
                   placeholder="Enter tags separated by commas (e.g., Auditorium, Wedding, Conference)"
-                  sx={{ mb: 1 }}
+                  sx={{ mb: 1, ...inputSx }}
                 />
                 <Typography variant="body2" color="text.secondary">
                   Add relevant keywords to help users find this venue easily
@@ -2843,7 +3054,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
               {viewMode === 'edit' ? 'Cancel' : 'Reset'}
             </Button>
             <Button
-              variant="contained" 
+variant="contained" 
               type="submit"
               size="large"
               disabled={loading}
@@ -2858,27 +3069,11 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
           autoHideDuration={6000}
           onClose={handleCloseToast}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{
-            '& .MuiSnackbarContent-root': {
-              minWidth: '600px',
-              maxWidth: '600px',
-              width: 'auto',
-            },
-          }}
-        >
+          sx={{'& .MuiSnackbarContent-root': { minWidth: '600px',maxWidth: '600px',width: 'auto',},}}>
           <Alert
             onClose={handleCloseToast}
             severity={toast.severity}
-            sx={{
-              width: '100%',
-              '& .MuiAlert-message': {
-                whiteSpace: 'pre-line',
-                wordBreak: 'break-word',
-                fontSize: '1rem',
-                lineHeight: 1.5,
-              },
-            }}
-          >
+            sx={{width: '100%','& .MuiAlert-message': {whiteSpace: 'pre-line',wordBreak: 'break-word', fontSize: '1rem', lineHeight: 1.5,},}}>
             {toast.message}
           </Alert>
         </Snackbar>

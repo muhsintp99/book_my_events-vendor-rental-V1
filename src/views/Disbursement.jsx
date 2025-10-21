@@ -92,7 +92,8 @@ const DisbursementMethodSetup = () => {
           <Button
             variant="contained"
             color="primary"
-            startIcon={<AddIcon />}
+            startIcon={<AddIcon />} 
+            sx={{ textTransform: 'none', bgcolor:'#E15B65' }}
             onClick={handleAddMethod}
           >
             Add New Method
@@ -248,7 +249,7 @@ const DisbursementMethodSetup = () => {
           <Button onClick={handleCloseModal} sx={{ mr: 2 }}>
             Cancel
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmitModal}>
+          <Button variant="contained" color="primary" onClick={handleSubmitModal} sx={{color:'white',bgcolor:'#E15B65'}}>
             Submit
           </Button>
         </Box>

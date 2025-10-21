@@ -344,6 +344,9 @@ const DriverView = Loadable(lazy(() => import('views/DriverView')));
 const Coupon = Loadable(lazy(()=> import('views/Coupon')));
 const Banners = Loadable(lazy(()=> import('views/Banners')));
 
+//vehicle marketing
+const VehicleBanners = Loadable(lazy(()=> import('views/VehicleBanners')));
+
 // business
 const ProviderConfig = Loadable(lazy(()=> import('views/ProviderConfig')));
 const Notification = Loadable(lazy(()=> import('views/Notification')));
@@ -432,13 +435,13 @@ const MainRoutes = {
           ]
         },
         {
-          path: 'providers',
+          path: 'vehicle',
           children: [
             { path: 'new', element: <AddDriver/> },
             { path: 'add', element: <Drivers/> },
             { path: 'driverview', element: <DriverView/> },
             { path: 'newcoupon', element: <Coupon/> },
-            { path: 'banner', element: <Banners/> }
+            { path: 'banners', element: <VehicleBanners/> }
           ]
         },
         {

@@ -317,7 +317,7 @@ const CarListingView = () => {
               borderRadius: 2,
               '&:hover': {
                 bgcolor: '#fee',
-                borderColor: '#dc3545'
+                borderColor: '#ff0019ff'
               }
             }}
           >
@@ -329,7 +329,7 @@ const CarListingView = () => {
             startIcon={<EditIcon />}
             onClick={handleEdit}
             sx={{
-              background: 'linear-gradient(135deg, #d9505d 0%, #ed081f 100%)',
+              background: 'linear-gradient(135deg, #E15B65 0%, #e98e8eff 100%)',
               textTransform: 'none',
               fontSize: '14px',
               px: 3,
@@ -338,7 +338,7 @@ const CarListingView = () => {
               borderRadius: 2,
               boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #ed081f 0%, #d9505d 100%)',
+                background: 'linear-gradient(135deg, #f68b96ff 0%, #c52131ff 100%)',
                 boxShadow: '0 6px 16px rgba(217, 80, 93, 0.4)'
               }
             }}

@@ -104,7 +104,7 @@ const DisbursementReport = () => {
           <MenuItem value="This week">This week</MenuItem>
           <MenuItem value="Custom">Custom</MenuItem>
         </TextField>
-        <Button variant="contained" color="primary" sx={{ height: '40px', paddingRight: 10, marginLeft: 10 }}>
+        <Button variant="contained" color="primary" sx={{ height: '40px', paddingRight: 10, marginLeft: 10, bgcolor:'#E15B65' }}>
           Filter
         </Button>
       </Box>
@@ -120,9 +120,9 @@ const DisbursementReport = () => {
             />
             <Button
               variant="outlined"
-              color="primary"
+              color="#E15B65"
               size="small"
-              onClick={handleClick}
+              onClick={handleClick} sx={{color:'#E15B65'}}
               endIcon={<ArrowDropDownIcon />}
             >
               Export

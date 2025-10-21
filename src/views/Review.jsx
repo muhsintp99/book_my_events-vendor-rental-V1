@@ -91,9 +91,9 @@ const Review = () => {
         />
         <div>
           <Button
-            variant="outlined"
+            variant="outlined" color='#E15B65'
             size="small"
-            sx={{ textTransform: 'none' }}
+            sx={{ textTransform: 'none',color:'#E15B65' }}
             onClick={handleExportClick}
           >
             Export
@@ -165,7 +165,7 @@ const Review = () => {
                       variant="contained"
                       color="primary"
                       startIcon={<ReplyIcon />}
-                      sx={{ textTransform: 'none' }}
+                      sx={{ textTransform: 'none', bgcolor:'#E15B65' }}
                       onClick={() => handleOpenReplyModal(review)}
                     >
                       {review.replyDate !== 'Not replied Yet' ? 'View Reply' : 'Give Reply'}

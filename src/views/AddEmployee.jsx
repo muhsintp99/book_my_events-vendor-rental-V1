@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Tooltip,
   Stack,
   FormControl,
   InputLabel,
@@ -256,11 +255,6 @@ const Addemployee = () => {
               Add New Employee
             </Typography>
           </Box>
-          <Tooltip title="Settings">
-            <IconButton color="primary" sx={{ backgroundColor: 'white', border: `1px solid ${theme.palette.grey[300]}` }}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
         </Box>
         <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4 }}>
           Insert the basic information of the employee
@@ -356,7 +350,7 @@ const Addemployee = () => {
                   ) : (
                     <Box>
                       <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                      <Typography variant="body2" color="primary" sx={{ mb: 0.5, fontWeight: 'medium' }}>
+                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>
                         Choose File
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -421,10 +415,10 @@ const Addemployee = () => {
           {/* Submit Button */}
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
-              variant="outlined"
-              color="inherit"
+              variant="outlined" 
+              color="#E15B65"
               size="large"
-              onClick={handleReset}
+              onClick={handleReset} sx={{color:"#E15B65"}}
             >
               Reset
             </Button>
@@ -432,7 +426,7 @@ const Addemployee = () => {
               variant="contained"
               type="submit"
               size="large"
-              sx={{ ml: 2 }}
+              sx={{ ml: 2, color: 'white', bgcolor: '#E15B65' }}
             >
               Submit
             </Button>

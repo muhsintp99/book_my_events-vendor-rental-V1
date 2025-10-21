@@ -52,7 +52,7 @@ const EmployeeList = () => {
         <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
           <Box component="span" sx={{ mr: 1 }}>👤</Box> Employee List <Box component="span" sx={{ ml: 1, color: 'text.secondary' }}>({employees.length})</Box>
         </Typography>
-        <Button onClick={() => navigate("/employee/new")} variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#397ed3ff', '&:hover': { backgroundColor: '#79a8e9ff' } }}>
+        <Button onClick={() => navigate("/employee/new")} variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#E15B65', '&:hover': { backgroundColor: '#f33542ff' } }}>
           Add New Employee
         </Button>
       </Box>
@@ -67,9 +67,9 @@ const EmployeeList = () => {
           }}
         />
         <Button
-          variant="outlined"
+          variant="outlined" color='#E15B65'
           size="small"
-          onClick={handleClick}
+          onClick={handleClick}  sx={{color:'#E15B65'}}
           endIcon={<ArrowDropDownIcon />}
         >
           Export

@@ -80,6 +80,14 @@ const vehiclemanagement = {
       url: '/vehicles/categories',
       icon: icons.IconCategory,
       breadcrumbs: false
+    },
+    {
+      id: 'schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/venue/schedules',
+      icon: icons.IconCalendar,
+      breadcrumbs: false
     }
   ]
 };

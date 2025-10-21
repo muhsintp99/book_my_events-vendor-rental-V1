@@ -5,14 +5,14 @@ import { styled } from '@mui/system';
 const BlueSwitch = styled(Switch)(({ theme }) => ({
   '& .MuiSwitch-switchBase': {
     '&.Mui-checked': {
-      color: '#1976d2',
+      color: '#E15B65',
       '& + .MuiSwitch-track': {
-        backgroundColor: '#1976d2',
+        backgroundColor: '#E15B65',
       },
     },
   },
   '& .MuiSwitch-track': {
-    backgroundColor: '#1976d2',
+    backgroundColor: '#e1888eff',
   },
 }));
 
@@ -174,7 +174,7 @@ const NotificationSetup = () => {
           <Button onClick={handleCancelMail} variant="contained" sx={{ backgroundColor: '#FEE2E2', color: '#DC2626', '&:hover': { backgroundColor: '#FECACA' }, textTransform: 'none', px: 2, py: 0.5, borderRadius: '4px' }}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmMail} variant="contained" sx={{ backgroundColor: '#1b8dd0ff', color: '#FFFFFF', '&:hover': { backgroundColor: '#6dbaedff' }, textTransform: 'none', px: 2, py: 0.5, borderRadius: '4px' }}>
+          <Button onClick={handleConfirmMail} variant="contained" sx={{ backgroundColor: '#E15B65', color: '#FFFFFF', '&:hover': { backgroundColor: '#d63640ff' }, textTransform: 'none', px: 2, py: 0.5, borderRadius: '4px' }}>
             Ok
           </Button>
         </DialogActions>
@@ -183,7 +183,7 @@ const NotificationSetup = () => {
         open={openSnackbar}
         autoHideDuration={3000}
         onClose={handleCloseSnackbar}
-        message={<Box sx={{ backgroundColor: '#2fa1e3ff', color: '#FFFFFF', p: 1, borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
+        message={<Box sx={{ backgroundColor: '#E15B65', color: '#FFFFFF', p: 1, borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
           <svg width="16" height="16" fill="none" style={{ marginRight: '8px' }}>
             <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm3.5 10.1l-4-4-2 2-1.4-1.4 3.4-3.4 5.4 5.4-1.4 1.4z" fill="#FFFFFF" />
           </svg>

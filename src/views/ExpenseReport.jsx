@@ -48,7 +48,7 @@ const ExpenseReport = () => {
           <MenuItem value="This Week">This Week</MenuItem>
           <MenuItem value="Custom">Custom</MenuItem>
         </TextField>
-        <Button variant="contained" color="primary" sx={{ height: '50px', paddingRight: 30, marginLeft: 80 }}>
+        <Button variant="contained" color="primary" sx={{ height: '50px', paddingRight: 30, marginLeft: 80, bgcolor:'#E15B65' }}>
           Filter
         </Button>
       </Box>
@@ -62,9 +62,9 @@ const ExpenseReport = () => {
             sx={{ mr: 2 }}
           />
           <Button
-            variant="outlined"
+            variant="outlined" color='#E15B65'
             size="small"
-            onClick={handleClick}
+            onClick={handleClick} sx={{color:'#E15B65'}}
             endIcon={<ArrowDropDownIcon />}
           >
             Export
