@@ -1210,7 +1210,7 @@ const Createnew = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [vehicleImages, setVehicleImages] = useState([]);
+  const [newVehicleImages, setNewVehicleImages] = useState([]);
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [category, setCategory] = useState('');
@@ -1517,6 +1517,12 @@ const Createnew = () => {
     setDiscount(vehicle.discount?.toString() || '');
   }, [brands, categories, zones]);
 
+
+  useEffect(() => {
+  return () => {
+    newVehicleImages.forEach(file => URL.revokeObjectURL(file));
+  };
+}, [newVehicleImages]);
   // Fetch brands, categories, and zones
   useEffect(() => {
     const fetchBrandsCategoriesAndZones = async () => {
@@ -1641,15 +1647,15 @@ const Createnew = () => {
   }, []);
 
   const handleVehicleImagesChange = useCallback((event) => {
-    const files = Array.from(event.target.files);
-    if (files.length > 0) setVehicleImages(files);
-  }, []);
+  const files = Array.from(event.target.files);
+  setNewVehicleImages(prev => [...prev, ...files]);
+}, []);
 
   const handleDropImages = useCallback((event) => {
-    event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    if (files.length > 0) setVehicleImages(files);
-  }, []);
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer.files);
+  setNewVehicleImages(prev => [...prev, ...files]);
+}, []);
 
   // Tag handling
   const handleTagInputChange = useCallback((event) => {
@@ -1685,7 +1691,7 @@ const Createnew = () => {
     setDescription('');
     setVenueAddress('');
     setThumbnailFile(null);
-    setVehicleImages([]);
+setNewVehicleImages([]);
     setBrand('');
     setModel('');
     setCategory('');
@@ -1756,13 +1762,13 @@ const Createnew = () => {
       return;
     }
 
-    if (vehicleImages.length === 0 && existingImages.length === 0 && !isEdit) {
-      setToastMessage('Please upload at least one vehicle image.');
-      setToastSeverity('error');
-      setOpenToast(true);
-      setLoading(false);
-      return;
-    }
+   if (newVehicleImages.length === 0 && existingImages.length === 0 && !isEdit) {
+  setToastMessage('Please upload at least one vehicle image.');
+  setToastSeverity('error');
+  setOpenToast(true);
+  setLoading(false);
+  return;
+}
 
     if (!validateLicensePlate(licensePlateNumber)) {
       setToastMessage('Invalid license plate number.');
@@ -1809,8 +1815,7 @@ const Createnew = () => {
     if (discount) formData.append('discount', parseFloat(discount));
     searchTags.forEach(tag => formData.append('searchTags[]', tag));
     if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
-    vehicleImages.forEach(file => formData.append('images', file));
-
+newVehicleImages.forEach(file => formData.append('images', file));
     // Log FormData for debugging
     const formDataEntries = {};
     for (let [key, value] of formData.entries()) {
@@ -1871,7 +1876,7 @@ const Createnew = () => {
     viewMode, effectiveVehicleId, name, brand, model, category, zone, type, engineCapacity, enginePower,
     seatingCapacity, airCondition, fuelType, transmissionType, licensePlateNumber, tripType,
     hourlyWisePrice, perDayPrice, distanceWisePrice, discount, searchTags, thumbnailFile,
-    vehicleImages, existingThumbnail, existingImages, validateLicensePlate, handleReset, navigate,
+    newVehicleImages, existingThumbnail, existingImages, validateLicensePlate, handleReset, navigate,
     API_BASE_URL, moduleId, isDataLoaded, vehicleKeyFromState, setVehicleData, venueAddress, latitude, longitude, operatingHours
   ]);
 
@@ -1994,7 +1999,7 @@ const Createnew = () => {
                   ) : (
                     <Box>
                       <CloudUploadIcon sx={{ fontSize: 40, color: '#E15B65', mb: 1 }} />
-                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>
+                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium'  }}>
                         Click to upload
                       </Typography>
                       <Typography variant="body2" color="#E15B65">
@@ -2023,58 +2028,71 @@ const Createnew = () => {
                   JPG, JPEG, PNG Less Than 1MB (Ratio 2:1)
                 </Typography>
                 <UploadDropArea
-                  onDragOver={handleDragOver}
-                  onDrop={handleDropImages}
-                  onClick={() => document.getElementById('images-upload').click()}
-                >
-                  {vehicleImages.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                      {vehicleImages.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`Vehicle image ${index + 1}`}
-                          style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
-                        />
-                      ))}
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, width: '100%' }}>
-                        {vehicleImages.length} image(s) selected
-                      </Typography>
-                    </Box>
-                  ) : existingImages.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                      {existingImages.map((url, index) => (
-                        <img
-                          key={index}
-                          src={url}
-                          alt={`Existing vehicle image ${index + 1}`}
-                          style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
-                        />
-                      ))}
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, width: '100%' }}>
-                        {existingImages.length} existing image(s). Upload to replace.
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <CloudUploadIcon sx={{ fontSize: 40, color: '#E15B65', mb: 1 }} />
-                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>
-                        Click to upload
-                      </Typography>
-                      <Typography variant="body2" color="#E15B65">
-                        Or drag and drop
-                      </Typography>
-                    </Box>
-                  )}
-                  <input
-                    type="file"
-                    id="images-upload"
-                    hidden
-                    accept="image/jpeg,image/png,image/jpg"
-                    multiple
-                    onChange={handleVehicleImagesChange}
-                  />
-                </UploadDropArea>
+  onDragOver={handleDragOver}
+  onDrop={handleDropImages}
+  onClick={() => document.getElementById('images-upload').click()}
+>
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', width: '100%' }}>
+    {existingImages.length > 0 && (
+      <>
+        {existingImages.map((url, index) => (
+          <Box key={`existing-${index}`} sx={{ position: 'relative' }}>
+            <img
+              src={url}
+              alt={`Existing vehicle image ${index + 1}`}
+              style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
+            />
+            <Typography variant="caption" sx={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
+              Existing
+            </Typography>
+          </Box>
+        ))}
+      </>
+    )}
+    {newVehicleImages.length > 0 && (
+      <>
+        {newVehicleImages.map((file, index) => (
+          <Box key={`new-${index}`} sx={{ position: 'relative' }}>
+            <img
+              src={URL.createObjectURL(file)}
+              alt={`New vehicle image ${index + 1}`}
+              style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
+            />
+            <IconButton
+              size="small"
+              onClick={() => setNewVehicleImages(prev => prev.filter((_, i) => i !== index))}
+              sx={{ position: 'absolute', top: -4, right: -4, backgroundColor: 'white', width: 24, height: 24 }}
+            >
+              <Typography sx={{ fontSize: 14, color: 'red' }}>×</Typography>
+            </IconButton>
+          </Box>
+        ))}
+      </>
+    )}
+    {(existingImages.length === 0 && newVehicleImages.length === 0) && (
+      <>
+        <CloudUploadIcon sx={{ fontSize: 40, color: '#E15B65', mb: 1 }} />
+        <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium', borderColor:'#E15B65' }}>
+          Click to upload
+        </Typography>
+        <Typography variant="body2" color="#E15B65">
+          Or drag and drop
+        </Typography>
+      </>
+    )}
+  </Box>
+  <Typography variant="body2" color="text.secondary" sx={{ mt: 1, width: '100%', textAlign: 'center' }}>
+    {existingImages.length + newVehicleImages.length} image(s) {existingImages.length > 0 ? '(including existing)' : ''}. Upload to add more.
+  </Typography>
+  <input
+    type="file"
+    id="images-upload"
+    hidden
+    accept="image/jpeg,image/png,image/jpg"
+    multiple
+    onChange={handleVehicleImagesChange}
+  />
+</UploadDropArea>
               </CardContent>
             </Card>
           </Box>
@@ -2552,7 +2570,7 @@ const Createnew = () => {
             </Card>
           </Box>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="outlined" color="inherit" size="large" onClick={handleReset}>
+            <Button variant="outlined" color="#E15B65" size="large" onClick={handleReset} sx={{color:'#E15B65'}}>
               {isEdit ? 'Cancel' : 'Reset'}
             </Button>
             <Button 
@@ -2560,7 +2578,7 @@ const Createnew = () => {
               type="submit" 
               size="large" 
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null} sx={{color:'white',bgcolor:'#E15B65'}}
             >
               {loading ? 'Submitting...' : isEdit ? 'Update' : 'Submit'}
             </Button>

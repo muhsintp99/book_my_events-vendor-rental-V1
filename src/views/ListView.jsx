@@ -31,7 +31,6 @@ import {
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { px } from 'framer-motion';
 
 const ThumbnailImage = styled('img')(({ theme, active }) => ({
   width: 80,
@@ -62,6 +61,34 @@ const InfoCard = styled(Box)(({ theme }) => ({
   },
 }));
 
+const NoImageBox = ({ loading }) => (
+  <Box
+    sx={{
+      width: '100%',
+      height: { xs: 240, md: 300 },
+      background: loading ? 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)' : '#f5f5f5',
+      borderRadius: 3,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#999',
+      fontSize: '14px',
+      border: '2px dashed #ccc'
+    }}
+  >
+    {loading ? (
+      <CircularProgress size={40} sx={{ color: '#d9505d' }} />
+    ) : (
+      <>
+        <CarIcon sx={{ fontSize: 48, opacity: 0.5 }} />
+        <Typography variant="body2" sx={{ mt: 1, opacity: 0.7 }}>
+          No Image Available
+        </Typography>
+      </>
+    )}
+  </Box>
+);
+
 const CarListingView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -76,6 +103,11 @@ const CarListingView = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [mainImageLoading, setMainImageLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState(new Set());
+
+  const BASE_UPLOAD_URL = (API_BASE_URL || 'https://api.bookmyevent.ae/api').replace(/\/api\/?$/, '');
+  const getImageUrl = (filename) => filename ? `${BASE_UPLOAD_URL}/Uploads/vehicles/${filename}` : '';
 
   useEffect(() => {
     if (location.state?.vehicle) {
@@ -89,6 +121,22 @@ const CarListingView = () => {
       setLoading(false);
     }
   }, [id, location.state]);
+
+  let imageList = [];
+  if (vehicle && vehicle.images && vehicle.images.length > 0) {
+    imageList = vehicle.images.map(getImageUrl).filter(url => url);
+  } else if (vehicle && vehicle.thumbnail) {
+    imageList = [getImageUrl(vehicle.thumbnail)].filter(url => url);
+  }
+  const images = imageList.length > 0 ? imageList : [];
+
+  useEffect(() => {
+    setMainImageLoading(true);
+    setImageErrors(new Set());
+    if (images.length > 0) {
+      setActiveImage(0);
+    }
+  }, [vehicle, images.length]);
 
   const fetchVehicle = async () => {
     setLoading(true);
@@ -122,6 +170,12 @@ const CarListingView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageError = (index) => {
+    console.error(`Image load error for index ${index}:`, images[index]);
+    setImageErrors(prev => new Set([...prev, index]));
+    setMainImageLoading(false);
   };
 
   const confirmDelete = () => {
@@ -221,11 +275,8 @@ const CarListingView = () => {
     );
   }
 
-  const images = vehicle.images && vehicle.images.length > 0 
-    ? vehicle.images 
-    : vehicle.thumbnail 
-    ? [vehicle.thumbnail] 
-    : ['https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'];
+  const hasValidMainImage = images.length > 0 && !imageErrors.has(activeImage);
+  const showNoImage = images.length === 0 || imageErrors.has(activeImage);
 
   return (
     <Box sx={{ 
@@ -359,31 +410,66 @@ const CarListingView = () => {
           {/* Image Gallery Section */}
           <Grid container spacing={4}>
             <Grid item xs={12} md={5}>
-              <Box>
-                <Box
-                  component="img"
-                  src={images[activeImage]}
-                  alt={vehicle.name || 'Vehicle'}
-                  sx={{
-                    width: '100%',
-                    height: { xs: 240, md: 300 },
-                    objectFit: 'cover',
-                    borderRadius: 3,
-                    mb: 2,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  {images.map((img, index) => (
-                    <ThumbnailImage
-                      key={index}
-                      src={img}
-                      alt={`${vehicle.name} view ${index + 1}`}
-                      active={activeImage === index}
-                      onClick={() => setActiveImage(index)}
-                    />
-                  ))}
+              <Box sx={{ position: 'relative' }}>
+                <Box sx={{
+                  width: '100%',
+                  height: { xs: 240, md: 300 },
+                  borderRadius: 3,
+                  mb: 2,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                  overflow: 'hidden'
+                }}>
+                  {showNoImage ? (
+                    <NoImageBox loading={mainImageLoading} />
+                  ) : (
+                    <>
+                      {mainImageLoading && (
+                        <Box sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'rgba(255,255,255,0.8)',
+                          zIndex: 1
+                        }}>
+                          <CircularProgress size={40} sx={{ color: '#d9505d' }} />
+                        </Box>
+                      )}
+                      <img
+                        src={images[activeImage]}
+                        alt={vehicle.name || 'Vehicle'}
+                        onLoad={() => setMainImageLoading(false)}
+                        onError={() => handleImageError(activeImage)}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: mainImageLoading ? 'none' : 'block'
+                        }}
+                        loading="lazy"
+                      />
+                    </>
+                  )}
                 </Box>
+                {images.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    {images.map((img, index) => (
+                      <ThumbnailImage
+                        key={index}
+                        src={img}
+                        alt={`${vehicle.name} view ${index + 1}`}
+                        active={activeImage === index}
+                        onClick={() => setActiveImage(index)}
+                        onError={() => handleImageError(index)}
+                        loading="lazy"
+                      />
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Grid>
 
@@ -457,7 +543,7 @@ const CarListingView = () => {
           {/* Three Column Info Section */}
           <Grid container spacing={3}>
             {/* General Info */}
-            <Grid item xs={12} md={4} width={335}>
+            <Grid item xs={12} md={4} sx={{ width: 335 }}>
               <InfoCard>
                 <Box sx={{ 
                   display: 'flex', 
@@ -531,7 +617,7 @@ const CarListingView = () => {
             </Grid>
 
             {/* Fare & Discounts */}
-            <Grid item xs={12} md={4} width={335}>
+            <Grid item xs={12} md={4} sx={{ width: 335 }}>
               <InfoCard>
                 <Box sx={{ 
                   display: 'flex', 
@@ -614,7 +700,7 @@ const CarListingView = () => {
             </Grid>
 
             {/* Other Features */}
-            <Grid item xs={12} md={4} width={340}>
+            <Grid item xs={12} md={4} sx={{ width: 340 }}>
               <InfoCard>
                 <Box sx={{ 
                   display: 'flex', 

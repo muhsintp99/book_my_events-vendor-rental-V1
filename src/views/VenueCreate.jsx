@@ -1224,29 +1224,7 @@
 // export default CreateAuditorium;
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  IconButton,
-  Tooltip,
-  Stack,
-  Radio,
-  FormControlLabel,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Switch,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Checkbox,
-  Dialog,DialogContent, DialogActions
-} from '@mui/material';
+import {Box,Typography,TextField,Button,Card,CardContent,IconButton,Stack,Radio,FormControlLabel,Select,MenuItem,FormControl,InputLabel,Switch,Snackbar,Alert,CircularProgress,Checkbox,Dialog,DialogContent, DialogActions,RadioGroup} from '@mui/material';
 import { Visibility } from '@mui/icons-material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -1431,6 +1409,67 @@ const transformToTimeSlots = (pricingSchedule) => {
   
   return timeSlots;
 };
+const packageNames = {
+  basic: 'Basic Package',
+  standard: 'Standard Package',
+  premium: 'Premium Package',
+  deluxe: 'Deluxe / Royal Package'
+};
+const packageData = {
+  basic: {
+    subtitle: 'Small gatherings, office events, or budget-friendly functions',
+    description: 'Small gatherings, office events, or budget-friendly functions',
+    welcomeDrink: 'Welcome drink (1 option)',
+    starters: '1 Starter (Veg/Non-Veg)',
+    mainCourses: '2 Main Courses (1 Veg + 1 Non-Veg)',
+    riceBread: '1 Rice Item (Ghee rice / Fried rice / Biriyani)',
+    liveCounters: '',
+    desserts: '1 Dessert (Payasam / Ice cream)',
+    salad: 'Salad, Pickle, Papad',
+    buffetSetup: false,
+    priceRange: '₹250 – ₹300 per head'
+  },
+  standard: {
+    subtitle: 'Engagements, family functions, or mid-scale corporate events',
+    description: 'Engagements, family functions, or mid-scale corporate events',
+    welcomeDrink: 'Welcome drink (2 options)',
+    starters: '2 Starters (1 Veg + 1 Non-Veg)',
+    mainCourses: '3 Main Courses (2 Veg + 1 Non-Veg)',
+    riceBread: '1 Rice Item + 1 Bread (Chapati / Naan)',
+    liveCounters: '',
+    desserts: '1 Dessert + Fruit salad',
+    salad: 'Salad, Pickle, Papad',
+    buffetSetup: false,
+    priceRange: '₹450 – ₹650 per head'
+  },
+  premium: {
+    subtitle: 'Weddings, receptions, or luxury corporate events',
+    description: 'Weddings, receptions, or luxury corporate events',
+    welcomeDrink: 'Welcome drink counter (Juices, Mocktails)',
+    starters: '3 Starters (2 Non-Veg + 1 Veg)',
+    mainCourses: '4 Main Courses (2 Veg + 2 Non-Veg)',
+    riceBread: '2 Rice Items (Biriyani + Fried Rice / Ghee Rice)\n2 Breads (Naan / Chapati / Parotta)',
+    liveCounters: 'Live Counter (Dosa / Pasta / Chaat / Grill)',
+    desserts: '2 Desserts (Ice cream + Payasam / Cake)',
+    salad: 'Salad Bar, Papad, Pickle',
+    buffetSetup: false,
+    priceRange: '₹750 – ₹1,200 per head'
+  },
+  deluxe: {
+    subtitle: 'Grand weddings, receptions & VIP events',
+    description: 'Grand weddings, receptions & VIP events',
+    welcomeDrink: 'Live Juice & Mocktail Bar',
+    starters: '4 Starters (2 Veg + 2 Non-Veg)',
+    mainCourses: '5 Main Courses (2 Veg + 3 Non-Veg)',
+    riceBread: '2 Rice Items + 2 Bread Options',
+    liveCounters: '2 Live Counters (Tandoor / Grill / Chaat / Pasta)',
+    desserts: '3 Desserts (Payasam, Ice cream, Cake / Gulab Jamun)',
+    salad: 'Salad Bar, Papad, Pickle',
+    buffetSetup: true,
+    priceRange: '₹1,200 – ₹2,000 per head'
+  }
+};
+
 const CreateAuditorium = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1477,9 +1516,24 @@ const CreateAuditorium = () => {
     accessibilityInfo: '',
     elderlyAccessibility: false,
     searchTags: '',
+    packageId: '',
+    selectedFoodPackage: '',
+    foodSubtitle: '',
+    foodDescription: '',
+    foodWelcomeDrink: '',
+    foodStarters: '',
+    foodMainCourses: '',
+    foodRiceBread: '',
+    foodLiveCounters: '',
+    foodDesserts: '',
+    foodSalad: '',
+    foodBuffetSetup: false,
+    minFoodPrice: '',
+    maxFoodPrice: '',
   });
   const [categories, setCategories] = useState([]);
   const [files, setFiles] = useState({ thumbnail: null, auditoriumImage: null, floorPlan: null });
+  const [packageFiles, setPackageFiles] = useState({ thumbnail: null });
   const [existingImages, setExistingImages] = useState({
     thumbnail: '',
     auditoriumImage: '',
@@ -1680,11 +1734,24 @@ useEffect(() => {
       setFiles((prev) => ({ ...prev, [key]: file }));
     }
   };
+  const handlePackageFileChange = (key) => (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPackageFiles((prev) => ({ ...prev, [key]: file }));
+    }
+  };
   const handleDrop = (key) => (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
     if (file) {
       setFiles((prev) => ({ ...prev, [key]: file }));
+    }
+  };
+  const handlePackageDrop = (key) => (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setPackageFiles((prev) => ({ ...prev, [key]: file }));
     }
   };
   //timeslot
@@ -1699,6 +1766,31 @@ useEffect(() => {
         }
       }
     }));
+  };
+  const handleFoodPackageChange = (e) => {
+    const value = e.target.value;
+    if (value && packageData[value]) {
+      const pkg = packageData[value];
+      const priceMatch = pkg.priceRange.match(/₹?(\d+(?:\.\d+)?)\s*[–\-\s]\s*₹?(\d+(?:\.\d+)?)/i);
+      const minP = priceMatch ? priceMatch[1] : '';
+      const maxP = priceMatch ? priceMatch[2] : '';
+      setFormData(prev => ({
+        ...prev,
+        selectedFoodPackage: value,
+        foodSubtitle: pkg.subtitle,
+        foodDescription: pkg.description,
+        foodWelcomeDrink: pkg.welcomeDrink,
+        foodStarters: pkg.starters,
+        foodMainCourses: pkg.mainCourses,
+        foodRiceBread: pkg.riceBread,
+        foodLiveCounters: pkg.liveCounters,
+        foodDesserts: pkg.desserts,
+        foodSalad: pkg.salad,
+        foodBuffetSetup: pkg.buffetSetup,
+        minFoodPrice: minP,
+        maxFoodPrice: maxP,
+      }));
+    }
   };
   const handleDragOver = (event) => event.preventDefault();
   const handleReset = () => {
@@ -1737,9 +1829,24 @@ useEffect(() => {
       accessibilityInfo: '',
       elderlyAccessibility: false,
       searchTags: '',
+      packageId: '',
+      selectedFoodPackage: '',
+      foodSubtitle: '',
+      foodDescription: '',
+      foodWelcomeDrink: '',
+      foodStarters: '',
+      foodMainCourses: '',
+      foodRiceBread: '',
+      foodLiveCounters: '',
+      foodDesserts: '',
+      foodSalad: '',
+      foodBuffetSetup: false,
+      minFoodPrice: '',
+      maxFoodPrice: '',
     });
     setTimeSlots(resetTimeSlots);
     setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null });
+    setPackageFiles({ thumbnail: null });
     setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '' });
     // setToast({ open: false, message: '', severity: 'success' });
     setViewMode('create');
@@ -1771,6 +1878,13 @@ useEffect(() => {
   );
   if (!hasPricing) {
     errors.push('At least one time slot with price is required');
+  }
+  if (formData.foodCateringAvailability) {
+    if (!formData.selectedFoodPackage) errors.push('Food package type is required');
+    if (!formData.minFoodPrice.trim()) errors.push('Min food price is required');
+    if (!formData.maxFoodPrice.trim()) errors.push('Max food price is required');
+    if (!formData.foodSubtitle.trim()) errors.push('Food subtitle is required');
+    if (!formData.foodDescription.trim()) errors.push('Food description is required');
   }
   return errors;
 };
@@ -1828,7 +1942,37 @@ const fetchCategories = async () => {
     setCategories([]);
   }
 };
-
+const fetchPackage = async (packageId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await response.json();
+    if (result.success) {
+      const pkg = result.data;
+      const includes = pkg.includes || [];
+      setFormData(prev => ({
+        ...prev,
+        selectedFoodPackage: pkg.packageType,
+        foodSubtitle: pkg.subtitle || '',
+        foodDescription: pkg.description || '',
+        foodWelcomeDrink: includes[0] || '',
+        foodStarters: includes[1] || '',
+        foodMainCourses: includes[2] || '',
+        foodRiceBread: includes[3] || '',
+        foodLiveCounters: includes[4] || '',
+        foodDesserts: includes[5] || '',
+        foodSalad: includes[6] || '',
+        foodBuffetSetup: includes.some(i => i.includes('Full Buffet Setup with Decor & Service Staff')),
+        minFoodPrice: (pkg.priceRange?.min || 0).toString(),
+        maxFoodPrice: (pkg.priceRange?.max || 0).toString(),
+      }));
+    }
+  } catch (error) {
+    console.error('Error fetching package:', error);
+  }
+};
   const fetchVenue = async (id) => {
     setLoading(true);
     try {
@@ -1882,7 +2026,31 @@ const fetchCategories = async () => {
         searchTags: Array.isArray(result.data.searchTags)
          ? result.data.searchTags.join(', ')
          : result.data.searchTags || '',
+        packageId: result.data.packageId || '',
+        selectedFoodPackage: result.data.selectedFoodPackage || '',
+        foodSubtitle: result.data.foodSubtitle || '',
+        foodDescription: result.data.foodDescription || '',
+        foodWelcomeDrink: result.data.foodWelcomeDrink || '',
+        foodStarters: result.data.foodStarters || '',
+        foodMainCourses: result.data.foodMainCourses || '',
+        foodRiceBread: result.data.foodRiceBread || '',
+        foodLiveCounters: result.data.foodLiveCounters || '',
+        foodDesserts: result.data.foodDesserts || '',
+        foodSalad: result.data.foodSalad || '',
+        foodBuffetSetup: !!result.data.foodBuffetSetup,
+        minFoodPrice: '',
+        maxFoodPrice: '',
       });
+      if (result.data.foodCateringAvailability && result.data.foodPriceRange && !result.data.packageId) {
+        const priceMatch = result.data.foodPriceRange.match(/₹?(\d+(?:\.\d+)?)\s*[–\-\s]\s*₹?(\d+(?:\.\d+)?)/i);
+        if (priceMatch) {
+          setFormData(prev => ({
+            ...prev,
+            minFoodPrice: priceMatch[1] || '',
+            maxFoodPrice: priceMatch[2] || ''
+          }));
+        }
+      }
       console.log("hello" ,formData?.categories);
       
       setTimeSlots(transformToTimeSlots(result.data.pricingSchedule) || defaultTimeSlots);
@@ -1892,6 +2060,9 @@ const fetchCategories = async () => {
         floorPlan: result.data.images?.[1] || '',
         documents: result.data.documents || '',
       });
+      if (result.data.packageId) {
+        fetchPackage(result.data.packageId);
+      }
       setViewMode('edit');
     } catch (error) {
       console.error('Error fetching venue:', error);
@@ -1926,11 +2097,11 @@ Object.entries(pricingSchedule).forEach(([day, slots]) => {
         endTime: slot.endTime || "",
         endAmpm: slot.endAmpm || "PM",
         perDay:
-          formData.priceType === "perDay" ? Number(slot.price || 0) : 0,
+          formData.venueType === "per_function" ? Number(slot.price || 0) : 0,
         perHour:
-          formData.priceType === "perHour" ? Number(slot.price || 0) : 0,
+          formData.venueType === "per_hour" ? Number(slot.price || 0) : 0,
         perPerson:
-          formData.priceType === "perPerson" ? Number(slot.price || 0) : 0,
+          formData.venueType === "per_person" ? Number(slot.price || 0) : 0,
       };
     } else {
       formattedPricing[day][slotType] = null;
@@ -1938,7 +2109,7 @@ Object.entries(pricingSchedule).forEach(([day, slots]) => {
   });
 });
 
-data.append("pricingSchedule", JSON.stringify(formattedPricing));
+pricingData.append("pricingSchedule", JSON.stringify(formattedPricing));
 
   const response = await fetch(`${API_BASE_URL}/venues/${venueId}/pricing`, {
     method: 'PUT',
@@ -1990,6 +2161,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
       'nonAcAvailable',
       'multipleHalls',
       'elderlyAccessibility',
+      'foodBuffetSetup',
     ];
     
     const payload = {
@@ -2017,6 +2189,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
     const pricingSchedule = transformToArray(timeSlots, formData.venueType);
     try {
       let mainResult;
+      let venueId = id;
       if (viewMode === 'create') {
         data.append('venueType', formData.venueType || '');
         data.append('pricingSchedule', JSON.stringify(pricingSchedule));
@@ -2032,6 +2205,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
           },
         });
         mainResult = await response.json();
+        venueId = mainResult.data._id;
       } else {
         if (files.thumbnail) data.append('thumbnail', files.thumbnail);
         if (files.auditoriumImage) data.append('images', files.auditoriumImage);
@@ -2052,6 +2226,65 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
         // }
       }
       if (mainResult.success) {
+        if (formData.foodCateringAvailability) {
+          const includes = [
+            formData.foodWelcomeDrink,
+            formData.foodStarters,
+            formData.foodMainCourses,
+            formData.foodRiceBread,
+            formData.foodLiveCounters,
+            formData.foodDesserts,
+            formData.foodSalad,
+          ].filter(Boolean);
+          if (formData.foodBuffetSetup) {
+            includes.push('Full Buffet Setup with Decor & Service Staff');
+          }
+          const priceRange = {
+            min: parseFloat(formData.minFoodPrice) || 0,
+            max: parseFloat(formData.maxFoodPrice) || 0,
+          };
+          const packageFormData = new FormData();
+          packageFormData.append('module', localStorage.getItem('moduleId'));
+          packageFormData.append('title', packageNames[formData.selectedFoodPackage]);
+          packageFormData.append('subtitle', formData.foodSubtitle);
+          packageFormData.append('description', formData.foodDescription);
+          packageFormData.append('packageType', formData.selectedFoodPackage);
+          packageFormData.append('includes', JSON.stringify(includes));
+          packageFormData.append('priceRange', JSON.stringify(priceRange));
+          packageFormData.append('categories', JSON.stringify(["68e795f06a1614cf448a36f5","68e797ac6a1614cf448a372d"]));
+          if (packageFiles.thumbnail) {
+            packageFormData.append('thumbnail', packageFiles.thumbnail);
+          }
+          let packageUrl = `${API_BASE_URL}/packages`;
+          let packageMethod = 'POST';
+          if (formData.packageId) {
+            packageUrl += `/${formData.packageId}`;
+            packageMethod = 'PUT';
+          }
+          const packageRes = await fetch(packageUrl, {
+            method: packageMethod,
+            body: packageFormData,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const packageResult = await packageRes.json();
+          if (packageResult.success) {
+            const newPackageId = packageResult.data._id || formData.packageId;
+            // Update venue with packageId if necessary
+            const updateVenueData = new FormData();
+            updateVenueData.append('packageId', newPackageId);
+            await fetch(`${API_BASE_URL}/venues/${venueId}`, {
+              method: 'PUT',
+              body: updateVenueData,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          } else {
+            console.error('Failed to update/create package');
+          }
+        }
         setToast({
           open: true,
           message: viewMode === 'edit' ? 'Venue updated successfully' : 'Venue created successfully',
@@ -2139,20 +2372,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   rows={4}
                   sx={{ mb: 2, ...inputSx }}
                 />
-                <TextField
-                  fullWidth
-                  label="Venue Address*"
-                  name="venueAddress"
-                  value={formData.venueAddress}
-                  onChange={handleInputChange}
-                  placeholder="Enter complete address"
-                  multiline
-                  rows={2}
-                  sx={{ mb: 2, ...inputSx }}
-                  required
-                />
-
-              <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
+  <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
   <InputLabel id="category-label">Category*</InputLabel>
   <Select
     labelId="category-label"
@@ -2169,31 +2389,6 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
     ))}
   </Select>
 </FormControl>
-
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <TextField
-                    sx={{ flex: 1, ...inputSx }}
-                    label="Latitude*"
-                    name="latitude"
-                    value={formData.latitude}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 25.2048"
-                    type="number"
-                    inputProps={{ step: '0.0001' }}
-                    required
-                  />
-                  <TextField
-                    sx={{ flex: 1, ...inputSx }}
-                    label="Longitude*"
-                    name="longitude"
-                    value={formData.longitude}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 55.2708"
-                    type="number"
-                    inputProps={{ step: '0.0001' }}
-                    required
-                  />
-                </Box>
                 <TextField
                     fullWidth
                     label="Search Location"
@@ -2225,6 +2420,42 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     </Typography>
                   </Box>
                 )}
+                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <TextField
+                    sx={{ flex: 1, ...inputSx }}
+                    label="Latitude*"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 25.2048"
+                    type="number"
+                    inputProps={{ step: '0.0001' }}
+                    required
+                  />
+                  <TextField
+                    sx={{ flex: 1, ...inputSx }}
+                    label="Longitude*"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 55.2708"
+                    type="number"
+                    inputProps={{ step: '0.0001' }}
+                    required
+                  />
+                </Box>
+                  <TextField
+                  fullWidth
+                  label="Venue Address*"
+                  name="venueAddress"
+                  value={formData.venueAddress}
+                  onChange={handleInputChange}
+                  placeholder="Enter complete address"
+                  multiline
+                  rows={2}
+                  sx={{ mb: 2, ...inputSx }}
+                  required
+                />
                 <Box sx={{ mb: 4 }}>
                   <Typography variant="h6" gutterBottom>Operating Hours</Typography>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -2372,6 +2603,182 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                       control={<Switch name="foodCateringAvailability" checked={formData.foodCateringAvailability} onChange={handleInputChange} />}
                       label="Food & Catering Availability"
                     />
+                    {formData.foodCateringAvailability && (
+                      <Box sx={{ gridColumn: '1 / -1', border: `1px solid ${theme.palette.grey[300]}`, borderRadius: 1, p: 2 }}>
+                        <Typography variant="subtitle1" gutterBottom sx={{ gridColumn: '1 / -1' }}>
+                          Food & Catering Package Details
+                        </Typography>
+                        <FormControl component="fieldset" fullWidth sx={{ mb: 2 }}>
+                          <RadioGroup
+                            value={formData.selectedFoodPackage}
+                            onChange={handleFoodPackageChange}
+                          >
+                            {Object.keys(packageData).map((key) => (
+                              <FormControlLabel
+                                key={key}
+                                value={key}
+                                control={<Radio />}
+                                label={packageNames[key]}
+                              />
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <Stack spacing={2}>
+                          <TextField
+                            fullWidth
+                            label="Subtitle (Ideal for)"
+                            name="foodSubtitle"
+                            value={formData.foodSubtitle}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={1}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Description"
+                            name="foodDescription"
+                            value={formData.foodDescription}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Welcome Drink"
+                            name="foodWelcomeDrink"
+                            value={formData.foodWelcomeDrink}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Starters (include veg/non-veg)"
+                            name="foodStarters"
+                            value={formData.foodStarters}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Main Courses (include veg/non-veg)"
+                            name="foodMainCourses"
+                            value={formData.foodMainCourses}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Rice / Bread"
+                            name="foodRiceBread"
+                            value={formData.foodRiceBread}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Live Counters (optional)"
+                            name="foodLiveCounters"
+                            value={formData.foodLiveCounters}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Desserts"
+                            name="foodDesserts"
+                            value={formData.foodDesserts}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <TextField
+                            fullWidth
+                            label="Salad, Pickle, Papad"
+                            name="foodSalad"
+                            value={formData.foodSalad}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={2}
+                            sx={inputSx}
+                          />
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                name="foodBuffetSetup"
+                                checked={formData.foodBuffetSetup}
+                                onChange={handleInputChange}
+                              />
+                            }
+                            label="Full Buffet Setup with Decor & Service Staff"
+                          />
+                          <Box sx={{ display: 'flex', gap: 2 }}>
+                            <TextField
+                              fullWidth
+                              label="Min Price (per head)*"
+                              name="minFoodPrice"
+                              value={formData.minFoodPrice}
+                              onChange={handleInputChange}
+                              type="number"
+                              inputProps={{ min: 0 }}
+                              sx={inputSx}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Max Price (per head)*"
+                              name="maxFoodPrice"
+                              value={formData.maxFoodPrice}
+                              onChange={handleInputChange}
+                              type="number"
+                              inputProps={{ min: 0 }}
+                              sx={inputSx}
+                            />
+                          </Box>
+                          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Package Thumbnail</Typography>
+                          <UploadDropArea
+                            onDragOver={handleDragOver}
+                            onDrop={handlePackageDrop('thumbnail')}
+                            onClick={() => document.getElementById('package-thumbnail-upload').click()}
+                          >
+                            {packageFiles.thumbnail ? (
+                              <Box>
+                                <img
+                                  src={URL.createObjectURL(packageFiles.thumbnail)}
+                                  alt="Package thumbnail preview"
+                                  style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
+                                />
+                                <Typography variant="body2" color="text.secondary">{packageFiles.thumbnail.name}</Typography>
+                              </Box>
+                            ) : (
+                              <Box>
+                                <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
+                                <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
+                                <Typography variant="body2" color="text.secondary">Or drag and drop</Typography>
+                              </Box>
+                            )}
+                            <input
+                              type="file"
+                              id="package-thumbnail-upload"
+                              hidden
+                              accept="image/jpeg,image/png,image/jpg"
+                              onChange={handlePackageFileChange('thumbnail')}
+                            />
+                          </UploadDropArea>
+                        </Stack>
+                      </Box>
+                    )}
                     <FormControlLabel
                       control={<Switch name="stageLightingAudio" checked={formData.stageLightingAudio} onChange={handleInputChange} />}
                       label="Stage / Lighting / Audio System"
@@ -2708,34 +3115,29 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'startTime', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
                  sx={{ width: '80px', ...inputSx }}
-                 inputProps={{ style: { textAlign: 'center' } }}
-               />
+                 inputProps={{ style: { textAlign: 'center' } }}/>
                <Select
                  size="small"
                  value={timeSlots[day].evening.startPeriod}
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'startPeriod', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
-                 sx={{ width: '70px' }}
-               >
+                 sx={{ width: '70px' }}>
                  <MenuItem value="Am">Am</MenuItem>
                  <MenuItem value="Pm">Pm</MenuItem>
                </Select>
-               
-               <TextField
+                <TextField
                  size="small"
                  value={timeSlots[day].evening.endTime}
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'endTime', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
                  sx={{ width: '80px', ...inputSx }}
-                 inputProps={{ style: { textAlign: 'center' } }}
-               />
+                 inputProps={{ style: { textAlign: 'center' } }}/>
                <Select
                  size="small"
                  value={timeSlots[day].evening.endPeriod}
                  onChange={(e) => handleTimeSlotChange(day, 'evening', 'endPeriod', e.target.value)}
                  disabled={!timeSlots[day].evening.enabled}
-                 sx={{ width: '70px' }}
-               >
+                 sx={{ width: '70px' }}>
                  <MenuItem value="Am">Am</MenuItem>
                  <MenuItem value="Pm">Pm</MenuItem>
                </Select>
@@ -2761,13 +3163,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
      ))}
    </Box>
  )}
-</Box>
-          
-        
-     
-     
-              
-                <Box sx={{ mb: 3 }}>
+</Box><Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle1" gutterBottom>Give Discount</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Set a discount that applies to all pricing types—hourly, daily, and distance-based
@@ -2781,8 +3177,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     placeholder="Ex: 10"
                     type="number"
                     inputProps={{ min: 0, max: 100 }}
-                    sx={inputSx}
-                  />
+                    sx={inputSx}/>
                 </Box>
                 <TextField
                   fullWidth
@@ -2793,8 +3188,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Ex: 20"
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
-                  sx={{ mb: 2, ...inputSx }}
-                />
+                  sx={{ mb: 2, ...inputSx }}/>
                 <TextField
                   fullWidth
                   label="Cancellation Policy"
@@ -2804,8 +3198,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="e.g., Free cancellation 48 hours before"
                   multiline
                   rows={2}
-                  sx={{ mb: 2, ...inputSx }}
-                />
+                  sx={{ mb: 2, ...inputSx }}/>
                 <TextField
                   fullWidth
                   label="Extra Charges (e.g., Cleaning fee)"
@@ -2815,8 +3208,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   placeholder="Describe extra charges"
                   multiline
                   rows={2}
-                  sx={inputSx}
-                />
+                  sx={inputSx}/>
               </CardContent>
             </Card>
           </Box>
@@ -2850,8 +3242,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     placeholder="e.g., 200"
                     type="number"
                     required
-                    sx={inputSx}
-                  />
+                    sx={inputSx} />
                   <TextField
                     fullWidth
                     label="Max Guest Count (Standing)"
@@ -2860,15 +3251,13 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     onChange={handleInputChange}
                     placeholder="e.g., 300"
                     type="number"
-                    sx={inputSx}
-                  />
+                    sx={inputSx}/>
                 </Box>
                 <UploadDropArea
                   onDragOver={handleDragOver}
                   onDrop={handleDrop('floorPlan')}
                   onClick={() => document.getElementById('floor-plan-upload').click()}
-                  sx={{ mb: 2 }}
-                >
+                  sx={{ mb: 2 }}>
                   {files.floorPlan ? (
                     <Box>
                       <Typography variant="body2" color="text.secondary">{files.floorPlan.name}</Typography>
@@ -2901,13 +3290,11 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                     id="floor-plan-upload"
                     hidden
                     accept="image/*,application/pdf"
-                    onChange={handleFileChange('floorPlan')}
-                  />
+                    onChange={handleFileChange('floorPlan')}/>
                 </UploadDropArea>
                 <FormControlLabel
                   control={<Switch name="multipleHalls" checked={formData.multipleHalls} onChange={handleInputChange} />}
-                  label="Multiple Halls/Sections Under One Venue"
-                />
+                  label="Multiple Halls/Sections Under One Venue"/>
               </CardContent>
             </Card>
           </Box>
@@ -2922,8 +3309,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.nearbyTransport}
                   onChange={handleInputChange}
                   placeholder="Describe nearby metro, bus stops, etc."
-                  sx={{ mb: 2, ...inputSx }}
-                />
+                  sx={{ mb: 2, ...inputSx }} />
                 <TextField
                   fullWidth
                   label="Accessibility Information"
@@ -2931,13 +3317,11 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                   value={formData.accessibilityInfo}
                   onChange={handleInputChange}
                   placeholder="Describe accessibility features"
-                  sx={{ mb: 2, ...inputSx }}
-                />
+                  sx={{ mb: 2, ...inputSx }}/>
                 <FormControlLabel
                   control={<Switch name="elderlyAccessibility" checked={formData.elderlyAccessibility} onChange={handleInputChange} />}
                   label="Accessibility for Elderly & Differently Abled"
-                  sx={{ mb: 3 }}
-                />
+                  sx={{ mb: 3 }}/>
               </CardContent>
             </Card>
           </Box>
@@ -2951,8 +3335,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
                <UploadDropArea
   onDragOver={handleDragOver}
   onDrop={handleDrop('documents')}
-  onClick={() => document.getElementById('documents-upload').click()}
->
+  onClick={() => document.getElementById('documents-upload').click()}>
   {files.documents ? (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       {files.documents.name}
@@ -2962,8 +3345,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
           setPreviewSrc(URL.createObjectURL(files.documents));
           setOpenPreview(true);
         }}
-        sx={{ color: theme.palette.primary.main }}
-      >
+        sx={{ color: theme.palette.primary.main }}>
         <Visibility fontSize="small" />
       </IconButton>
     </Box>
@@ -2976,8 +3358,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
           setPreviewSrc(existingImages.documents);
           setOpenPreview(true);
         }}
-        sx={{ color: theme.palette.primary.main }}
-      >
+        sx={{ color: theme.palette.primary.main }}>
         <Visibility fontSize="small" />
       </IconButton>
     </Box>
@@ -2993,8 +3374,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
     id="documents-upload"
     hidden
     accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    onChange={handleFileChange('documents')}
-  />
+    onChange={handleFileChange('documents')}/>
 </UploadDropArea>
 <Dialog
   open={openPreview}
@@ -3003,8 +3383,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
   fullWidth
   PaperProps={{
     sx: { height: '80vh', p: 2 },
-  }}
->
+  }}>
   <DialogContent sx={{ p: 0, height: '100%' }}>
     <Box sx={{ height: '100%' }}>
       <iframe
@@ -3020,8 +3399,7 @@ data.append("pricingSchedule", JSON.stringify(formattedPricing));
     </Button>
   </DialogActions>
 </Dialog>
-
-              </CardContent>
+ </CardContent>
             </Card>
           </Box>
           <Box sx={{ mb: 4 }}>
