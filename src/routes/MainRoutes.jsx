@@ -317,9 +317,10 @@ const Completed = Loadable(lazy(()=> import('views/Completed')));
 const Canceled = Loadable(lazy(()=> import('views/Canceled')));
 const PaymentFailed = Loadable(lazy(()=> import('views/PaymentFailed')));
 
-//bookings
+//venue 
 const VenueCreate = Loadable(lazy(()=> import('views/VenueCreate')));
 const VenueList = Loadable(lazy(()=> import('views/VenueList')));
+const VenueListView = Loadable(lazy(()=> import('views/VenueListView')));
 const VenueCategory = Loadable(lazy(()=> import('views/VenueCategory')));
 
 // reports
@@ -537,8 +538,8 @@ const MainRoutes = {
           element: <VenueList />
         },
         {
-          path: '/venue-setup/listview',
-          element: <ListView />
+          path: '/venue-setup/listview/:id',
+          element: <VenueListView />
         }
       ]
     },

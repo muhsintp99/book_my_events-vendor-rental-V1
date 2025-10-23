@@ -1469,9 +1469,27 @@ const packageData = {
     priceRange: '₹1,200 – ₹2,000 per head'
   }
 };
-
 const CreateAuditorium = () => {
   const { id } = useParams();
+useEffect(() => {
+  const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
+  const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
+
+  if (!alreadyRefreshed) {
+    sessionStorage.setItem(refreshedKey, 'true');
+    setTimeout(() => {
+      window.location.reload();
+    }, 150);
+  } else {
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
+      .forEach((key) => {
+        if (key !== refreshedKey) sessionStorage.removeItem(key);
+      });
+  }
+}, [id]);
+
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -2126,197 +2144,180 @@ pricingData.append("pricingSchedule", JSON.stringify(formattedPricing));
     return result;
   };
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setToast({ open: false, message: '', severity: 'success' });
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setToast({
-        open: true,
-        message: 'No authentication token found. Please log in.',
-        severity: 'error',
-      });
-      setLoading(false);
-      return;
-    }
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setToast({
-        open: true,
-        message: validationErrors.join(', '),
-        severity: 'error',
-      });
-      setLoading(false);
-      return;
-    }
-    const data = new FormData();
-    const booleanFields = [
-      'parkingAvailability',
-      'foodCateringAvailability',
-      'stageLightingAudio',
-      'wheelchairAccessibility',
-      'securityArrangements',
-      'wifiAvailability',
-      'acAvailable',
-      'nonAcAvailable',
-      'multipleHalls',
-      'elderlyAccessibility',
-      'foodBuffetSetup',
-    ];
-    
-    const payload = {
-      ...formData,
-      shortDescription: formData.description || '',
-      holidaySchedule: formData.holidayScheduling || '',
-      categories: formData.categories || '',
-      accessibilityInfo: formData.accessibilityInfo,
-    };
-    delete payload.description;
-    delete payload.holidayScheduling;
-    delete payload.elderlyAccessibility;
-    delete payload.venueType;
-   
-    Object.entries(payload).forEach(([key, value]) => {
-      if (key === 'searchTags' && value) {
-        const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
-        tagsArray.forEach(tag => data.append(key, tag));
-      } else if (booleanFields.includes(key)) {
-        data.append(key, value.toString());
-      } else {
-        data.append(key, value || '');
-      }
+  event.preventDefault();
+  setLoading(true);
+  setToast({ open: false, message: '', severity: 'success' });
+  const token = localStorage.getItem('token');
+  if (!token) {
+    setToast({
+      open: true,
+      message: 'No authentication token found. Please log in.',
+      severity: 'error',
     });
-    const pricingSchedule = transformToArray(timeSlots, formData.venueType);
-    try {
-      let mainResult;
-      let venueId = id;
-      if (viewMode === 'create') {
-        data.append('venueType', formData.venueType || '');
-        data.append('pricingSchedule', JSON.stringify(pricingSchedule));
-        if (files.thumbnail) data.append('thumbnail', files.thumbnail);
-        if (files.auditoriumImage) data.append('images', files.auditoriumImage);
-        if (files.floorPlan) data.append('images', files.floorPlan);
-        const url = `${API_BASE_URL}/venues/`;
-        const response = await fetch(url, {
-          method: 'POST',
-          body: data,
+    setLoading(false);
+    return;
+  }
+  const validationErrors = validateForm();
+  if (validationErrors.length > 0) {
+    setToast({
+      open: true,
+      message: validationErrors.join(', '),
+      severity: 'error',
+    });
+    setLoading(false);
+    return;
+  }
+  const data = new FormData();
+  const booleanFields = [
+    'parkingAvailability',
+    'foodCateringAvailability',
+    'stageLightingAudio',
+    'wheelchairAccessibility',
+    'securityArrangements',
+    'wifiAvailability',
+    'acAvailable',
+    'nonAcAvailable',
+    'multipleHalls',
+    'elderlyAccessibility',
+    'foodBuffetSetup',
+  ];
+  const payload = {
+    ...formData,
+    shortDescription: formData.description || '',
+    holidaySchedule: formData.holidayScheduling || '',
+    categories: formData.categories || '',
+    accessibilityInfo: formData.accessibilityInfo,
+  };
+  delete payload.description;
+  delete payload.holidayScheduling;
+  delete payload.elderlyAccessibility;
+  delete payload.venueType;
+  Object.entries(payload).forEach(([key, value]) => {
+    if (key === 'searchTags' && value) {
+      const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+      tagsArray.forEach(tag => data.append(key, tag));
+    } else if (booleanFields.includes(key)) {
+      data.append(key, value.toString());
+    } else {
+      data.append(key, value || '');
+    }
+  });
+  const pricingSchedule = transformToArray(timeSlots, formData.venueType);
+  try {
+    let mainResult;
+    let venueId = id;
+    if (viewMode === 'create') {
+      data.append('venueType', formData.venueType || '');
+      data.append('pricingSchedule', JSON.stringify(pricingSchedule));
+      if (files.thumbnail) data.append('thumbnail', files.thumbnail);
+      if (files.auditoriumImage) data.append('images', files.auditoriumImage);
+      if (files.floorPlan) data.append('images', files.floorPlan);
+      const url = `${API_BASE_URL}/venues/`;
+      const response = await fetch(url, {
+        method: 'POST',
+        body: data,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      mainResult = await response.json();
+      venueId = mainResult.data._id;
+    } else {
+      if (files.thumbnail) data.append('thumbnail', files.thumbnail);
+      if (files.auditoriumImage) data.append('images', files.auditoriumImage);
+      if (files.floorPlan) data.append('images', files.floorPlan);
+      data.append('venueType', formData.venueType || '');
+      data.append('pricingSchedule', JSON.stringify(pricingSchedule));
+      const url = `${API_BASE_URL}/venues/${id}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: data,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      mainResult = await response.json();
+    }
+    if (mainResult.success) {
+      if (formData.foodCateringAvailability) {
+        const includes = [
+          formData.foodWelcomeDrink,
+          formData.foodStarters,
+          formData.foodMainCourses,
+          formData.foodRiceBread,
+          formData.foodLiveCounters,
+          formData.foodDesserts,
+          formData.foodSalad,
+        ].filter(Boolean);
+        if (formData.foodBuffetSetup) {
+          includes.push('Full Buffet Setup with Decor & Service Staff');
+        }
+        const priceRange = {
+          min: parseFloat(formData.minFoodPrice) || 0,
+          max: parseFloat(formData.maxFoodPrice) || 0,
+        };
+        const packageFormData = new FormData();
+        packageFormData.append('module', localStorage.getItem('moduleId'));
+        packageFormData.append('title', packageNames[formData.selectedFoodPackage]);
+        packageFormData.append('subtitle', formData.foodSubtitle);
+        packageFormData.append('description', formData.foodDescription);
+        packageFormData.append('packageType', formData.selectedFoodPackage);
+        packageFormData.append('includes', JSON.stringify(includes));
+        packageFormData.append('priceRange', JSON.stringify(priceRange));
+        packageFormData.append('categories', JSON.stringify(["68e795f06a1614cf448a36f5", "68e797ac6a1614cf448a372d"]));
+        if (packageFiles.thumbnail) {
+          packageFormData.append('thumbnail', packageFiles.thumbnail);
+        }
+        packageFormData.append('venueId', venueId);
+        const packageUrl = `${API_BASE_URL}/packages`;
+        const packageRes = await fetch(packageUrl, {
+          method: 'POST', 
+          body: packageFormData,
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        mainResult = await response.json();
-        venueId = mainResult.data._id;
-      } else {
-        if (files.thumbnail) data.append('thumbnail', files.thumbnail);
-        if (files.auditoriumImage) data.append('images', files.auditoriumImage);
-        if (files.floorPlan) data.append('images', files.floorPlan);
-        data.append('venueType', formData.venueType || '');
-        data.append('pricingSchedule', JSON.stringify(pricingSchedule));
-        const url = `${API_BASE_URL}/venues/${id}`;
-        const response = await fetch(url, {
-          method: 'PUT',
-          body: data,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        mainResult = await response.json();
-        // if (mainResult.success) {
-        //   await submitPricing(id, token, formData.venueType, pricingSchedule);
-        // }
-      }
-      if (mainResult.success) {
-        if (formData.foodCateringAvailability) {
-          const includes = [
-            formData.foodWelcomeDrink,
-            formData.foodStarters,
-            formData.foodMainCourses,
-            formData.foodRiceBread,
-            formData.foodLiveCounters,
-            formData.foodDesserts,
-            formData.foodSalad,
-          ].filter(Boolean);
-          if (formData.foodBuffetSetup) {
-            includes.push('Full Buffet Setup with Decor & Service Staff');
-          }
-          const priceRange = {
-            min: parseFloat(formData.minFoodPrice) || 0,
-            max: parseFloat(formData.maxFoodPrice) || 0,
-          };
-          const packageFormData = new FormData();
-          packageFormData.append('module', localStorage.getItem('moduleId'));
-          packageFormData.append('title', packageNames[formData.selectedFoodPackage]);
-          packageFormData.append('subtitle', formData.foodSubtitle);
-          packageFormData.append('description', formData.foodDescription);
-          packageFormData.append('packageType', formData.selectedFoodPackage);
-          packageFormData.append('includes', JSON.stringify(includes));
-          packageFormData.append('priceRange', JSON.stringify(priceRange));
-          packageFormData.append('categories', JSON.stringify(["68e795f06a1614cf448a36f5","68e797ac6a1614cf448a372d"]));
-          if (packageFiles.thumbnail) {
-            packageFormData.append('thumbnail', packageFiles.thumbnail);
-          }
-          let packageUrl = `${API_BASE_URL}/packages`;
-          let packageMethod = 'POST';
-          if (formData.packageId) {
-            packageUrl += `/${formData.packageId}`;
-            packageMethod = 'PUT';
-          }
-          const packageRes = await fetch(packageUrl, {
-            method: packageMethod,
-            body: packageFormData,
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const packageResult = await packageRes.json();
+        if (!packageResult.success) {
+          console.error('Failed to create package:', packageResult.message);
+          setToast({
+            open: true,
+            message: 'Venue saved, but package creation failed.',
+            severity: 'warning',
           });
-          const packageResult = await packageRes.json();
-          if (packageResult.success) {
-            const newPackageId = packageResult.data._id || formData.packageId;
-            // Update venue with packageId if necessary
-            const updateVenueData = new FormData();
-            updateVenueData.append('packageId', newPackageId);
-            await fetch(`${API_BASE_URL}/venues/${venueId}`, {
-              method: 'PUT',
-              body: updateVenueData,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          } else {
-            console.error('Failed to update/create package');
-          }
         }
-        setToast({
-          open: true,
-          message: viewMode === 'edit' ? 'Venue updated successfully' : 'Venue created successfully',
-          severity: 'success',
-        });
-        if (viewMode === 'edit') {
-          setTimeout(() => {
-            navigate('/venue-setup/lists');
-          }, 2000);
-        } else {
-          handleReset();
-        }
-    
-      } else {
-        throw new Error(mainResult.message || `Failed to ${viewMode === 'edit' ? 'update' : 'create'} venue`);
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
       setToast({
         open: true,
-        message: error.message.includes('expired')
-         ? 'Session expired. Please log in again.'
-         : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
-        severity: 'error',
+        message: viewMode === 'edit' ? 'Venue updated successfully' : 'Venue created successfully',
+        severity: 'success',
       });
-      if (error.message.includes('expired')) {
-        navigate('/login');
+      if (viewMode === 'edit') {
+        setTimeout(() => {
+          navigate('/venue-setup/lists');
+        }, 2000);
+      } else {
+        handleReset();
       }
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error(mainResult.message || `Failed to ${viewMode === 'edit' ? 'update' : 'create'} venue`);
     }
-  };
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    setToast({
+      open: true,
+      message: error.message.includes('expired')
+        ? 'Session expired. Please log in again.'
+        : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
+      severity: 'error',
+    });
+    if (error.message.includes('expired')) {
+      navigate('/login');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
   const handleCloseToast = (event, reason) => {
     if (reason === 'clickaway') return;
     setToast({ open: false, message: '', severity: 'success' });
