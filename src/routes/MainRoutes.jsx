@@ -322,6 +322,7 @@ const VenueCreate = Loadable(lazy(()=> import('views/VenueCreate')));
 const VenueList = Loadable(lazy(()=> import('views/VenueList')));
 const VenueListView = Loadable(lazy(()=> import('views/VenueListView')));
 const VenueCategory = Loadable(lazy(()=> import('views/VenueCategory')));
+const FoodMenu = Loadable(lazy(()=> import('views/FoodMenu')));
 
 // reports
 const ExpenseReport = Loadable(lazy(()=> import('views/ExpenseReport')));
@@ -484,7 +485,7 @@ const MainRoutes = {
       path: 'bookings',
       children: [
         {
-          path: '', // This will handle /trips
+          path: '', 
           element: <AllTrips />
         },
 
@@ -540,6 +541,11 @@ const MainRoutes = {
         {
           path: '/venue-setup/listview/:id',
           element: <VenueListView />
+        },
+        {
+          path: '/venue-setup/foodmenu',
+          element: <FoodMenu />
+        
         }
       ]
     },

@@ -144,23 +144,23 @@ const Category = () => {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <TextField
-              variant="outlined"
+              variant="outlined" color='#E15B65' borderColor='#E15B65'
               placeholder="Search categories"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
+              size="small" 
             />
             <Button
-              variant="outlined"
+              variant="outlined" color='#E15B65'
               startIcon={<SearchIcon />}
-              onClick={handleSearch}
+              onClick={handleSearch} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
             >
               Search
             </Button>
             <Button
-              variant="outlined"
+              variant="outlined" color='#E15B65'
               endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick}
+              onClick={handleClick} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
             >
               Export
             </Button>

@@ -57,6 +57,12 @@ const venuemanagement = {
           url: '/venue-setup/lists'
         },
         {
+          id: 'food-menu',
+          title: 'Food Menu',
+          type: 'item',
+          url: '/venue-setup/foodmenu'
+        },
+        {
           id: 'bulk-import',
           title: 'Bulk Import',
           type: 'item',

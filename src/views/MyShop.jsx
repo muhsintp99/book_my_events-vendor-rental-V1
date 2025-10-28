@@ -22,8 +22,7 @@ import {
   DirectionsCar as CarIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import EditProvider from './EditProvider'; // Adjust the import path as needed
-
+import EditProvider from './EditProvider'; 
 const MyShop = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [providerData, setProviderData] = useState({
@@ -132,18 +131,16 @@ const MyShop = () => {
       ...prevData,
       ...updatedData,
     }));
-    navigate('/myshop'); // Navigate back to MyShop
+    navigate('/myshop'); 
   };
 
   const formatAddress = (address) => {
     if (!address) return 'Not provided';
     
-    // If address is a string, return it directly
     if (typeof address === 'string') {
       return address;
     }
     
-    // If address is an object with properties
     const parts = [
       address.street,
       address.city,
@@ -346,7 +343,7 @@ const MyShop = () => {
           <Box>
             <Switch defaultChecked   sx={{
     '& .MuiSwitch-switchBase.Mui-checked': {
-      color: '#E15B65'},
+      color: '#b42a33ff'},
     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
       backgroundColor: '#E15B65'
     },}} />
