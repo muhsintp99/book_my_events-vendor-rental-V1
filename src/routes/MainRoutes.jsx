@@ -571,6 +571,15 @@ const MainRoutes = {
         }
       ]
     },
+     {
+      path: 'providers',
+      children: [
+        {
+          path: 'banners',
+          element: <Banners/>
+        }
+      ]
+    },
 
       ]
     }

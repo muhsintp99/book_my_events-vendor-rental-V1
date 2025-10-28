@@ -16,8 +16,6 @@ const icons = {
   IconDownload
 };
 
-// ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
-
 const Marketingssection = {
   id: 'marketing-management',
   title: 'MARKETING SECTION',
@@ -35,7 +33,7 @@ const Marketingssection = {
       id: 'Banners',
       title: 'Banners',
       type: 'item',
-      url: '/providers/banner',
+      url: '/providers/banners',
       icon: icons.IconUserCheck,
       breadcrumbs: false
     },

@@ -287,10 +287,9 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
 const API_URL = "https://api.bookmyevent.ae/api/banners";
 const ZONE_API_URL = "https://api.bookmyevent.ae/api/zones";
-
 // Styled drop area
 const UploadDropArea = styled(Box)(({ theme }) => ({
   border: "2px dashed #e0e0e0",
@@ -304,7 +303,6 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   backgroundColor: "#fafafa",
   "&:hover": { backgroundColor: "#f0f0f0" },
 }));
-
 const Banner = () => {
   const [title, setTitle] = useState("");
   const [zone, setZone] = useState("");
@@ -316,25 +314,22 @@ const Banner = () => {
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState(null);
   const [bannerType, setBannerType] = useState("");
-
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState("success");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bannerToDelete, setBannerToDelete] = useState(null);
   const [showForm, setShowForm] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetchBanners();
     fetchZones();
   }, []);
-
   const showToast = (message, severity = "success") => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
   };
-
   // Fetch Zones
   const fetchZones = async () => {
     try {
@@ -349,7 +344,6 @@ const Banner = () => {
       showToast("Failed to load zones", "error");
     }
   };
-
   // Fetch Banners
   const fetchBanners = async () => {
     try {
@@ -367,33 +361,26 @@ const Banner = () => {
       setLoading(false);
     }
   };
-
   // Image Upload
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
       return showToast("Only JPG, JPEG, PNG files allowed", "error");
     }
-
     if (file.size > 2 * 1024 * 1024) {
       return showToast("File size must be less than 2MB", "error");
     }
-
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
-
   // CREATE or UPDATE
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!title.trim()) return showToast("Title is required", "error");
     if (!zone) return showToast("Please select a zone", "error");
     if (!bannerType) return showToast("Please select a banner type", "error");
     if (!image && !editId) return showToast("Banner image is required", "error");
-
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
@@ -402,7 +389,6 @@ const Banner = () => {
       formData.append("zone", zone);
       formData.append("bannerType", bannerType);
       if (image) formData.append("image", image);
-
       if (editId) {
         await axios.put(`${API_URL}/${editId}`, formData, {
           headers: {
@@ -420,7 +406,6 @@ const Banner = () => {
         });
         showToast("Banner added successfully!");
       }
-
       handleReset();
       setShowForm(false);
       fetchBanners();
@@ -430,7 +415,6 @@ const Banner = () => {
       showToast(error.response?.data?.message || "Operation failed", "error");
     }
   };
-
   // DELETE
   const handleDelete = async () => {
     try {
@@ -448,12 +432,10 @@ const Banner = () => {
       setBannerToDelete(null);
     }
   };
-
   const openDeleteDialog = (id) => {
     setBannerToDelete(id);
     setDeleteDialogOpen(true);
   };
-
   // EDIT
   const handleEdit = (banner) => {
     setEditId(banner._id);
@@ -464,7 +446,6 @@ const Banner = () => {
     setBannerType(banner.bannerType || "");
     setShowForm(true);
   };
-
   const handleReset = () => {
     setTitle("");
     setLink("");
@@ -475,7 +456,6 @@ const Banner = () => {
     setBannerType("");
     setShowForm(true);
   };
-
   return (
     <Box sx={{ p: 3, backgroundColor: "#fff", minHeight: "100vh" }}>
       {showForm ? (
@@ -483,18 +463,16 @@ const Banner = () => {
           <Typography variant="h5" sx={{ mb: 3 }}>
             {editId ? "Edit Banner" : "Add New Banner"}
           </Typography>
-
           {/* Banner Form */}
           <Card sx={{ p: 2, mb: 4, border: "1px solid #e0e0e0" }}>
             <CardContent>
               <TextField
                 fullWidth
-                label="Banner Title"
+                label="venue Banner Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 sx={{ mb: 2 }}
               />
-
               {/* Zone Dropdown */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Select Zone</InputLabel>
@@ -514,7 +492,6 @@ const Banner = () => {
                   )}
                 </Select>
               </FormControl>
-
               {/* Banner Type Dropdown */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Banner Type</InputLabel>
@@ -528,7 +505,6 @@ const Banner = () => {
                   <MenuItem value="zone_wise">Zone Wise</MenuItem>
                 </Select>
               </FormControl>
-
               <TextField
                 fullWidth
                 label="Banner Link (Optional)"
@@ -536,23 +512,21 @@ const Banner = () => {
                 onChange={(e) => setLink(e.target.value)}
                 sx={{ mb: 3 }}
               />
-
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Banner Image
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 JPG, JPEG, PNG Less Than 2MB (Ratio 3:1)
               </Typography>
-
-              <UploadDropArea onClick={() => document.getElementById("banner-upload").click()}>
+              <UploadDropArea onClick={() => document.getElementById("banner-upload").click()} sx={{borderColor:'#E15B65'}}>
                 {preview ? (
                   <img src={preview} alt="Preview" style={{ maxHeight: 160, borderRadius: 8 }} />
                 ) : (
                   <>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="#E15B65">
                       Click to upload
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="#E15B65">
                       Or drag and drop
                     </Typography>
                   </>
@@ -567,25 +541,39 @@ const Banner = () => {
               </UploadDropArea>
             </CardContent>
           </Card>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 4 }}>
-            <Button variant="outlined" onClick={handleReset}>
-              Cancel
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+            <Button
+              variant="outlined"
+              onClick={() => setShowForm(false)}
+              sx={{ color: '#E15B65', borderColor: '#E15B65' }}
+            >
+              View Banners List
             </Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              {editId ? "Update" : "Submit"}
-            </Button>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button variant="outlined" color="#E15B65" onClick={handleReset} sx={{color:'#E15B65'}}>
+                Cancel
+              </Button>
+              <Button variant="contained" color="#E15B65" onClick={handleSubmit} sx={{color:'white', bgcolor:'#E15B65'}}>
+                {editId ? "Update" : "Submit"}
+              </Button>
+            </Box>
           </Box>
         </>
       ) : (
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(-1)}
+            sx={{ color: '#E15B65', borderColor: '#E15B65' }}
+          >
+            Back
+          </Button>
           <Typography variant="h5">Banner Management</Typography>
-          <Button variant="contained" onClick={() => setShowForm(true)}>
+          <Button variant="contained" onClick={() => setShowForm(true)} sx={{color:'white', bgcolor:'#E15B65'}}>
             Add New Banner
           </Button>
         </Box>
       )}
-
       {!showForm && (
         <>
           {/* Banner List */}
@@ -595,7 +583,6 @@ const Banner = () => {
               {banners.length}
             </span>
           </Typography>
-
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
               <CircularProgress />
@@ -645,9 +632,9 @@ const Banner = () => {
                           <TableCell>
                             <Button
                               size="small"
-                              variant="outlined"
+                              variant="outlined" color="green"
                               onClick={() => handleEdit(b)}
-                              sx={{ mr: 1 }}
+                              sx={{ mr: 1 ,color:'green', borderColor:'green'}}
                             >
                               Edit
                             </Button>
@@ -676,7 +663,6 @@ const Banner = () => {
           )}
         </>
       )}
-
       {/* Snackbar */}
       <Snackbar
         open={toastOpen}
@@ -688,7 +674,6 @@ const Banner = () => {
           {toastMessage}
         </Alert>
       </Snackbar>
-
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
@@ -710,5 +695,4 @@ const Banner = () => {
     </Box>
   );
 };
-
 export default Banner;

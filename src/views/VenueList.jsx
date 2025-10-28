@@ -1333,7 +1333,7 @@ export default function VenuesList() {
         console.error("No authentication token found");
         return;
       }
-      const response = await fetch(`${API_BASE_URL}/venues/${id}/toggle`, {
+      const response = await fetch(`${API_BASE_URL}/venues/${id}/toggle-active`, {
         method: "PATCH",
         headers: {
          Authorization: `Bearer ${token}`,
