@@ -869,10 +869,10 @@ const FoodMenu = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const isSelecting = location.state?.selectingForVenue;
   const preSelected = location.state?.preSelected || [];
-  
+
   const [viewMode, setViewMode] = useState('list');
   const [currentPackage, setCurrentPackage] = useState(null);
   const [packages, setPackages] = useState([]);
@@ -890,7 +890,7 @@ const FoodMenu = () => {
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
-  
+
   const API_BASE_URL = 'https://api.bookmyevent.ae';
 
   useEffect(() => {
@@ -909,7 +909,6 @@ const FoodMenu = () => {
     if (!providerId) return;
     const token = localStorage.getItem('token');
     if (!token) return;
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/packages/provider/${providerId}`, {
         headers: {
@@ -930,19 +929,19 @@ const FoodMenu = () => {
     }
   };
 
- const toggleSelection = (pkg) => {
-  console.log('Toggling package:', pkg); 
-  setSelectedPackages(prev =>
-    prev.some(p => p._id === pkg._id)
-      ? prev.filter(p => p._id !== pkg._id)
-      : [...prev, pkg]
-  );
-};
+  const toggleSelection = (pkg) => {
+    console.log('Toggling package:', pkg);
+    setSelectedPackages(prev =>
+      prev.some(p => p._id === pkg._id)
+        ? prev.filter(p => p._id !== pkg._id)
+        : [...prev, pkg]
+    );
+  };
 
-const handleSaveSelection = () => {
+  const handleSaveSelection = () => {
     console.log('Saving selection:', selectedPackages);
     // Navigate back with selected packages
-    navigate('/venue-setup/new', { 
+    navigate('/venue-setup/new', {
       state: { selectedPackages },
       replace: true
     });
@@ -1035,7 +1034,6 @@ const handleSaveSelection = () => {
       setOpenToast(true);
       return;
     }
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/packages/${currentPackage._id}`, {
         method: 'DELETE',
@@ -1081,7 +1079,6 @@ const handleSaveSelection = () => {
       setOpenToast(true);
       return;
     }
-
     const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
     if (!providerId) {
       setToastMessage('Provider ID is missing. Please log in again.');
@@ -1089,16 +1086,13 @@ const handleSaveSelection = () => {
       setOpenToast(true);
       return;
     }
-
     const transformedIncludes = menuSections
       .filter((s) => s.includes.trim())
       .map((s) => ({
         title: s.heading.trim() || 'Menu Item',
         items: s.includes.split(',').map(item => item.trim()).filter(item => item)
       }));
-
     const price = parseFloat(formData.startingPrice) || 0;
-
     const packageFormData = new FormData();
     packageFormData.append('providerId', providerId);
     packageFormData.append('title', formData.packageTitle || 'Custom Package');
@@ -1108,18 +1102,15 @@ const handleSaveSelection = () => {
     packageFormData.append('includes', JSON.stringify(transformedIncludes));
     packageFormData.append('price', price.toString());
     packageFormData.append('categories', JSON.stringify(['68e795f06a1614cf448a36f5', '68e797ac6a1614cf448a372d']));
-
     if (thumbnailFile) {
       packageFormData.append('thumbnail', thumbnailFile);
     }
     galleryFiles.forEach((file) => {
       packageFormData.append('images', file);
     });
-
     const isEdit = !!currentPackage?._id;
     const url = isEdit ? `${API_BASE_URL}/api/packages/${currentPackage._id}` : `${API_BASE_URL}/api/packages`;
     const method = isEdit ? 'PUT' : 'POST';
-
     try {
       const response = await fetch(url, {
         method,
@@ -1134,7 +1125,6 @@ const handleSaveSelection = () => {
       } catch (parseError) {
         throw new Error('Invalid response from server');
       }
-
       if (response.ok) {
         await fetchPackages();
         setCurrentPackage(result.package || result);
@@ -1187,6 +1177,18 @@ const handleSaveSelection = () => {
               </Stack>
             </Box>
           ))}
+          <Typography variant="h6" sx={{ mb: 2 }}>Gallery</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+            {(currentPackage.images || []).map((img, index) => (
+              <img
+                key={index}
+                src={`${API_BASE_URL}/${img}`}
+                alt={`Gallery ${index + 1}`}
+                style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 4 }}
+                onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+              />
+            ))}
+          </Box>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h6">Starting Price</Typography>
             <Typography variant="h4" color="primary">₹{currentPackage.price} Per Head</Typography>
@@ -1350,16 +1352,36 @@ const handleSaveSelection = () => {
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" gutterBottom>Gallery</Typography>
               <UploadDropArea onClick={() => document.getElementById('gallery-upload').click()}>
-                {galleryFiles.length > 0 ? (
-                  <Typography>{galleryFiles.length} images</Typography>
-                ) : (
+                {galleryFiles.length === 0 ? (
                   <Box>
                     <CloudUploadIcon sx={{ fontSize: 40, color: '#999', mb: 1 }} />
                     <Typography variant="body2" color="#E15B65">Click to upload</Typography>
                   </Box>
+                ) : (
+                  <Typography variant="body2" color="#E15B65">Click to add more images</Typography>
                 )}
                 <input type="file" id="gallery-upload" hidden accept="image/*" multiple onChange={handleGalleryChange} />
               </UploadDropArea>
+              {galleryFiles.length > 0 && (
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {galleryFiles.map((file, index) => (
+                    <ImagePreviewContainer key={index}>
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => deleteGalleryFile(index)}
+                        sx={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white' }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </ImagePreviewContainer>
+                  ))}
+                </Box>
+              )}
             </Box>
           </Box>
           <TextField fullWidth label="Starting Price (₹)" name="startingPrice" value={formData.startingPrice} onChange={handleInputChange} type="number" sx={{ mb: 3 }} InputProps={{ endAdornment: <InputAdornment position="end">Per Head</InputAdornment> }} />

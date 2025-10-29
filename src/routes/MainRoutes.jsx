@@ -320,7 +320,6 @@ const PaymentFailed = Loadable(lazy(()=> import('views/PaymentFailed')));
 //venue 
 const VenueCreate = Loadable(lazy(()=> import('views/VenueCreate')));
 const VenueList = Loadable(lazy(()=> import('views/VenueList')));
-const VenueListView = Loadable(lazy(()=> import('views/VenueListView')));
 const VenueCategory = Loadable(lazy(()=> import('views/VenueCategory')));
 const FoodMenu = Loadable(lazy(()=> import('views/FoodMenu')));
 
@@ -537,10 +536,6 @@ const MainRoutes = {
         {
           path: '/venue-setup/lists',
           element: <VenueList />
-        },
-        {
-          path: '/venue-setup/listview/:id',
-          element: <VenueListView />
         },
         {
           path: '/venue-setup/foodmenu',
