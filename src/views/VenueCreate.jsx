@@ -2800,95 +2800,6 @@ const CreateAuditorium = () => {
               </CardContent>
             </Card>
           </Box>
-          <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
-            <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                <Typography variant="h6" gutterBottom>Venue Thumbnail*</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Choose the main image that represents your venue.
-                </Typography>
-                <UploadDropArea
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop('thumbnail')}
-                  onClick={() => document.getElementById('thumbnail-upload').click()}>
-                  {files.thumbnail ? (
-                    <Box>
-                      <img
-                        src={URL.createObjectURL(files.thumbnail)}
-                        alt="Thumbnail preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
-                      <Typography variant="body2" color="text.secondary">{files.thumbnail.name}</Typography>
-                    </Box>
-                  ) : existingImages.thumbnail ? (
-                    <Box>
-                      <img
-                        src={getImageSrc(existingImages.thumbnail)}
-                        alt="Existing thumbnail"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
-                      <Typography variant="body2" color="text.secondary">Existing thumbnail. Upload to replace.</Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
-                      <Typography variant="body2" color="#f59299ff">Or drag and drop</Typography>
-                    </Box>
-                  )}
-                  <input
-                    type="file"
-                    id="thumbnail-upload"
-                    hidden
-                    accept="image/jpeg,image/png,image/jpg"
-                    onChange={handleFileChange('thumbnail')} />
-                </UploadDropArea>
-              </CardContent>
-            </Card>
-            <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                <Typography variant="h6" gutterBottom>Auditorium Image*</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  JPG, JPEG, PNG Less Than 2MB
-                </Typography>
-                <UploadDropArea
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop('auditoriumImage')}
-                  onClick={() => document.getElementById('auditorium-image-upload').click()} >
-                  {files.auditoriumImage ? (
-                    <Box>
-                      <img
-                        src={URL.createObjectURL(files.auditoriumImage)}
-                        alt="Auditorium image preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
-                      <Typography variant="body2" color="text.secondary">{files.auditoriumImage.name}</Typography>
-                    </Box>
-                  ) : existingImages.auditoriumImage ? (
-                    <Box>
-                      <img
-                        src={getImageSrc(existingImages.auditoriumImage)}
-                        alt="Existing auditorium image"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} />
-                      <Typography variant="body2" color="text.secondary">Existing auditorium image. Upload to replace.</Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
-                      <Typography variant="body2" color="#f59299ff">Or drag and drop</Typography>
-                    </Box>
-                  )}
-                  <input
-                    type="file"
-                    id="auditorium-image-upload"
-                    hidden
-                    accept="image/jpeg,image/png,image/jpg"
-                    onChange={handleFileChange('auditoriumImage')} />
-                </UploadDropArea>
-              </CardContent>
-            </Card>
-          </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -3024,6 +2935,95 @@ const CreateAuditorium = () => {
                       sx={inputSx} />
                   </Stack>
                 </Box>
+              </CardContent>
+            </Card>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', gap: 3, mb: 4 }}>
+            <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
+              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                <Typography variant="h6" gutterBottom>Venue Thumbnail*</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Choose the main image that represents your venue.
+                </Typography>
+                <UploadDropArea
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop('thumbnail')}
+                  onClick={() => document.getElementById('thumbnail-upload').click()}>
+                  {files.thumbnail ? (
+                    <Box>
+                      <img
+                        src={URL.createObjectURL(files.thumbnail)}
+                        alt="Thumbnail preview"
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
+                      />
+                      <Typography variant="body2" color="text.secondary">{files.thumbnail.name}</Typography>
+                    </Box>
+                  ) : existingImages.thumbnail ? (
+                    <Box>
+                      <img
+                        src={getImageSrc(existingImages.thumbnail)}
+                        alt="Existing thumbnail"
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
+                      />
+                      <Typography variant="body2" color="text.secondary">Existing thumbnail. Upload to replace.</Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
+                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
+                      <Typography variant="body2" color="#f59299ff">Or drag and drop</Typography>
+                    </Box>
+                  )}
+                  <input
+                    type="file"
+                    id="thumbnail-upload"
+                    hidden
+                    accept="image/jpeg,image/png,image/jpg"
+                    onChange={handleFileChange('thumbnail')} />
+                </UploadDropArea>
+              </CardContent>
+            </Card>
+            <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
+              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                <Typography variant="h6" gutterBottom>Auditorium Image*</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  JPG, JPEG, PNG Less Than 2MB
+                </Typography>
+                <UploadDropArea
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop('auditoriumImage')}
+                  onClick={() => document.getElementById('auditorium-image-upload').click()} >
+                  {files.auditoriumImage ? (
+                    <Box>
+                      <img
+                        src={URL.createObjectURL(files.auditoriumImage)}
+                        alt="Auditorium image preview"
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
+                      />
+                      <Typography variant="body2" color="text.secondary">{files.auditoriumImage.name}</Typography>
+                    </Box>
+                  ) : existingImages.auditoriumImage ? (
+                    <Box>
+                      <img
+                        src={getImageSrc(existingImages.auditoriumImage)}
+                        alt="Existing auditorium image"
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} />
+                      <Typography variant="body2" color="text.secondary">Existing auditorium image. Upload to replace.</Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
+                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
+                      <Typography variant="body2" color="#f59299ff">Or drag and drop</Typography>
+                    </Box>
+                  )}
+                  <input
+                    type="file"
+                    id="auditorium-image-upload"
+                    hidden
+                    accept="image/jpeg,image/png,image/jpg"
+                    onChange={handleFileChange('auditoriumImage')} />
+                </UploadDropArea>
               </CardContent>
             </Card>
           </Box>
