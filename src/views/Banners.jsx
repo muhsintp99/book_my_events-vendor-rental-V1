@@ -288,8 +288,13 @@ import {
 import { styled } from "@mui/system";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
 const API_URL = "https://api.bookmyevent.ae/api/banners";
 const ZONE_API_URL = "https://api.bookmyevent.ae/api/zones";
+
+// Public base URL for banner images (adjust if your serving path differs)
+const PUBLIC_IMAGE_BASE = "https://api.bookmyevent.ae/uploads/banners";
+
 // Styled drop area
 const UploadDropArea = styled(Box)(({ theme }) => ({
   border: "2px dashed #e0e0e0",
@@ -303,6 +308,7 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
   backgroundColor: "#fafafa",
   "&:hover": { backgroundColor: "#f0f0f0" },
 }));
+
 const Banner = () => {
   const [title, setTitle] = useState("");
   const [zone, setZone] = useState("");
@@ -321,15 +327,27 @@ const Banner = () => {
   const [bannerToDelete, setBannerToDelete] = useState(null);
   const [showForm, setShowForm] = useState(true);
   const navigate = useNavigate();
+
   useEffect(() => {
     fetchBanners();
     fetchZones();
   }, []);
+
   const showToast = (message, severity = "success") => {
     setToastMessage(message);
     setToastSeverity(severity);
     setToastOpen(true);
   };
+
+  // Transform local image path to public URL
+  const transformImageUrl = (imagePath) => {
+    if (!imagePath || imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    // Replace local path prefix with public base
+    return `${PUBLIC_IMAGE_BASE}${imagePath.replace('/var/www/backend/Uploads/banners', '')}`;
+  };
+
   // Fetch Zones
   const fetchZones = async () => {
     try {
@@ -344,6 +362,7 @@ const Banner = () => {
       showToast("Failed to load zones", "error");
     }
   };
+
   // Fetch Banners
   const fetchBanners = async () => {
     try {
@@ -353,7 +372,12 @@ const Banner = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fetched = response.data?.data?.banners || [];
-      setBanners(fetched);
+      // Transform local paths to public URLs
+      const transformedBanners = fetched.map((banner) => ({
+        ...banner,
+        image: transformImageUrl(banner.image),
+      }));
+      setBanners(transformedBanners);
     } catch (error) {
       console.error("Error fetching banners:", error);
       showToast("Failed to load banners", "error");
@@ -361,6 +385,7 @@ const Banner = () => {
       setLoading(false);
     }
   };
+
   // Image Upload
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -374,6 +399,7 @@ const Banner = () => {
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
+
   // CREATE or UPDATE
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -415,6 +441,7 @@ const Banner = () => {
       showToast(error.response?.data?.message || "Operation failed", "error");
     }
   };
+
   // DELETE
   const handleDelete = async () => {
     try {
@@ -432,20 +459,24 @@ const Banner = () => {
       setBannerToDelete(null);
     }
   };
+
   const openDeleteDialog = (id) => {
     setBannerToDelete(id);
     setDeleteDialogOpen(true);
   };
+
   // EDIT
   const handleEdit = (banner) => {
+    const publicImage = transformImageUrl(banner.image);
     setEditId(banner._id);
     setTitle(banner.title);
     setLink(banner.link || "");
-    setPreview(banner.image);
-    setZone(banner.zone || "");
+    setPreview(publicImage);
+    setZone(banner.zone?._id || banner.zone || "");
     setBannerType(banner.bannerType || "");
     setShowForm(true);
   };
+
   const handleReset = () => {
     setTitle("");
     setLink("");
@@ -456,6 +487,7 @@ const Banner = () => {
     setBannerType("");
     setShowForm(true);
   };
+
   return (
     <Box sx={{ p: 3, backgroundColor: "#fff", minHeight: "100vh" }}>
       {showForm ? (
@@ -618,6 +650,10 @@ const Banner = () => {
                                   objectFit: "cover",
                                   border: "1px solid #ddd",
                                 }}
+                                onError={(e) => {
+                                  console.error(`Failed to load image: ${b.image}`);
+                                  e.target.src = '/placeholder-image.jpg'; // Optional: fallback image
+                                }}
                               />
                               <Typography>{b.title}</Typography>
                             </Box>
@@ -695,4 +731,5 @@ const Banner = () => {
     </Box>
   );
 };
+
 export default Banner;
