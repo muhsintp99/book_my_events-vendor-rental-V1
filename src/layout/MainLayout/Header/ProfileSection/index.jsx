@@ -933,7 +933,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import axios from 'axios';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
@@ -952,8 +952,6 @@ import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Badge from '@mui/material/Badge';
 import {
-
-
   TextField,
   Button,
   Card,
@@ -983,12 +981,10 @@ import PushPinIcon from '@mui/icons-material/PushPin';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import TelegramIcon from '@mui/icons-material/Telegram';
-
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
-
 // assets
 import User1 from 'assets/images/users/user-round.svg';
 import {
@@ -1005,26 +1001,23 @@ import {
 } from '@tabler/icons-react';
 
 // ==============================|| PROFILE MENU ||============================== //
-
 export default function ProfileSection() {
   const theme = useTheme();
   const navigate = useNavigate(); // Add this hook
   const { borderRadius } = useConfig();
-
-
   const [open, setOpen] = useState(false);
   const [isedit, SetIsedit] = useState(false)
   console.log(isedit);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('');
-
+  const [profile, setProfile] = useState(null);
+  const [formData, setFormData] = useState({});
   //edit
-
-
   // State for toggles
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
   const anchorRef = useRef(null);
+
+  const PROFILE_API = "https://api.bookmyevent.ae/api/profile";
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -1035,73 +1028,134 @@ export default function ProfileSection() {
     if (storedRole) {
       setRole(storedRole);
     }
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const { data } = await axios.get(PROFILE_API, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success && data.data.length > 0) {
+        const prof = data.data[0];
+        setProfile(prof);
+        // Parse socialLinks if it's a JSON string
+        const socialLinks = prof.socialLinks 
+          ? (typeof prof.socialLinks === 'string' ? JSON.parse(prof.socialLinks) : prof.socialLinks)
+          : {};
+        setFormData({
+          name: user?.name || prof.name || "Tech Solutions",
+          phone: prof.mobileNumber || "",
+          website: socialLinks.website || "",
+          email: user?.email || prof.userId?.email || "",
+          address: prof.address || user?.address || "business ave,city",
+          facebook: socialLinks.facebook || "",
+          instagram: socialLinks.instagram || "",
+          twitter: socialLinks.twitter || "",
+          linkedin: socialLinks.linkedin || "",
+          youtube: socialLinks.youtube || "",
+          whatsapp: socialLinks.whatsapp || "",
+          tiktok: socialLinks.tiktok || "",
+          pinterest: socialLinks.pinterest || "",
+          snapchat: socialLinks.snapchat || "",
+          telegram: socialLinks.telegram || ""
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
+  };
+
+  const transformProfilePhoto = (path) => {
+    if (!path) return User1;
+    return `https://api.bookmyevent.ae${path}`;
+  };
+
+  const handleInputChange = (field) => (e) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const socialLinksObj = {
+        website: formData.website || "",
+        facebook: formData.facebook || "",
+        instagram: formData.instagram || "",
+        twitter: formData.twitter || "",
+        linkedin: formData.linkedin || "",
+        youtube: formData.youtube || "",
+        whatsapp: formData.whatsapp || "",
+        tiktok: formData.tiktok || "",
+        pinterest: formData.pinterest || "",
+        snapchat: formData.snapchat || "",
+        telegram: formData.telegram || ""
+      };
+      const updatePayload = {
+        name: formData.name,
+        address: formData.address,
+        mobileNumber: formData.phone,
+        socialLinks: JSON.stringify(socialLinksObj)
+      };
+      await axios.put(`${PROFILE_API}/${profile._id}`, updatePayload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("Profile updated successfully!"); // Replace with toast if needed
+      SetIsedit(false);
+      fetchProfile();
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to update profile.");
+    }
+  };
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
-
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
     }
     setOpen(false);
   };
-
   // Navigation handlers
   // const handleBusinessDetails = () => {
   //   navigate('/business/details');
   //   setOpen(false);
   // };
-
-
-
   const handleHelpSupport = () => {
     navigate('/help/support');
     setOpen(false);
   };
-
   // Toggle handlers
   const handleNotificationToggle = () => {
     setNotificationsEnabled(!notificationsEnabled);
   };
-
-
-
-  // ✅ Old working Logout function
-  // const handleLogout = () => {
-  //   localStorage.clear(); // clears all localStorage items
-  //   navigate('/pages/login'); // keep your existing login route
-  //   setOpen(false);
-  // };
-
   // Add logout handler
   const handleLogout = () => {
     // Clear any stored authentication data
     localStorage.removeItem('token'); // Remove auth token
     localStorage.removeItem('user'); // Remove user data
     sessionStorage.clear(); // Clear session storage
-
     // Close the menu
     setOpen(false);
-
     // Navigate to sign in page
     navigate('/login'); // Adjust the path as needed for your app
   };
-
   const prevOpen = useRef(open);
-
   useEffect(() => {
     if (prevOpen.current === true && open === false) {
       anchorRef.current.focus();
     }
     prevOpen.current = open;
   }, [open]);
-
   return (
     <>
       {/* Avatar acts as dropdown trigger */}
       <Avatar
+        src={profile ? transformProfilePhoto(profile.profilePhoto) : undefined}
         alt="user-avatar"
         sx={{
           ...theme.typography.mediumAvatar,
@@ -1118,7 +1172,6 @@ export default function ProfileSection() {
       >
         {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
       </Avatar>
-
       <Popper
         placement="bottom"
         open={open}
@@ -1181,6 +1234,7 @@ export default function ProfileSection() {
                           }
                         >
                           <Avatar
+                            src={profile ? transformProfilePhoto(profile.profilePhoto) : User1}
                             sx={{
                               width: 100,
                               height: 100,
@@ -1193,11 +1247,11 @@ export default function ProfileSection() {
                               textTransform: 'uppercase'
                             }}
                           >
-                            {user?.email ? user.email.charAt(0) : 'U'}
+                            {(!profile || !profile.profilePhoto) && (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
                           </Avatar>
                         </Badge>
                         <Typography variant="h4" sx={{ fontWeight: 600, color: 'white', mb: 0.5 }}>
-                          {user?.email || 'user@example.com'}
+                          {user?.email || profile?.userId?.email || 'user@example.com'}
                         </Typography>
                         <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1 }}>
                           {role || 'venue vendor'}
@@ -1211,7 +1265,6 @@ export default function ProfileSection() {
                           <Typography variant="body2">{user?.email || 'user@example.com'}</Typography>
                         </Box> */}
                       </Box>
-
                       {/* Statistics */}
                       <Grid container spacing={2} sx={{ mb: 2, justifyContent: 'center' }}>
                         <Grid item xs={4}>
@@ -1254,7 +1307,6 @@ export default function ProfileSection() {
                           </Box>
                         </Grid>
                       </Grid>
-
                       {/* Verification Badge */}
                       <Box
                         sx={{
@@ -1284,11 +1336,9 @@ export default function ProfileSection() {
                         />
                       </Box>
                     </Box>
-
                     {/* Scrollable Settings Section */}
                     <Box sx={{ p: 2 }}>
                       <Divider />
-
                       <List
                         component="nav"
                         sx={{
@@ -1302,7 +1352,6 @@ export default function ProfileSection() {
                         {/* Edit Profile */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}
                           onClick={() => SetIsedit(true)} >
-
                           <ListItemIcon>
                             <IconUser stroke={1.5} size="20px" />
                           </ListItemIcon>
@@ -1311,7 +1360,6 @@ export default function ProfileSection() {
                             secondary={<Typography variant="caption" color="textSecondary">Update your profile information</Typography>}
                           />
                         </ListItemButton>
-
                         {/* Business Details */}
                         {/* <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleBusinessDetails}>
                           <ListItemIcon>
@@ -1322,7 +1370,6 @@ export default function ProfileSection() {
                             secondary={<Typography variant="caption" color="textSecondary">Manage your business information</Typography>}
                           />
                         </ListItemButton> */}
-
                         {/* Notifications */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
                           <ListItemIcon>
@@ -1334,10 +1381,6 @@ export default function ProfileSection() {
                           />
                           <Switch checked={notificationsEnabled} onChange={handleNotificationToggle} color="primary" size="small" />
                         </ListItemButton>
-
-
-
-
                         {/* Help & Support */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleHelpSupport}>
                           <ListItemIcon>
@@ -1348,9 +1391,7 @@ export default function ProfileSection() {
                             secondary={<Typography variant="caption" color="textSecondary">Get help and contact support</Typography>}
                           />
                         </ListItemButton>
-
                         <Divider sx={{ my: 1 }} />
-
                         {/* ✅ Logout */}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleLogout}>
                           <ListItemIcon>
@@ -1364,7 +1405,6 @@ export default function ProfileSection() {
                 )}
                 {/* ----edit profile---- */}
                 {open && isedit === true && (
-
                   <MainCard
                     border={false}
                     elevation={16}
@@ -1387,7 +1427,6 @@ export default function ProfileSection() {
                             color="inherit"
                             aria-label="back"
                             onClick={() => SetIsedit(false)}
-
                             sx={{ mr: 1 }}
                           >
                             <ArrowBack />
@@ -1397,7 +1436,6 @@ export default function ProfileSection() {
                           </Typography>
                         </Toolbar>
                       </AppBar>
-
                       {/* Content */}
                       <Container maxWidth="xl" sx={{ py: 3 }}>
                         {/* Title Section */}
@@ -1418,7 +1456,6 @@ export default function ProfileSection() {
                             Update your business information.
                           </Typography>
                         </Box>
-
                         {/* Form Card */}
                         <Card elevation={1} sx={{ borderRadius: 3 }}>
                           <CardContent sx={{ p: 3 }}>
@@ -1437,14 +1474,13 @@ export default function ProfileSection() {
                                 Basic Information
                               </Typography>
                             </Box>
-
                             <Stack spacing={3}>
                               {/* Vendor Name */}
                               <TextField
                                 fullWidth
                                 label="Vendor Name"
-                                value={user?.name || "Tech Solutions"}
-                                // onChange={handleInputChange('vendorName')}
+                                value={formData.name || ""}
+                                onChange={handleInputChange('name')}
                                 variant="outlined"
                                 InputProps={{
                                   startAdornment: (
@@ -1460,13 +1496,12 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               {/* Phone Number */}
                               <TextField
                                 fullWidth
                                 label="Phone Number"
-                                value={user?.phone || "998989898"}
-                                // onChange={handleInputChange('phoneNumber')}
+                                value={formData.phone || ""}
+                                onChange={handleInputChange('phone')}
                                 variant="outlined"
                                 type="tel"
                                 InputProps={{
@@ -1483,13 +1518,12 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               {/* Website */}
                               <TextField
                                 fullWidth
                                 label="Website"
-                                value={user?.website || "IconWorldWww.www"}
-                                // onChange={handleInputChange('website')}
+                                value={formData.website || ""}
+                                onChange={handleInputChange('website')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1506,13 +1540,12 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               {/* Email Address */}
                               <TextField
                                 fullWidth
                                 label="Email Address"
-                                value={user?.email || "agmail.com"}
-                                // onChange={handleInputChange('emailAddress')}
+                                value={formData.email || ""}
+                                // Read-only, since email might not be updatable
                                 variant="outlined"
                                 type="email"
                                 InputProps={{
@@ -1521,6 +1554,7 @@ export default function ProfileSection() {
                                       <Email sx={{ color: '#999' }} />
                                     </InputAdornment>
                                   ),
+                                  readOnly: true
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1529,13 +1563,12 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               {/* Business Address */}
                               <TextField
                                 fullWidth
                                 label="Business Address"
-                                value={user?.address || "business ave,city"}
-                                // onChange={handleInputChange('businessAddress')}
+                                value={formData.address || ""}
+                                onChange={handleInputChange('address')}
                                 variant="outlined"
                                 multiline
                                 rows={3}
@@ -1554,7 +1587,6 @@ export default function ProfileSection() {
                                 }}
                               />
                             </Stack>
-
                             <Box sx={{ mb: 3, mt: 4 }}>
                               <Typography
                                 variant="h6"
@@ -1569,13 +1601,12 @@ export default function ProfileSection() {
                                 Social Media Links
                               </Typography>
                             </Box>
-
                             <Stack spacing={3}>
                               <TextField
                                 fullWidth
                                 label="Instagram"
-                                value={user?.instagram || "https://instagram.com/techsu"}
-                                // onChange={handleInputChange('instagram')}
+                                value={formData.instagram || ""}
+                                onChange={handleInputChange('instagram')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1592,12 +1623,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="Facebook"
-                                value={user?.facebook || "https://facebook.com/techsu"}
-                                // onChange={handleInputChange('facebook')}
+                                value={formData.facebook || ""}
+                                onChange={handleInputChange('facebook')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1614,12 +1644,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="Twitter / X"
-                                value={user?.twitter || "https://twitter.com/techsol"}
-                                // onChange={handleInputChange('twitter')}
+                                value={formData.twitter || ""}
+                                onChange={handleInputChange('twitter')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1636,12 +1665,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="LinkedIn"
-                                value={user?.linkedin || "https://linkedin.com/compa"}
-                                // onChange={handleInputChange('linkedin')}
+                                value={formData.linkedin || ""}
+                                onChange={handleInputChange('linkedin')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1659,7 +1687,6 @@ export default function ProfileSection() {
                                 }}
                               />
                             </Stack>
-
                             <Box sx={{ mb: 3, mt: 4 }}>
                               <Typography
                                 variant="h6"
@@ -1674,13 +1701,12 @@ export default function ProfileSection() {
                                 Video & Content Platforms
                               </Typography>
                             </Box>
-
                             <Stack spacing={3}>
                               <TextField
                                 fullWidth
                                 label="YouTube"
-                                value={user?.youtube || "https://youtube.com/@techs"}
-                                // onChange={handleInputChange('youtube')}
+                                value={formData.youtube || ""}
+                                onChange={handleInputChange('youtube')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1697,12 +1723,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="TikTok"
-                                value={user?.tiktok || "https://tiktok.com/@techsol"}
-                                // onChange={handleInputChange('tiktok')}
+                                value={formData.tiktok || ""}
+                                onChange={handleInputChange('tiktok')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1720,17 +1745,14 @@ export default function ProfileSection() {
                                 }}
                               />
                             </Stack>
-
                             <Box sx={{ mb: 3, mt: 4 }}>
-
                             </Box>
-
                             <Stack spacing={3}>
                               <TextField
                                 fullWidth
                                 label="Pinterest"
-                                value={user?.pinterest || "https://pinterest.com/techs"}
-                                // onChange={handleInputChange('pinterest')}
+                                value={formData.pinterest || ""}
+                                onChange={handleInputChange('pinterest')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1747,12 +1769,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="Snapchat"
-                                value={user?.snapchat || "https://snapchat.com/add/t."}
-                                // onChange={handleInputChange('snapchat')}
+                                value={formData.snapchat || ""}
+                                onChange={handleInputChange('snapchat')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1770,7 +1791,6 @@ export default function ProfileSection() {
                                 }}
                               />
                             </Stack>
-
                             <Box sx={{ mb: 3, mt: 4 }}>
                               <Typography
                                 variant="h6"
@@ -1785,13 +1805,12 @@ export default function ProfileSection() {
                                 Messaging & Communication
                               </Typography>
                             </Box>
-
                             <Stack spacing={3}>
                               <TextField
                                 fullWidth
                                 label="WhatsApp Business"
-                                value={user?.whatsapp || "+1 (555) 123-4567"}
-                                // onChange={handleInputChange('whatsapp')}
+                                value={formData.whatsapp || ""}
+                                onChange={handleInputChange('whatsapp')}
                                 variant="outlined"
                                 type="tel"
                                 InputProps={{
@@ -1808,12 +1827,11 @@ export default function ProfileSection() {
                                   }
                                 }}
                               />
-
                               <TextField
                                 fullWidth
                                 label="Telegram"
-                                value={user?.telegram || "https://t.me/techsolutions"}
-                                // onChange={handleInputChange('telegram')}
+                                value={formData.telegram || ""}
+                                onChange={handleInputChange('telegram')}
                                 variant="outlined"
                                 type="url"
                                 InputProps={{
@@ -1831,9 +1849,7 @@ export default function ProfileSection() {
                                 }}
                               />
                             </Stack>
-
                             <Divider sx={{ my: 3 }} />
-
                             {/* Action Buttons */}
                             <Stack direction="row" spacing={2}>
                               <Button
@@ -1856,7 +1872,7 @@ export default function ProfileSection() {
                               <Button
                                 variant="contained"
                                 fullWidth
-                                onClick={() => SetIsedit(false)}
+                                onClick={handleSave}
                                 sx={{
                                   borderRadius: 2,
                                   py: 1.5,
@@ -1879,9 +1895,7 @@ export default function ProfileSection() {
                       </Container>
                     </Box>
                   </MainCard>
-
                 )}
-
               </Paper>
             </Transitions>
           </ClickAwayListener>
