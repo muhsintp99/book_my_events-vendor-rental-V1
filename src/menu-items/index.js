@@ -88,9 +88,9 @@ import dashboard from './dashboard';
 
 // Rental Modules
 import vehiclemanagement from './vendors/vehiclemanagement';
-import Tripmanagement from './vendors/tripmanagement';
-import Employeesection from './vendors/employeesection';
-import Businesssection from './vendors/businesssection';
+// import Tripmanagement from './vendors/tripmanagement';
+// import Employeesection from './vendors/employeesection';
+// import Businesssection from './vendors/businesssection';
 
 // Venue Modules
 // import bookingmanagement from './venues/bookingmanagement';
@@ -100,7 +100,7 @@ import Marketing from './venues/marketingsection';
 
 // Common
 import Marketingsection from './vendors/marketingsection';
-import Reportsection from './vendors/reportsection';
+// import Reportsection from './vendors/reportsection';
 
 // Other specific modules
 import photographymanagement from './photography/photomanagement';
@@ -121,7 +121,7 @@ let specificSections = [];
 
 // handle conditions
 if (logRes === 'transport') {
-  specificSections = [Tripmanagement, vehiclemanagement,Marketingsection, Employeesection, Businesssection,Reportsection];
+  specificSections = [ vehiclemanagement,Marketingsection];
 } else if (logRes === 'venues') {
   specificSections = [venuemanagement, Businessection, Marketing];
 } else if (logRes === 'event') {

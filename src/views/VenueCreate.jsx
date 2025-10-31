@@ -180,22 +180,22 @@
 // const CreateAuditorium = () => {
 //   const { id } = useParams();
 //   const location = useLocation();
-//   useEffect(() => {
-//     const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
-//     const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
-//     if (!alreadyRefreshed) {
-//       sessionStorage.setItem(refreshedKey, 'true');
-//       setTimeout(() => {
-//         window.location.reload();
-//       }, 150);
-//     } else {
-//       Object.keys(sessionStorage)
-//         .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
-//         .forEach((key) => {
-//           if (key !== refreshedKey) sessionStorage.removeItem(key);
-//         });
-//     }
-//   }, [id]);
+  // useEffect(() => {
+  //   const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
+  //   const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
+  //   if (!alreadyRefreshed) {
+  //     sessionStorage.setItem(refreshedKey, 'true');
+  //     setTimeout(() => {
+  //       window.location.reload();
+  //     }, 150);
+  //   } else {
+  //     Object.keys(sessionStorage)
+  //       .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
+  //       .forEach((key) => {
+  //         if (key !== refreshedKey) sessionStorage.removeItem(key);
+  //       });
+  //   }
+  // }, [id]);
 //   const navigate = useNavigate();
 //   const theme = useTheme();
 //   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -1941,29 +1941,24 @@ const CreateAuditorium = () => {
   const { id } = useParams();
   const location = useLocation();
   useEffect(() => {
-    // Only handle edit mode refresh logic when id exists
-    if (!id) return;
-
-    const refreshedKey = `venue-refreshed-${id}`;
+    const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
     const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
-    const fromPackageSelection = sessionStorage.getItem('from-package-selection');
-
-    if (!alreadyRefreshed && !fromPackageSelection) {
-      // First time loading in edit mode and NOT coming from package selection
+    if (!alreadyRefreshed) {
       sessionStorage.setItem(refreshedKey, 'true');
       setTimeout(() => {
         window.location.reload();
-      }, 150);
-    } else if (fromPackageSelection) {
-      // Coming from package selection - don't refresh, just clean up
-      sessionStorage.removeItem('from-package-selection');
-      sessionStorage.removeItem(refreshedKey); // Remove refresh key to prevent future refreshes
+      }, );
+    } else {
+      Object.keys(sessionStorage)
+        .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
+        .forEach((key) => {
+          if (key !== refreshedKey) sessionStorage.removeItem(key);
+        });
     }
   }, [id]);
   useEffect(() => {
   if (id) {
     const fromPackageSelection = sessionStorage.getItem('from-package-selection');
-    // Only fetch venue data if NOT coming from package selection
     if (!fromPackageSelection) {
       fetchVenue(id);
     }
@@ -1980,41 +1975,26 @@ const CreateAuditorium = () => {
   const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState(id ? 'edit' : 'create');
   const [formData, setFormData] = useState({
-    venueName: '',
-    description: '',
-    venueAddress: '',
-    categories: '',
-    latitude: '',
-    longitude: '',
-    openingHours: '',
-    closingHours: '',
+    venueName: '',description: '',
+    venueAddress: '',categories: '',
+  latitude: '', longitude: '',
+    openingHours: '',closingHours: '',
     holidayScheduling: '',
-    parkingAvailability: false,
-    parkingCapacity: '',
+    parkingAvailability: false,parkingCapacity: '',
     foodCateringAvailability: false,
-    stageLightingAudio: false,
-    wheelchairAccessibility: false,
+    stageLightingAudio: false, wheelchairAccessibility: false,
     securityArrangements: false,
     wifiAvailability: false,
-    acAvailable: false,
-    nonAcAvailable: false,
-    acType: 'Not Specified',
-    washroomsInfo: '',
-    dressingRooms: '',
+    acAvailable: false,nonAcAvailable: false,nonAcDiscount: '',acType: 'Not Specified',
+    washroomsInfo: '',dressingRooms: '',
     venueType: '',
-    discount: '',
-    advanceDeposit: '',
+    discount: '',advanceDeposit: '',
     cancellationPolicy: '',
-    extraCharges: '',
-    seatingArrangement: '',
-    maxGuestsSeated: '',
-    maxGuestsStanding: '',
-    multipleHalls: false,
-    nearbyTransport: '',
-    accessibilityInfo: '',
-    elderlyAccessibility: false,
-    searchTags: '',
-    selectedPackageIds: [],
+    extraCharges: '',seatingArrangement: '',
+    maxGuestsSeated: '',maxGuestsStanding: '',
+    multipleHalls: false,nearbyTransport: '',
+    accessibilityInfo: '',elderlyAccessibility: false,
+    searchTags: '',selectedPackageIds: [],
   });
   const [categories, setCategories] = useState([]);
   const [fetchedPackages, setFetchedPackages] = useState([]);
@@ -2290,47 +2270,30 @@ const CreateAuditorium = () => {
   const handleDragOver = (event) => event.preventDefault();
   const handleReset = () => {
     setFormData({
-      venueName: '',
-      description: '',
-      venueAddress: '',
-      categories: '',
-      latitude: '',
-      longitude: '',
-      openingHours: '',
-      closingHours: '',
+      venueName: '', description: '', venueAddress: '',
+      categories: '',latitude: '',longitude: '',
+      openingHours: '',closingHours: '',
       holidayScheduling: '',
-      parkingAvailability: false,
-      parkingCapacity: '',
+      parkingAvailability: false, parkingCapacity: '',
       foodCateringAvailability: false,
       stageLightingAudio: false,
       wheelchairAccessibility: false,
       securityArrangements: false,
       wifiAvailability: false,
-      acAvailable: false,
-      nonAcAvailable: false,
-      acType: 'Not Specified',
-      washroomsInfo: '',
-      dressingRooms: '',
-      venueType: '',
-      discount: '',
-      advanceDeposit: '',
-      cancellationPolicy: '',
-      extraCharges: '',
-      seatingArrangement: '',
-      maxGuestsSeated: '',
-      maxGuestsStanding: '',
-      multipleHalls: false,
-      nearbyTransport: '',
-      accessibilityInfo: '',
-      elderlyAccessibility: false,
-      searchTags: '',
-      selectedPackageIds: [],
+      acAvailable: false,nonAcAvailable: false,acType: 'Not Specified',
+      washroomsInfo: '',dressingRooms: '',
+      venueType: '',discount: '',
+      advanceDeposit: '',cancellationPolicy: '',
+      extraCharges: '',seatingArrangement: '',
+      maxGuestsSeated: '', maxGuestsStanding: '',
+      multipleHalls: false, nearbyTransport: '',
+      accessibilityInfo: '', elderlyAccessibility: false,
+      searchTags: '',selectedPackageIds: [],
     });
     setSelectedPackages([]);
     setTimeSlots(resetTimeSlots);
     setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null, documents: null });
     setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '', documents: '' });
-    // setToast({ open: false, message: '', severity: 'success' });
     setViewMode('create');
     if (markerRef.current) {
       markerRef.current.setMap(null);
@@ -2531,142 +2494,170 @@ const CreateAuditorium = () => {
     }
     return result;
   };
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setToast({ open: false, message: '', severity: 'success' });
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setToast({
-        open: true,
-        message: 'No authentication token found. Please log in.',
-        severity: 'error',
-      });
-      setLoading(false);
-      return;
-    }
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setToast({
-        open: true,
-        message: validationErrors.join(', '),
-        severity: 'error',
-      });
-      setLoading(false);
-      return;
-    }
-    try {
-      let venueId = id;
-      // ---------- STEP 2: CREATE OR UPDATE VENUE ----------
-      const data = new FormData();
-      const booleanFields = [
-        'parkingAvailability',
-        'foodCateringAvailability',
-        'stageLightingAudio',
-        'wheelchairAccessibility',
-        'securityArrangements',
-        'wifiAvailability',
-        'acAvailable',
-        'nonAcAvailable',
-        'multipleHalls',
-        'elderlyAccessibility',
-      ];
-      const payload = {
-        ...formData,
-        shortDescription: formData.description || '',
-        holidaySchedule: formData.holidayScheduling || '',
-        categories: formData.categories || '',
-        accessibilityInfo: formData.accessibilityInfo || '',
-      };
-      delete payload.description;
-      delete payload.holidayScheduling;
-      delete payload.venueType;
-      delete payload.selectedPackageIds;
-      Object.entries(payload).forEach(([key, value]) => {
-        if (key === 'searchTags' && value) {
-          const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
-          tagsArray.forEach(tag => data.append(key, tag));
-        } else if (booleanFields.includes(key)) {
-          data.append(key, value.toString());
-        } else {
-          data.append(key, value || '');
-        }
-      });
-      data.append('venueType', formData.venueType || '');
-      const pricingSchedule = transformToArray(timeSlots, formData.venueType);
-      data.append('pricingSchedule', JSON.stringify(pricingSchedule));
-      // ✅ Attach packageId if exists
-      if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0) {
-        // Your backend may accept either `packageId` or `packages` array
-        // adjust accordingly (most likely `packages`)
-        data.append('packages', JSON.stringify(formData.selectedPackageIds));
-      }
-      if (files.thumbnail) data.append('thumbnail', files.thumbnail);
-      if (files.auditoriumImage) data.append('images', files.auditoriumImage);
-      if (files.floorPlan) data.append('images', files.floorPlan);
-      let venueRes;
-      if (viewMode === 'create') {
-        venueRes = await fetch(`${API_BASE_URL}/venues/`, {
-          method: 'POST',
-          body: data,
-          headers: { Authorization: `Bearer ${token}` },
-        });
+
+  const validateDiscount = (value) => {
+  const num = parseFloat(value) || 0;
+  if (num < 0) return 0;
+  if (num > 100) {
+    setToast({
+      open: true,
+      message: 'Discount capped at 100%.',
+      severity: 'warning',
+    });
+    return 100;  
+  }
+  return num;
+};
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setLoading(true);
+  setToast({ open: false, message: '', severity: 'success' });
+  const token = localStorage.getItem('token');
+  if (!token) {
+    setToast({
+      open: true,
+      message: 'No authentication token found. Please log in.',
+      severity: 'error',
+    });
+    setLoading(false);
+    return;
+  }
+  const validationErrors = validateForm();
+  if (validationErrors.length > 0) {
+    setToast({
+      open: true,
+      message: validationErrors.join(', '),
+      severity: 'error',
+    });
+    setLoading(false);
+    return;
+  }
+  try {
+    let venueId = id;
+    
+    const data = new FormData();
+    const booleanFields = [
+      'parkingAvailability',
+      'foodCateringAvailability',
+      'stageLightingAudio',
+      'wheelchairAccessibility',
+      'securityArrangements',
+      'wifiAvailability',
+      'acAvailable',
+      'nonAcAvailable',
+      'multipleHalls',
+      'elderlyAccessibility',
+    ];
+
+    let discountObj = {
+      packageDiscount: validateDiscount(formData.discount),  
+      nonAc: formData.nonAcAvailable ? validateDiscount(formData.nonAcDiscount) : 0  
+    };
+
+    const payload = {
+      ...formData,
+      shortDescription: formData.description || '',
+      holidaySchedule: formData.holidayScheduling || '',
+      categories: formData.categories || '',
+      accessibilityInfo: formData.accessibilityInfo || '',
+      discount: JSON.stringify(discountObj),  
+    };
+    delete payload.description;
+    delete payload.holidayScheduling;
+    delete payload.venueType;
+    delete payload.selectedPackageIds;
+    delete payload.nonAcDiscount;  
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === 'searchTags' && value) {
+        const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+        tagsArray.forEach(tag => data.append(key, tag));
+      } else if (booleanFields.includes(key)) {
+        data.append(key, value.toString());
       } else {
-        venueRes = await fetch(`${API_BASE_URL}/venues/${id}`, {
-          method: 'PUT',
-          body: data,
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        data.append(key, value || '');
       }
-      const venueResult = await venueRes.json();
-      if (!venueRes.ok || !venueResult.success) {
-        throw new Error(venueResult.message || 'Failed to create/update venue');
-      }
-      venueId = venueResult.data?._id || venueResult._id;
-      console.log('✅ Venue created/updated:', venueId);
-      // ---------- STEP 3: LINK PACKAGE TO VENUE (if created after) ----------
-      if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0 && viewMode === 'edit') {
-        const linkRes = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ packages: formData.selectedPackageIds }),
-        });
-        const linkResult = await linkRes.json();
-        if (!linkRes.ok) {
-          console.error('Failed to link package to venue:', linkResult.message);
-        }
-      }
-      // ---------- SUCCESS ----------
-      setToast({
-        open: true,
-        message:
-          viewMode === 'edit'
-            ? 'Venue updated successfully '
-            : 'Venue created successfully ',
-        severity: 'success',
-      });
-      if (viewMode === 'edit') {
-        setTimeout(() => navigate('/venue-setup/lists'), 2000);
-      } else {
-        handleReset();
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setToast({
-        open: true,
-        message: error.message.includes('expired')
-          ? 'Session expired. Please log in again.'
-          : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
-        severity: 'error',
-      });
-      if (error.message.includes('expired')) navigate('/login');
-    } finally {
-      setLoading(false);
+    });
+
+    data.append('venueType', formData.venueType || '');
+    const pricingSchedule = transformToArray(timeSlots, formData.venueType);
+    data.append('pricingSchedule', JSON.stringify(pricingSchedule));
+
+    if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0) {
+      data.append('packages', JSON.stringify(formData.selectedPackageIds));
     }
-  };
+
+    if (files.thumbnail) data.append('thumbnail', files.thumbnail);
+    if (files.auditoriumImage) data.append('images', files.auditoriumImage);
+    if (files.floorPlan) data.append('images', files.floorPlan);
+
+    let venueRes;
+    if (viewMode === 'create') {
+      venueRes = await fetch(`${API_BASE_URL}/venues/`, {
+        method: 'POST',
+        body: data,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } else {
+      venueRes = await fetch(`${API_BASE_URL}/venues/${id}`, {
+        method: 'PUT',
+        body: data,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+
+    const venueResult = await venueRes.json();
+    if (!venueRes.ok || !venueResult.success) {
+      throw new Error(venueResult.message || 'Failed to create/update venue');
+    }
+
+    venueId = venueResult.data?._id || venueResult._id;
+    console.log('✅ Venue created/updated with discount:', discountObj);  // Debug: Check clamped values
+
+    // ---------- LINK PACKAGE (unchanged) ----------
+    if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0 && viewMode === 'edit') {
+      const linkRes = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ packages: formData.selectedPackageIds }),
+      });
+      const linkResult = await linkRes.json();
+      if (!linkRes.ok) {
+        console.error('Failed to link package to venue:', linkResult.message);
+      }
+    }
+
+    // ---------- SUCCESS ----------
+    setToast({
+      open: true,
+      message:
+        viewMode === 'edit'
+          ? 'Venue updated successfully'
+          : 'Venue created successfully',
+      severity: 'success',
+    });
+    if (viewMode === 'edit') {
+      setTimeout(() => navigate('/venue-setup/lists'), 2000);
+    } else {
+      handleReset();
+    }
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    setToast({
+      open: true,
+      message: error.message.includes('expired')
+        ? 'Session expired. Please log in again.'
+        : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
+      severity: 'error',
+    });
+    if (error.message.includes('expired')) navigate('/login');
+  } finally {
+    setLoading(false);
+  }
+};
   const handleCloseToast = (event, reason) => {
     if (reason === 'clickaway') return;
     setToast({ open: false, message: '', severity: 'success' });
@@ -2923,8 +2914,29 @@ const CreateAuditorium = () => {
                       control={<Switch name="wifiAvailability" checked={formData.wifiAvailability} onChange={handleInputChange} />}
                       label="Wi-Fi Availability" />
                     <FormControlLabel
-                      control={<Switch name="nonAcAvailable" checked={formData.nonAcAvailable} onChange={handleInputChange} />}
-                      label="Non AC Available" />
+  control={<Switch name="nonAcAvailable" checked={formData.nonAcAvailable} onChange={handleInputChange} />}
+  label="Non AC Available" />
+{formData.nonAcAvailable && (
+  <Box sx={{ backgroundColor: '#fce4ec', border: '1px solid #f8bbd9', borderRadius: 1, p: 2, mt: 1 }}>
+    <Typography variant="subtitle1" gutterBottom sx={{ color: '#c2185b', fontWeight: 600 }}>
+      Non-AC Discount Pricing
+    </Typography>
+    <TextField
+      fullWidth
+      label="Fixed Discount Amount (₹)"
+      name="nonAcDiscount"
+      value={formData.nonAcDiscount}
+      onChange={handleInputChange}
+      placeholder="e.g., 500, 1000, 2000"
+      type="number"
+      inputProps={{ min: 0 }}
+      sx={{ mb: 2, ...inputSx }}
+    />
+    <Typography variant="body2" color="text.secondary">
+      Note: You can set either percentage or fixed amount as discount for Non-AC bookings
+    </Typography>
+  </Box>
+)}
                     <TextField
                       fullWidth
                       label="Washrooms/Restrooms Info"
