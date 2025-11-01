@@ -1977,19 +1977,15 @@ const CreateAuditorium = () => {
   const [formData, setFormData] = useState({
     venueName: '',description: '',
     venueAddress: '',categories: '',
-  latitude: '', longitude: '',
-    openingHours: '',closingHours: '',
-    holidayScheduling: '',
+    latitude: '', longitude: '',
+    openingHours: '',closingHours: '', holidayScheduling: '',
     parkingAvailability: false,parkingCapacity: '',
     foodCateringAvailability: false,
     stageLightingAudio: false, wheelchairAccessibility: false,
-    securityArrangements: false,
-    wifiAvailability: false,
+    securityArrangements: false, wifiAvailability: false,
     acAvailable: false,nonAcAvailable: false,nonAcDiscount: '',acType: 'Not Specified',
-    washroomsInfo: '',dressingRooms: '',
-    venueType: '',
-    discount: '',advanceDeposit: '',
-    cancellationPolicy: '',
+    washroomsInfo: '',dressingRooms: '',   venueType: '',
+    discount: '',advanceDeposit: '',  cancellationPolicy: '',
     extraCharges: '',seatingArrangement: '',
     maxGuestsSeated: '',maxGuestsStanding: '',
     multipleHalls: false,nearbyTransport: '',
@@ -2071,9 +2067,6 @@ const CreateAuditorium = () => {
     try {
       const token = localStorage.getItem('token');
       const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
-
-      console.log('Fetching packages with providerId:', providerId);
-
       if (!providerId) {
         console.warn('Provider ID not available');
         setFetchedPackages([]);
@@ -2096,7 +2089,6 @@ const CreateAuditorium = () => {
         return;
       }
       const result = await response.json();
-      console.log('Packages API Response:', result);
 
       // Handle the response format from your API
       let packages = [];
@@ -2105,7 +2097,6 @@ const CreateAuditorium = () => {
       } else if (result.success && Array.isArray(result.data)) {
         packages = result.data;
       }
-      console.log('Parsed packages:', packages);
       setFetchedPackages(packages);
       if (packages.length === 0) {
         console.log('No packages found for this provider');
@@ -2276,13 +2267,10 @@ const CreateAuditorium = () => {
       holidayScheduling: '',
       parkingAvailability: false, parkingCapacity: '',
       foodCateringAvailability: false,
-      stageLightingAudio: false,
-      wheelchairAccessibility: false,
-      securityArrangements: false,
-      wifiAvailability: false,
+      stageLightingAudio: false, wheelchairAccessibility: false,
+      securityArrangements: false, wifiAvailability: false,
       acAvailable: false,nonAcAvailable: false,acType: 'Not Specified',
-      washroomsInfo: '',dressingRooms: '',
-      venueType: '',discount: '',
+      washroomsInfo: '',dressingRooms: '', venueType: '',discount: '',
       advanceDeposit: '',cancellationPolicy: '',
       extraCharges: '',seatingArrangement: '',
       maxGuestsSeated: '', maxGuestsStanding: '',
@@ -2390,6 +2378,20 @@ const CreateAuditorium = () => {
       if (!result.success) {
         throw new Error(result.message || 'Failed to fetch venue');
       }
+      let discountValue = '';
+      let nonAcDiscountValue = '';
+      
+      if (result.data.discount) {
+        try {
+          const discountObj = typeof result.data.discount === 'string' 
+            ? JSON.parse(result.data.discount) 
+            : result.data.discount;
+          discountValue = discountObj.packageDiscount?.toString() || '';
+          nonAcDiscountValue = discountObj.nonAc?.toString() || '';
+        } catch (e) {
+          discountValue = result.data.discount.toString() || '';
+        }
+      }
       setFormData({
         venueName: result.data.venueName || '',
         description: result.data.shortDescription || '',
@@ -2413,7 +2415,7 @@ const CreateAuditorium = () => {
         washroomsInfo: result.data.washroomsInfo || '',
         dressingRooms: result.data.dressingRooms || '',
         venueType: result.data.venueType || '',
-        discount: result.data.discount || '',
+        discount: discountValue, nonAcDiscount: nonAcDiscountValue,
         advanceDeposit: result.data.advanceDeposit || '',
         cancellationPolicy: result.data.cancellationPolicy || '',
         extraCharges: result.data.extraCharges || '',
@@ -2427,8 +2429,9 @@ const CreateAuditorium = () => {
         searchTags: Array.isArray(result.data.searchTags)
           ? result.data.searchTags.join(', ')
           : result.data.searchTags || '',
-        selectedPackageIds: result.data.packages || [],
-      });
+          selectedPackageIds: Array.isArray(result.data.packages)   
+          ? result.data.packages.map(pkg => typeof pkg === 'string' ? pkg : pkg._id)
+          : [],      });
       console.log("hello", formData?.categories);
       setTimeSlots(transformToTimeSlots(result.data.pricingSchedule) || defaultTimeSlots);
       setExistingImages({
@@ -2688,19 +2691,15 @@ const handleSubmit = async (event) => {
                   fullWidth
                   label="Venue Name*" name="venueName"
                   value={formData.venueName}
-                  onChange={handleInputChange}
-                  placeholder="Type venue name"
-                  sx={{ mb: 2, ...inputSx }}
-                  required />
+                  onChange={handleInputChange}  placeholder="Type venue name"
+                  sx={{ mb: 2, ...inputSx }} required />
                 <TextField
                   fullWidth
                   label="Description" name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Describe your auditorium"
-                  multiline
-                  rows={4}
-                  sx={{ mb: 2, ...inputSx }} />
+                  multiline rows={4}  sx={{ mb: 2, ...inputSx }} />
                 <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
                   <InputLabel id="category-label">Category*</InputLabel>
                   <Select
@@ -2717,10 +2716,8 @@ const handleSubmit = async (event) => {
                 </FormControl>
                 <TextField
                   fullWidth label="Search Location"
-                  inputRef={searchInputRef}
-                  variant="outlined"
-                  placeholder="Enter a location"
-                  sx={{ mb: 2, ...inputSx }} />
+                  inputRef={searchInputRef}  variant="outlined"
+                  placeholder="Enter a location" sx={{ mb: 2, ...inputSx }} />
                 {mapsLoaded && GOOGLE_MAPS_API_KEY ? (
                   <>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -2729,12 +2726,9 @@ const handleSubmit = async (event) => {
                     <Box
                       ref={mapRef}
                       sx={{
-                        height: 300,
-                        width: '100%',
+                        height: 300, width: '100%',
                         borderRadius: theme.shape.borderRadius,
-                        border: `1px solid ${theme.palette.grey[300]}`,
-                        mb: 2,
-                      }} />
+                        border: `1px solid ${theme.palette.grey[300]}`,  mb: 2,  }} />
                   </>
                 ) : (
                   <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[300]}`, borderRadius: theme.shape.borderRadius, mb: 2 }}>
@@ -2748,22 +2742,19 @@ const handleSubmit = async (event) => {
                     sx={{ flex: 1, ...inputSx }}
                     label="Latitude*" name="latitude"
                     value={formData.latitude}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 25.2048"
+                    onChange={handleInputChange} placeholder="e.g., 25.2048"
                     type="number" inputProps={{ step: '0.0001' }} required />
                   <TextField
                     sx={{ flex: 1, ...inputSx }}
                     label="Longitude*" name="longitude"
-                    value={formData.longitude}
-                    onChange={handleInputChange}
+                    value={formData.longitude} onChange={handleInputChange}
                     placeholder="e.g., 55.2708"
                     type="number" inputProps={{ step: '0.0001' }} required />
                 </Box>
                 <TextField
                   fullWidth
                   label="Venue Address*" name="venueAddress"
-                  value={formData.venueAddress}
-                  onChange={handleInputChange}
+                  value={formData.venueAddress}  onChange={handleInputChange}
                   placeholder="Enter complete address"
                   multiline rows={2}
                   sx={{ mb: 2, ...inputSx }} required />
@@ -2784,8 +2775,7 @@ const handleSubmit = async (event) => {
                   <TextField
                     fullWidth label="Holiday Scheduling"
                     name="holidayScheduling" value={formData.holidayScheduling}
-                    onChange={handleInputChange}
-                    placeholder="Describe holiday hours or closures"
+                    onChange={handleInputChange} placeholder="Describe holiday hours or closures"
                     multiline rows={2} sx={inputSx} />
                 </Box>
               </CardContent>
@@ -2809,10 +2799,7 @@ const handleSubmit = async (event) => {
                   <Box
   sx={{
     backgroundColor: '#fce4ec',
-    border: '1px solid #f8bbd9',
-    borderRadius: 1,
-    p: 2,
-    mt: 1,
+    border: '1px solid #f8bbd9', borderRadius: 1,p: 2, mt: 1,
     cursor: 'pointer',
     '&:hover': { backgroundColor: '#f8bbd9' }
   }}
@@ -2820,12 +2807,8 @@ const handleSubmit = async (event) => {
     sessionStorage.setItem('tempFormData', JSON.stringify(formData)); // Save current form data
     navigate('/venue-setup/foodmenu', {
       state: { selectingForVenue: true, preSelected: selectedPackages }
-    });
-  }}
->
-
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    }); }}>
+ <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography variant="h5" color="#E15B65">🍴</Typography>
                               <Typography variant="subtitle1" color="#E15B65">Menu Selection</Typography>
@@ -2836,29 +2819,19 @@ const handleSubmit = async (event) => {
                        {selectedPackages.length > 0 && (
                           <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                             {selectedPackages.map((pkg) => {
-                              console.log('Package data:', pkg);
-                              console.log('Thumbnail path:', pkg.thumbnail);
                               
-                              // Construct proper image URL - match FoodMenu exactly
                               const imageUrl = pkg.thumbnail 
                                 ? `https://api.bookmyevent.ae/${pkg.thumbnail}` 
                                 : '/placeholder.jpg';
-                              
-                              console.log('Final image URL:', imageUrl);
-                              
+                                                            
                               return (
                                 <Card key={pkg._id} sx={{ width: 150, height: 160 }}>
                                   <CardMedia
-                                    component="img"
-                                    height="120"
-                                    image={imageUrl}
-                                    alt={pkg.title}
-                                    sx={{ objectFit: 'cover' }}
+                                    component="img" height="120"
+                                    image={imageUrl}alt={pkg.title}  sx={{ objectFit: 'cover' }}
                                     onError={(e) => { 
                                       console.error('Image failed to load:', imageUrl);
-                                      e.target.src = '/placeholder.jpg'; 
-                                    }}
-                                  />
+                                      e.target.src = '/placeholder.jpg';    }} />
                                   <CardContent sx={{ p: 1 }}>
                                     <Typography variant="body2" noWrap sx={{ fontSize: '0.75rem' }}>
                                       {pkg.title}
@@ -2923,15 +2896,10 @@ const handleSubmit = async (event) => {
     </Typography>
     <TextField
       fullWidth
-      label="Fixed Discount Amount (₹)"
-      name="nonAcDiscount"
-      value={formData.nonAcDiscount}
-      onChange={handleInputChange}
-      placeholder="e.g., 500, 1000, 2000"
-      type="number"
-      inputProps={{ min: 0 }}
-      sx={{ mb: 2, ...inputSx }}
-    />
+      label="Fixed Discount Amount (₹)" name="nonAcDiscount"
+      value={formData.nonAcDiscount} onChange={handleInputChange}
+      placeholder="e.g., 500, 1000, 2000"  type="number"
+      inputProps={{ min: 0 }} sx={{ mb: 2, ...inputSx }}/>
     <Typography variant="body2" color="text.secondary">
       Note: You can set either percentage or fixed amount as discount for Non-AC bookings
     </Typography>
@@ -2939,10 +2907,8 @@ const handleSubmit = async (event) => {
 )}
                     <TextField
                       fullWidth
-                      label="Washrooms/Restrooms Info"
-                      name="washroomsInfo"
-                      value={formData.washroomsInfo}
-                      onChange={handleInputChange}
+                      label="Washrooms/Restrooms Info" name="washroomsInfo"
+                      value={formData.washroomsInfo}  onChange={handleInputChange}
                       placeholder="Details about washrooms"
                       sx={inputSx} />
                   </Stack>
@@ -2958,16 +2924,14 @@ const handleSubmit = async (event) => {
                   Choose the main image that represents your venue.
                 </Typography>
                 <UploadDropArea
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop('thumbnail')}
+                  onDragOver={handleDragOver}  onDrop={handleDrop('thumbnail')}
                   onClick={() => document.getElementById('thumbnail-upload').click()}>
                   {files.thumbnail ? (
                     <Box>
                       <img
                         src={URL.createObjectURL(files.thumbnail)}
                         alt="Thumbnail preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}  />
                       <Typography variant="body2" color="text.secondary">{files.thumbnail.name}</Typography>
                     </Box>
                   ) : existingImages.thumbnail ? (
@@ -2987,9 +2951,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"
-                    id="thumbnail-upload"
-                    hidden
+                    type="file"  id="thumbnail-upload"  hidden
                     accept="image/jpeg,image/png,image/jpg"
                     onChange={handleFileChange('thumbnail')} />
                 </UploadDropArea>
@@ -3031,8 +2993,7 @@ const handleSubmit = async (event) => {
                   )}
                   <input
                     type="file"
-                    id="auditorium-image-upload"
-                    hidden
+                    id="auditorium-image-upload" hidden
                     accept="image/jpeg,image/png,image/jpg"
                     onChange={handleFileChange('auditoriumImage')} />
                 </UploadDropArea>
@@ -3060,12 +3021,9 @@ const handleSubmit = async (event) => {
                           checked={formData.venueType === 'per_person'}
                           sx={{
                             color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
-                            '&.Mui-checked': { color: formData.venueType === 'per_person' ? '#fff' : '#E15B65' }
-                          }} />}
+                            '&.Mui-checked': { color: formData.venueType === 'per_person' ? '#fff' : '#E15B65' }  }} />}
                       sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        px: 3,
+                        borderRadius: 2,  textTransform: 'none',  px: 3,
                         color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
                         backgroundColor: formData.venueType === 'per_person' ? '#E15B65' : 'transparent',
                         borderColor: '#E15B65',
@@ -3084,8 +3042,7 @@ const handleSubmit = async (event) => {
                           checked={formData.venueType === 'per_hour'}
                           sx={{
                             color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65',
-                            '&.Mui-checked': { color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65' }
-                          }} />}
+                            '&.Mui-checked': { color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65' } }} />}
                       sx={{
                         borderRadius: 2,
                         textTransform: 'none',
@@ -3095,9 +3052,7 @@ const handleSubmit = async (event) => {
                         borderColor: '#E15B65',
                         '&:hover': {
                           backgroundColor: formData.venueType === 'per_hour' ? '#c94a57' : 'rgba(225,91,101,0.08)',
-                          borderColor: '#E15B65'
-                        }
-                      }}>
+                          borderColor: '#E15B65'}  }}>
                       Per Hour
                     </Button>
                     <Button
@@ -3115,17 +3070,13 @@ const handleSubmit = async (event) => {
                         '&:hover': { backgroundColor: formData.venueType === 'per_function' ? '#c94a57' : 'rgba(225,91,101,0.08)', borderColor: '#E15B65' }
                       }}> Per Function</Button>
                   </Box>
-                  {/* Table */}
                   {formData.venueType && (
                     <Box sx={{
                       border: `1px solid ${theme.palette.grey[300]}`,
-                      borderRadius: 1,
-                      overflow: 'hidden'
-                    }}>
-                      {/* Table Header */}
+                      borderRadius: 1, overflow: 'hidden'}}>
+
                       <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '150px 1fr 1fr',
+                        display: 'grid', gridTemplateColumns: '150px 1fr 1fr',
                         backgroundColor: theme.palette.grey[100],
                         borderBottom: `1px solid ${theme.palette.grey[300]}`
                       }}>
@@ -3137,19 +3088,13 @@ const handleSubmit = async (event) => {
                         <Box key={day}>
                           {/* Morning Slot Row */}
                           <Box sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '150px 1fr 1fr',
-                            borderBottom: `1px solid ${theme.palette.grey[300]}`
-                          }}>
+                            display: 'grid',   gridTemplateColumns: '150px 1fr 1fr',
+                            borderBottom: `1px solid ${theme.palette.grey[300]}` }}>
                             {/* Day Column */}
                             <Box sx={{
-                              p: 2,
-                              borderRight: `1px solid ${theme.palette.grey[300]}`,
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              textTransform: 'capitalize',
-                              fontWeight: 500,
-                            }}>
+                              p: 2,  borderRight: `1px solid ${theme.palette.grey[300]}`,
+                              display: 'flex', alignItems: 'flex-start',
+                              textTransform: 'capitalize', fontWeight: 500,  }}>
                               {day.charAt(0).toUpperCase() + day.slice(1)}
                             </Box>
                             {/* Morning Slot */}
@@ -3160,10 +3105,8 @@ const handleSubmit = async (event) => {
                             }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                 <Checkbox
-                                  size="small"
-                                  checked={timeSlots[day].morning.enabled}
-                                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'enabled', e.target.checked)}
-                                  sx={{ p: 0 }} />
+                                  size="small"  checked={timeSlots[day].morning.enabled}
+                                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'enabled', e.target.checked)}  sx={{ p: 0 }} />
                                 <Typography variant="body2">Morning Slot</Typography>
                               </Box>
                               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -3171,21 +3114,17 @@ const handleSubmit = async (event) => {
                                   size="small"
                                   value={timeSlots[day].morning.startTime}
                                   onChange={(e) => handleTimeSlotChange(day, 'morning', 'startTime', e.target.value)}
-                                  disabled={!timeSlots[day].morning.enabled}
-                                  sx={{ width: '80px', ...inputSx }}
+                                  disabled={!timeSlots[day].morning.enabled}  sx={{ width: '80px', ...inputSx }}
                                   inputProps={{ style: { textAlign: 'center' } }} />
                                 <Select
-                                  size="small"
-                                  value={timeSlots[day].morning.startPeriod}
+                                  size="small"  value={timeSlots[day].morning.startPeriod}
                                   onChange={(e) => handleTimeSlotChange(day, 'morning', 'startPeriod', e.target.value)}
-                                  disabled={!timeSlots[day].morning.enabled}
-                                  sx={{ width: '70px' }}>
+                                  disabled={!timeSlots[day].morning.enabled}  sx={{ width: '70px' }}>
                                   <MenuItem value="Am">Am</MenuItem>
                                   <MenuItem value="Pm">Pm</MenuItem>
                                 </Select>
                                 <TextField
-                                  size="small"
-                                  value={timeSlots[day].morning.endTime}
+                                  size="small" value={timeSlots[day].morning.endTime}
                                   onChange={(e) => handleTimeSlotChange(day, 'morning', 'endTime', e.target.value)}
                                   disabled={!timeSlots[day].morning.enabled}
                                   sx={{ width: '80px', ...inputSx }}
@@ -3203,36 +3142,26 @@ const handleSubmit = async (event) => {
                             </Box>
                             {/* Morning Pricing */}
                             <Box sx={{
-                              p: 2,
-                              borderBottom: `1px solid ${theme.palette.grey[300]}`
-                            }}>
+                              p: 2,  borderBottom: `1px solid ${theme.palette.grey[300]}`  }}>
                               <TextField
-                                fullWidth
-                                size="small"
+                                fullWidth  size="small"
                                 value={timeSlots[day].morning.price}
                                 onChange={(e) => handleTimeSlotChange(day, 'morning', 'price', e.target.value)}
                                 disabled={!timeSlots[day].morning.enabled}
-                                placeholder="Enter price"
-                                type="number"
-                                inputProps={{ step: '0.01', min: '0' }}
-                                sx={inputSx} />
+                                placeholder="Enter price" type="number"
+                                inputProps={{ step: '0.01', min: '0' }}  sx={inputSx} />
                             </Box>
                           </Box>
                           {/* Evening Slot Row */}
                           <Box sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '150px 1fr 1fr',
+                            display: 'grid',  gridTemplateColumns: '150px 1fr 1fr',
                             borderBottom: `1px solid ${theme.palette.grey[300]}`
                           }}>
                             {/* Day Column */}
                             <Box sx={{
-                              p: 2,
-                              borderRight: `1px solid ${theme.palette.grey[300]}`,
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              textTransform: 'capitalize',
-                              fontWeight: 500,
-                            }}>
+                              p: 2,  borderRight: `1px solid ${theme.palette.grey[300]}`,
+                              display: 'flex',  alignItems: 'flex-start',
+                              textTransform: 'capitalize',  fontWeight: 500, }}>
                               {day.charAt(0).toUpperCase() + day.slice(1)}
                             </Box>
                             {/* Evening Slot */}
@@ -3287,15 +3216,11 @@ const handleSubmit = async (event) => {
                             {/* Evening Pricing */}
                             <Box sx={{ p: 2 }}>
                               <TextField
-                                fullWidth
-                                size="small"
-                                value={timeSlots[day].evening.price}
+                                fullWidth  size="small"   value={timeSlots[day].evening.price}
                                 onChange={(e) => handleTimeSlotChange(day, 'evening', 'price', e.target.value)}
                                 disabled={!timeSlots[day].evening.enabled}
-                                placeholder="Enter price"
-                                type="number"
-                                inputProps={{ step: '0.01', min: '0' }}
-                                sx={inputSx}
+                                placeholder="Enter price"  type="number"
+                                inputProps={{ step: '0.01', min: '0' }}  sx={inputSx}
                               />
                             </Box>
                           </Box>
@@ -3310,45 +3235,30 @@ const handleSubmit = async (event) => {
                   </Typography>
                   <TextField
                     fullWidth
-                    label="Discount (%)"
-                    name="discount"
-                    value={formData.discount}
-                    onChange={handleInputChange}
-                    placeholder="Ex: 10"
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                    sx={inputSx} />
+                    label="Discount (%)"  name="discount"
+                    value={formData.discount} onChange={handleInputChange}
+                    placeholder="Ex: 10"  type="number"
+                    inputProps={{ min: 0, max: 100 }}  sx={inputSx} />
                 </Box>
                 <TextField
                   fullWidth
                   label="Advance Payment / Deposit (%)"
-                  name="advanceDeposit"
-                  value={formData.advanceDeposit}
-                  onChange={handleInputChange}
-                  placeholder="Ex: 20"
-                  type="number"
-                  inputProps={{ min: 0, max: 100 }}
-                  sx={{ mb: 2, ...inputSx }} />
+                  name="advanceDeposit" value={formData.advanceDeposit}
+                  onChange={handleInputChange} placeholder="Ex: 20"
+                  type="number"  inputProps={{ min: 0, max: 100 }} sx={{ mb: 2, ...inputSx }} />
                 <TextField
                   fullWidth
-                  label="Cancellation Policy"
-                  name="cancellationPolicy"
+                  label="Cancellation Policy"  name="cancellationPolicy"
                   value={formData.cancellationPolicy}
                   onChange={handleInputChange}
                   placeholder="e.g., Free cancellation 48 hours before"
-                  multiline
-                  rows={2}
-                  sx={{ mb: 2, ...inputSx }} />
+                  multiline rows={2} sx={{ mb: 2, ...inputSx }} />
                 <TextField
                   fullWidth
-                  label="Extra Charges (e.g., Cleaning fee)"
-                  name="extraCharges"
-                  value={formData.extraCharges}
-                  onChange={handleInputChange}
+                  label="Extra Charges (e.g., Cleaning fee)"  name="extraCharges"
+                  value={formData.extraCharges} onChange={handleInputChange}
                   placeholder="Describe extra charges"
-                  multiline
-                  rows={2}
-                  sx={inputSx} />
+                  multiline rows={2} sx={inputSx} />
               </CardContent>
             </Card>
           </Box>
@@ -3360,10 +3270,8 @@ const handleSubmit = async (event) => {
                 <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
                   <InputLabel id="seating-arrangement-label">Seating Arrangement*</InputLabel>
                   <Select
-                    labelId="seating-arrangement-label"
-                    name="seatingArrangement"
-                    value={formData.seatingArrangement}
-                    label="Seating Arrangement"
+                    labelId="seating-arrangement-label" name="seatingArrangement"
+                    value={formData.seatingArrangement} label="Seating Arrangement"
                     onChange={handleInputChange} >
                     <MenuItem value="">Select seating arrangement</MenuItem>
                     <MenuItem value="Amphitheater">Amphitheater</MenuItem>
@@ -3374,23 +3282,15 @@ const handleSubmit = async (event) => {
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                   <TextField
                     fullWidth
-                    label="Max Guest Count (Seated)*"
-                    name="maxGuestsSeated"
+                    label="Max Guest Count (Seated)*"  name="maxGuestsSeated"
                     value={formData.maxGuestsSeated}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 200"
-                    type="number"
-                    required
-                    sx={inputSx} />
+                    onChange={handleInputChange}  placeholder="e.g., 200"
+                    type="number"  required sx={inputSx} />
                   <TextField
-                    fullWidth
-                    label="Max Guest Count (Standing)"
-                    name="maxGuestsStanding"
+                    fullWidth label="Max Guest Count (Standing)" name="maxGuestsStanding"
                     value={formData.maxGuestsStanding}
                     onChange={handleInputChange}
-                    placeholder="e.g., 300"
-                    type="number"
-                    sx={inputSx} />
+                    placeholder="e.g., 300"  type="number" sx={inputSx} />
                 </Box>
                 <UploadDropArea
                   onDragOver={handleDragOver}
@@ -3424,9 +3324,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"
-                    id="floor-plan-upload"
-                    hidden
+                    type="file"  id="floor-plan-upload"  hidden
                     accept="image/*,application/pdf"
                     onChange={handleFileChange('floorPlan')} />
                 </UploadDropArea>
@@ -3443,23 +3341,20 @@ const handleSubmit = async (event) => {
                 <TextField
                   fullWidth
                   label="Nearby Transport Details"
-                  name="nearbyTransport"
-                  value={formData.nearbyTransport}
+                  name="nearbyTransport" value={formData.nearbyTransport}
                   onChange={handleInputChange}
                   placeholder="Describe nearby metro, bus stops, etc."
                   sx={{ mb: 2, ...inputSx }} />
                 <TextField
                   fullWidth
                   label="Accessibility Information"
-                  name="accessibilityInfo"
-                  value={formData.accessibilityInfo}
+                  name="accessibilityInfo" value={formData.accessibilityInfo}
                   onChange={handleInputChange}
                   placeholder="Describe accessibility features"
                   sx={{ mb: 2, ...inputSx }} />
                 <FormControlLabel
                   control={<Switch name="elderlyAccessibility" checked={formData.elderlyAccessibility} onChange={handleInputChange} />}
-                  label="Accessibility for Elderly & Differently Abled"
-                  sx={{ mb: 3 }} />
+                  label="Accessibility for Elderly & Differently Abled" sx={{ mb: 3 }} />
               </CardContent>
             </Card>
           </Box>
@@ -3489,7 +3384,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   ) : existingImages.documents ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {existingImages.documents.split('/').pop()} {/* Show only the file name from the URL */}
+                      {existingImages.documents.split('/').pop()} 
                       <IconButton
                         size="small"
                         onClick={() => {
@@ -3508,9 +3403,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"
-                    id="documents-upload"
-                    hidden
+                    type="file"  id="documents-upload"  hidden
                     accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={handleFileChange('documents')} />
                 </UploadDropArea>
@@ -3544,10 +3437,8 @@ const handleSubmit = async (event) => {
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="subtitle1" gutterBottom>Search Tags</Typography>
                 <TextField
-                  fullWidth
-                  label="Search Tags"
-                  name="searchTags"
-                  value={formData.searchTags}
+                  fullWidth label="Search Tags"
+                  name="searchTags" value={formData.searchTags}
                   onChange={handleInputChange}
                   placeholder="Enter tags separated by commas (e.g., Auditorium, Wedding, Conference)"
                   sx={{ mb: 1, ...inputSx }} />
@@ -3559,18 +3450,13 @@ const handleSubmit = async (event) => {
           </Box>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
-              variant="outlined"
-              color="inherit"
-              size="large"
-              onClick={handleReset}
-              disabled={loading} >
+              variant="outlined" color="inherit" size="large"
+              onClick={handleReset} disabled={loading} >
               {viewMode === 'edit' ? 'Cancel' : 'Reset'}
             </Button>
             <Button
-              variant="contained"
-              type="submit"
-              size="large"
-              disabled={loading}
+              variant="contained" type="submit"
+              size="large" disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : null}
               sx={{ backgroundColor: '#E15B65' }}>
               {loading ? 'Submitting...' : viewMode === 'edit' ? 'Update' : 'Submit'}

@@ -322,6 +322,7 @@ const VenueCreate = Loadable(lazy(()=> import('views/VenueCreate')));
 const VenueList = Loadable(lazy(()=> import('views/VenueList')));
 const VenueCategory = Loadable(lazy(()=> import('views/VenueCategory')));
 const FoodMenu = Loadable(lazy(()=> import('views/FoodMenu')));
+const VenueListView = Loadable(lazy(()=> import('views/VenueListView')));
 
 // reports
 const ExpenseReport = Loadable(lazy(()=> import('views/ExpenseReport')));
@@ -483,96 +484,44 @@ const MainRoutes = {
          {
       path: 'bookings',
       children: [
-        {
-          path: '', 
-          element: <AllTrips />
-        },
-
-        {
-          path: 'scheduled',
-          element: <Scheduled /> 
-        },
-        {
-          path: 'pending',
-          element: <Pendings />
-        },
-        {
-          path: 'confirmed',
-          element: <Confirmed />
-        },
-        {
-          path: 'ongoing',
-          element: <Ongoing />
-        },
-        {
-          path: 'completed',
-          element: <Completed />
-        },
-        {
-          path: 'canceled',
-          element: <Canceled />
-        },
-        {
-          path: 'payment-failed',
-          element: <PaymentFailed />
-        }
+        { path: '',  element: <AllTrips />},
+        { path: 'scheduled',element: <Scheduled /> },
+        {path: 'pending',element: <Pendings />},
+        { path: 'confirmed', element: <Confirmed />},
+        { path: 'ongoing', element: <Ongoing />},
+        { path: 'completed', element: <Completed />},
+        { path: 'canceled', element: <Canceled />},
+        { path: 'payment-failed', element: <PaymentFailed />}
       ]
     },
-    {
-      path: '/page-not-found',
-      element: <PageNotFound />
-    },
+    { path: '/page-not-found', element: <PageNotFound />},
     {
       path: 'venue-setup',
       children: [
-        {
-          path: '/venue-setup/new',
-          element: <VenueCreate />
-        },
-        {
-          path: '/venue-setup/new/:id',
-          element: <VenueCreate />
-        },
-        {
-          path: '/venue-setup/lists',
-          element: <VenueList />
-        },
-        {
-          path: '/venue-setup/foodmenu',
-          element: <FoodMenu />
-        
-        }
+        { path: '/venue-setup/new', element: <VenueCreate />},
+        { path: '/venue-setup/new/:id', element: <VenueCreate />},
+        { path: '/venue-setup/lists', element: <VenueList /> },
+        { path: '/venue-setup/foodmenu', element: <FoodMenu />},
+        { path: '/venue-setup/listview/:id', element: <VenueListView />}
       ]
     },
     {
       path: 'venue',
       children: [
-        {
-          path: '/venue/categories',
-          element: <VenueCategory/>
-        },
-        {
-          path: '/venue/schedules',
-          element: <Schedules/>
-        }
+        { path: '/venue/categories', element: <VenueCategory/>},
+        { path: '/venue/schedules', element: <Schedules/> }
       ]
     },
      {
       path: 'business',
       children: [
-        {
-          path: '/business/myshop',
-          element: <VenueMyShop/>
-        }
+        { path: '/business/myshop', element: <VenueMyShop/>}
       ]
     },
      {
       path: 'providers',
       children: [
-        {
-          path: 'banners',
-          element: <Banners/>
-        }
+        { path: 'banners', element: <Banners/>}
       ]
     },
 
