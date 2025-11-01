@@ -38,14 +38,14 @@ const Businessection = {
     //   icon: icons.IconUserCheck,
     //   breadcrumbs: false
     // },
-    {
-      id: 'My-venue',
-      title: 'My Venue',
-      type: 'item',
-      url: '/business/myshop',
-      icon: icons.IconUsers,
-      breadcrumbs: false
-    },
+    // {
+    //   id: 'My-venue',
+    //   title: 'My Venue',
+    //   type: 'item',
+    //   url: '/business/myshop',
+    //   icon: icons.IconUsers,
+    //   breadcrumbs: false
+    // },
     // {
     //   id: 'My-Business-Plan',
     //   title: 'My Business Plan',

@@ -2512,6 +2512,19 @@ const CreateAuditorium = () => {
   return num;
 };
 
+const validateFixedDiscount = (value) => {
+  const num = parseFloat(value) || 0;
+  if (num < 0) {
+    setToast({
+      open: true,
+      message: 'Fixed discount must be a positive number.',
+      severity: 'warning',
+    });
+    return 0;
+  }
+  return num;
+};
+
 const handleSubmit = async (event) => {
   event.preventDefault();
   setLoading(true);
@@ -2555,7 +2568,7 @@ const handleSubmit = async (event) => {
 
     let discountObj = {
       packageDiscount: validateDiscount(formData.discount),  
-      nonAc: formData.nonAcAvailable ? validateDiscount(formData.nonAcDiscount) : 0  
+      nonAc: formData.nonAcAvailable ? validateFixedDiscount(formData.nonAcDiscount) : 0  
     };
 
     const payload = {

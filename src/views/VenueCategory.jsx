@@ -144,21 +144,33 @@ const Category = () => {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <TextField
-              variant="outlined" color='#E15B65' borderColor='#E15B65'
-              placeholder="Search categories"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="small" 
-            />
+  variant="outlined"
+  placeholder="Search categories"
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  size="small" sx={{
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#E15B65',
+      },
+      '&:hover fieldset': {
+        borderColor: '#E15B65',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#E15B65',
+      },
+    },
+  }}
+/>
             <Button
-              variant="outlined" color='#E15B65'
+              variant="outlined" 
               startIcon={<SearchIcon />}
               onClick={handleSearch} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
             >
               Search
             </Button>
             <Button
-              variant="outlined" color='#E15B65'
+              variant="outlined" 
               endIcon={<ArrowDropDownIcon />}
               onClick={handleClick} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
             >

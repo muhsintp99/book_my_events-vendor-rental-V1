@@ -1189,14 +1189,9 @@ import React, { useState, useEffect } from "react";
 import {AppBar,Toolbar,Typography,Box,Button,Select,MenuItem,FormControl,TextField,
   Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Switch,
   IconButton,Stack, Chip,
-  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Snackbar,
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar,
   TableContainer as MuiTableContainer,
   Divider,
-  Card,
-  CardContent,
-  CardHeader,
-  Avatar,
-  Chip as MuiChip,
 } from "@mui/material";
 import { Visibility, Edit, Delete, Search, Business, LocationOn, Schedule, LocalParking, Restaurant, Lightbulb, Accessibility, Security, Wifi, AcUnit, Group, AttachMoney, EventSeat, LocalOffer, Cancel, DirectionsTransit, Elderly, Tag } from "@mui/icons-material";
 import { Alert } from "@mui/material";
@@ -1204,7 +1199,6 @@ import { useNavigate } from "react-router-dom";
 export default function VenuesList() {
   const API_BASE_URL = "https://api.bookmyevent.ae/api";
   const [venues, setVenues] = useState([]);
-  const [categoriesMap, setCategoriesMap] = useState({}); // Map of category ID to name
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     seatingArrangement: "",
@@ -1214,21 +1208,30 @@ export default function VenuesList() {
     seatingArrangement: "",
     search: "",
   });
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedVenue, setSelectedVenue] = useState(null);
   const [openConfirm, setOpenConfirm] = useState(false); // Confirm delete dialog
   const [venueToDelete, setVenueToDelete] = useState(null);
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState("success");
   const navigate = useNavigate();
+
+  const safeString = (value) => {
+    if (value == null) return "";
+    try {
+      if (typeof value === "string") return value;
+      if (typeof value.toString === "function") {
+        const str = value.toString();
+        if (typeof str === "string") return str;
+      }
+      return JSON.stringify(value);
+    } catch (e) {
+      return "[Invalid Value]";
+    }
+  };
+
   // Fetch venues on component mount
   useEffect(() => {
     fetchVenues();
-  }, []);
-  // Fetch categories on component mount to map IDs to names
-  useEffect(() => {
-    fetchCategories();
   }, []);
   const fetchVenues = async () => {
     setLoading(true);
@@ -1261,44 +1264,6 @@ export default function VenuesList() {
       setLoading(false);
     }
   };
-  const fetchCategories = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No authentication token found");
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/categories`, {
-        headers: {
-         Authorization: `Bearer ${token}`,
-        },
-      });
-      const result = await response.json();
-      console.log("Fetched categories:", result);
-      if (result.success) {
-        const map = {};
-        (result.data || []).forEach(cat => {
-          map[cat._id] = cat.name || cat.title;
-        });
-        setCategoriesMap(map);
-      } else {
-        console.error("Failed to fetch categories:", result.message);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
-  // Handle view venue details
-  const handleViewVenue = (venue) => {
-    console.log("Selected venue for modal:", venue);
-    setSelectedVenue(venue);
-    setOpenModal(true);
-  };
-  // Close modal
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedVenue(null);
-  };
   // Apply filters when "Filter" button clicked
   const handleApplyFilters = () => {
     setFilters(pendingFilters);
@@ -1315,8 +1280,7 @@ export default function VenuesList() {
     ];
     const rows = filteredVenues.map(
       (v, i) =>
-        `${i + 1},${v.venueName},${v.venueAddress},${v.seatingArrangement || "-"},${v.maxGuestsSeated || "-"
-        },${v.isActive ? 'Active' : 'Inactive'}`
+        `${i + 1},${safeString(v.venueName)},${safeString(v.venueAddress)},${safeString(v.seatingArrangement || "-")},${safeString(v.maxGuestsSeated || "-")},${v.isActive ? 'Active' : 'Inactive'}`
     );
     const csv = headers.concat(rows).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -1333,7 +1297,7 @@ export default function VenuesList() {
         console.error("No authentication token found");
         return;
       }
-      const response = await fetch(`${API_BASE_URL}/venues/${id}/toggle-active`, {
+      const response = await fetch(`${API_BASE_URL}/venues/${safeString(id)}/toggle-active`, {
         method: "PATCH",
         headers: {
          Authorization: `Bearer ${token}`,
@@ -1342,7 +1306,7 @@ export default function VenuesList() {
       const result = await response.json();
       if (result.success) {
         setVenues(prev => prev.map(v =>
-          v._id === id ? { ...v, isActive: !v.isActive } : v
+          safeString(v._id) === safeString(id) ? { ...v, isActive: !v.isActive } : v
         ));
       } else {
         console.error("Failed to toggle venue status:", result.message);
@@ -1353,7 +1317,7 @@ export default function VenuesList() {
   };
   //confim delete
   const confirmDelete = (id) => {
-    setVenueToDelete(id);
+    setVenueToDelete(safeString(id));
     setOpenConfirm(true);
   };
   // Delete venue
@@ -1389,12 +1353,15 @@ export default function VenuesList() {
   };
   // Filtering logic (applied filters only)
   const filteredVenues = venues.filter((v) => {
+    const venueNameLower = safeString(v.venueName).toLowerCase();
+    const searchLower = safeString(filters.search).toLowerCase();
+    const seating = safeString(v.seatingArrangement);
     return (
       (filters.seatingArrangement
-        ? v.seatingArrangement === filters.seatingArrangement
+        ? seating === filters.seatingArrangement
         : true) &&
       (filters.search
-        ? v.venueName.toLowerCase().includes(filters.search.toLowerCase())
+        ? venueNameLower.includes(searchLower)
         : true)
     );
   });
@@ -1474,7 +1441,7 @@ export default function VenuesList() {
           <Stack direction="row" spacing={1} flexWrap="wrap" >
             <TextField
               size="small"
-              placeholder="Search by venue name" variant="outlined" color="#E15B65"  bgcolor="#E15B65"
+              placeholder="Search by venue name" variant="outlined" 
               value={pendingFilters.search}  
               onChange={(e) =>
                 setPendingFilters({ ...pendingFilters, search: e.target.value })
@@ -1488,6 +1455,9 @@ export default function VenuesList() {
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
           borderColor: '#E15B65',
+        },
+        '& .MuiInputBase-root': {
+          backgroundColor: '#E15B65',
         },
       }}/>
             <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }} onClick={handleExport}>
@@ -1533,19 +1503,19 @@ export default function VenuesList() {
                 </TableRow>
               ) : (
                 filteredVenues.map((v, i) => (
-                  <TableRow key={v._id}>
+                  <TableRow key={safeString(v._id)}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>
                       <Typography
                         variant="body2"
                         sx={{ fontWeight: 600, color: "#396becff" }}
                       >
-                        {v.venueName}
+                        {safeString(v.venueName) || "-"}
                       </Typography>
                     </TableCell>
-                    <TableCell>{v.venueAddress}</TableCell>
-                    <TableCell >{v.seatingArrangement || "-"}</TableCell>
-                    <TableCell>{v.maxGuestsSeated || "-"}</TableCell>
+                    <TableCell>{safeString(v.venueAddress) || "-"}</TableCell>
+                    <TableCell >{safeString(v.seatingArrangement) || "-"}</TableCell>
+                    <TableCell>{safeString(v.maxGuestsSeated) || "-"}</TableCell>
                     <TableCell>
                       <Switch
                         checked={v.isActive}
@@ -1573,7 +1543,7 @@ export default function VenuesList() {
                               color: "#2e79bbff",
                               borderRadius: "8px",
                           }}
-                          onClick={() => handleViewVenue(v)}
+                          onClick={() => navigate(`/venue-setup/listview/${safeString(v._id)}`)}
                         >
                           <Visibility fontSize="small" />
                         </IconButton>
@@ -1584,7 +1554,7 @@ export default function VenuesList() {
                               color: "#065f46",
                               borderRadius: "8px",
                           }}
-                          onClick={() => navigate(`/venue-setup/new/${v._id}`)}
+                          onClick={() => navigate(`/venue-setup/new/${safeString(v._id)}`)}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
@@ -1595,7 +1565,7 @@ export default function VenuesList() {
                           color: "#dc2626",
                           borderRadius: "8px",
                         }}
-                        onClick={() => confirmDelete(v._id)}   // ✅ FIXED
+                        onClick={() => confirmDelete(v._id)}
                         >
                           <Delete fontSize="small" />
                         </IconButton>
@@ -1608,412 +1578,6 @@ export default function VenuesList() {
           </Table>
         </TableContainer>
       </Paper>
-      {/* Venue Details Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="lg" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } }}>
-        <DialogTitle sx={{ bgcolor: '#E15B65', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar sx={{ bgcolor: 'white', color: '#E15B65' }}>
-              <Business />
-            </Avatar>
-            <Typography variant="h5" fontWeight="bold">
-              Venue Details
-            </Typography>
-          </Stack>
-          <IconButton onClick={handleCloseModal} sx={{ color: 'white' }}>
-            <Visibility fontSize="medium" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, bgcolor: '#fafafa' }}>
-          {selectedVenue && (
-            <Grid container spacing={3}>
-              {/* Basic Information Card */}
-              <Grid item xs={12}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><Business /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Basic Information</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Venue Name
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">{selectedVenue.venueName || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Category
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">
-                          {Array.isArray(selectedVenue.categories) && selectedVenue.categories.length > 0
-                            ? selectedVenue.categories.map(cat => {
-                                const catId = typeof cat === 'object' ? cat._id : cat;
-                                return categoriesMap[catId] || catId || 'Unknown Category';
-                              }).join(", ")
-                            : selectedVenue.category || "-"
-                          }
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Description
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">{selectedVenue.shortDescription || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Address
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">{selectedVenue.venueAddress || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Location Card */}
-              <Grid item xs={12} md={6}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><LocationOn /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Location</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent sx={{ pt: 1 }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Latitude
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.latitude || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Longitude
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.longitude || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Operating Hours Card */}
-              <Grid item xs={12} md={6}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><Schedule /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Operating Hours</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent sx={{ pt: 1 }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Opening Hours
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.openingHours || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Closing Hours
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.closingHours || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Holiday Schedule
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.holidaySchedule || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Facilities Card */}
-              <Grid item xs={12}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><LocalParking /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Facilities & Amenities</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Parking Availability
-                        </Typography>
-                        <MuiChip label={selectedVenue.parkingAvailability ? "Yes" : "No"} color={selectedVenue.parkingAvailability ? "success" : "default"} size="small" />
-                        {selectedVenue.parkingCapacity && (
-                          <Typography variant="body2" sx={{ ml: 1 }}>({selectedVenue.parkingCapacity} spots)</Typography>
-                        )}
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Food & Catering
-                        </Typography>
-                        <MuiChip label={selectedVenue.foodCateringAvailability ? "Yes" : "No"} color={selectedVenue.foodCateringAvailability ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Stage/Lighting/Audio
-                        </Typography>
-                        <MuiChip label={selectedVenue.stageLightingAudio ? "Yes" : "No"} color={selectedVenue.stageLightingAudio ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Wheelchair Accessibility
-                        </Typography>
-                        <MuiChip label={selectedVenue.wheelchairAccessibility ? "Yes" : "No"} color={selectedVenue.wheelchairAccessibility ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Security Arrangements
-                        </Typography>
-                        <MuiChip label={selectedVenue.securityArrangements ? "Yes" : "No"} color={selectedVenue.securityArrangements ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Wi-Fi Availability
-                        </Typography>
-                        <MuiChip label={selectedVenue.wifiAvailability ? "Yes" : "No"} color={selectedVenue.wifiAvailability ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          AC Available
-                        </Typography>
-                        <MuiChip label={selectedVenue.acAvailable ? "Yes" : "No"} color={selectedVenue.acAvailable ? "success" : "default"} size="small" />
-                        {selectedVenue.acType && (
-                          <Typography variant="body2" sx={{ ml: 1 }}>({selectedVenue.acType})</Typography>
-                        )}
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Non-AC Available
-                        </Typography>
-                        <MuiChip label={selectedVenue.nonAcAvailable ? "Yes" : "No"} color={selectedVenue.nonAcAvailable ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Washrooms Info
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.washroomsInfo || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Dressing Rooms
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.dressingRooms || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Pricing Card */}
-              <Grid item xs={12}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><AttachMoney /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Pricing & Policies</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Discount
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">{selectedVenue.discount ? `${selectedVenue.discount}%` : "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Advance Deposit
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">{selectedVenue.advanceDeposit ? `${selectedVenue.advanceDeposit}%` : "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Dynamic Pricing
-                        </Typography>
-                        <MuiChip label={selectedVenue.dynamicPricing ? "Enabled" : "Disabled"} color={selectedVenue.dynamicPricing ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Multiple Halls
-                        </Typography>
-                        <MuiChip label={selectedVenue.multipleHalls ? "Yes" : "No"} color={selectedVenue.multipleHalls ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Custom Packages
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.customPackages || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Cancellation Policy
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.cancellationPolicy || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Extra Charges
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.extraCharges || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
-                          Pricing Schedule
-                        </Typography>
-                        {selectedVenue.pricingSchedule && Object.keys(selectedVenue.pricingSchedule).length > 0 ? (
-                          <MuiTableContainer component={Paper} sx={{ borderRadius: 1 }}>
-                            <Table size="small">
-                              <TableHead sx={{ bgcolor: '#f8f9fa' }}>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Day</TableCell>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Slot</TableCell>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Per Day</TableCell>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Per Hour</TableCell>
-                                  <TableCell sx={{ fontWeight: 'bold' }}>Per Person</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {Object.entries(selectedVenue.pricingSchedule).map(([day, slots]) => (
-                                  <React.Fragment key={day}>
-                                    {Object.entries(slots).map(([slotType, slot]) => (
-                                      slot ? (
-                                        <TableRow key={`${day}-${slotType}`} hover>
-                                          <TableCell>{day.charAt(0).toUpperCase() + day.slice(1)}</TableCell>
-                                          <TableCell>{slotType.charAt(0).toUpperCase() + slotType.slice(1)}</TableCell>
-                                          <TableCell>{`${slot.startTime || ''} ${slot.startAmpm || ''} - ${slot.endTime || ''} ${slot.endAmpm || ''}`}</TableCell>
-                                          <TableCell>{slot.perDay || "-"}</TableCell>
-                                          <TableCell>{slot.perHour || "-"}</TableCell>
-                                          <TableCell>{slot.perPerson || "-"}</TableCell>
-                                        </TableRow>
-                                      ) : null
-                                    ))}
-                                  </React.Fragment>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </MuiTableContainer>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">-</Typography>
-                        )}
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Capacity & Accessibility Card */}
-              <Grid item xs={12} md={6}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><EventSeat /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Capacity & Seating</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent sx={{ pt: 1 }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Seating Arrangement
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.seatingArrangement || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Max Guests Seated
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.maxGuestsSeated || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Max Guests Standing
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.maxGuestsStanding || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><Accessibility /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Accessibility</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent sx={{ pt: 1 }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Elderly Accessibility
-                        </Typography>
-                        <MuiChip label={selectedVenue.accessibilityInfo ? "Yes" : "No"} color={selectedVenue.accessibilityInfo ? "success" : "default"} size="small" />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Accessibility Info
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.accessibilityInfo || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Additional Info Card */}
-              <Grid item xs={12}>
-                <Card elevation={2} sx={{ borderRadius: 2 }}>
-                  <CardHeader
-                    avatar={<Avatar sx={{ bgcolor: '#E15B65' }}><DirectionsTransit /></Avatar>}
-                    title={<Typography variant="h6" fontWeight="bold">Additional Information</Typography>}
-                    sx={{ bgcolor: '#f8f9fa', '& .MuiCardHeader-title': { color: '#E15B65' } }}
-                  />
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Nearby Transport
-                        </Typography>
-                        <Typography variant="body2" fontWeight="500">{selectedVenue.nearbyTransport || "-"}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
-                          Search Tags
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {Array.isArray(selectedVenue?.searchTags) && selectedVenue.searchTags.length > 0 ? (
-                            selectedVenue.searchTags.map((tag, index) => (
-                              <MuiChip key={index} label={tag} size="small" variant="outlined" color="primary" />
-                            ))
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">-</Typography>
-                          )}
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3, bgcolor: '#f8f9fa', borderTop: '1px solid #e0e0e0' }}>
-          <Button onClick={handleCloseModal} variant="contained" sx={{ bgcolor: '#E15B65', color: 'white', borderRadius: 2 }}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
       <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
