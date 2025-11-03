@@ -94,16 +94,14 @@ const Review = () => {
             variant="outlined" color='#E15B65'
             size="small"
             sx={{ textTransform: 'none',color:'#E15B65' }}
-            onClick={handleExportClick}
-          >
+            onClick={handleExportClick}>
             Export
             <span style={{ marginLeft: '5px' }}>▼</span>
-          </Button>
+          </Button> 
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
-            onClose={() => handleExportClose(null)}
-          >
+            onClose={() => handleExportClose(null)}>
             <MenuItem onClick={() => handleExportClose('PDF')}>PDF</MenuItem>
             <MenuItem onClick={() => handleExportClose('Excel')}>Excel</MenuItem>
             <MenuItem onClick={() => handleExportClose('CSV')}>CSV</MenuItem>

@@ -347,9 +347,6 @@ const DriverView = Loadable(lazy(() => import('views/DriverView')));
 const Coupon = Loadable(lazy(()=> import('views/Coupon')));
 const Banners = Loadable(lazy(()=> import('views/Banners')));
 
-//vehicle marketing
-// const VehicleBanners = Loadable(lazy(()=> import('views/VehicleBanners')));
-
 // business
 const ProviderConfig = Loadable(lazy(()=> import('views/ProviderConfig')));
 const Notification = Loadable(lazy(()=> import('views/Notification')));
@@ -370,9 +367,23 @@ const EmployeeList = Loadable(lazy(()=> import('views/EmployeeList')));
 
 // sample page
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
-
 const VenueMyShop = Loadable(lazy(()=> import('views/VenueMyShop')))
 
+//venuereport
+const VenueReport = Loadable(lazy(()=> import('views/VenueReport')));
+const VenueTaxReport = Loadable(lazy(()=> import('views/VenueTaxReport')));
+const VenueExpReport = Loadable(lazy(()=> import('views/VenueExpReport')));
+const VenueDisburseRepo = Loadable(lazy(()=> import ('views/VenueDisburseRepo')));
+
+//venue employee
+const VenueEmpRole = Loadable(lazy(()=> import ('views/VenueEmpRole')));
+
+//----------------------------------------------------------------------------//
+//CATERING
+const AddPackage = Loadable(lazy(()=> import('views/catering/AddPackage')));
+const PackageList = Loadable(lazy(()=> import('views/catering/PackageList')));
+const CateringReport = Loadable(lazy(()=> import('views/catering/CateringReport')));
+//----------------------------------------------------------------------------//
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -380,21 +391,10 @@ const MainRoutes = {
   path: '/',
   children: [
     // ✅ Public login route
-    {
-      path: 'login',
-      element: <Login />
-    },
-    {
-      path: 'register',
-      element: <Register />
-    },
-    {
-      path: 'forgot-password',
-      element: <Forgotpass/>
-    },
+    { path: 'login',element: <Login />},
+    { path: 'register', element: <Register /> },
+    { path: 'forgot-password', element: <Forgotpass/>},
     
-
-    // ✅ Protected dashboard + all child routes
     {
       path: '/',
       element: (
@@ -477,6 +477,16 @@ const MainRoutes = {
             { path: 'vat', element: <VatReport/> }
           ]
         },
+        //venue report
+         {
+          path: 'report',
+          children: [
+            { path: 'venueexp', element: <VenueExpReport/> },
+            { path: 'disbursement', element: <VenueDisburseRepo/> },
+            { path: 'venue', element: <VenueReport/> },
+            { path: 'venuetax', element: <VenueTaxReport/> }
+          ]
+        },
         {
           path: 'employee',
           children: [
@@ -517,16 +527,38 @@ const MainRoutes = {
         { path: '/venue/schedules', element: <Schedules/> }
       ]
     },
+    //venue employee
+     {
+      path: 'employee',
+      children: [
+        { path: '/employee/venuerole', element: <VenueEmpRole/>},
+      ]
+    },
      {
       path: 'business',
       children: [
-        { path: '/business/myshop', element: <VenueMyShop/>}
-      ]
+        { path: '/business/myshop', element: <VenueMyShop/>} ]
     },
      {
       path: 'providers',
       children: [
         { path: 'banners', element: <Banners/>}
+      ]
+    },
+
+    //CATERING
+    {
+      path: 'catering',
+      children: [
+        { path: 'addpackage', element: <AddPackage/>},
+        { path: 'packagelist', element: <PackageList/>},
+        { path: 'cateringreport', element: <CateringReport/>}
+      ]
+    },
+    {
+      path: 'report',
+      children: [
+        { path: 'cateringreport', element: <CateringReport/>}
       ]
     },
 

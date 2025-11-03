@@ -1,109 +1,77 @@
+
+
+
+
+
 // assets
 import {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
-  IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconBuilding,
+  IconCategory,
+  IconTrademark,
+  IconPlus,
+  IconList,
+  IconClipboardCheck,
+  IconUpload,
+  IconDownload,
+  IconEngine,
+  IconCalendar,IconBowlSpoon
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
-  IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconBuilding,
+  IconCategory,
+  IconTrademark,
+  IconPlus,
+  IconList,
+  IconClipboardCheck,
+  IconUpload,
+  IconDownload,
+  IconEngine,
+  IconCalendar,IconBowlSpoon
 };
 
-// ==============================|| TRIP MANAGEMENT MENU GROUP ||============================== //
+// ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
-const cateringmanagement = {
+const venuemanagement = {
+  id: 'catering-management',
   title: 'CATERING MANAGEMENT',
-  id: 'cateringmanagement', // Fixed typo: was 'tripmanagemet'
   type: 'group',
   children: [
     {
-      id: 'catering',
-      title: 'Catering Bookings',
+      id: 'catering-setup',
+      title: 'Catering Setup',
       type: 'collapse',
-      icon: icons.IconBuildingSkyscraper,
+      icon: icons.IconBowlSpoon,
       children: [
         {
-          id: 'all-trips',
-          title: 'All',
+          id: 'add pacakge',
+          title: 'Add Pacakage',
           type: 'item',
-          url: '/trips'
+          url: 'catering/addpackage',
+          icon: icons.IconPlus  
         },
         {
-          id: 'scheduled-trips',
-          title: 'Scheduled',
+          id: 'list',
+          title: 'Package List',
           type: 'item',
-          url: '/trips/scheduled'
+          url: 'catering/packagelist',
+          icon: icons.IconList
         },
-        {
-          id: 'pending-trips',
-          title: 'Pending',
-          type: 'item',
-          url: '/trips/pending'
-        },
-        {
-          id: 'confirmed-trips',
-          title: 'Confirmed',
-          type: 'item',
-          url: '/trips/confirmed'
-        },
-        {
-          id: 'ongoing-trips',
-          title: 'Ongoing',
-          type: 'item',
-          url: '/trips/ongoing'
-        },
-        {
-          id: 'completed-trips',
-          title: 'Completed',
-          type: 'item',
-          url: '/trips/completed'
-        },
-        {
-          id: 'canceled-trips',
-          title: 'Canceled',
-          type: 'item',
-          url: '/trips/canceled'
-        },
-        {
-          id: 'payment-failed-trips',
-          title: 'Payment Failed',
-          type: 'item',
-          url: '/trips/payment-failed'
-        }
+      
       ]
-    }
+    },
+    
+    {
+      id: 'categories',
+      title: 'Categories',
+      type: 'item',
+      url: '/venue/categories',
+      icon: icons.IconCategory,
+      breadcrumbs: false
+    },
+    
   ]
 };
 
-export default cateringmanagement;
+export default venuemanagement;

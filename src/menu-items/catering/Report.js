@@ -1,10 +1,10 @@
 // assets
 import {
-  IconUserPlus,
-  IconUserCheck,
-  IconUsers,
-  IconUpload,
-  IconDownload
+  IconUserPlus,      
+  IconUserCheck,     
+  IconUsers,         
+  IconUpload,        
+  IconDownload       
 } from '@tabler/icons-react';
 
 // constants
@@ -17,16 +17,17 @@ const icons = {
 };
 
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
-const Reportssection = {
-  id: 'report-management', // Changed to unique ID
+
+const Reportsection = {
+  id: 'report-management',
   title: 'REPORT SECTION',
   type: 'group',
   children: [
     {
-      id: 'sales-Report',
-      title: 'Sales Report',
+      id: 'Expense-Report',
+      title: 'Expense Report',
       type: 'item',
-      url: '/report/venueexp',
+      url: '/report/cateringexp',
       icon: icons.IconUserPlus,
       breadcrumbs: false
     },
@@ -34,35 +35,28 @@ const Reportssection = {
       id: 'Disbursement-Method',
       title: 'Disbursement Method',
       type: 'item',
-      url: '/report/disbursement',
+      url: '/report/cater-disburse',
       icon: icons.IconUserCheck,
       breadcrumbs: false
     },
     {
-      id: 'Venue-Report',
-      title: 'Venue Report',
+      id: 'catering-Report',
+      title: 'Catering Report',
       type: 'item',
-      url: '/report/venue',
+      url: '/report/cateringreport',
       icon: icons.IconUsers,
       breadcrumbs: false
     },
     {
-      id: 'tax-Report',
+      id: 'Tax-Report',
       title: 'Tax Report',
       type: 'item',
-      url: '/report/venuetax',
+      url: '/report/vat',
       icon: icons.IconUpload,
       breadcrumbs: false
     },
-    // {
-    //   id: 'bulk-export',
-    //   title: 'Bulk Export',
-    //   type: 'item',
-    //   url: '/providers/export',
-    //   icon: icons.IconDownload,
-    //   breadcrumbs: false
-    // }
+ 
   ]
 };
 
-export default Reportssection;
+export default Reportsection;

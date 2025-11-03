@@ -88,26 +88,30 @@ import dashboard from './dashboard';
 
 // Rental Modules
 import vehiclemanagement from './vendors/vehiclemanagement';
+import Reportsection from './vendors/reportsection';
 // import Tripmanagement from './vendors/tripmanagement';
-// import Employeesection from './vendors/employeesection';
+import Employeesection from './vendors/employeesection';
 // import Businesssection from './vendors/businesssection';
 
 // Venue Modules
 // import bookingmanagement from './venues/bookingmanagement';
 import venuemanagement from './venues/venuemanagement';
 import Businessection from './venues/businesssection';
-import Marketingsection from './venues/marketingsection';
+import Report from './venues/reportsection';
+import Employee from './venues/employee';
 
 // Common
-// import Marketingsection from './vendors/marketingsection';
-// import Reportsection from './vendors/reportsection';
+import Marketingsection from './venues/marketingsection';
 
 // Other specific modules
 import photographymanagement from './photography/photomanagement';
 import picmanagement from './photography/picmanagement'; 
 import eventmanagement from './Event/eventmanagement';
 import mehandimanagement from './mehandi/mehandimanagement';
+
+// catering
 import cateringmanagement from './catering/cateringmanagement';
+import Reports from './catering/Report';
 
 
 // ==============================|| MENU ITEMS ||============================== //
@@ -121,9 +125,9 @@ let specificSections = [];
 
 // handle conditions
 if (logRes === 'transport') {
-  specificSections = [ vehiclemanagement];
+  specificSections = [ vehiclemanagement,Reportsection,Employeesection];
 } else if (logRes === 'venues') {
-  specificSections = [venuemanagement, Businessection];
+  specificSections = [venuemanagement, Businessection, Report, Employee];
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
 } else if (logRes === 'mehandi') {
@@ -131,7 +135,7 @@ if (logRes === 'transport') {
 } else if (logRes === 'photography') {
   specificSections = [photographymanagement, picmanagement];
 } else if (logRes === 'catering') {
-  specificSections = [cateringmanagement];
+  specificSections = [cateringmanagement, Reports];
 } else if (logRes === 'makeup') {
   // specificSections = [makeupmanagement];
   specificSections = [];
