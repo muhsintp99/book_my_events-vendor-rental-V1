@@ -96,10 +96,10 @@ import vehiclemanagement from './vendors/vehiclemanagement';
 // import bookingmanagement from './venues/bookingmanagement';
 import venuemanagement from './venues/venuemanagement';
 import Businessection from './venues/businesssection';
-import Marketing from './venues/marketingsection';
+import Marketingsection from './venues/marketingsection';
 
 // Common
-import Marketingsection from './vendors/marketingsection';
+// import Marketingsection from './vendors/marketingsection';
 // import Reportsection from './vendors/reportsection';
 
 // Other specific modules
@@ -115,15 +115,15 @@ const logRes = (localStorage.getItem('logRes') || '').toLowerCase();
 console.log("logRes:", logRes);
 
 // Common sections for all
-// const commonSections = [Marketingsection];
+const commonSections = [Marketingsection];
 
 let specificSections = [];
 
 // handle conditions
 if (logRes === 'transport') {
-  specificSections = [ vehiclemanagement,Marketingsection];
+  specificSections = [ vehiclemanagement];
 } else if (logRes === 'venues') {
-  specificSections = [venuemanagement, Businessection, Marketing];
+  specificSections = [venuemanagement, Businessection];
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
 } else if (logRes === 'mehandi') {
@@ -143,8 +143,8 @@ if (logRes === 'transport') {
 const menuItems = {
   items: [
     dashboard,
-    ...specificSections
-    // ...commonSections
+    ...specificSections,
+    ...commonSections
   ]
 };
 

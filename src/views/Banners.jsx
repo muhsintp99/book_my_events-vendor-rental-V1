@@ -328,6 +328,23 @@ const Banner = () => {
   const [showForm, setShowForm] = useState(true);
   const navigate = useNavigate();
 
+  // Retrieve vendorId from localStorage user object
+  const getVendorId = () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user._id || user.id || null;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+      return null;
+    }
+  };
+
+  const vendorId = getVendorId();
+
   useEffect(() => {
     fetchBanners();
     fetchZones();
@@ -363,30 +380,50 @@ const Banner = () => {
     }
   };
 
-  // Fetch Banners
+  // Fetch Banners (filtered by vendor client-side)
+ // Fetch Banners (filtered by vendor using dedicated endpoint)
   const fetchBanners = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get(API_URL, {
+      if (!vendorId) {
+        console.error("Vendor ID not available for fetching banners");
+        showToast("Vendor ID not found. Please log in again.", "error");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Fetching banners for vendorId:", vendorId); // Debug log
+      
+      // Use the vendor-specific endpoint: banners/vendor/:vendorId
+      const response = await axios.get(`${API_URL}/vendor/${vendorId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const fetched = response.data?.data?.banners || [];
+      
+      let fetched = response.data?.data?.banners || [];
+      console.log("Fetched banners:", fetched); // Debug log
+      
       // Transform local paths to public URLs
       const transformedBanners = fetched.map((banner) => ({
         ...banner,
         image: transformImageUrl(banner.image),
       }));
+      
       setBanners(transformedBanners);
+      console.log("Transformed banners:", transformedBanners); // Debug log
     } catch (error) {
       console.error("Error fetching banners:", error);
-      showToast("Failed to load banners", "error");
+      if (error.response?.status === 404) {
+        showToast("No banners found for this vendor", "info");
+        setBanners([]);
+      } else {
+        showToast("Failed to load banners", "error");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Image Upload
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -407,6 +444,7 @@ const Banner = () => {
     if (!zone) return showToast("Please select a zone", "error");
     if (!bannerType) return showToast("Please select a banner type", "error");
     if (!image && !editId) return showToast("Banner image is required", "error");
+    if (!vendorId) return showToast("Vendor ID not found. Please log in again.", "error");
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
@@ -414,6 +452,7 @@ const Banner = () => {
       formData.append("link", link);
       formData.append("zone", zone);
       formData.append("bannerType", bannerType);
+      formData.append("vendor", vendorId);
       if (image) formData.append("image", image);
       if (editId) {
         await axios.put(`${API_URL}/${editId}`, formData, {
@@ -434,7 +473,10 @@ const Banner = () => {
       }
       handleReset();
       setShowForm(false);
-      fetchBanners();
+      // Add a short delay to ensure the new banner is saved and available in the next fetch
+      setTimeout(() => {
+        fetchBanners();
+      }, 1000);
     } catch (error) {
       console.error("Banner submit error:", error);
       console.error("Response:", error.response?.data);

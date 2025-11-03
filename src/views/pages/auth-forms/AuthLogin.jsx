@@ -94,14 +94,14 @@ export default function AuthLogin() {
           control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} color="primary" />}
           label="Keep me logged in"
         />
-        <Typography component={Link} to="/forgot-password" color="secondary" sx={{ textDecoration: 'none' }}>
+        <Typography component={Link} to="/forgot-password" color="#E15B65" sx={{ textDecoration: 'none' }}>
           Forgot Password?
         </Typography>
       </Grid>
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
-          <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
+          <Button color="secondary" fullWidth size="large" type="submit" variant="contained" sx={{ bgcolor:"#E15B65"}}>
             Sign In
           </Button>
         </AnimateButton>

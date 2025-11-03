@@ -104,9 +104,8 @@ const VenueListingView = () => {
   const location = useLocation();
   const API_BASE_URL = 'https://api.bookmyevent.ae/api';
   const USE_HTTPS = true;  // Set to false for HTTP fallback during dev (insecure!)
-  const BASE_URL = USE_HTTPS ? 'https://bookmyevent.ae' : 'http://bookmyevent.ae';
-  const PACKAGE_BASE_URL = USE_HTTPS ? 'https://api.bookmyevent.ae' : 'http://api.bookmyevent.ae';
-
+  const BASE_URL = USE_HTTPS ? (API_BASE_URL.replace(/\/api\/?$/, '')) : 'http://api.bookmyevent.ae'.replace(/\/api\/?$/, '');
+  const PACKAGE_BASE_URL = USE_HTTPS ? (API_BASE_URL.replace(/\/api\/?$/, '')) : 'http://api.bookmyevent.ae'.replace(/\/api\/?$/, '');
   const [activeImage, setActiveImage] = useState(0);
   const [venue, setVenue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -120,14 +119,16 @@ const VenueListingView = () => {
 
   const getImageUrl = (path) => {
     if (!path) return '';
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    return `${BASE_URL}/${cleanPath}`;
+    // Extract just the filename (handles full paths or relative)
+    const filename = path.split('/').pop();
+    return `${BASE_URL}/uploads/venues/${filename}`;
   };
 
   const getPackageImageUrl = (path) => {
     if (!path) return '/placeholder.jpg';
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    return `${PACKAGE_BASE_URL}/${cleanPath}`;
+    // Extract just the filename
+    const filename = path.split('/').pop();
+    return `${PACKAGE_BASE_URL}/uploads/packages/${filename}`;
   };
 
   useEffect(() => {
@@ -182,6 +183,7 @@ const VenueListingView = () => {
         venueData.packages.forEach((pkg, i) => console.log(`Package ${i}:`, pkg.title, 'Thumbnail:', pkg.thumbnail));
       }
       console.log('Images:', venueData.images, venueData.thumbnail);
+      console.log('Generated image URLs:', images);  // Log generated URLs
       setError('');
     } catch (error) {
       console.error('Error fetching venue:', error);
@@ -195,7 +197,8 @@ const VenueListingView = () => {
     }
   };
 
-  const handleImageError = (index) => {
+  const handleImageError = (index, url) => {
+    console.error(`Image failed at index ${index}: ${url}`);
     setImageErrors(prev => new Set([...prev, index]));
     setMainImageLoading(false);
   };
@@ -393,15 +396,10 @@ const VenueListingView = () => {
             startIcon={<DeleteIcon />}
             onClick={confirmDelete}
             sx={{
-              color: '#dc3545',
-              borderColor: '#dc3545',
-              bgcolor: '#fff5f5',
-              textTransform: 'none',
-              fontSize: '14px',
-              px: 3,
-              py: 1,
-              fontWeight: 500,
-              borderRadius: 2,
+              color: '#dc3545', borderColor: '#dc3545',
+              bgcolor: '#fff5f5', textTransform: 'none',
+              fontSize: '14px', px: 3, py: 1,
+              fontWeight: 500, borderRadius: 2,
               '&:hover': {
                 bgcolor: '#fee',
                 borderColor: '#ff0019ff'
@@ -416,60 +414,41 @@ const VenueListingView = () => {
             onClick={handleEdit}
             sx={{
               background: 'linear-gradient(135deg, #E15B65 0%, #e98e8eff 100%)',
-              textTransform: 'none',
-              fontSize: '14px',
-              px: 3,
-              py: 1,
-              fontWeight: 500,
-              borderRadius: 2,
-              boxShadow: '0 4px 12px rgba(225, 91, 101, 0.3)',
+              textTransform: 'none', fontSize: '14px',
+              px: 3, py: 1, fontWeight: 500,
+              borderRadius: 2, boxShadow: '0 4px 12px rgba(225, 91, 101, 0.3)',
               '&:hover': {
                 background: 'linear-gradient(135deg, #f68b96ff 0%, #c52131ff 100%)',
                 boxShadow: '0 6px 16px rgba(225, 91, 101, 0.4)'
               }
-            }}
-          >
+            }}>
             Edit Venue
           </Button>
         </Box>
       </Box>
       {/* Main Content Card */}
       <Card sx={{
-        borderRadius: 3,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        bgcolor: '#ffffff',
-        overflow: 'hidden'
-      }}>
+        borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        bgcolor: '#ffffff', overflow: 'hidden' }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
           {/* Image Gallery Section */}
           <Grid container spacing={4}>
             <Grid item xs={12} md={5}>
               <Box sx={{ position: 'relative' }}>
                 <Box sx={{
-                  width: '100%',
-                  height: { xs: 240, md: 300 },
-                  borderRadius: 3,
-                  mb: 2,
+                  width: '100%', height: { xs: 240, md: 300 },
+                  borderRadius: 3,  mb: 2,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  overflow: 'hidden'
-                }}>
+                  overflow: 'hidden' }}>
                   {showNoImage ? (
                     <NoImageBox loading={mainImageLoading} />
                   ) : (
                     <>
                       {mainImageLoading && (
                         <Box sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'rgba(255,255,255,0.8)',
-                          zIndex: 1
-                        }}>
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                          display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', background: 'rgba(255,255,255,0.8)',  zIndex: 1  }}>
                           <CircularProgress size={40} sx={{ color: '#E15B65' }} />
                         </Box>
                       )}
@@ -477,16 +456,13 @@ const VenueListingView = () => {
                         src={images[activeImage]}
                         alt={venue.venueName || 'Venue'}
                         onLoad={() => setMainImageLoading(false)}
-                        onError={() => {
-                          handleImageError(activeImage);
+                        onError={(e) => {
+                          handleImageError(activeImage, e.target.src);
                           setMainImageLoading(false);
                         }}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          display: mainImageLoading ? 'none' : 'block'
-                        }}
+                          width: '100%', height: '100%',
+                          objectFit: 'cover', display: mainImageLoading ? 'none' : 'block'  }}
                         loading="lazy"
                       />
                     </>
@@ -501,7 +477,7 @@ const VenueListingView = () => {
                         alt={`${venue.venueName} view ${index + 1}`}
                         active={activeImage === index}
                         onClick={() => setActiveImage(index)}
-                        onError={() => handleImageError(index)}
+                        onError={(e) => handleImageError(index, e.target.src)}
                         loading="lazy"
                       />
                     ))}
@@ -517,18 +493,11 @@ const VenueListingView = () => {
                 {venue.venueName || 'Venue Name'}
               </Typography>
               <Box sx={{
-                bgcolor: '#f8f9fa',
-                borderRadius: 2,
-                p: 2.5,
-                mb: 3,
-                border: '1px solid #e9ecef'
-              }}>
+                bgcolor: '#f8f9fa',  borderRadius: 2,
+                p: 2.5,  mb: 3,  border: '1px solid #e9ecef'  }}>
                 <Typography variant="subtitle1" color="#495057" mb={1} fontWeight="600" sx={{
-                  fontSize: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
+                  fontSize: '15px', display: 'flex',
+                  alignItems: 'center', gap: 1}}>
                   <BusinessIcon sx={{ fontSize: 18 }} />
                   Description
                 </Typography>
@@ -537,18 +506,13 @@ const VenueListingView = () => {
                 </Typography>
               </Box>
               <Box sx={{
-                bgcolor: '#f8f9fa',
-                borderRadius: 2,
-                p: 2.5,
-                mb: 3,
+                bgcolor: '#f8f9fa', borderRadius: 2,
+                p: 2.5,  mb: 3,
                 border: '1px solid #e9ecef'
               }}>
                 <Typography variant="subtitle1" color="#495057" mb={1} fontWeight="600" sx={{
-                  fontSize: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
+                  fontSize: '15px', display: 'flex',
+                  alignItems: 'center',  gap: 1}}>
                   <LocationIcon sx={{ fontSize: 18 }} />
                   Address
                 </Typography>
@@ -559,10 +523,8 @@ const VenueListingView = () => {
               {venue.searchTags && venue.searchTags.length > 0 && (
                 <Box>
                   <Typography variant="subtitle1" color="#495057" mb={1.5} fontWeight="600" sx={{
-                    fontSize: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
+                    fontSize: '15px',  display: 'flex',
+                    alignItems: 'center',   gap: 1
                   }}>
                     <TagIcon sx={{ fontSize: 18 }} />
                     Search Tags
@@ -575,10 +537,8 @@ const VenueListingView = () => {
                         sx={{
                           background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
                           color: '#1565c0',
-                          fontWeight: 600,
-                          border: '1px solid #90caf9'
-                        }}
-                      />
+                          fontWeight: 600, border: '1px solid #90caf9'
+                        }} />
                     ))}
                   </Box>
                 </Box>
@@ -592,17 +552,11 @@ const VenueListingView = () => {
             <Grid item xs={12} md={4}>
               <InfoCard>
                 <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', mb: 3 }}>
                   <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #fee 0%, #fcc 100%)',
-                    mb: 2
-                  }}>
+                    p: 2,  borderRadius: 3,
+                    background: 'linear-gradient(135deg, #fee 0%, #fcc 100%)',  mb: 2}}>
                     <BusinessIcon sx={{ fontSize: 32, color: '#E15B65' }} />
                   </Box>
                   <Typography variant="h6" fontWeight="700" sx={{
@@ -622,12 +576,8 @@ const VenueListingView = () => {
                     { label: 'Closing Hours', value: venue.closingHours || 'N/A' }
                   ].map((item, index) => (
                     <Box key={index} sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                      pb: 2,
-                      borderBottom: index !== 5 ? '1px solid #f0f0f0' : 'none'
-                    }}>
+                      display: 'flex',  justifyContent: 'space-between',
+                      mb: 2, pb: 2,  borderBottom: index !== 5 ? '1px solid #f0f0f0' : 'none'}}>
                       <Typography color="#6c757d" fontWeight="500" sx={{ fontSize: '14px' }}>
                         {item.label}
                       </Typography>
@@ -643,17 +593,11 @@ const VenueListingView = () => {
             <Grid item xs={12} md={4}>
               <InfoCard>
                 <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center',mb: 3 }}>
                   <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
-                    mb: 2
-                  }}>
+                    p: 2, borderRadius: 3,
+                    background: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)', mb: 2}}>
                     <MoneyIcon sx={{ fontSize: 32, color: '#28a745' }} />
                   </Box>
                   <Typography variant="h6" fontWeight="700" sx={{
@@ -665,18 +609,11 @@ const VenueListingView = () => {
                 </Box>
                 <Box>
                   <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0'
-                  }} />
+                    display: 'flex', justifyContent: 'space-between', mb: 2,
+                    pb: 2, borderBottom: '1px solid #f0f0f0' }} />
                   <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0'
+                    display: 'flex',justifyContent: 'space-between',
+                    mb: 2,pb: 2,borderBottom: '1px solid #f0f0f0'
                   }}>
                     <Typography color="#6c757d" fontWeight="500" sx={{ fontSize: '14px' }}>
                       Advance Deposit
@@ -996,7 +933,10 @@ const VenueListingView = () => {
                             component="img"
                             src={imageUrl}
                             alt={pkg.title}
-                            onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+                            onError={(e) => { 
+                              console.error('Package image failed to load:', imageUrl);
+                              e.target.src = '/placeholder.jpg'; 
+                            }}
                             sx={{
                               width: '100%',
                               height: 160,

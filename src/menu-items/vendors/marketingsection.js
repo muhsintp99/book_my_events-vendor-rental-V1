@@ -35,7 +35,7 @@ const Marketingsection = {
       id: 'Banners',
       title: 'Banners',
       type: 'item',
-      url: '/vehicle/banners',
+      url: '',
       icon: icons.IconUserCheck,
       breadcrumbs: false
     },

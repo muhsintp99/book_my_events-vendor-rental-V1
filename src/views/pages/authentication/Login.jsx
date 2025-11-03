@@ -22,7 +22,7 @@ function LogoSection() {
       <img
         src={bookLogo}
         alt="Book Logo"
-        style={{ width: 110, height: 50 }}
+        style={{ width: 160, height: 50 }}
       />
     </Link>
   );
@@ -41,14 +41,13 @@ export default function Login() {
                 <Grid container spacing={2} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                   <Grid sx={{ mb: 3 }}>
                   
-                    {/* ✅ New Logo Section */}
                     <LogoSection />
                   </Grid>
                   <Grid size={12}>
                     <Grid container direction={{ xs: 'column-reverse', md: 'row' }} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                       <Grid>
                         <Stack spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                          <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main' }}>
+                          <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: '#E15B65' }}>
                             Hi, Welcome Back
                           </Typography>
                           <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>

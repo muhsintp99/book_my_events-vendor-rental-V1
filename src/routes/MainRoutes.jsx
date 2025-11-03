@@ -302,6 +302,7 @@ import Register from '../views/pages/authentication/Register';
 
 // auth pages
 const Login = Loadable(lazy(() => import('views/pages/authentication/Login')));
+const Forgotpass = Loadable(lazy(() => import('views/pages/auth-forms/Forgotpass')));
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -347,7 +348,7 @@ const Coupon = Loadable(lazy(()=> import('views/Coupon')));
 const Banners = Loadable(lazy(()=> import('views/Banners')));
 
 //vehicle marketing
-const VehicleBanners = Loadable(lazy(()=> import('views/VehicleBanners')));
+// const VehicleBanners = Loadable(lazy(()=> import('views/VehicleBanners')));
 
 // business
 const ProviderConfig = Loadable(lazy(()=> import('views/ProviderConfig')));
@@ -386,6 +387,10 @@ const MainRoutes = {
     {
       path: 'register',
       element: <Register />
+    },
+    {
+      path: 'forgot-password',
+      element: <Forgotpass/>
     },
     
 
@@ -442,8 +447,8 @@ const MainRoutes = {
             { path: 'new', element: <AddDriver/> },
             { path: 'add', element: <Drivers/> },
             { path: 'driverview', element: <DriverView/> },
-            { path: 'newcoupon', element: <Coupon/> },
-            { path: 'banners', element: <VehicleBanners/> }
+            { path: 'newcoupon', element: <Coupon/> }
+            // { path: 'banners', element: <VehicleBanners/> }
           ]
         },
         {

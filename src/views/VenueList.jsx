@@ -1455,10 +1455,7 @@ export default function VenuesList() {
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
           borderColor: '#E15B65',
-        },
-        '& .MuiInputBase-root': {
-          backgroundColor: '#E15B65',
-        },
+        }
       }}/>
             <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }} onClick={handleExport}>
               Export
