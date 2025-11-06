@@ -89,6 +89,7 @@ import dashboard from './dashboard';
 // Rental Modules
 import vehiclemanagement from './vendors/vehiclemanagement';
 import Reportsection from './vendors/reportsection';
+
 // import Tripmanagement from './vendors/tripmanagement';
 import Employeesection from './vendors/employeesection';
 // import Businesssection from './vendors/businesssection';
@@ -112,6 +113,7 @@ import mehandimanagement from './mehandi/mehandimanagement';
 // catering
 import cateringmanagement from './catering/cateringmanagement';
 import Reports from './catering/Report';
+import Employees from './catering/employees';
 
 
 // ==============================|| MENU ITEMS ||============================== //
@@ -135,7 +137,7 @@ if (logRes === 'transport') {
 } else if (logRes === 'photography') {
   specificSections = [photographymanagement, picmanagement];
 } else if (logRes === 'catering') {
-  specificSections = [cateringmanagement, Reports];
+  specificSections = [cateringmanagement, Reports, Employees];
 } else if (logRes === 'makeup') {
   // specificSections = [makeupmanagement];
   specificSections = [];

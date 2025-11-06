@@ -313,7 +313,6 @@ const Banner = () => {
   const [title, setTitle] = useState("");
   const [zone, setZone] = useState("");
   const [zones, setZones] = useState([]);
-  const [link, setLink] = useState("");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [banners, setBanners] = useState([]);
@@ -361,7 +360,6 @@ const Banner = () => {
     if (!imagePath || imagePath.startsWith('http')) {
       return imagePath;
     }
-    // Replace local path prefix with public base
     return `${PUBLIC_IMAGE_BASE}${imagePath.replace('/var/www/backend/Uploads/banners', '')}`;
   };
 
@@ -380,8 +378,6 @@ const Banner = () => {
     }
   };
 
-  // Fetch Banners (filtered by vendor client-side)
- // Fetch Banners (filtered by vendor using dedicated endpoint)
   const fetchBanners = async () => {
     try {
       setLoading(true);
@@ -393,26 +389,21 @@ const Banner = () => {
         return;
       }
       
-      console.log("Fetching banners for vendorId:", vendorId); // Debug log
+      console.log("Fetching banners for vendorId:", vendorId); 
       
-      // Use the vendor-specific endpoint: banners/vendor/:vendorId
       const response = await axios.get(`${API_URL}/vendor/${vendorId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
       let fetched = response.data?.data?.banners || [];
-      console.log("Fetched banners:", fetched); // Debug log
       
-      // Transform local paths to public URLs
       const transformedBanners = fetched.map((banner) => ({
         ...banner,
         image: transformImageUrl(banner.image),
       }));
       
       setBanners(transformedBanners);
-      console.log("Transformed banners:", transformedBanners); // Debug log
     } catch (error) {
-      console.error("Error fetching banners:", error);
       if (error.response?.status === 404) {
         showToast("No banners found for this vendor", "info");
         setBanners([]);
@@ -437,7 +428,6 @@ const Banner = () => {
     setPreview(URL.createObjectURL(file));
   };
 
-  // CREATE or UPDATE
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return showToast("Title is required", "error");
@@ -449,7 +439,6 @@ const Banner = () => {
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("link", link);
       formData.append("zone", zone);
       formData.append("bannerType", bannerType);
       formData.append("vendor", vendorId);
@@ -473,7 +462,6 @@ const Banner = () => {
       }
       handleReset();
       setShowForm(false);
-      // Add a short delay to ensure the new banner is saved and available in the next fetch
       setTimeout(() => {
         fetchBanners();
       }, 1000);
@@ -484,7 +472,6 @@ const Banner = () => {
     }
   };
 
-  // DELETE
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -507,12 +494,10 @@ const Banner = () => {
     setDeleteDialogOpen(true);
   };
 
-  // EDIT
   const handleEdit = (banner) => {
     const publicImage = transformImageUrl(banner.image);
     setEditId(banner._id);
     setTitle(banner.title);
-    setLink(banner.link || "");
     setPreview(publicImage);
     setZone(banner.zone?._id || banner.zone || "");
     setBannerType(banner.bannerType || "");
@@ -521,7 +506,6 @@ const Banner = () => {
 
   const handleReset = () => {
     setTitle("");
-    setLink("");
     setZone("");
     setImage(null);
     setPreview(null);
@@ -537,7 +521,6 @@ const Banner = () => {
           <Typography variant="h5" sx={{ mb: 3 }}>
             {editId ? "Edit Banner" : "Add New Banner"}
           </Typography>
-          {/* Banner Form */}
           <Card sx={{ p: 2, mb: 4, border: "1px solid #e0e0e0" }}>
             <CardContent>
               <TextField
@@ -545,16 +528,14 @@ const Banner = () => {
                 label="venue Banner Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+                sx={{ mb: 2 }}/>
               {/* Zone Dropdown */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Select Zone</InputLabel>
                 <Select
                   value={zone}
                   label="Select Zone"
-                  onChange={(e) => setZone(e.target.value)}
-                >
+                  onChange={(e) => setZone(e.target.value)} >
                   {zones.length > 0 ? (
                     zones.map((z) => (
                       <MenuItem key={z._id || z.id} value={z._id || z.id}>
@@ -572,20 +553,12 @@ const Banner = () => {
                 <Select
                   value={bannerType}
                   label="Banner Type"
-                  onChange={(e) => setBannerType(e.target.value)}
-                >
+                  onChange={(e) => setBannerType(e.target.value)}>
                   <MenuItem value="top_deal">Top Deal</MenuItem>
                   <MenuItem value="cash_back">Cash Back</MenuItem>
                   <MenuItem value="zone_wise">Zone Wise</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
-                fullWidth
-                label="Banner Link (Optional)"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                sx={{ mb: 3 }}
-              />
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Banner Image
               </Typography>
@@ -603,15 +576,13 @@ const Banner = () => {
                     <Typography variant="caption" color="#E15B65">
                       Or drag and drop
                     </Typography>
-                  </>
-                )}
+                  </> )}
                 <input
                   id="banner-upload"
                   type="file"
                   accept="image/jpeg,image/png"
                   style={{ display: "none" }}
-                  onChange={handleImageUpload}
-                />
+                  onChange={handleImageUpload}/>
               </UploadDropArea>
             </CardContent>
           </Card>
@@ -619,8 +590,7 @@ const Banner = () => {
             <Button
               variant="outlined"
               onClick={() => setShowForm(false)}
-              sx={{ color: '#E15B65', borderColor: '#E15B65' }}
-            >
+              sx={{ color: '#E15B65', borderColor: '#E15B65' }} >
               View Banners List
             </Button>
             <Box sx={{ display: "flex", gap: 2 }}>
@@ -638,8 +608,7 @@ const Banner = () => {
           <Button
             variant="outlined"
             onClick={() => navigate(-1)}
-            sx={{ color: '#E15B65', borderColor: '#E15B65' }}
-          >
+            sx={{ color: '#E15B65', borderColor: '#E15B65' }}>
             Back
           </Button>
           <Typography variant="h5">Banner Management</Typography>
@@ -671,7 +640,6 @@ const Banner = () => {
                       <TableCell sx={{ fontWeight: "bold" }}>Banner Info</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Zone</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Type</TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>Link</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Action</TableCell>
                     </TableRow>
                   </TableHead>
@@ -703,25 +671,18 @@ const Banner = () => {
                           <TableCell>{b.zone?.name || "-"}</TableCell>
                           <TableCell>{b.bannerType || "-"}</TableCell>
                           <TableCell>
-                            <a href={b.link} target="_blank" rel="noreferrer">
-                              {b.link || "-"}
-                            </a>
-                          </TableCell>
-                          <TableCell>
                             <Button
                               size="small"
                               variant="outlined" color="green"
                               onClick={() => handleEdit(b)}
-                              sx={{ mr: 1 ,color:'green', borderColor:'green'}}
-                            >
+                              sx={{ mr: 1 ,color:'green', borderColor:'green'}} >
                               Edit
                             </Button>
                             <Button
                               size="small"
                               color="error"
                               variant="outlined"
-                              onClick={() => openDeleteDialog(b._id)}
-                            >
+                              onClick={() => openDeleteDialog(b._id)} >
                               Delete
                             </Button>
                           </TableCell>
@@ -741,22 +702,18 @@ const Banner = () => {
           )}
         </>
       )}
-      {/* Snackbar */}
       <Snackbar
         open={toastOpen}
         autoHideDuration={4000}
         onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
+        anchorOrigin={{ vertical: "top", horizontal: "center" }} >
         <Alert onClose={() => setToastOpen(false)} severity={toastSeverity} sx={{ width: "100%" }}>
           {toastMessage}
         </Alert>
       </Snackbar>
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-      >
+        onClose={() => setDeleteDialogOpen(false)} >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText>

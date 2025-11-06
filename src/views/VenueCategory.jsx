@@ -80,7 +80,6 @@ const Category = () => {
     fetchCategories();
   }, [moduleId, API_BASE_URL]);
 
-  // Search functionality
   const handleSearch = () => {
     if (!searchTerm.trim()) {
       setFilteredCategories(categories);
@@ -92,7 +91,6 @@ const Category = () => {
     setFilteredCategories(filtered);
   };
 
-  // Export menu
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
@@ -119,8 +117,7 @@ const Category = () => {
         p: 3,
         backgroundColor: theme.palette.grey[100],
         minHeight: '100vh',
-      }}
-    >
+      }}>
       <Box
         sx={{
           maxWidth: 'lg',
@@ -129,16 +126,14 @@ const Category = () => {
           borderRadius: theme.shape.borderRadius,
           boxShadow: theme.shadows[1],
           p: 3,
-        }}
-      >
+        }} >
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             mb: 3,
-          }}
-        >
+          }}>
           <Typography variant="h5" component="h1">
             Category List
           </Typography>
@@ -160,20 +155,17 @@ const Category = () => {
         borderColor: '#E15B65',
       },
     },
-  }}
-/>
+  }}/>
             <Button
               variant="outlined" 
               startIcon={<SearchIcon />}
-              onClick={handleSearch} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
-            >
+              onClick={handleSearch} sx={{ borderColor: '#E15B65', color: '#E15B65' }}>
               Search
             </Button>
             <Button
               variant="outlined" 
               endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick} sx={{ borderColor: '#E15B65', color: '#E15B65' }}
-            >
+              onClick={handleClick} sx={{ borderColor: '#E15B65', color: '#E15B65' }}>
               Export
             </Button>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
@@ -206,8 +198,7 @@ const Category = () => {
                     <img
                       src={category.image}
                       alt={category.name}
-                      style={{ width: 100, height: 50, objectFit: 'contain' }}
-                    />
+                      style={{ width: 100, height: 50, objectFit: 'contain' }} />
                   ) : (
                     <Typography variant="caption" color="text.secondary">
                       No Image

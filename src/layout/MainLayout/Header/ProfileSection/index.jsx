@@ -14,7 +14,6 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Badge from '@mui/material/Badge';
 import {
@@ -40,7 +39,6 @@ import User1 from 'assets/images/users/user-round.svg';
 import {
   IconLogout,
   IconUser,
-  IconBell,
   IconMapPin,
   IconCheck
 } from '@tabler/icons-react';
@@ -195,8 +193,7 @@ export default function ProfileSection() {
         ref={anchorRef}
         onClick={handleToggle}
         aria-controls={open ? 'menu-list-grow' : undefined}
-        aria-haspopup="true"
-      >
+        aria-haspopup="true" >
         {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
       </Avatar>
       <Popper
@@ -206,8 +203,7 @@ export default function ProfileSection() {
         role={undefined}
         transition
         disablePortal
-        modifiers={[{ name: 'offset', options: { offset: [0, 14] } }]}
-      >
+        modifiers={[{ name: 'offset', options: { offset: [0, 14] } }]}>
         {({ TransitionProps }) => (
           <ClickAwayListener onClickAway={handleClose}>
             <Transitions in={open} {...TransitionProps}>
@@ -223,8 +219,7 @@ export default function ProfileSection() {
                       maxHeight: '90vh',
                       overflowY: 'auto',
                       '&::-webkit-scrollbar': { width: 6 }
-                    }}
-                  >
+                    }} >
                   <Box
                     sx={{
                       background: 'linear-gradient(135deg, #e8888fff 0%, #b2434cff 100%)',
@@ -236,8 +231,7 @@ export default function ProfileSection() {
                       zIndex: 1,
                       padding: 0,
                       paddingTop: 2
-                    }}
-                  >
+                    }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
                       <Badge
                         overlap="circular"
@@ -251,9 +245,7 @@ export default function ProfileSection() {
                               backgroundColor: '#4caf50',
                               border: '3px solid white'
                             }}
-                          />
-                        }
-                      >
+                          /> }>
                         <Avatar
                           src={profilePreview || User1}
                           sx={{
@@ -312,9 +304,7 @@ export default function ProfileSection() {
                         alignItems: 'center',
                         backgroundColor: 'rgba(255,255,255,0.1)',
                         borderRadius: 2,
-                        p: 1.5
-                      }}
-                    >
+                        p: 1.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconCheck size={20} style={{ color: '#56d85aff', marginRight: 8 }} />
                         <Typography variant="body2" sx={{ color: '#53d757ff', fontWeight: 500 }}>
@@ -327,10 +317,8 @@ export default function ProfileSection() {
                           backgroundColor: '#4caf50',
                           color: 'white',
                           fontWeight: 500,
-                          fontSize: '0.75rem'
-                        }}
-                        size="small"
-                      />
+                          fontSize: '0.75rem' }}
+                        size="small"/>
                     </Box>
                   </Box>
                   <Box sx={{ p: 2 }}>
@@ -342,9 +330,7 @@ export default function ProfileSection() {
                         maxWidth: 350,
                         minWidth: 300,
                         borderRadius: `${borderRadius}px`,
-                        '& .MuiListItemButton-root': { mt: 0.5 }
-                      }}
-                    >
+                        '& .MuiListItemButton-root': { mt: 0.5 }}}>
                       <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={() => SetIsedit(true)}>
                         <ListItemIcon><IconUser stroke={1.5} size="20px" /></ListItemIcon>
                         <ListItemText
@@ -373,8 +359,7 @@ export default function ProfileSection() {
                       maxHeight: '90vh',
                       overflowY: 'auto',
                       '&::-webkit-scrollbar': { width: 8 }
-                    }}
-                  >
+                    }}>
                   <Box sx={{ flexGrow: 1, bgcolor: '#e67373ff', minHeight: '100vh' }}>
                     <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', color: 'text.primary' }}>
                       <Toolbar>
@@ -422,8 +407,7 @@ export default function ProfileSection() {
                                   style={{ display: 'none' }}
                                   id="profile-photo-upload"
                                   type="file"
-                                  onChange={handleProfileImageUpload}
-                                />
+                                  onChange={handleProfileImageUpload}  />
                                 <label htmlFor="profile-photo-upload">
                                   <IconButton
                                     component="span"
@@ -436,8 +420,7 @@ export default function ProfileSection() {
                                       '&:hover': { bgcolor: 'primary.dark' },
                                       width: 40,
                                       height: 40
-                                    }}
-                                  >
+                                    }} >
                                     <PhotoCamera fontSize="small" />
                                   </IconButton>
                                 </label>
@@ -469,9 +452,7 @@ export default function ProfileSection() {
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
                                   bgcolor: '#f8f9fa'
-                                }
-                              }}
-                            />
+                                }}} />
                             <TextField
                               fullWidth
                               label="Website"
@@ -493,7 +474,7 @@ export default function ProfileSection() {
                                 }
                               }}/>
                           </Stack>
-                          {/* Social Media */}
+
                           <Box sx={{ mb: 3, mt: 4 }}>
                             <Typography variant="h6" component="h2" sx={{ borderLeft: '4px solid #2196f3', pl: 2, color: '#333', fontWeight: 500 }}>
                               Social Media Links

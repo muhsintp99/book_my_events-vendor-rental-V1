@@ -9,6 +9,8 @@ import {
   InputAdornment,
   Snackbar,
   Alert,
+  Autocomplete,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -60,13 +62,73 @@ const AddNewMenu = () => {
   const [menuSections, setMenuSections] = useState([
     { id: Date.now(), heading: '', includes: '' },
   ]);
+  const [selectedCategory, setSelectedCategory] = useState(null); // {value: _id, label: name}
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
   const [currentPackage, setCurrentPackage] = useState(null);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoryMap, setCategoryMap] = useState({}); // For preview names
   const API_BASE_URL = 'https://api.bookmyevent.ae';
+
+  // Helper: get token from storage
+  const getAuthToken = () => {
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  };
+
+  // Fetch available categories dynamically
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = getAuthToken();
+        const moduleId = localStorage.getItem('moduleId');
+        const headers = { Accept: 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(
+          `${API_BASE_URL}/api/categories/modules/${moduleId}`,
+          { headers }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Response is not JSON');
+        }
+        const data = await response.json();
+        // Check if response has success and data properties
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const formattedCategories = data.data.map((category) => ({
+            value: category._id,
+            label: category.title || category.name,
+          }));
+          setAvailableCategories(formattedCategories);
+          // Map _id to label for preview
+          const map = {};
+          data.data.forEach((category) => {
+            map[category._id] = category.title || category.name;
+          });
+          setCategoryMap(map);
+        } else {
+          setAvailableCategories([]);
+          setCategoryMap({});
+        }
+        setLoadingCategories(false);
+      } catch (error) {
+        console.error('Error fetching categories:', error.message);
+        setAvailableCategories([]); // Fallback to empty
+        setCategoryMap({});
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     if (location.state?.editPackage) {
       const pkg = location.state.editPackage;
@@ -74,6 +136,18 @@ const AddNewMenu = () => {
       populateForm(pkg);
     }
   }, [location.state]);
+
+  // Update selected category label when availableCategories loads during edit
+  useEffect(() => {
+    if (currentPackage && availableCategories.length > 0 && !selectedCategory && currentPackage.categories?.length > 0) {
+      const categoryId = currentPackage.categories[0]?._id || currentPackage.categories[0];
+      const categoryObj = availableCategories.find((cat) => cat.value === categoryId);
+      if (categoryObj) {
+        setSelectedCategory(categoryObj);
+      }
+    }
+  }, [availableCategories, currentPackage, selectedCategory]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -81,6 +155,7 @@ const AddNewMenu = () => {
       [name]: value,
     }));
   };
+
   const handleMenuChange = (id, field, value) => {
     setMenuSections((prev) =>
       prev.map((section) =>
@@ -88,37 +163,45 @@ const AddNewMenu = () => {
       )
     );
   };
+
   const addMenuSection = () => {
     setMenuSections((prev) => [
       ...prev,
       { id: Date.now(), heading: '', includes: '' },
     ]);
   };
+
   const deleteMenuSection = (id) => {
     setMenuSections((prev) => prev.filter((section) => section.id !== id));
   };
+
   const handleThumbnailChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setThumbnailFile(file);
     }
   };
+
   const handleGalleryChange = (event) => {
     const newFiles = Array.from(event.target.files);
     setGalleryFiles((prev) => [...prev, ...newFiles]);
   };
+
   const deleteGalleryFile = (index) => {
     setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
   };
+
   const clearThumbnail = () => {
     setThumbnailFile(null);
   };
+
   const handleCloseToast = (event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
     setOpenToast(false);
   };
+
   const populateForm = (pkg) => {
     setFormData({
       packageTitle: pkg.title || '',
@@ -133,15 +216,23 @@ const AddNewMenu = () => {
         includes: inc.items?.join(', ') || '',
       }))
     );
+    const categoryObj = pkg.categories?.[0];
+    if (categoryObj) {
+      setSelectedCategory({ value: categoryObj._id || categoryObj, label: categoryObj.title || categoryObj.name || '' });
+    } else {
+      setSelectedCategory(null);
+    }
     setThumbnailFile(null);
     setGalleryFiles([]);
   };
+
   const handleEdit = () => {
     if (currentPackage) {
       populateForm(currentPackage);
     }
     setViewMode('form');
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
@@ -174,8 +265,12 @@ const AddNewMenu = () => {
     cateringFormData.append('description', formData.description || '');
     cateringFormData.append('cateringType', 'custom');
     cateringFormData.append('includes', JSON.stringify(transformedIncludes));
+    if (selectedCategory) {
+      cateringFormData.append('categories', JSON.stringify([selectedCategory.value]));
+    } else {
+      cateringFormData.append('categories', JSON.stringify([]));
+    }
     cateringFormData.append('price', price.toString());
-    cateringFormData.append('categories', JSON.stringify([]));
     if (thumbnailFile) {
       cateringFormData.append('thumbnail', thumbnailFile);
     }
@@ -210,6 +305,7 @@ const AddNewMenu = () => {
         setMenuSections([
           { id: Date.now(), heading: '', includes: '' },
         ]);
+        setSelectedCategory(null);
         setThumbnailFile(null);
         setGalleryFiles([]);
         setCurrentPackage(result.catering || result);
@@ -227,6 +323,7 @@ const AddNewMenu = () => {
       setOpenToast(true);
     }
   };
+
   if (viewMode === 'preview' && currentPackage) {
     return (
       <Box
@@ -294,6 +391,19 @@ const AddNewMenu = () => {
           <Typography variant="body1" sx={{ mb: 3, textAlign: 'justify' }}>
             {currentPackage.description}
           </Typography>
+          {/* Categories */}
+          {currentPackage.categories && currentPackage.categories.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Category
+              </Typography>
+              <Chip 
+                label={currentPackage.categories[0]?.title || currentPackage.categories[0]} 
+                variant="outlined" 
+                color="primary" 
+              />
+            </Box>
+          )}
           {/* Includes */}
           <Typography variant="h6" sx={{ mb: 2 }}>
             Includes
@@ -432,8 +542,26 @@ const AddNewMenu = () => {
             placeholder="Type description"
             multiline
             rows={3}
-            sx={{ mb: 3 }}
+            sx={{ mb: 2 }}
             variant="outlined"
+          />
+          <Autocomplete
+            fullWidth
+            options={availableCategories}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option.value === value?.value}
+            value={selectedCategory}
+            onChange={(event, newValue) => setSelectedCategory(newValue)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Category"
+                placeholder={loadingCategories ? "Loading categories..." : "Select a category"}
+                sx={{ mb: 2 }}
+                variant="outlined"
+                disabled={loadingCategories}
+              />
+            )}
           />
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -606,8 +734,7 @@ const AddNewMenu = () => {
                   hidden
                   accept="image/jpeg,image/png,image/jpg"
                   multiple
-                  onChange={handleGalleryChange}
-                />
+                  onChange={handleGalleryChange}/>
               </UploadDropArea>
               {currentPackage?.images?.length > 0 && (
                 <Box sx={{ mt: 2 }}>
@@ -620,8 +747,7 @@ const AddNewMenu = () => {
                         <img
                           src={`${API_BASE_URL}/${img}`}
                           alt={`Existing gallery ${index + 1}`}
-                          style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }}
-                        />
+                          style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
                       </Box>
                     ))}
                   </Stack>
@@ -647,15 +773,13 @@ const AddNewMenu = () => {
                   </InputAdornment>
                 ),
               }}
-              variant="outlined"
-            />
+              variant="outlined" />
           </Box>
           <Button
             type="submit"
             variant="contained"
             fullWidth
-            sx={{ backgroundColor: '#E15B65', color: 'white', py: 1.5 }}
-          >
+            sx={{ backgroundColor: '#E15B65', color: 'white', py: 1.5 }} >
             {currentPackage ? 'Update Menu' : 'Create Menu'}
           </Button>
         </Box>

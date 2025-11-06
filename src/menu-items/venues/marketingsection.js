@@ -1,16 +1,14 @@
-// assets
 import {
-  IconUserPlus,      
-  IconUserCheck,     
+  IconTicket,      
+  IconPhotoEdit,     
   IconUsers,         
   IconUpload,        
   IconDownload       
 } from '@tabler/icons-react';
 
-// constants
 const icons = {
-  IconUserPlus,
-  IconUserCheck,
+  IconTicket,
+  IconPhotoEdit,
   IconUsers,
   IconUpload,
   IconDownload
@@ -26,7 +24,7 @@ const Marketingssection = {
       title: 'Coupon',
       type: 'item',
       url: '/providers/newcoupon',
-      icon: icons.IconUserPlus,
+      icon: icons.IconTicket,
       breadcrumbs: false
     },
     {
@@ -34,10 +32,9 @@ const Marketingssection = {
       title: 'Banners',
       type: 'item',
       url: '/providers/banners',
-      icon: icons.IconUserCheck,
+      icon: icons.IconPhotoEdit,
       breadcrumbs: false
     },
-   
   ]
 };
 

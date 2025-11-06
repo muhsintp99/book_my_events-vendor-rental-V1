@@ -1,18 +1,18 @@
 // assets
 import {
-  IconUserPlus,      
+  IconReportMoney,      
   IconUserCheck,     
-  IconUsers,         
-  IconUpload,        
+  IconChefHat,         
+  IconReceiptTax,        
   IconDownload       
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconUserPlus,
+  IconReportMoney,
   IconUserCheck,
-  IconUsers,
-  IconUpload,
+  IconChefHat,
+  IconReceiptTax,
   IconDownload
 };
 
@@ -28,7 +28,7 @@ const Reportsection = {
       title: 'Expense Report',
       type: 'item',
       url: '/report/cateringexp',
-      icon: icons.IconUserPlus,
+      icon: icons.IconReportMoney,
       breadcrumbs: false
     },
     {
@@ -44,15 +44,15 @@ const Reportsection = {
       title: 'Catering Report',
       type: 'item',
       url: '/report/cateringreport',
-      icon: icons.IconUsers,
+      icon: icons.IconChefHat,
       breadcrumbs: false
     },
     {
       id: 'Tax-Report',
       title: 'Tax Report',
       type: 'item',
-      url: '/report/vat',
-      icon: icons.IconUpload,
+      url: '/report/cateringtax',
+      icon: icons.IconReceiptTax,
       breadcrumbs: false
     },
  

@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import Chart from 'react-apexcharts';
 
 // project imports
-import chartData from './chartdata/area-chart';
+import chartData from './chartdata/areachart';
 
 // ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
 
@@ -63,24 +63,18 @@ export default function VehicleAreaChartCard() {
           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Grid item>
               <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
-                Vehicles
+                Packages
               </Typography>
             </Grid>
             <Grid item>
               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹1759.00
+                ₹1800.00
               </Typography>
             </Grid>
           </Grid>
         </Grid>
-        {/* <Grid item xs={12}>
-          <Typography variant="subtitle2" sx={{ color: coralMain }}>
-            10% Profit
-          </Typography>
-        </Grid> */}
       </Grid>
 
-      {/* Chart */}
       <Chart {...chartConfig} />
     </Card>
   );
