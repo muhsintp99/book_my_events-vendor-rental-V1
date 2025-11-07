@@ -103,10 +103,7 @@ const VenueListingView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const API_BASE_URL = 'https://api.bookmyevent.ae/api';
-  const USE_HTTPS = true;  
-
-  const BASE_URL = 'https://api.bookmyevent.ae' ;
-  const PACKAGE_BASE_URL = BASE_URL;
+  const BASE_URL = 'https://api.bookmyevent.ae';
 
   const [activeImage, setActiveImage] = useState(0);
   const [venue, setVenue] = useState(null);
@@ -124,10 +121,55 @@ const VenueListingView = () => {
     const filename = path.split('/').pop();
     return `${BASE_URL}/uploads/venues/${filename}`;
   };
+
   const getPackageImageUrl = (path) => {
     if (!path) return '/placeholder.jpg';
     const filename = path.split('/').pop();
-    return `${PACKAGE_BASE_URL}/uploads/packages/${filename}`;
+    return `${BASE_URL}/uploads/packages/${filename}`;
+  };
+
+  const fetchVenue = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(`${API_BASE_URL}/venues/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let venueData = response.data.data || response.data;
+
+      if (venueData.packages && Array.isArray(venueData.packages) && venueData.packages.length > 0) {
+        const packagePromises = venueData.packages.map((pkg) =>
+          axios
+            .get(`${API_BASE_URL}/packages/${pkg._id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => res.data.data || res.data)
+            .catch(() => pkg) 
+        );
+
+        const fullPackages = await Promise.all(packagePromises);
+        venueData.packages = fullPackages.map((p) => ({
+          ...p,
+          thumbnail: p.thumbnail || venueData.thumbnail || null,
+        }));
+      }
+
+      setVenue(venueData);
+      setError('');
+    } catch (error) {
+      console.error('Error fetching venue:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load venue data';
+      setError(errorMessage);
+      setToastMessage(errorMessage);
+      setToastSeverity('error');
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -153,46 +195,15 @@ const VenueListingView = () => {
       imageList = [...imageList, ...imagesArray.map(getImageUrl)];
     }
   }
-  const images = imageList.filter(url => url);
+  const images = imageList.filter(Boolean);
 
   useEffect(() => {
     setMainImageLoading(true);
     setImageErrors(new Set());
     if (images.length > 0) {
-      setActiveImage(0);}
-  }, [venue, images.length]);
-
-  const fetchVenue = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await axios.get(`${API_BASE_URL}/venues/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const venueData = response.data.data || response.data;
-      setVenue(venueData);
-      console.log('Full venue data:', venueData);
-      console.log('Packages:', venueData.packages);
-      if (venueData.packages) {
-        venueData.packages.forEach((pkg, i) => console.log(`Package ${i}:`, pkg.title, 'Thumbnail:', pkg.thumbnail));
-      }
-      console.log('Images:', venueData.images, venueData.thumbnail);
-      console.log('Generated image URLs:', images);  // Log generated URLs
-      setError('');
-    } catch (error) {
-      console.error('Error fetching venue:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to load venue data';
-      setError(errorMessage);
-      setToastMessage(errorMessage);
-      setToastSeverity('error');
-      setOpenToast(true);
-    } finally {
-      setLoading(false);
+      setActiveImage(0);
     }
-  };
+  }, [venue, images.length]);
 
   const handleImageError = (index, url) => {
     console.error(`Image failed at index ${index}: ${url}`);
@@ -304,6 +315,7 @@ const VenueListingView = () => {
           </Typography>
         </Alert>
       </Box>); }
+
   const hasValidMainImage = images.length > 0 && !imageErrors.has(activeImage);
   const showNoImage = images.length === 0 || imageErrors.has(activeImage);
   const discount = getDiscount();
@@ -515,7 +527,6 @@ const VenueListingView = () => {
                 </Box>
               </InfoCard>
             </Grid>
-            {/* Pricing & Discounts */}
             <Grid item xs={12} md={4}>
               <InfoCard>
                 <Box sx={{display: 'flex', flexDirection: 'column',alignItems: 'center',mb: 3 }}>
@@ -702,11 +713,7 @@ const VenueListingView = () => {
                     return (
                       <React.Fragment key={day}>
                         {hasMorning && (
-                          <Box sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '150px 1fr 1fr',
-                            borderBottom: '1px solid #e9ecef'
-                          }}>
+                          <Box sx={{display: 'grid', gridTemplateColumns: '150px 1fr 1fr',borderBottom: '1px solid #e9ecef' }}>
                             <Box sx={{ p: 2, borderRight: '1px solid #e9ecef', textTransform: 'capitalize', fontWeight: 500 }}>
                               {day}
                             </Box>
@@ -724,11 +731,7 @@ const VenueListingView = () => {
                           </Box>
                         )}
                         {hasEvening && (
-                          <Box sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '150px 1fr 1fr',
-                            borderBottom: '1px solid #e9ecef'
-                          }}>
+                          <Box sx={{display: 'grid',gridTemplateColumns: '150px 1fr 1fr',borderBottom: '1px solid #e9ecef' }}>
                             <Box sx={{ p: 2, borderRight: '1px solid #e9ecef', textTransform: 'capitalize', fontWeight: 500 }}>
                               {!hasMorning ? day : ''}
                             </Box>
@@ -756,30 +759,20 @@ const VenueListingView = () => {
             <>
               <Box sx={{ my: 5, height: '1px', bgcolor: '#e9ecef' }} />
               <Box>
-                <Typography variant="h5" fontWeight="700" mb={3} sx={{
-                  color: '#2c3e50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
+                <Typography variant="h5" fontWeight="700" mb={3} sx={{ color: '#2c3e50', display: 'flex', alignItems: 'center', gap: 1 }}>
                   <RestaurantIcon sx={{ fontSize: 24, color: '#E15B65' }} />
                   Food Packages
                 </Typography>
                 <Grid container spacing={2}>
                   {venue.packages.map((pkg, index) => {
-                    const imageUrl = getPackageImageUrl(pkg.thumbnail);
+                    const imageUrl = pkg.thumbnail
+                      ? getPackageImageUrl(pkg.thumbnail)
+                      : getImageUrl(venue.thumbnail) || '/placeholder.jpg';
+
                     return (
                       <Grid item xs={12} sm={6} md={3} key={pkg._id || index}>
-                        <Card sx={{
-                          height: '100%',
-                          borderRadius: 2,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                            transform: 'translateY(-4px)'
-                          }
-                        }}>
+                        <Card sx={{ height: '100%',  borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',  transition: 'all 0.3s ease', '&:hover': { boxShadow: '0 4px 16px rgba(0,0,0,0.15)', transform: 'translateY(-4px)'
+                          }}}>
                           <Box
                             component="img"
                             src={imageUrl}
@@ -788,23 +781,19 @@ const VenueListingView = () => {
                               console.error('Package image failed to load:', imageUrl);
                               e.target.src = '/placeholder.jpg';
                             }}
-                            sx={{
-                              width: '100%',
-                              height: 160,
-                              objectFit: 'cover'
-                            }}
-                          />
+                            sx={{ width: '100%', height: 160, objectFit: 'cover' }}/>
                           <CardContent sx={{ p: 2 }}>
-                            <Typography variant="subtitle1" fontWeight="600" sx={{
-                              fontSize: '14px',
-                              color: '#2c3e50',
-                              mb: 0.5
-                            }}>
+                            <Typography variant="subtitle1" fontWeight="600" sx={{fontSize: '14px',color: '#2c3e50',mb: 0.5 }}>
                               {pkg.title}
                             </Typography>
                             {pkg.price && (
                               <Typography variant="body2" color="#E15B65" fontWeight="600">
                                 ₹{pkg.price}
+                              </Typography>
+                            )}
+                            {pkg.description && (
+                              <Typography variant="body2" sx={{ color: '#555', fontSize: '13px', mt: 0.5 }}>
+                                {pkg.description}
                               </Typography>
                             )}
                           </CardContent>
@@ -818,7 +807,7 @@ const VenueListingView = () => {
           )}
         </CardContent>
       </Card>
-      {/* Delete Dialog */}
+
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
@@ -827,11 +816,7 @@ const VenueListingView = () => {
         PaperProps={{
           sx: { borderRadius: 3 }
         }} >
-        <DialogTitle sx={{
-          color: '#dc3545',
-          fontWeight: 700,
-          fontSize: '20px'
-        }}>
+        <DialogTitle sx={{ color: '#dc3545', fontWeight: 700, fontSize: '20px' }}>
           Delete Venue
         </DialogTitle>
         <DialogContent>
@@ -856,6 +841,7 @@ const VenueListingView = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
       <Snackbar
         open={openToast}
         autoHideDuration={3000}
@@ -873,4 +859,4 @@ const VenueListingView = () => {
   );
 };
 
-export default VenueListingView; 
+export default VenueListingView;
