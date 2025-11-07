@@ -42,7 +42,7 @@ const Reportssection = {
       id: 'Venue-Report',
       title: 'Venue Report',
       type: 'item',
-      url: '/report/venue',
+      url: '/report/venuereport',
       icon: icons.IconUsers,
       breadcrumbs: false
     },

@@ -197,7 +197,7 @@ const MainRoutes = {
           children: [
             { path: 'venueexp', element: <VenueExpReport/> },
             { path: 'disbursement', element: <VenueDisburseRepo/> },
-            { path: 'venue', element: <VenueReport/> },
+            { path: 'venuereport', element: <VenueReport/> },
             { path: 'venuetax', element: <VenueTaxReport/> }
           ]
         },
