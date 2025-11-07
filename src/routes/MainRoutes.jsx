@@ -78,7 +78,8 @@ const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const VenueMyShop = Loadable(lazy(()=> import('views/VenueMyShop')))
 
 //venuereport
-const VenueReport = Loadable(lazy(()=> import('views/VenueReport')));
+
+const VenueReport = Loadable(lazy(()=> import('views/Venuereport')));
 const VenueTaxReport = Loadable(lazy(()=> import('views/VenueTaxReport')));
 const VenueExpReport = Loadable(lazy(()=> import('views/VenueExpReport')));
 const VenueDisburseRepo = Loadable(lazy(()=> import ('views/VenueDisburseRepo')));
