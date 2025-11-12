@@ -8,6 +8,8 @@ import ProtectedRoute from './ProtectedRoute';
 import Schedules from '../views/Schedules';
 import Register from '../views/pages/authentication/Register';
 
+const DeleteProfile = Loadable(lazy(() => import('views/DeleteProfile')));
+
 // auth pages
 const Login = Loadable(lazy(() => import('views/pages/authentication/Login')));
 const Forgotpass = Loadable(lazy(() => import('views/pages/auth-forms/Forgotpass')));
@@ -109,6 +111,8 @@ const MainRoutes = {
     { path: 'login',element: <Login />},
     { path: 'register', element: <Register /> },
     { path: 'forgot-password', element: <Forgotpass/>},
+    { path: 'delete-profile', element: <DeleteProfile /> },
+    
     
     {
       path: '/',
@@ -122,7 +126,7 @@ const MainRoutes = {
         {
           path: 'dashboard',
           children: [
-            { path: 'default', element: <DashboardDefault /> }
+            { path: 'default', element: <DashboardDefault /> },
           ]
         },
         
@@ -225,6 +229,7 @@ const MainRoutes = {
       ]
     },
     { path: '/page-not-found', element: <PageNotFound />},
+
     {
       path: 'venue-setup',
       children: [
@@ -286,6 +291,8 @@ const MainRoutes = {
         { path: 'cateringrole', element: <EmployeRole/>}
       ]
     },
+           
+
     ]
     }
   ]

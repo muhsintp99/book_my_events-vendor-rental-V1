@@ -132,12 +132,10 @@ const venueMyShop = () => {
   const formatAddress = (address) => {
     if (!address) return 'Not provided';
     
-    // If address is a string, return it directly
     if (typeof address === 'string') {
       return address;
     }
     
-    // If address is an object with properties
     const parts = [
       address.street,
       address.city,
@@ -228,10 +226,8 @@ const venueMyShop = () => {
             </Box>
           </Paper>
         </Grid>
-        {/* Provider Details Section */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, height: 400, width: 500, borderRadius: 2 }}>
-            {/* Avatar Icon */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
               <Box
                 sx={{
@@ -248,7 +244,6 @@ const venueMyShop = () => {
                 </Avatar>
               </Box>
             </Box>
-            {/* Provider Information */}
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
                 <CircularProgress />

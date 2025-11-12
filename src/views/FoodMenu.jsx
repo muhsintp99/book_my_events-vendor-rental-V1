@@ -827,6 +827,11 @@ import {
   InputAdornment,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -869,28 +874,30 @@ const FoodMenu = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-
   const isSelecting = location.state?.selectingForVenue;
   const preSelected = location.state?.preSelected || [];
-
   const [viewMode, setViewMode] = useState('list');
   const [currentPackage, setCurrentPackage] = useState(null);
   const [packages, setPackages] = useState([]);
   const [selectedPackages, setSelectedPackages] = useState([]);
   const [formData, setFormData] = useState({
     packageTitle: '',
+    subtitle: '',
     description: '',
     startingPrice: '',
   });
+  const [categories, setCategories] = useState([]);
   const [menuSections, setMenuSections] = useState([
     { id: Date.now(), heading: '', includes: '' },
   ]);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState('success');
-
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const API_BASE_URL = 'https://api.bookmyevent.ae';
 
   useEffect(() => {
@@ -1004,9 +1011,11 @@ const FoodMenu = () => {
   const populateForm = (pkg) => {
     setFormData({
       packageTitle: pkg.title || '',
+      subtitle: pkg.subtitle || '',
       description: pkg.description || '',
       startingPrice: pkg.price?.toString() || '',
     });
+    setCategories(pkg.categories || []);
     setMenuSections(
       (pkg.includes || []).map((inc, index) => ({
         id: Date.now() + index,
@@ -1014,6 +1023,8 @@ const FoodMenu = () => {
         includes: inc.items?.join(', ') || '',
       }))
     );
+    setThumbnailPreview(pkg.thumbnail ? `${API_BASE_URL}/${pkg.thumbnail}` : null);
+    setGalleryPreviews((pkg.images || []).map(img => `${API_BASE_URL}/${img}`));
     setThumbnailFile(null);
     setGalleryFiles([]);
   };
@@ -1025,13 +1036,18 @@ const FoodMenu = () => {
     setViewMode('form');
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
     if (!currentPackage?._id) return;
     const token = localStorage.getItem('token');
     if (!token) {
       setToastMessage('No authentication token found. Please log in.');
       setToastSeverity('error');
       setOpenToast(true);
+      setOpenDeleteDialog(false);
       return;
     }
     try {
@@ -1051,6 +1067,7 @@ const FoodMenu = () => {
         setCurrentPackage(null);
         setFormData({
           packageTitle: '',
+          subtitle: '',
           description: '',
           startingPrice: '',
         });
@@ -1059,6 +1076,8 @@ const FoodMenu = () => {
         ]);
         setThumbnailFile(null);
         setGalleryFiles([]);
+        setThumbnailPreview(null);
+        setGalleryPreviews([]);
       } else {
         throw new Error(result.message || 'Failed to delete package');
       }
@@ -1067,7 +1086,13 @@ const FoodMenu = () => {
       setToastMessage(`Error deleting package: ${error.message}`);
       setToastSeverity('error');
       setOpenToast(true);
+    } finally {
+      setOpenDeleteDialog(false);
     }
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
   };
 
   const handleSubmit = async (e) => {
@@ -1096,12 +1121,14 @@ const FoodMenu = () => {
     const packageFormData = new FormData();
     packageFormData.append('providerId', providerId);
     packageFormData.append('title', formData.packageTitle || 'Custom Package');
-    packageFormData.append('subtitle', '');
+    packageFormData.append('subtitle', formData.subtitle || '');
     packageFormData.append('description', formData.description || '');
     packageFormData.append('packageType', 'custom');
     packageFormData.append('includes', JSON.stringify(transformedIncludes));
     packageFormData.append('price', price.toString());
-    packageFormData.append('categories', JSON.stringify(['68e795f06a1614cf448a36f5', '68e797ac6a1614cf448a372d']));
+    if (categories.length > 0) {
+      packageFormData.append('categories', JSON.stringify(categories));
+    }
     if (thumbnailFile) {
       packageFormData.append('thumbnail', thumbnailFile);
     }
@@ -1202,6 +1229,32 @@ const FoodMenu = () => {
             </Button>
           </Box>
         </Box>
+
+        <Dialog
+          open={openDeleteDialog}
+          onClose={handleCloseDeleteDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this package? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} color="error" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar open={openToast} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert onClose={handleCloseToast} severity={toastSeverity}>{toastMessage}</Alert>
+        </Snackbar>
       </Box>
     );
   }
@@ -1262,10 +1315,13 @@ const FoodMenu = () => {
                 }}
                 onClick={() => {
                   setViewMode('form');
-                  setFormData({ packageTitle: '', description: '', startingPrice: '' });
+                  setFormData({ packageTitle: '', subtitle: '', description: '', startingPrice: '' });
+                  setCategories([]);
                   setMenuSections([{ id: Date.now(), heading: '', includes: '' }]);
                   setThumbnailFile(null);
                   setGalleryFiles([]);
+                  setThumbnailPreview(null);
+                  setGalleryPreviews([]);
                   setCurrentPackage(null);
                 }}
               >
@@ -1309,6 +1365,7 @@ const FoodMenu = () => {
         </Box>
         <Box component="form" onSubmit={handleSubmit}>
           <TextField fullWidth label="Package Title" name="packageTitle" value={formData.packageTitle} onChange={handleInputChange} sx={{ mb: 2 }} />
+          <TextField fullWidth label="Subtitle" name="subtitle" value={formData.subtitle} onChange={handleInputChange} sx={{ mb: 2 }} />
           <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleInputChange} multiline rows={3} sx={{ mb: 3 }} />
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -1334,11 +1391,16 @@ const FoodMenu = () => {
               <Typography variant="subtitle2" gutterBottom>Thumbnail</Typography>
               <UploadDropArea onClick={() => document.getElementById('thumbnail-upload').click()}>
                 {thumbnailFile ? (
-                  <Box>
+                  <Box sx={{ position: 'relative' }}>
                     <img src={URL.createObjectURL(thumbnailFile)} alt="Thumbnail" style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain' }} />
-                    <IconButton onClick={clearThumbnail} size="small" sx={{ position: 'absolute', top: -8, right: -8 }}>
+                    <IconButton onClick={(e) => { e.stopPropagation(); clearThumbnail(); }} size="small" sx={{ position: 'absolute', top: 0, right: 0 }}>
                       <CloseIcon />
                     </IconButton>
+                  </Box>
+                ) : thumbnailPreview ? (
+                  <Box>
+                    <img src={thumbnailPreview} alt="Current Thumbnail" style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain' }} />
+                    <Typography variant="body2" color="#E15B65">Click to replace</Typography>
                   </Box>
                 ) : (
                   <Box>
@@ -1352,7 +1414,7 @@ const FoodMenu = () => {
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" gutterBottom>Gallery</Typography>
               <UploadDropArea onClick={() => document.getElementById('gallery-upload').click()}>
-                {galleryFiles.length === 0 ? (
+                {(galleryPreviews.length === 0 && galleryFiles.length === 0) ? (
                   <Box>
                     <CloudUploadIcon sx={{ fontSize: 40, color: '#999', mb: 1 }} />
                     <Typography variant="body2" color="#E15B65">Click to upload</Typography>
@@ -1362,24 +1424,36 @@ const FoodMenu = () => {
                 )}
                 <input type="file" id="gallery-upload" hidden accept="image/*" multiple onChange={handleGalleryChange} />
               </UploadDropArea>
-              {galleryFiles.length > 0 && (
-                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {galleryFiles.map((file, index) => (
-                    <ImagePreviewContainer key={index}>
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
-                      />
-                      <IconButton
-                        size="small"
-                        onClick={() => deleteGalleryFile(index)}
-                        sx={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white' }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </ImagePreviewContainer>
-                  ))}
+              {(galleryPreviews.length > 0 || galleryFiles.length > 0) && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2">Gallery Images</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {galleryPreviews.map((url, index) => (
+                      <Box key={`existing-${index}`} sx={{ position: 'relative', display: 'inline-block' }}>
+                        <img
+                          src={url}
+                          alt={`Current Gallery ${index + 1}`}
+                          style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                        />
+                      </Box>
+                    ))}
+                    {galleryFiles.map((file, index) => (
+                      <ImagePreviewContainer key={`new-${index}`}>
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => deleteGalleryFile(index)}
+                          sx={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white' }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </ImagePreviewContainer>
+                    ))}
+                  </Box>
                 </Box>
               )}
             </Box>

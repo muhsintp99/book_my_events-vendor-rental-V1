@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardMedia,
+  Chip,
   Snackbar,
   Alert,
   Stack,
@@ -74,7 +75,7 @@ const AddCard = styled(Box)(({ theme }) => ({
 const CateringPackagesList = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState('list'); // 'list', 'preview'
+  const [viewMode, setViewMode] = useState('list');
   const [packages, setPackages] = useState([]);
   const [currentPackage, setCurrentPackage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -85,19 +86,34 @@ const CateringPackagesList = () => {
   const [selectedPackageId, setSelectedPackageId] = useState(null);
   const API_BASE_URL = 'https://api.bookmyevent.ae';
 
+  const getImageUrl = (path) => {
+    if (!path) return '/placeholder.jpg';
+    let normalized = path.toLowerCase().replace(/^uploads/i, '/uploads');
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    return `${API_BASE_URL}${normalized}`;
+  };
+
   useEffect(() => {
     fetchPackages();
   }, []);
 
   const fetchPackages = async () => {
-    const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
+     const providerId = localStorage.getItem('providerId');
     if (!providerId) {
       setLoading(false);
+      setToastMessage('Provider ID missing. Please log in again.');
+      setToastSeverity('error');
+      setOpenToast(true);
       return;
     }
     const token = localStorage.getItem('token');
     if (!token) {
       setLoading(false);
+      setToastMessage('No authentication token. Please log in.');
+      setToastSeverity('error');
+      setOpenToast(true);
       return;
     }
     try {
@@ -108,11 +124,13 @@ const CateringPackagesList = () => {
       });
       if (response.ok) {
         const result = await response.json();
-        setPackages(result.caterings || []);
+        console.log('Fetched result:', result);
+        setPackages(result.data || []);
       } else {
         throw new Error('Failed to fetch packages');
       }
     } catch (error) {
+      console.error('Fetch error:', error);
       setToastMessage('Failed to fetch packages');
       setToastSeverity('error');
       setOpenToast(true);
@@ -162,7 +180,7 @@ const CateringPackagesList = () => {
         setToastMessage('Package deleted successfully!');
         setToastSeverity('success');
         setOpenToast(true);
-        fetchPackages(); // Refresh list
+        fetchPackages();
         if (currentPackage?._id === selectedPackageId) {
           setViewMode('list');
           setCurrentPackage(null);
@@ -171,6 +189,7 @@ const CateringPackagesList = () => {
         throw new Error(result.message || 'Failed to delete package');
       }
     } catch (error) {
+      console.error('Delete error:', error);
       setToastMessage(`Error deleting package: ${error.message}`);
       setToastSeverity('error');
       setOpenToast(true);
@@ -209,7 +228,7 @@ const CateringPackagesList = () => {
           {/* Thumbnail with overlay */}
           <Box sx={{ position: 'relative', mb: 3 }}>
             <img
-              src={currentPackage.thumbnail ? `${API_BASE_URL}/${currentPackage.thumbnail}` : '/placeholder.jpg'}
+              src={getImageUrl(currentPackage.thumbnail)}
               alt={currentPackage.title}
               style={{
                 width: '100%',
@@ -218,6 +237,7 @@ const CateringPackagesList = () => {
                 borderRadius: 8,
               }}
               onError={(e) => {
+                e.target.onerror = null;
                 e.target.src = '/placeholder.jpg';
               }}
             />
@@ -233,7 +253,7 @@ const CateringPackagesList = () => {
               }}
             >
               <Typography variant="h6" sx={{ mb: 0.5 }}>
-                {currentPackage.title}
+                {currentPackage.title || 'Untitled Package'}
               </Typography>
               <Typography variant="body2">
                 {currentPackage.subtitle || 'Traditional Style'}
@@ -242,8 +262,15 @@ const CateringPackagesList = () => {
           </Box>
           {/* Description */}
           <Typography variant="body1" sx={{ mb: 3, textAlign: 'justify' }}>
-            {currentPackage.description}
+            {currentPackage.description || 'No description available.'}
           </Typography>
+          {/* Categories */}
+          {currentPackage.categories && currentPackage.categories.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>Category</Typography>
+              <Chip label={currentPackage.categories[0]?.title || 'Uncategorized'} variant="outlined" color="primary" />
+            </Box>
+          )}
           {/* Includes */}
           <Typography variant="h6" sx={{ mb: 2 }}>
             Includes
@@ -251,14 +278,14 @@ const CateringPackagesList = () => {
           {(currentPackage.includes || []).map((inc, index) => (
             <Box key={index} sx={{ mb: 2 }}>
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'medium' }}>
-                {inc.title}
+                {inc.title || 'Untitled Section'}
               </Typography>
               <Stack component="ul" spacing={0.5} sx={{ pl: 2, mb: 0 }}>
-                {inc.items.map((item, itemIndex) => (
+                {inc.items?.map((item, itemIndex) => (
                   <Typography key={itemIndex} variant="body2" component="li">
                     {item}
                   </Typography>
-                ))}
+                )) || <Typography variant="body2" color="text.secondary">No items</Typography>}
               </Stack>
             </Box>
           ))}
@@ -268,7 +295,7 @@ const CateringPackagesList = () => {
               Starting Price
             </Typography>
             <Typography variant="h4" color="primary">
-              ₹{currentPackage.price} Per Head
+              ₹{currentPackage.price || 0} Per Head
             </Typography>
           </Box>
           {/* Gallery Images at bottom */}
@@ -280,7 +307,7 @@ const CateringPackagesList = () => {
               {(currentPackage.images || []).slice(0, 6).map((img, index) => (
                 <Box key={index} sx={{ position: 'relative' }}>
                   <img
-                    src={`${API_BASE_URL}/${img}`}
+                    src={getImageUrl(img)}
                     alt={`Gallery image ${index + 1}`}
                     style={{
                       width: 150,
@@ -289,11 +316,15 @@ const CateringPackagesList = () => {
                       borderRadius: 8,
                     }}
                     onError={(e) => {
+                      e.target.onerror = null;
                       e.target.src = '/placeholder.jpg';
                     }}
                   />
                 </Box>
               ))}
+              {(!currentPackage.images || currentPackage.images.length === 0) && (
+                <Typography variant="body2" color="text.secondary">No images</Typography>
+              )}
             </Stack>
           </Box>
           {/* Action Buttons */}
@@ -358,46 +389,53 @@ const CateringPackagesList = () => {
           Catering Packages
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center' }}>
-          {packages.map((pkg) => (
-            <StyledCard
-              key={pkg._id}
-              onClick={() => handlePackageClick(pkg)}
-              onMouseEnter={(e) => e.currentTarget.querySelector('.action-overlay')?.style.setProperty('opacity', '1')}
-              onMouseLeave={(e) => e.currentTarget.querySelector('.action-overlay')?.style.setProperty('opacity', '0')}
-            >
-              <Box sx={{ position: 'relative' }}>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={pkg.thumbnail ? `${API_BASE_URL}/${pkg.thumbnail}` : '/placeholder.jpg'}
-                  alt={pkg.title}
-                  sx={{ objectFit: 'cover' }}
-                  onError={(e) => {
-                    e.target.src = '/placeholder.jpg';
-                  }}
-                />
-                <ActionOverlay className="action-overlay">
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEdit(pkg); }}>
-                    <EditIcon fontSize="small" color="primary" />
-                  </IconButton>
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleOpenDeleteDialog(pkg._id); }}>
-                    <DeleteIcon fontSize="small" color="error" />
-                  </IconButton>
-                </ActionOverlay>
-              </Box>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ mb: 1, fontWeight: 'medium' }}>
-                  {pkg.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {pkg.subtitle || 'Traditional Style'}
-                </Typography>
-                <Typography variant="h6" color="primary">
-                  ₹{pkg.price} Per Head
-                </Typography>
-              </CardContent>
-            </StyledCard>
-          ))}
+          {packages.length > 0 ? (
+            packages.map((pkg) => (
+              <StyledCard
+                key={pkg._id}
+                onClick={() => handlePackageClick(pkg)}
+                onMouseEnter={(e) => e.currentTarget.querySelector('.action-overlay')?.style.setProperty('opacity', '1')}
+                onMouseLeave={(e) => e.currentTarget.querySelector('.action-overlay')?.style.setProperty('opacity', '0')}>
+                <Box sx={{ position: 'relative' }}>
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={getImageUrl(pkg.thumbnail)}
+                    alt={pkg.title}
+                    sx={{ objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/placeholder.jpg';
+                    }}/>
+                  <ActionOverlay className="action-overlay">
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEdit(pkg); }}>
+                      <EditIcon fontSize="small" color="primary" />
+                    </IconButton>
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleOpenDeleteDialog(pkg._id); }}>
+                      <DeleteIcon fontSize="small" color="error" />
+                    </IconButton>
+                  </ActionOverlay>
+                </Box>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 'medium' }}>
+                    {pkg.title || 'Untitled Package'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {pkg.subtitle || 'Traditional Style'}
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    ₹{pkg.price || 0} Per Head
+                  </Typography>
+                </CardContent>
+              </StyledCard>
+            ))
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                No packages found. Create your first one!
+              </Typography>
+            </Box>
+          )}
           <AddCard onClick={() => navigate('/catering/addpackage')}>
             <AddIcon sx={{ fontSize: 48, color: '#E15B65', mb: 2 }} />
             <Typography variant="h6" color="#E15B65">
@@ -409,8 +447,7 @@ const CateringPackagesList = () => {
           open={openToast}
           autoHideDuration={6000}
           onClose={handleCloseToast}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
           <Alert onClose={handleCloseToast} severity={toastSeverity} sx={{ width: '100%' }}>
             {toastMessage}
           </Alert>
@@ -419,8 +456,7 @@ const CateringPackagesList = () => {
           open={openDeleteDialog}
           onClose={handleCloseDeleteDialog}
           aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
+          aria-describedby="alert-dialog-description">
           <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">

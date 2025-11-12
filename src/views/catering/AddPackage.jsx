@@ -44,15 +44,49 @@ const UploadDropArea = styled(Box)(({ theme }) => ({
     display: 'none',
   },
 }));
+
 const ImagePreviewContainer = styled(Box)({
   position: 'relative',
   display: 'inline-block',
 });
+
+// Helper function to get providerId from localStorage
+const getProviderId = () => {
+  let providerId = localStorage.getItem('providerId');
+  
+  // Fallback: Try to extract from user object if providerId is not directly available
+  if (!providerId) {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const logRes = localStorage.getItem('logRes');
+        
+        // Try different possible locations for providerId
+        if (logRes) {
+          providerId = user.profile?._id || user._id;
+        } else {
+          providerId = user.providerId || user._id;
+        }
+        
+        // Store it for future use
+        if (providerId) {
+          localStorage.setItem('providerId', providerId);
+        }
+      } catch (e) {
+        console.error('Error parsing user:', e);
+      }
+    }
+  }
+  
+  return providerId;
+};
+
 const AddNewMenu = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const [viewMode, setViewMode] = useState('form'); // 'form', 'preview'
+  const [viewMode, setViewMode] = useState('form');
   const [formData, setFormData] = useState({
     packageTitle: '',
     subtitle: '',
@@ -62,7 +96,7 @@ const AddNewMenu = () => {
   const [menuSections, setMenuSections] = useState([
     { id: Date.now(), heading: '', includes: '' },
   ]);
-  const [selectedCategory, setSelectedCategory] = useState(null); // {value: _id, label: name}
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [availableCategories, setAvailableCategories] = useState([]);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
@@ -71,15 +105,22 @@ const AddNewMenu = () => {
   const [toastSeverity, setToastSeverity] = useState('success');
   const [currentPackage, setCurrentPackage] = useState(null);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [categoryMap, setCategoryMap] = useState({}); // For preview names
+  const [categoryMap, setCategoryMap] = useState({});
   const API_BASE_URL = 'https://api.bookmyevent.ae';
 
-  // Helper: get token from storage
+  const getImageUrl = (path) => {
+    if (!path) return '/placeholder.jpg';
+    let normalized = path.toLowerCase().replace(/^uploads/i, '/uploads');
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    return `${API_BASE_URL}${normalized}`;
+  };
+
   const getAuthToken = () => {
     return localStorage.getItem('token') || sessionStorage.getItem('token');
   };
 
-  // Fetch available categories dynamically
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -101,14 +142,12 @@ const AddNewMenu = () => {
           throw new Error('Response is not JSON');
         }
         const data = await response.json();
-        // Check if response has success and data properties
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           const formattedCategories = data.data.map((category) => ({
             value: category._id,
             label: category.title || category.name,
           }));
           setAvailableCategories(formattedCategories);
-          // Map _id to label for preview
           const map = {};
           data.data.forEach((category) => {
             map[category._id] = category.title || category.name;
@@ -121,7 +160,7 @@ const AddNewMenu = () => {
         setLoadingCategories(false);
       } catch (error) {
         console.error('Error fetching categories:', error.message);
-        setAvailableCategories([]); // Fallback to empty
+        setAvailableCategories([]);
         setCategoryMap({});
         setLoadingCategories(false);
       }
@@ -137,7 +176,6 @@ const AddNewMenu = () => {
     }
   }, [location.state]);
 
-  // Update selected category label when availableCategories loads during edit
   useEffect(() => {
     if (currentPackage && availableCategories.length > 0 && !selectedCategory && currentPackage.categories?.length > 0) {
       const categoryId = currentPackage.categories[0]?._id || currentPackage.categories[0];
@@ -242,14 +280,19 @@ const AddNewMenu = () => {
       setOpenToast(true);
       return;
     }
-    const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
+    
+    const providerId = getProviderId();
     const moduleId = localStorage.getItem('moduleId');
+    
     if (!providerId) {
       setToastMessage('Provider ID is missing. Please log in again.');
       setToastSeverity('error');
       setOpenToast(true);
       return;
     }
+    
+    console.log('Using providerId:', providerId);
+    
     const transformedIncludes = menuSections
       .filter((s) => s.includes.trim())
       .map((s) => ({
@@ -295,7 +338,6 @@ const AddNewMenu = () => {
         throw new Error('Invalid response from server');
       }
       if (response.ok) {
-        // Clear form data after successful submit
         setFormData({
           packageTitle: '',
           subtitle: '',
@@ -308,7 +350,7 @@ const AddNewMenu = () => {
         setSelectedCategory(null);
         setThumbnailFile(null);
         setGalleryFiles([]);
-        setCurrentPackage(result.catering || result);
+        setCurrentPackage(result.data);
         setViewMode('preview');
         setToastMessage(result.message || `Catering ${isEdit ? 'updated' : 'created'} successfully!`);
         setToastSeverity('success');
@@ -326,25 +368,8 @@ const AddNewMenu = () => {
 
   if (viewMode === 'preview' && currentPackage) {
     return (
-      <Box
-        sx={{
-          p: 3,
-          backgroundColor: theme.palette.grey[100],
-          minHeight: '100vh',
-          width: '100%',
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            margin: 'auto',
-            backgroundColor: 'white',
-            borderRadius: theme.shape.borderRadius,
-            boxShadow: theme.shadows[1],
-            p: 3,
-            overflowX: 'hidden',
-          }}
-        >
+      <Box sx={{ p: 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
+        <Box sx={{ width: '100%', margin: 'auto', backgroundColor: 'white', borderRadius: theme.shape.borderRadius, boxShadow: theme.shadows[1], p: 3, overflowX: 'hidden' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
             <IconButton onClick={() => navigate(-1)} color="primary">
               <ArrowBackIcon />
@@ -353,126 +378,82 @@ const AddNewMenu = () => {
               Package Preview
             </Typography>
           </Box>
-          {/* Thumbnail with overlay */}
           <Box sx={{ position: 'relative', mb: 3 }}>
             <img
-              src={currentPackage.thumbnail ? `${API_BASE_URL}/${currentPackage.thumbnail}` : '/placeholder.jpg'}
+              src={getImageUrl(currentPackage.thumbnail)}
               alt={currentPackage.title}
-              style={{
-                width: '100%',
-                height: 200,
-                objectFit: 'cover',
-                borderRadius: 8,
-              }}
+              style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8 }}
               onError={(e) => {
+                e.target.onerror = null;
                 e.target.src = '/placeholder.jpg';
               }}
             />
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                color: 'white',
-                p: 2,
-              }}
-            >
+            <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', color: 'white', p: 2 }}>
               <Typography variant="h6" sx={{ mb: 0.5 }}>
-                {currentPackage.title}
+                {currentPackage.title || 'Untitled Package'}
               </Typography>
               <Typography variant="body2">
                 {currentPackage.subtitle || 'Traditional Style'}
               </Typography>
             </Box>
           </Box>
-          {/* Description */}
           <Typography variant="body1" sx={{ mb: 3, textAlign: 'justify' }}>
-            {currentPackage.description}
+            {currentPackage.description || 'No description available.'}
           </Typography>
-          {/* Categories */}
           {currentPackage.categories && currentPackage.categories.length > 0 && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Category
-              </Typography>
-              <Chip 
-                label={currentPackage.categories[0]?.title || currentPackage.categories[0]} 
-                variant="outlined" 
-                color="primary" 
-              />
+              <Typography variant="h6" sx={{ mb: 1 }}>Category</Typography>
+              <Chip label={currentPackage.categories[0]?.title || currentPackage.categories[0] || 'Uncategorized'} variant="outlined" color="primary" />
             </Box>
           )}
-          {/* Includes */}
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Includes
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}>Includes</Typography>
           {(currentPackage.includes || []).map((inc, index) => (
             <Box key={index} sx={{ mb: 2 }}>
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'medium' }}>
-                {inc.title}
+                {inc.title || 'Untitled Section'}
               </Typography>
               <Stack component="ul" spacing={0.5} sx={{ pl: 2, mb: 0 }}>
-                {inc.items.map((item, itemIndex) => (
+                {inc.items?.map((item, itemIndex) => (
                   <Typography key={itemIndex} variant="body2" component="li">
                     {item}
                   </Typography>
-                ))}
+                )) || <Typography variant="body2" color="text.secondary">No items</Typography>}
               </Stack>
             </Box>
           ))}
-          {/* Price */}
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 0.5 }}>
-              Starting Price
-            </Typography>
+            <Typography variant="h6" sx={{ mb: 0.5 }}>Starting Price</Typography>
             <Typography variant="h4" color="primary">
-              ₹{currentPackage.price} Per Head
+              ₹{currentPackage.price || 0} Per Head
             </Typography>
           </Box>
-          {/* Gallery Images at bottom */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Gallery
-            </Typography>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>Gallery</Typography>
             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
               {(currentPackage.images || []).slice(0, 6).map((img, index) => (
                 <Box key={index} sx={{ position: 'relative' }}>
                   <img
-                    src={`${API_BASE_URL}/${img}`}
+                    src={getImageUrl(img)}
                     alt={`Gallery image ${index + 1}`}
-                    style={{
-                      width: 150,
-                      height: 150,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                    }}
+                    style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 8 }}
                     onError={(e) => {
+                      e.target.onerror = null;
                       e.target.src = '/placeholder.jpg';
                     }}
                   />
                 </Box>
               ))}
+              {(!currentPackage.images || currentPackage.images.length === 0) && (
+                <Typography variant="body2" color="text.secondary">No images</Typography>
+              )}
             </Stack>
           </Box>
-          {/* Action Buttons */}
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={handleEdit}
-              sx={{ color: '#E15B65', borderColor: '#E15B65' }}
-            >
+            <Button variant="outlined" startIcon={<EditIcon />} onClick={handleEdit} sx={{ color: '#E15B65', borderColor: '#E15B65' }}>
               Edit Menu
             </Button>
           </Box>
-          <Snackbar
-            open={openToast}
-            autoHideDuration={6000}
-            onClose={handleCloseToast}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          >
+          <Snackbar open={openToast} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
             <Alert onClose={handleCloseToast} severity={toastSeverity} sx={{ width: '100%' }}>
               {toastMessage}
             </Alert>
@@ -481,27 +462,10 @@ const AddNewMenu = () => {
       </Box>
     );
   }
-  // Form mode (add or edit menu)
+
   return (
-    <Box
-      sx={{
-        p: 3,
-        backgroundColor: theme.palette.grey[100],
-        minHeight: '100vh',
-        width: '100%',
-      }}
-    >
-      <Box
-        sx={{
-          width: '100%',
-          margin: 'auto',
-          backgroundColor: 'white',
-          borderRadius: theme.shape.borderRadius,
-          boxShadow: theme.shadows[1],
-          p: 3,
-          overflowX: 'hidden',
-        }}
-      >
+    <Box sx={{ p: 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
+      <Box sx={{ width: '100%', margin: 'auto', backgroundColor: 'white', borderRadius: theme.shape.borderRadius, boxShadow: theme.shadows[1], p: 3, overflowX: 'hidden' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           {currentPackage && (
             <IconButton onClick={() => navigate(-1)} color="primary">
@@ -513,38 +477,9 @@ const AddNewMenu = () => {
           </Typography>
         </Box>
         <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Package Title"
-            name="packageTitle"
-            value={formData.packageTitle}
-            onChange={handleInputChange}
-            placeholder="Type package title"
-            sx={{ mb: 2 }}
-            variant="outlined"
-          />
-          <TextField
-            fullWidth
-            label="Subtitle"
-            name="subtitle"
-            value={formData.subtitle}
-            onChange={handleInputChange}
-            placeholder="Type subtitle"
-            sx={{ mb: 2 }}
-            variant="outlined"
-          />
-          <TextField
-            fullWidth
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Type description"
-            multiline
-            rows={3}
-            sx={{ mb: 2 }}
-            variant="outlined"
-          />
+          <TextField fullWidth label="Package Title" name="packageTitle" value={formData.packageTitle} onChange={handleInputChange} placeholder="Type package title" sx={{ mb: 2 }} variant="outlined" />
+          <TextField fullWidth label="Subtitle" name="subtitle" value={formData.subtitle} onChange={handleInputChange} placeholder="Type subtitle" sx={{ mb: 2 }} variant="outlined" />
+          <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleInputChange} placeholder="Type description" multiline rows={3} sx={{ mb: 2 }} variant="outlined" />
           <Autocomplete
             fullWidth
             options={availableCategories}
@@ -566,51 +501,16 @@ const AddNewMenu = () => {
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle1">Menu List</Typography>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={addMenuSection}
-                startIcon={<AddIcon />}
-                sx={{ backgroundColor: '#E15B65', color: 'white' }}
-              >
+              <Button variant="contained" size="small" onClick={addMenuSection} startIcon={<AddIcon />} sx={{ backgroundColor: '#E15B65', color: 'white' }}>
                 Add
               </Button>
             </Box>
             {menuSections.map((section) => (
-              <Box
-                key={section.id}
-                sx={{
-                  border: `1px solid ${theme.palette.grey[300]}`,
-                  borderRadius: 1,
-                  p: 2,
-                  mb: 2,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  label="Add heading here"
-                  value={section.heading}
-                  onChange={(e) => handleMenuChange(section.id, 'heading', e.target.value)}
-                  sx={{ mb: 2 }}
-                  variant="outlined"
-                />
+              <Box key={section.id} sx={{ border: `1px solid ${theme.palette.grey[300]}`, borderRadius: 1, p: 2, mb: 2 }}>
+                <TextField fullWidth label="Add heading here" value={section.heading} onChange={(e) => handleMenuChange(section.id, 'heading', e.target.value)} sx={{ mb: 2 }} variant="outlined" />
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                  <TextField
-                    fullWidth
-                    label="Includes"
-                    value={section.includes}
-                    onChange={(e) => handleMenuChange(section.id, 'includes', e.target.value)}
-                    multiline
-                    rows={3}
-                    sx={{ flex: 1 }}
-                    variant="outlined"
-                    placeholder="Enter items separated by commas"
-                  />
-                  <IconButton
-                    onClick={() => deleteMenuSection(section.id)}
-                    color="error"
-                    sx={{ alignSelf: 'flex-end' }}
-                  >
+                  <TextField fullWidth label="Includes" value={section.includes} onChange={(e) => handleMenuChange(section.id, 'includes', e.target.value)} multiline rows={3} sx={{ flex: 1 }} variant="outlined" placeholder="Enter items separated by commas" />
+                  <IconButton onClick={() => deleteMenuSection(section.id)} color="error" sx={{ alignSelf: 'flex-end' }}>
                     <DeleteIcon />
                   </IconButton>
                 </Box>
@@ -619,135 +519,66 @@ const AddNewMenu = () => {
           </Box>
           <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
             <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Thumbnail Image
-              </Typography>
-              <UploadDropArea
-                onClick={() => document.getElementById('thumbnail-upload').click()}
-              >
+              <Typography variant="subtitle2" gutterBottom>Thumbnail Image</Typography>
+              <UploadDropArea onClick={() => document.getElementById('thumbnail-upload').click()}>
                 {thumbnailFile ? (
                   <Box sx={{ textAlign: 'center' }}>
                     <ImagePreviewContainer>
-                      <img
-                        src={URL.createObjectURL(thumbnailFile)}
-                        alt="Thumbnail preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
-                      <IconButton
-                        onClick={clearThumbnail}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: -8,
-                          right: -8,
-                          backgroundColor: 'white',
-                          color: 'error',
-                          boxShadow: theme.shadows[2],
-                        }}
-                      >
+                      <img src={URL.createObjectURL(thumbnailFile)} alt="Thumbnail preview" style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} />
+                      <IconButton onClick={clearThumbnail} size="small" sx={{ position: 'absolute', top: -8, right: -8, backgroundColor: 'white', color: 'error', boxShadow: theme.shadows[2] }}>
                         <CloseIcon fontSize="small" />
                       </IconButton>
                     </ImagePreviewContainer>
-                    <Typography variant="body2" color="text.secondary">
-                      {thumbnailFile.name}
-                    </Typography>
+                    <Typography variant="body2" color="text.secondary">{thumbnailFile.name}</Typography>
                   </Box>
                 ) : currentPackage?.thumbnail ? (
                   <Box sx={{ textAlign: 'center' }}>
-                    <img
-                      src={`${API_BASE_URL}/${currentPackage.thumbnail}`}
-                      alt="Current thumbnail"
-                      style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      Current thumbnail. Click to replace.
-                    </Typography>
+                    <img src={getImageUrl(currentPackage.thumbnail)} alt="Current thumbnail" style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }} />
+                    <Typography variant="body2" color="text.secondary">Current thumbnail. Click to replace.</Typography>
                   </Box>
                 ) : (
                   <Box>
                     <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                    <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>
-                      Click to upload
-                    </Typography>
+                    <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
                     <Typography variant="body2" color="text.secondary">Or drag and drop</Typography>
                   </Box>
                 )}
-                <input
-                  type="file"
-                  id="thumbnail-upload"
-                  hidden
-                  accept="image/jpeg,image/png,image/jpg"
-                  onChange={handleThumbnailChange}
-                />
+                <input type="file" id="thumbnail-upload" hidden accept="image/jpeg,image/png,image/jpg" onChange={handleThumbnailChange} />
               </UploadDropArea>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Gallery Images
-              </Typography>
-              <UploadDropArea
-                onClick={() => document.getElementById('gallery-upload').click()}
-              >
+              <Typography variant="subtitle2" gutterBottom>Gallery Images</Typography>
+              <UploadDropArea onClick={() => document.getElementById('gallery-upload').click()}>
                 {galleryFiles.length > 0 ? (
                   <Box sx={{ textAlign: 'center' }}>
                     <Stack direction="row" flexWrap="wrap" spacing={1} sx={{ justifyContent: 'center', mb: 1 }}>
                       {galleryFiles.map((file, index) => (
                         <ImagePreviewContainer key={index}>
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Gallery preview ${index + 1}`}
-                            style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }}
-                          />
-                          <IconButton
-                            onClick={() => deleteGalleryFile(index)}
-                            size="small"
-                            sx={{
-                              position: 'absolute',
-                              top: -8,
-                              right: -8,
-                              backgroundColor: 'white',
-                              color: 'error',
-                              boxShadow: theme.shadows[2],
-                            }}
-                          >
+                          <img src={URL.createObjectURL(file)} alt={`Gallery preview ${index + 1}`} style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
+                          <IconButton onClick={() => deleteGalleryFile(index)} size="small" sx={{ position: 'absolute', top: -8, right: -8, backgroundColor: 'white', color: 'error', boxShadow: theme.shadows[2] }}>
                             <CloseIcon fontSize="small" />
                           </IconButton>
                         </ImagePreviewContainer>
                       ))}
                     </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      {galleryFiles.length} image(s) selected
-                    </Typography>
+                    <Typography variant="body2" color="text.secondary">{galleryFiles.length} image(s) selected</Typography>
                   </Box>
                 ) : (
                   <Box>
                     <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                    <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>
-                      Click to upload
-                    </Typography>
+                    <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
                     <Typography variant="body2" color="text.secondary">Or drag and drop</Typography>
                   </Box>
                 )}
-                <input
-                  type="file"
-                  id="gallery-upload"
-                  hidden
-                  accept="image/jpeg,image/png,image/jpg"
-                  multiple
-                  onChange={handleGalleryChange}/>
+                <input type="file" id="gallery-upload" hidden accept="image/jpeg,image/png,image/jpg" multiple onChange={handleGalleryChange} />
               </UploadDropArea>
               {currentPackage?.images?.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom color="text.secondary">
-                    Existing Images
-                  </Typography>
+                  <Typography variant="subtitle2" gutterBottom color="text.secondary">Existing Images</Typography>
                   <Stack direction="row" flexWrap="wrap" spacing={1}>
                     {currentPackage.images.map((img, index) => (
                       <Box key={index} sx={{ position: 'relative' }}>
-                        <img
-                          src={`${API_BASE_URL}/${img}`}
-                          alt={`Existing gallery ${index + 1}`}
-                          style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
+                        <img src={getImageUrl(img)} alt={`Existing gallery ${index + 1}`} style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }} />
                       </Box>
                     ))}
                   </Stack>
@@ -756,39 +587,13 @@ const AddNewMenu = () => {
             </Box>
           </Box>
           <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              label="₹ Price (Starting From)"
-              name="startingPrice"
-              value={formData.startingPrice}
-              onChange={handleInputChange}
-              type="number"
-              inputProps={{ min: 0 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Typography variant="body2" color="text.secondary">
-                      Per Head
-                    </Typography>
-                  </InputAdornment>
-                ),
-              }}
-              variant="outlined" />
+            <TextField fullWidth label="₹ Price (Starting From)" name="startingPrice" value={formData.startingPrice} onChange={handleInputChange} type="number" inputProps={{ min: 0 }} InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="body2" color="text.secondary">Per Head</Typography></InputAdornment> }} variant="outlined" />
           </Box>
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            sx={{ backgroundColor: '#E15B65', color: 'white', py: 1.5 }} >
+          <Button type="submit" variant="contained" fullWidth sx={{ backgroundColor: '#E15B65', color: 'white', py: 1.5 }}>
             {currentPackage ? 'Update Menu' : 'Create Menu'}
           </Button>
         </Box>
-        <Snackbar
-          open={openToast}
-          autoHideDuration={6000}
-          onClose={handleCloseToast}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
+        <Snackbar open={openToast} autoHideDuration={6000} onClose={handleCloseToast} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
           <Alert onClose={handleCloseToast} severity={toastSeverity} sx={{ width: '100%' }}>
             {toastMessage}
           </Alert>
@@ -797,4 +602,5 @@ const AddNewMenu = () => {
     </Box>
   );
 };
+
 export default AddNewMenu;
