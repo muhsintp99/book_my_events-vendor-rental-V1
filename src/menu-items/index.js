@@ -116,6 +116,9 @@ import Reports from './catering/Report';
 import Employees from './catering/employees';
 
 
+// makeup
+import Makeupmanagement from './makeup/Makeupmanagement';
+
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '').toLowerCase(); 
 console.log("logRes:", logRes);
@@ -139,9 +142,8 @@ if (logRes === 'transport') {
 } else if (logRes === 'catering') {
   specificSections = [cateringmanagement, Reports, Employees];
 } else if (logRes === 'makeup') {
-  // specificSections = [makeupmanagement];
-  specificSections = [];
-} else if (logRes === 'dj_music') {
+    specificSections = [Makeupmanagement];      
+}else if (logRes === 'dj_music') {
   // specificSections = [djmusicmanagement];
   specificSections = [];
 }
