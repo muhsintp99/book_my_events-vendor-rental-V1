@@ -33,7 +33,7 @@ import axios from 'axios';
 const PINK = '#E91E63';
 const API_BASE = 'https://api.bookmyevent.ae';
 
-// Makeup Module ID (from your Postman → module._id)
+// Makeup Module ID
 const MAKEUP_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
 
 const MAKEUP_TYPES = [
@@ -51,7 +51,6 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
       <IconButton onClick={onDelete} sx={{ position: 'absolute', top: 12, right: 12, color: PINK }}>
         <DeleteIcon fontSize="small" />
       </IconButton>
-
       <TextField
         fullWidth
         label={<span>Section Title <span style={{ color: 'red' }}>*</span></span>}
@@ -59,7 +58,6 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
         onChange={(e) => onChange('title', e.target.value)}
         sx={{ mb: 2 }}
       />
-
       <TextField
         fullWidth
         label={<span>Items (comma separated) <span style={{ color: 'red' }}>*</span></span>}
@@ -68,7 +66,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
         onChange={(e) => onChange('items', e.target.value)}
         multiline
         rows={2}
-        helperText=" Separate items with commas"
+        helperText="Separate items with commas"
       />
     </Box>
   );
@@ -84,9 +82,12 @@ const AddmakePackage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Only Makeup Categories
+  // Makeup Categories
   const [makeupCategories, setMakeupCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  // ✅ Get logged-in vendor info from localStorage
+  const [currentVendor, setCurrentVendor] = useState(null);
 
   // Form Fields
   const [packageTitle, setPackageTitle] = useState('');
@@ -115,15 +116,41 @@ const AddmakePackage = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [existingGallery, setExistingGallery] = useState([]);
 
-  // Fetch ONLY Makeup Categories using correct endpoint
+  // ✅ Load current vendor from localStorage on mount
+  useEffect(() => {
+    const loadVendorInfo = () => {
+      try {
+        // Try different possible storage keys - adjust based on your auth implementation
+        const vendorData = localStorage.getItem('vendor') || 
+                          localStorage.getItem('user') || 
+                          localStorage.getItem('vendorData');
+        
+        if (vendorData) {
+          const parsed = JSON.parse(vendorData);
+          setCurrentVendor(parsed);
+          console.log('Loaded vendor:', parsed);
+        } else {
+          // Also check for just the ID
+          const vendorId = localStorage.getItem('vendorId') || 
+                          localStorage.getItem('userId');
+          if (vendorId) {
+            setCurrentVendor({ _id: vendorId, id: vendorId });
+          }
+        }
+      } catch (err) {
+        console.error('Error loading vendor info:', err);
+      }
+    };
+    
+    loadVendorInfo();
+  }, []);
+
+  // Fetch Makeup Categories
   useEffect(() => {
     const fetchMakeupCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const res = await axios.get(
-          `${API_BASE}/api/categories/modules/${MAKEUP_MODULE_ID}`
-        );
-
+        const res = await axios.get(`${API_BASE}/api/categories/modules/${MAKEUP_MODULE_ID}`);
         if (res.data.success && Array.isArray(res.data.data)) {
           setMakeupCategories(res.data.data);
         } else {
@@ -136,7 +163,6 @@ const AddmakePackage = () => {
         setCategoriesLoading(false);
       }
     };
-
     fetchMakeupCategories();
   }, []);
 
@@ -225,6 +251,14 @@ const AddmakePackage = () => {
   const removeExistingImage = (i) => setExistingGallery(prev => prev.filter((_, idx) => idx !== i));
 
   const handleSubmit = async () => {
+    // ✅ Check if vendor is logged in
+    const vendorId = currentVendor?._id || currentVendor?.id;
+    
+    if (!vendorId) {
+      setError('Vendor not authenticated. Please login again.');
+      return;
+    }
+
     if (!packageTitle.trim()) return setError('Package title is required');
     if (selectedCategories.length === 0) return setError('Select at least one category');
     if (!makeupType) return setError('Select makeup type');
@@ -236,6 +270,10 @@ const AddmakePackage = () => {
     setSuccessMessage('');
 
     const formData = new FormData();
+    
+    // ✅ Add module ID - THIS WAS MISSING!
+    formData.append('module', MAKEUP_MODULE_ID);
+    
     formData.append('packageTitle', packageTitle.trim());
     selectedCategories.forEach(cat => formData.append('categories', cat));
     formData.append('makeupType', makeupType);
@@ -247,7 +285,9 @@ const AddmakePackage = () => {
     formData.append('trialMakeupIncluded', trialIncluded);
     formData.append('travelToVenue', travelToVenue);
     formData.append('isActive', isActive);
-    formData.append('providerId', '68e77be26a1614cf448a34d7'); // Update if needed
+    
+    // ✅ Use dynamic vendor ID from localStorage instead of hardcoded
+    formData.append('providerId', vendorId);
 
     const validSections = serviceSections
       .filter(s => s.title.trim() && s.items.length > 0)
@@ -263,6 +303,7 @@ const AddmakePackage = () => {
         eyelashExtension: 'Eyelash Extension',
         nailPolish: 'Nail Polish',
       }[key]));
+      
     if (selectedBasic.length > 0) {
       let services = JSON.parse(formData.get('includedServices') || '[]');
       services.push({ title: 'Basic Add-ons', items: selectedBasic });
@@ -306,17 +347,29 @@ const AddmakePackage = () => {
             {isEditMode ? 'Edit' : 'Add'} Makeup Package
           </Typography>
         </Box>
+        {/* ✅ Show current vendor info */}
+        {currentVendor && (
+          <Typography variant="body2" color="text.secondary" sx={{ ml: 7 }}>
+            Creating as: {currentVendor.firstName || currentVendor.email || currentVendor._id}
+          </Typography>
+        )}
       </Box>
 
       <Box sx={{ p: { xs: 2, md: 4 } }}>
         {successMessage && <Alert severity="success" sx={{ mb: 3 }}>{successMessage}</Alert>}
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+        
+        {/* ✅ Warning if vendor not detected */}
+        {!currentVendor && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            Vendor information not found. Please login again to create packages.
+          </Alert>
+        )}
 
         <Paper elevation={3} sx={{ borderRadius: 3, p: { xs: 3, md: 6 } }}>
           <TextField fullWidth label="Package Title *" value={packageTitle} onChange={e => setPackageTitle(e.target.value)} sx={{ mb: 3 }} />
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            {/* ONLY MAKEUP CATEGORIES */}
             <FormControl fullWidth>
               <InputLabel>Category *</InputLabel>
               <Select
@@ -355,7 +408,6 @@ const AddmakePackage = () => {
             </FormControl>
           </Stack>
 
-          {/* Rest of your form (keep same) */}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
             <TextField fullWidth label="Base Price *" type="number" value={basePrice} onChange={e => setBasePrice(e.target.value)} />
             <TextField fullWidth label="Offer Price" type="number" value={offerPrice} onChange={e => setOfferPrice(e.target.value)} helperText="Leave empty if no discount" />
@@ -443,7 +495,7 @@ const AddmakePackage = () => {
             variant="contained"
             size="large"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || !currentVendor}
             sx={{ py: 2, bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
           >
             {submitting ? <CircularProgress size={28} color="inherit" /> : isEditMode ? 'Update Package' : 'Create Package'}
