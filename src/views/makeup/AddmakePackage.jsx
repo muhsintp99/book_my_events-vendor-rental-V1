@@ -121,7 +121,7 @@ const AddmakePackage = () => {
       try {
         setCategoriesLoading(true);
         const res = await axios.get(
-          `${API_BASE}/api/categories/module/${MAKEUP_MODULE_ID}`
+          `${API_BASE}/api/categories/modules/${MAKEUP_MODULE_ID}`
         );
 
         if (res.data.success && Array.isArray(res.data.data)) {
