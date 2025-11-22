@@ -31,7 +31,7 @@ import {
 import axios from 'axios';
 
 const PINK = '#E91E63';
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://api.bookmyevent.ae';
 
 // Makeup Module ID (from your Postman → module._id)
 const MAKEUP_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
