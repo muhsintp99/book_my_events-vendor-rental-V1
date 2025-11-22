@@ -33,13 +33,22 @@ import axios from 'axios';
 const PINK = '#E91E63';
 const API_BASE = 'http://localhost:5000';
 
+// Makeup Module ID (from your Postman → module._id)
+const MAKEUP_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
+
+const MAKEUP_TYPES = [
+  'HD Makeup',
+  'Airbrush Makeup',
+  'Matte Makeup',
+  'Dewy/Glass Makeup',
+  'Mineral Makeup',
+  'Traditional',
+];
+
 const ServiceSection = ({ section, onChange, onDelete }) => {
   return (
     <Box sx={{ position: 'relative', border: '1px solid #e5e5e5', borderRadius: 2, p: 3, mb: 3, bgcolor: 'white' }}>
-      <IconButton
-        onClick={onDelete}
-        sx={{ position: 'absolute', top: 12, right: 12, color: PINK }}
-      >
+      <IconButton onClick={onDelete} sx={{ position: 'absolute', top: 12, right: 12, color: PINK }}>
         <DeleteIcon fontSize="small" />
       </IconButton>
 
@@ -59,6 +68,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
         onChange={(e) => onChange('items', e.target.value)}
         multiline
         rows={2}
+        helperText=" Separate items with commas"
       />
     </Box>
   );
@@ -69,14 +79,18 @@ const AddmakePackage = () => {
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  const [loading, setLoading] = useState(isEditMode);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
+  // Only Makeup Categories
+  const [makeupCategories, setMakeupCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   // Form Fields
   const [packageTitle, setPackageTitle] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [makeupType, setMakeupType] = useState('');
   const [basePrice, setBasePrice] = useState('');
   const [offerPrice, setOfferPrice] = useState('');
@@ -91,7 +105,6 @@ const AddmakePackage = () => {
     { id: Date.now(), title: '', items: [] },
   ]);
 
-  // Basic Services (Predefined)
   const [basicServices, setBasicServices] = useState({
     hairStyling: false,
     sareeDraping: false,
@@ -102,11 +115,32 @@ const AddmakePackage = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [existingGallery, setExistingGallery] = useState([]);
 
-  const categoryOptions = [
-    { id: '6915f179edaddc3837ff31e7', title: 'Engagement' },
-    { id: '6915f167edaddc3837ff31df', title: 'Bridal Makeup' },
-  ];
+  // Fetch ONLY Makeup Categories using correct endpoint
+  useEffect(() => {
+    const fetchMakeupCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const res = await axios.get(
+          `${API_BASE}/api/categories/modules/${MAKEUP_MODULE_ID}`
+        );
 
+        if (res.data.success && Array.isArray(res.data.data)) {
+          setMakeupCategories(res.data.data);
+        } else {
+          setError('No makeup categories found');
+        }
+      } catch (err) {
+        console.error('Error fetching makeup categories:', err);
+        setError('Failed to load categories. Please refresh.');
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchMakeupCategories();
+  }, []);
+
+  // Edit Mode: Load existing package
   useEffect(() => {
     if (!isEditMode) {
       setLoading(false);
@@ -119,7 +153,7 @@ const AddmakePackage = () => {
         const pkg = res.data.data;
 
         setPackageTitle(pkg.packageTitle || '');
-        setCategories(pkg.categories?.map(c => c._id || c) || []);
+        setSelectedCategories(pkg.categories?.map(c => c._id || c) || []);
         setMakeupType(pkg.makeupType || '');
         setBasePrice(pkg.basePrice?.toString() || '');
         setOfferPrice(pkg.offerPrice?.toString() || '0');
@@ -139,11 +173,10 @@ const AddmakePackage = () => {
         }
 
         if (pkg.gallery?.length > 0) {
-          setExistingGallery(pkg.gallery.map(img => `${API_BASE}/${img}`));
+          setExistingGallery(pkg.gallery.map(img => `${API_BASE}${img}`));
         }
       } catch (err) {
         setError('Failed to load package.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -152,6 +185,7 @@ const AddmakePackage = () => {
     fetchPackage();
   }, [id, isEditMode]);
 
+  // Handlers
   const handleAddSection = () => {
     setServiceSections(prev => [...prev, { id: Date.now(), title: '', items: [] }]);
   };
@@ -190,42 +224,20 @@ const AddmakePackage = () => {
   const removeNewImage = (i) => setGalleryImages(prev => prev.filter((_, idx) => idx !== i));
   const removeExistingImage = (i) => setExistingGallery(prev => prev.filter((_, idx) => idx !== i));
 
-  const resetForm = () => {
-    setPackageTitle('');
-    setCategories([]);
-    setMakeupType('');
-    setBasePrice('');
-    setOfferPrice('');
-    setDescription('');
-    setCancellationPolicy('');
-    setAdvanceBookingAmount('');
-    setTrialIncluded(false);
-    setTravelToVenue(false);
-    setIsActive(true);
-    setServiceSections([{ id: Date.now(), title: '', items: [] }]);
-    setBasicServices({
-      hairStyling: false,
-      sareeDraping: false,
-      eyelashExtension: false,
-      nailPolish: false,
-    });
-    setGalleryImages([]);
-    setExistingGallery([]);
-  };
-
   const handleSubmit = async () => {
-    if (!packageTitle.trim() || categories.length === 0 || !makeupType || !basePrice || !description.trim()) {
-      alert('Please fill all required fields');
-      return;
-    }
+    if (!packageTitle.trim()) return setError('Package title is required');
+    if (selectedCategories.length === 0) return setError('Select at least one category');
+    if (!makeupType) return setError('Select makeup type');
+    if (!basePrice) return setError('Base price is required');
+    if (!description.trim()) return setError('Description is required');
 
     setSubmitting(true);
-    setSuccessMessage('');
     setError('');
+    setSuccessMessage('');
 
     const formData = new FormData();
     formData.append('packageTitle', packageTitle.trim());
-    categories.forEach(cat => formData.append('categories', cat));
+    selectedCategories.forEach(cat => formData.append('categories', cat));
     formData.append('makeupType', makeupType);
     formData.append('description', description.trim());
     formData.append('basePrice', basePrice);
@@ -235,58 +247,47 @@ const AddmakePackage = () => {
     formData.append('trialMakeupIncluded', trialIncluded);
     formData.append('travelToVenue', travelToVenue);
     formData.append('isActive', isActive);
-    formData.append('providerId', '68e77be26a1614cf448a34d7'); // Replace later
+    formData.append('providerId', '68e77be26a1614cf448a34d7'); // Update if needed
 
-    // Custom Sections
     const validSections = serviceSections
       .filter(s => s.title.trim() && s.items.length > 0)
       .map(s => ({ title: s.title.trim(), items: s.items }));
     formData.append('includedServices', JSON.stringify(validSections));
 
-    // Basic Services as extra section
+    // Basic Add-ons
     const selectedBasic = Object.keys(basicServices)
       .filter(key => basicServices[key])
-      .map(key => {
-        const labels = {
-          hairStyling: 'Hair Styling',
-          sareeDraping: 'Saree Draping',
-          eyelashExtension: 'Eyelash Extension',
-          nailPolish: 'Nail Polish',
-        };
-        return labels[key];
-      });
+      .map(key => ({
+        hairStyling: 'Hair Styling',
+        sareeDraping: 'Saree Draping',
+        eyelashExtension: 'Eyelash Extension',
+        nailPolish: 'Nail Polish',
+      }[key]));
     if (selectedBasic.length > 0) {
-      const existingServices = JSON.parse(formData.get('includedServices') || '[]');
-      existingServices.push({ title: 'Basic Add-ons', items: selectedBasic });
-      formData.set('includedServices', JSON.stringify(existingServices));
+      let services = JSON.parse(formData.get('includedServices') || '[]');
+      services.push({ title: 'Basic Add-ons', items: selectedBasic });
+      formData.set('includedServices', JSON.stringify(services));
     }
 
     galleryImages.forEach(file => formData.append('gallery', file));
 
     try {
       if (isEditMode) {
-        await axios.put(`${API_BASE}/api/makeup-packages/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await axios.put(`${API_BASE}/api/makeup-packages/${id}`, formData);
         setSuccessMessage('Package updated successfully!');
       } else {
-        await axios.post(`${API_BASE}/api/makeup-packages`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await axios.post(`${API_BASE}/api/makeup-packages`, formData);
         setSuccessMessage('Package created successfully!');
-        resetForm(); // Reset form after successful creation
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong');
-      console.error(err);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setError(err.response?.data?.message || 'Failed to save package');
     } finally {
       setSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  if (loading) {
+  if (loading || categoriesLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
         <CircularProgress size={60} />
@@ -312,76 +313,75 @@ const AddmakePackage = () => {
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
         <Paper elevation={3} sx={{ borderRadius: 3, p: { xs: 3, md: 6 } }}>
-
           <TextField fullWidth label="Package Title *" value={packageTitle} onChange={e => setPackageTitle(e.target.value)} sx={{ mb: 3 }} />
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
+            {/* ONLY MAKEUP CATEGORIES */}
             <FormControl fullWidth>
               <InputLabel>Category *</InputLabel>
-              <Select multiple value={categories} onChange={e => setCategories(e.target.value)}
-                renderValue={selected => (
+              <Select
+                multiple
+                value={selectedCategories}
+                onChange={e => setSelectedCategories(e.target.value)}
+                renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map(value => (
-                      <Chip key={value} label={categoryOptions.find(c => c.id === value)?.title || value} size="small" />
-                    ))}
+                    {selected.map(value => {
+                      const cat = makeupCategories.find(c => c._id === value);
+                      return <Chip key={value} label={cat?.title || 'Unknown'} size="small" />;
+                    })}
                   </Box>
                 )}
               >
-                {categoryOptions.map(cat => (
-                  <MenuItem key={cat.id} value={cat.id}>{cat.title}</MenuItem>
-                ))}
+                {makeupCategories.length === 0 ? (
+                  <MenuItem disabled>No categories available</MenuItem>
+                ) : (
+                  makeupCategories.map(cat => (
+                    <MenuItem key={cat._id} value={cat._id}>
+                      {cat.title}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
 
             <FormControl fullWidth>
               <InputLabel>Makeup Type *</InputLabel>
               <Select value={makeupType} onChange={e => setMakeupType(e.target.value)}>
-                <MenuItem value="HD">HD Makeup</MenuItem>
-                <MenuItem value="Airbrush">Airbrush Makeup</MenuItem>
-                <MenuItem value="Traditional">Traditional</MenuItem>
-                <MenuItem value="Matte">Matte</MenuItem>
+                <MenuItem value="" disabled>Select Type</MenuItem>
+                {MAKEUP_TYPES.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Stack>
 
+          {/* Rest of your form (keep same) */}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
             <TextField fullWidth label="Base Price *" type="number" value={basePrice} onChange={e => setBasePrice(e.target.value)} />
-            <TextField fullWidth label="Offer Price (%)" type="number" value={offerPrice} onChange={e => setOfferPrice(e.target.value)} />
+            <TextField fullWidth label="Offer Price" type="number" value={offerPrice} onChange={e => setOfferPrice(e.target.value)} helperText="Leave empty if no discount" />
             <TextField fullWidth label="Advance Booking Amount" value={advanceBookingAmount} onChange={e => setAdvanceBookingAmount(e.target.value)} />
           </Stack>
 
-          <TextField fullWidth label="Description / Details *" multiline rows={4} value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 4 }} />
+          <TextField fullWidth label="Description *" multiline rows={4} value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 4 }} />
 
-          {/* Basic Services Section */}
-          <Typography variant="h6" sx={{ color: PINK, fontWeight: 'bold', mb: 2 }}>Basic Services</Typography>
+          {/* Basic Add-ons */}
+          <Typography variant="h6" sx={{ mb: 2, color: PINK }}>Basic Add-ons</Typography>
           <Paper variant="outlined" sx={{ p: 3, mb: 4, bgcolor: '#fafafa' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Select from predefined services
-            </Typography>
-            <FormGroup>
-              <MuiFormControlLabel
-                control={<Checkbox checked={basicServices.hairStyling} onChange={e => setBasicServices(prev => ({ ...prev, hairStyling: e.target.checked }))} />}
-                label="Hair Styling"
-              />
-              <MuiFormControlLabel
-                control={<Checkbox checked={basicServices.sareeDraping} onChange={e => setBasicServices(prev => ({ ...prev, sareeDraping: e.target.checked }))} />}
-                label="Saree Draping"
-              />
-              <MuiFormControlLabel
-                control={<Checkbox checked={basicServices.eyelashExtension} onChange={e => setBasicServices(prev => ({ ...prev, eyelashExtension: e.target.checked }))} />}
-                label="Eyelash Extension"
-              />
-              <MuiFormControlLabel
-                control={<Checkbox checked={basicServices.nailPolish} onChange={e => setBasicServices(prev => ({ ...prev, nailPolish: e.target.checked }))} />}
-                label="Nail Polish"
-              />
+            <FormGroup row>
+              {Object.keys(basicServices).map(key => (
+                <MuiFormControlLabel
+                  key={key}
+                  control={<Checkbox checked={basicServices[key]} onChange={e => setBasicServices(prev => ({ ...prev, [key]: e.target.checked }))} />}
+                  label={key === 'hairStyling' ? 'Hair Styling' : key === 'sareeDraping' ? 'Saree Draping' : key === 'eyelashExtension' ? 'Eyelash Extension' : 'Nail Polish'}
+                />
+              ))}
             </FormGroup>
           </Paper>
 
-          {/* Custom Service Sections */}
+          {/* Custom Sections */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ color: PINK, fontWeight: 'bold' }}>Custom Service Sections</Typography>
+              <Typography variant="h6" sx={{ color: PINK }}>Custom Service Sections</Typography>
               <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: PINK }} onClick={handleAddSection}>
                 Add Section
               </Button>
@@ -404,48 +404,36 @@ const AddmakePackage = () => {
             <FormControlLabel control={<Switch checked={isActive} onChange={() => setIsActive(!isActive)} />} label="Package Active" />
           </Stack>
 
-          <Typography variant="h6" sx={{ color: PINK, fontWeight: 'bold', mb: 2 }}>Gallery Images (Max 5)</Typography>
+          {/* Gallery Upload */}
+          <Typography variant="h6" sx={{ color: PINK, mb: 2 }}>Gallery (Max 5)</Typography>
           <Paper
-            onClick={() => document.getElementById('gallery-upload')?.click()}
-            sx={{ border: '2px dashed #e0e0e0', borderRadius: 2, p: 4, textAlign: 'center', cursor: 'pointer', mb: 4, '&:hover': { borderColor: PINK } }}
+            onClick={() => document.getElementById('gallery-input').click()}
+            sx={{ border: '2px dashed #ddd', borderRadius: 2, p: 4, textAlign: 'center', cursor: 'pointer', mb: 4 }}
           >
-            <input id="gallery-upload" type="file" hidden multiple accept="image/*" onChange={handleGalleryUpload} />
+            <input id="gallery-input" type="file" hidden multiple accept="image/*" onChange={handleGalleryUpload} />
             {(galleryImages.length > 0 || existingGallery.length > 0) ? (
-              <Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', mb: 2 }}>
-                  {existingGallery.map((img, i) => (
-                    <Box key={`existing-${i}`} sx={{ position: 'relative', width: 120, height: 120 }}>
-                      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                      <IconButton
-                        onClick={(e) => { e.stopPropagation(); removeExistingImage(i); }}
-                        sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }}
-                        size="small"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ))}
-                  {galleryImages.map((file, i) => (
-                    <Box key={`new-${i}`} sx={{ position: 'relative', width: 120, height: 120 }}>
-                      <img src={URL.createObjectURL(file)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
-                      <IconButton
-                        onClick={(e) => { e.stopPropagation(); removeNewImage(i); }}
-                        sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }}
-                        size="small"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ))}
-                </Box>
-                <Typography variant="body2" sx={{ color: PINK, fontWeight: 'bold' }}>
-                  {galleryImages.length + existingGallery.length} / 5 images
-                </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {existingGallery.map((img, i) => (
+                  <Box key={`ex-${i}`} sx={{ position: 'relative' }}>
+                    <img src={img} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
+                    <IconButton onClick={(e) => { e.stopPropagation(); removeExistingImage(i); }} sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+                {galleryImages.map((file, i) => (
+                  <Box key={`new-${i}`} sx={{ position: 'relative' }}>
+                    <img src={URL.createObjectURL(file)} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
+                    <IconButton onClick={(e) => { e.stopPropagation(); removeNewImage(i); }} sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
               </Box>
             ) : (
               <>
                 <CloudUploadIcon sx={{ fontSize: 60, color: '#ccc' }} />
-                <Typography sx={{ mt: 2, color: PINK, fontWeight: 'bold' }}>Click to Upload</Typography>
+                <Typography sx={{ mt: 2, color: PINK, fontWeight: 'bold' }}>Click to Upload Images</Typography>
               </>
             )}
           </Paper>
@@ -456,9 +444,9 @@ const AddmakePackage = () => {
             size="large"
             onClick={handleSubmit}
             disabled={submitting}
-            sx={{ py: 2, fontSize: '1.2rem', bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
+            sx={{ py: 2, bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
           >
-            {submitting ? <CircularProgress size={28} sx={{ color: 'white' }} /> : isEditMode ? 'Update Package' : 'Create Package'}
+            {submitting ? <CircularProgress size={28} color="inherit" /> : isEditMode ? 'Update Package' : 'Create Package'}
           </Button>
         </Paper>
       </Box>
