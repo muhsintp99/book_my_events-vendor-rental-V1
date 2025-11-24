@@ -1,107 +1,79 @@
 // assets
 import {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
-  IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
+  IconBuilding,
+  IconCategory,
+  IconTrademark,
+  IconPlus,
+  IconList,
+  IconClipboardCheck,
+  IconUpload,
+  IconDownload,
+  IconEngine,
   IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconCamera,
+  IconPhoto
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
-  IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
+  IconBuilding,
+  IconCategory,
+  IconTrademark,
+  IconPlus,
+  IconList,
+  IconClipboardCheck,
+  IconUpload,
+  IconDownload,
+  IconEngine,
   IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconCamera,
+  IconPhoto
 };
 
-// ==============================|| TRIP MANAGEMENT MENU GROUP ||============================== //
+// ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const photomanagement = {
+  id: 'photo-management',
   title: 'PHOTOGRAPHY MANAGEMENT',
-  id: 'photomanagement', // Fixed typo: was 'tripmanagemet'
   type: 'group',
   children: [
     {
-      id: 'photohgraphy',
-      title: 'Photography Bookings',
+      id: 'photography-setup',
+      title: 'Photography Setup',
       type: 'collapse',
-      icon: icons.IconBuildingSkyscraper,
+      icon: icons.IconCamera, // 📸 Updated Photography Icon
       children: [
         {
-          id: 'all-trips',
-          title: 'All',
+          id: 'add-package',
+          title: 'Add Package',
           type: 'item',
-          url: '/trips'
+          url: 'photography/addpackage',
+          icon: icons.IconPlus
         },
         {
-          id: 'scheduled-trips',
-          title: 'Scheduled',
+          id: 'list',
+          title: 'Package List',
           type: 'item',
-          url: '/trips/scheduled'
+          url: 'photography/packagelist',
+          icon: icons.IconList
         },
         {
-          id: 'pending-trips',
-          title: 'Pending',
+          id: 'portfolio',
+          title: 'Portfolio',
           type: 'item',
-          url: '/trips/pending'
-        },
-        {
-          id: 'confirmed-trips',
-          title: 'Confirmed',
-          type: 'item',
-          url: '/trips/confirmed'
-        },
-        {
-          id: 'ongoing-trips',
-          title: 'Ongoing',
-          type: 'item',
-          url: '/trips/ongoing'
-        },
-        {
-          id: 'completed-trips',
-          title: 'Completed',
-          type: 'item',
-          url: '/trips/completed'
-        },
-        {
-          id: 'canceled-trips',
-          title: 'Canceled',
-          type: 'item',
-          url: '/trips/canceled'
-        },
-        {
-          id: 'payment-failed-trips',
-          title: 'Payment Failed',
-          type: 'item',
-          url: '/trips/payment-failed'
+          url: 'photography/portfolio',
+          icon: icons.IconPhoto // 🖼 Updated Portfolio Icon
         }
       ]
+    },
+
+    {
+      id: 'categories',
+      title: 'Categories',
+      type: 'item',
+      url: '/venue/categories',
+      icon: icons.IconCategory,
+      breadcrumbs: false
     }
   ]
 };

@@ -112,6 +112,10 @@ const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio'))
 // const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
 
 
+// photographyy
+const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
+const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
+const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Portfolio')));
 //----------------------------------------------------------------------------//
 
 // ==============================|| MAIN ROUTING ||============================== //
@@ -311,10 +315,35 @@ const MainRoutes = {
         {
           path: 'report',
           children: [
-            { path: 'cateringreport', element: <CateringReport /> },
-            { path: 'cateringtax', element: <CateringtaxReport /> },
-            { path: 'cater-disburse', element: <CateringDisburse /> },
-            { path: 'cateringexp', element: <CateringExpense /> }
+            { path: 'makeupreport', element: <CateringReport /> },
+            { path: 'makeuptax', element: <CateringtaxReport /> },
+            { path: 'disbursement', element: <CateringDisburse /> },
+            { path: 'makeupexp', element: <CateringExpense /> }
+          ]
+        },
+        {
+          path: 'employee',
+          children: [{ path: 'cateringrole', element: <EmployeRole /> }]
+        },
+
+
+
+        // photographyyyyy
+        {
+          path: 'photography',
+          children: [
+            { path: 'addpackage', element: <AddphotographyPackage /> },
+            { path: 'packagelist', element: <Photographylist /> },
+            { path: 'Portfolio', element: <PhotographyPortfolio /> }
+          ]
+        },
+        {
+          path: 'report',
+          children: [
+            { path: 'photographyreport', element: <CateringReport /> },
+            { path: 'phoographytax', element: <CateringtaxReport /> },
+            { path: 'disbursement', element: <CateringDisburse /> },
+            { path: 'photographyexp', element: <CateringExpense /> }
           ]
         },
         {
