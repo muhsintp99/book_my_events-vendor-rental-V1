@@ -28,7 +28,7 @@ import {
 import axios from 'axios';
 
 const PINK = '#E91E63';
-const API_BASE = 'https://api.bookmyevent.ae';
+const API_BASE = 'http://localhost:5000';
 
 // Photography Module ID
 const PHOTOGRAPHY_MODULE_ID = '68e5fb0fa4b2718b6cbf64e9';
@@ -65,7 +65,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
   );
 };
 
-// --------------------------
+// ------------------------------
 // Main Component
 // ------------------------------
 const AddPhotographyPackage = () => {
