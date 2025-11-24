@@ -65,7 +65,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
   );
 };
 
-// ------------------------------
+// --------------------------
 // Main Component
 // ------------------------------
 const AddPhotographyPackage = () => {
