@@ -148,6 +148,25 @@ const AddPhotographyPackage = () => {
   const [existingGallery, setExistingGallery] = useState([]);
 
   // ------------------------------
+  // Reset Form Function
+  // ------------------------------
+  const resetForm = () => {
+    setPackageTitle('');
+    setSelectedCategories([]);
+    setPrice('');
+    setDescription('');
+    setCancellationPolicy('');
+    setAdvanceBookingAmount('');
+    setTravelToVenue(false);
+    setIsActive(true);
+    setSelectedAddons([]);
+    setServiceSections([{ id: Date.now(), title: '', items: [] }]);
+    setGalleryImages([]);
+    setExistingGallery([]);
+    setError('');
+  };
+
+  // ------------------------------
   // Load Vendor Info
   // ------------------------------
   useEffect(() => {
@@ -322,7 +341,6 @@ const AddPhotographyPackage = () => {
 
     // Add basic addons as JSON string
     formData.append('basicAddons', JSON.stringify(selectedAddons));
-    console.log('Selected Add-ons being sent:', selectedAddons);
 
     const validSections = serviceSections
       .filter(s => s.title.trim() && s.items.length > 0)
@@ -343,6 +361,12 @@ const AddPhotographyPackage = () => {
       } else {
         await axios.post(`${API_BASE}/api/photography-packages`, formData);
         setSuccessMessage('Package created successfully!');
+        
+        // Reset form after successful creation
+        setTimeout(() => {
+          resetForm();
+          setSuccessMessage('');
+        }, 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Error saving package');

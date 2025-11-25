@@ -115,6 +115,33 @@ const AddmakePackage = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [existingGallery, setExistingGallery] = useState([]);
 
+  // ------------------------------
+  // Reset Form Function
+  // ------------------------------
+  const resetForm = () => {
+    setPackageTitle('');
+    setSelectedCategories([]);
+    setMakeupType('');
+    setBasePrice('');
+    setOfferPrice('');
+    setDescription('');
+    setCancellationPolicy('');
+    setAdvanceBookingAmount('');
+    setTrialIncluded(false);
+    setTravelToVenue(false);
+    setIsActive(true);
+    setServiceSections([{ id: Date.now(), title: '', items: [] }]);
+    setBasicServices({
+      hairStyling: false,
+      sareeDraping: false,
+      eyelashExtension: false,
+      nailPolish: false,
+    });
+    setGalleryImages([]);
+    setExistingGallery([]);
+    setError('');
+  };
+
   // ------------------------------ Load Vendor ------------------------------
   useEffect(() => {
     try {
@@ -303,11 +330,18 @@ const AddmakePackage = () => {
       } else {
         await axios.post(`${API_BASE}/api/makeup-packages`, formData);
         setSuccessMessage("Package created successfully!");
+        
+        // Reset form after successful creation
+        setTimeout(() => {
+          resetForm();
+          setSuccessMessage('');
+        }, 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Error saving package");
     } finally {
       setSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
