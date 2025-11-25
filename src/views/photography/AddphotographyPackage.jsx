@@ -17,6 +17,8 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  Checkbox,
+  FormGroup,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -32,6 +34,46 @@ const API_BASE = 'https://api.bookmyevent.ae';
 
 // Photography Module ID
 const PHOTOGRAPHY_MODULE_ID = '68e5fb0fa4b2718b6cbf64e9';
+
+// Photography Basic Add-ons
+const BASIC_ADDONS = [
+  { id: 'drone_video', label: 'Drone Video' },
+  { id: 'pre_wedding', label: 'Pre-Wedding Shoot' },
+  { id: 'candid_photography', label: 'Candid Photography' },
+  { id: 'traditional_photography', label: 'Traditional Photography' },
+  { id: 'video_editing', label: 'Video Editing' },
+  { id: 'photo_album', label: 'Photo Album' },
+  { id: 'led_wall', label: 'LED Wall Display' },
+  { id: 'crane_shoot', label: 'Crane/Jib Shoot' },
+];
+
+// ------------------------------
+// Custom Pink Switch
+// ------------------------------
+const PinkSwitch = (props) => (
+  <Switch
+    {...props}
+    sx={{
+      '& .MuiSwitch-switchBase': {
+        color: '#fff',
+        '&.Mui-checked': {
+          color: PINK,
+        },
+        '&.Mui-checked + .MuiSwitch-track': {
+          backgroundColor: PINK,
+          opacity: 0.8,
+        },
+      },
+      '& .MuiSwitch-track': {
+        backgroundColor: '#ddd',
+        opacity: 0.6,
+      },
+      '&.Mui-checked .MuiSwitch-thumb': {
+        color: PINK,
+      },
+    }}
+  />
+);
 
 // ------------------------------
 // Service Section Component
@@ -54,7 +96,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
       <TextField
         fullWidth
         label={<span>Items (comma separated) <span style={{ color: 'red' }}>*</span></span>}
-        placeholder="e.g. Candid Photography, Drone Video"
+        placeholder="e.g. 300 edited photos, Full day coverage"
         value={Array.isArray(section.items) ? section.items.join(', ') : ''}
         onChange={(e) => onChange('items', e.target.value)}
         multiline
@@ -94,6 +136,9 @@ const AddPhotographyPackage = () => {
   const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
   const [travelToVenue, setTravelToVenue] = useState(false);
   const [isActive, setIsActive] = useState(true);
+
+  // Basic Add-ons
+  const [selectedAddons, setSelectedAddons] = useState([]);
 
   const [serviceSections, setServiceSections] = useState([
     { id: Date.now(), title: '', items: [] },
@@ -169,6 +214,11 @@ const AddPhotographyPackage = () => {
         setTravelToVenue(pkg.travelToVenue);
         setIsActive(pkg.isActive);
 
+        // Load basic add-ons
+        if (pkg.basicAddons && Array.isArray(pkg.basicAddons)) {
+          setSelectedAddons(pkg.basicAddons);
+        }
+
         if (pkg.includedServices?.length > 0) {
           setServiceSections(pkg.includedServices.map(s => ({
             id: s._id,
@@ -219,6 +269,14 @@ const AddPhotographyPackage = () => {
     }
   };
 
+  const handleAddonToggle = (addonId) => {
+    setSelectedAddons(prev => 
+      prev.includes(addonId) 
+        ? prev.filter(id => id !== addonId)
+        : [...prev, addonId]
+    );
+  };
+
   const handleGalleryUpload = e => {
     const files = Array.from(e.target.files);
     const total = galleryImages.length + existingGallery.length + files.length;
@@ -261,6 +319,10 @@ const AddPhotographyPackage = () => {
     formData.append('travelToVenue', travelToVenue);
     formData.append('isActive', isActive);
     formData.append('providerId', vendorId);
+
+    // Add basic addons as JSON string
+    formData.append('basicAddons', JSON.stringify(selectedAddons));
+    console.log('Selected Add-ons being sent:', selectedAddons);
 
     const validSections = serviceSections
       .filter(s => s.title.trim() && s.items.length > 0)
@@ -396,10 +458,41 @@ const AddPhotographyPackage = () => {
             sx={{ mb: 4 }} 
           />
 
-          {/* Service Sections */}
+          {/* Basic Add-ons Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ color: PINK, mb: 2 }}>
+              Basic Add-ons
+            </Typography>
+            <Paper sx={{ border: '1px solid #e5e5e5', borderRadius: 2, p: 3 }}>
+              <FormGroup>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                  {BASIC_ADDONS.map(addon => (
+                    <FormControlLabel
+                      key={addon.id}
+                      control={
+                        <Checkbox
+                          checked={selectedAddons.includes(addon.id)}
+                          onChange={() => handleAddonToggle(addon.id)}
+                          sx={{
+                            color: PINK,
+                            '&.Mui-checked': {
+                              color: PINK,
+                            },
+                          }}
+                        />
+                      }
+                      label={addon.label}
+                    />
+                  ))}
+                </Box>
+              </FormGroup>
+            </Paper>
+          </Box>
+
+          {/* Custom Service Sections */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ color: PINK }}>Included Services</Typography>
+              <Typography variant="h6" sx={{ color: PINK }}>Custom Service Sections</Typography>
               <Button 
                 variant="contained" 
                 startIcon={<AddIcon />} 
@@ -429,18 +522,18 @@ const AddPhotographyPackage = () => {
             value={cancellationPolicy} 
             onChange={e => setCancellationPolicy(e.target.value)} 
             sx={{ mb: 4 }} 
-            placeholder="e.g. No refund within 48 hours"
+            placeholder="e.g. No refund within 48 hours of event"
           />
 
           {/* Toggles */}
-          <Stack direction="row" spacing={4} sx={{ mb: 4 }}>
+          <Stack direction="row" spacing={6} alignItems="center" sx={{ mb: 4 }}>
             <FormControlLabel 
-              control={<Switch checked={travelToVenue} onChange={() => setTravelToVenue(!travelToVenue)} />} 
-              label="Travel to Venue" 
+              control={<PinkSwitch checked={travelToVenue} onChange={() => setTravelToVenue(prev => !prev)} />} 
+              label={<Typography fontWeight="medium">Travel to Venue</Typography>}
             />
             <FormControlLabel 
-              control={<Switch checked={isActive} onChange={() => setIsActive(!isActive)} />} 
-              label="Package Active" 
+              control={<PinkSwitch checked={isActive} onChange={() => setIsActive(prev => !prev)} />} 
+              label={<Typography fontWeight="medium">Package Active</Typography>}
             />
           </Stack>
 
