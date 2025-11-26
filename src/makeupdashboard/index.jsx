@@ -3,25 +3,13 @@ import { useEffect, useState } from 'react';
 // material-ui
 import Grid from '@mui/material/Grid';
 
-// vicheledashboard imports
-import EarningCard from './EarningCard';
-import PopularCard from './PopularCard';
-import TotalOrderLineChartCard from './TotalOrderLineChartCard';
-import TotalIncomeDarkCard from '../../../ui-component/cards/TotalIncomeDarkCard';
-import TotalIncomeLightCard from '../../../ui-component/cards/TotalIncomeLightCard';
-import TotalGrowthBarChart from './TotalGrowthBarChart';
-
-
-import VehicleIndex from '../../../vehicledashboard/index'
-import CateringIndex from '../../../cateringdashboard/index'
-import MakeupIndex from '../../../makeupdashboard/index'
-import PhotographyIndex from '../../../photographydashboard/index'
-
-
-
-// venuedashboard import
-
-
+// project imports
+import MakeupEarningCard from './MakeupEarningCard'
+import MakeupPopularCard from './MakeupPopularCard';
+import MakeupOrderchart from './MakeupOrderChart';
+import MakeupIncomeLightCard from './cards/MakeupIncomeLightCard';
+import MakeupIncomeDarkCard from './cards/MakeupIncomeDarkCard';
+import MakeupGrowthBarChart from './MakeupGrowthBarChart';
 
 import { gridSpacing } from 'store/constant';
 
@@ -33,30 +21,6 @@ import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
 
-  const Module = localStorage.getItem('logRes');
-  console.log("logRes in module:", Module);
-
-  switch (Module) {
-    case "Transport":
-      return (
-        <VehicleIndex isLoading={isLoading} />
-      );
-      break;
-    case "Catering":
-      return (
-        <CateringIndex isLoading={isLoading} />
-      );  
-       case "Makeup":
-      return (
-        <MakeupIndex isLoading={isLoading} />
-      );  
-       case "Photography":
-      return (
-        <PhotographyIndex isLoading={isLoading} />
-      );  
-  }
-
-
   useEffect(() => {
     setLoading(false);
   }, []);
@@ -66,18 +30,18 @@ export default function Dashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <EarningCard isLoading={isLoading} />
+            <MakeupEarningCard isLoading={isLoading} />
           </Grid>
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <TotalOrderLineChartCard isLoading={isLoading} />
+            <MakeupOrderchart isLoading={isLoading} />
           </Grid>
           <Grid size={{ lg: 4, md: 12, sm: 12, xs: 12 }}>
             <Grid container spacing={gridSpacing}>
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <TotalIncomeDarkCard isLoading={isLoading} />
+                <MakeupIncomeDarkCard isLoading={isLoading} />
               </Grid>
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <TotalIncomeLightCard
+                <MakeupIncomeLightCard
                   {...{
                     isLoading: isLoading,
                     total: 203,
@@ -93,10 +57,10 @@ export default function Dashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <TotalGrowthBarChart isLoading={isLoading} />
+            <MakeupGrowthBarChart isLoading={isLoading} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <PopularCard isLoading={isLoading} />
+            <MakeupPopularCard isLoading={isLoading} />
           </Grid>
         </Grid>
       </Grid>

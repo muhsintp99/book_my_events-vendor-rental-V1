@@ -6,7 +6,7 @@ import {
   DialogContent, DialogActions, DialogContentText, Snackbar, Avatar, InputAdornment,
   Skeleton, Grid, Divider, List, ListItem, ListItemText, ListItemIcon, Tooltip,
   Card, CardMedia, FormControlLabel, Checkbox, Accordion, AccordionSummary,
-  AccordionDetails, Autocomplete, OutlinedInput, InputLabel
+  AccordionDetails, Autocomplete
 } from "@mui/material";
 import {
   Visibility, Edit, Delete, Search, Refresh, Add, Download, Close, Category,
@@ -122,7 +122,11 @@ export default function PhotographyList() {
     return () => clearTimeout(timer);
   }, [pendingSearch]);
 
-  const handleView = (pkg) => { setSelectedPackage(pkg); setSelectedImageIndex(0); setOpenView(true); };
+  const handleView = (pkg) => {
+    setSelectedPackage(pkg);
+    setSelectedImageIndex(0);
+    setOpenView(true);
+  };
 
   const handleEditOpen = (pkg) => {
     setSelectedPackage(pkg);
@@ -212,12 +216,10 @@ export default function PhotographyList() {
         });
       });
 
-      // Keep existing gallery paths
       editForm.gallery.forEach((path, i) => {
         formData.append("existingGallery", path);
       });
 
-      // Add new images
       newImages.forEach(file => {
         formData.append("gallery", file);
       });
@@ -331,7 +333,6 @@ export default function PhotographyList() {
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh", p: 3 }}>
-      {/* Header & Filters - unchanged */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar>
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 600 }}>
@@ -371,7 +372,6 @@ export default function PhotographyList() {
         </Stack>
       </Paper>
 
-      {/* Table - unchanged */}
       <Paper sx={{ mt: 3 }}>
         <TableContainer sx={{ maxHeight: "70vh" }}>
           <Table stickyHeader>
@@ -436,10 +436,149 @@ export default function PhotographyList() {
         </TableContainer>
       </Paper>
 
-      {/* View Modal - unchanged */}
-      {/* ... (keep your existing View Dialog) ... */}
+      {/* VIEW DETAILS DIALOG */}
+      <Dialog open={openView} onClose={() => setOpenView(false)} maxWidth="md" fullWidth scroll="paper">
+        <DialogTitle sx={{ bgcolor: PINK, color: "white", position: "relative" }}>
+          Package Details
+          <IconButton sx={{ position: "absolute", right: 8, top: 8, color: "white" }} onClick={() => setOpenView(false)}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
 
-      {/* === FULLY UPGRADED EDIT MODAL === */}
+        {selectedPackage && (
+          <DialogContent dividers sx={{ p: 3 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                {selectedPackage.gallery && selectedPackage.gallery.length > 0 ? (
+                  <Box>
+                    <Card elevation={3}>
+                      <CardMedia
+                        component="img"
+                        image={getImageUrl(selectedPackage.gallery[selectedImageIndex])}
+                        alt={selectedPackage.packageTitle}
+                        sx={{ height: 400, objectFit: "cover", borderRadius: 2 }}
+                      />
+                    </Card>
+                    {selectedPackage.gallery.length > 1 && (
+                      <Grid container spacing={1} sx={{ mt: 2 }}>
+                        {selectedPackage.gallery.map((img, idx) => (
+                          <Grid item xs={3} sm={2} key={idx}>
+                            <Box
+                              onClick={() => setSelectedImageIndex(idx)}
+                              sx={{
+                                cursor: "pointer",
+                                border: selectedImageIndex === idx ? `3px solid ${PINK}` : "3px solid transparent",
+                                borderRadius: 2,
+                                overflow: "hidden",
+                                transition: "all 0.2s",
+                                "&:hover": { opacity: 0.8 }
+                              }}
+                            >
+                              <img
+                                src={getImageUrl(img)}
+                                alt={`thumb-${idx}`}
+                                style={{ width: "100%", height: 80, objectFit: "cover" }}
+                              />
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ textAlign: "center", py: 6, bgcolor: "#f9f9f9", borderRadius: 2 }}>
+                    <ImageIcon sx={{ fontSize: 60, color: "#ccc" }} />
+                    <Typography color="text.secondary">No images in gallery</Typography>
+                  </Box>
+                )}
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="h4" fontWeight="bold" gutterBottom>
+                  {selectedPackage.packageTitle}
+                </Typography>
+                <Typography variant="h5" color={PINK} fontWeight="bold">
+                  AED {Number(selectedPackage.price).toLocaleString()}
+                </Typography>
+              </Grid>
+
+              {selectedPackage.description && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="text.secondary" paragraph>
+                    {selectedPackage.description}
+                  </Typography>
+                </Grid>
+              )}
+
+              {selectedPackage.categories && selectedPackage.categories.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Categories</Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {selectedPackage.categories.map((cat) => (
+                      <Chip key={cat._id} label={cat.title} color="primary" variant="outlined" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              <Grid item xs={12}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <DetailItem icon={<AttachMoney />} label="Advance Booking" value={selectedPackage.advanceBookingAmount || "Not specified"} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <DetailItem icon={<DirectionsCar />} label="Travel to Venue" value={selectedPackage.travelToVenue ? "Yes" : "No"} chip success={selectedPackage.travelToVenue} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <DetailItem icon={<CheckCircle />} label="Status" value={selectedPackage.isActive ? "Active" : "Inactive"} chip success={selectedPackage.isActive} error={!selectedPackage.isActive} />
+                  </Grid>
+                  {selectedPackage.cancellationPolicy && (
+                    <Grid item xs={12}>
+                      <DetailItem icon={<Policy />} label="Cancellation Policy" value={selectedPackage.cancellationPolicy} />
+                    </Grid>
+                  )}
+                </Grid>
+              </Grid>
+
+              {selectedPackage.includedServices && selectedPackage.includedServices.length > 0 && (
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 3 }} />
+                  <Typography variant="h6" gutterBottom color={PINK}>Included Services</Typography>
+                  {selectedPackage.includedServices.map((service, idx) => (
+                    <Accordion key={idx} elevation={2} sx={{ mb: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Typography fontWeight="bold">{service.title}</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <List dense>
+                          {service.items.map((item, i) => (
+                            <ListItem key={i}>
+                              <ListItemIcon sx={{ minWidth: 32 }}>
+                                <CheckCircle fontSize="small" color="success" />
+                              </ListItemIcon>
+                              <ListItemText primary={item} />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </Grid>
+              )}
+            </Grid>
+          </DialogContent>
+        )}
+
+        <DialogActions sx={{ p: 3, bgcolor: "#f9f9f9" }}>
+          <Button variant="contained" sx={{ bgcolor: PINK, "&:hover": { bgcolor: "#c14a54" } }} startIcon={<Edit />}
+            onClick={() => { setOpenView(false); handleEditOpen(selectedPackage); }}>
+            Edit Package
+          </Button>
+          <Button onClick={() => setOpenView(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* EDIT DIALOG - Already Perfect */}
       <Dialog open={openEdit} onClose={() => !saving && setOpenEdit(false)} maxWidth="md" fullWidth scroll="paper">
         <DialogTitle sx={{ bgcolor: PINK, color: "white" }}>
           Edit Photography Package
@@ -450,73 +589,42 @@ export default function PhotographyList() {
         <DialogContent dividers>
           <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <TextField
-                fullWidth label="Package Title" required
-                value={editForm.packageTitle}
-                onChange={(e) => setEditForm({ ...editForm, packageTitle: e.target.value })}
-              />
+              <TextField fullWidth label="Package Title" required value={editForm.packageTitle}
+                onChange={(e) => setEditForm({ ...editForm, packageTitle: e.target.value })} />
             </Grid>
-
             <Grid item xs={12}>
-              <TextField
-                fullWidth label="Description" multiline rows={3}
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-              />
+              <TextField fullWidth label="Description" multiline rows={3} value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
             </Grid>
-
             <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={categories}
-                getOptionLabel={(option) => option.title}
+              <Autocomplete multiple options={categories} getOptionLabel={(option) => option.title}
                 value={editForm.categories}
                 onChange={(e, newValue) => setEditForm({ ...editForm, categories: newValue })}
                 renderInput={(params) => <TextField {...params} label="Categories" />}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip label={option.title} {...getTagProps({ index })} />
-                  ))
-                }
+                renderTags={(value, getTagProps) => value.map((option, index) => (
+                  <Chip label={option.title} {...getTagProps({ index })} />
+                ))}
               />
             </Grid>
-
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth label="Price (AED)" type="number" required
-                value={editForm.price}
-                onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-              />
+              <TextField fullWidth label="Price (AED)" type="number" required value={editForm.price}
+                onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
             </Grid>
-
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth label="Advance Booking Amount (e.g. 50% or 5000)"
-                value={editForm.advanceBookingAmount}
-                onChange={(e) => setEditForm({ ...editForm, advanceBookingAmount: e.target.value })}
-              />
+              <TextField fullWidth label="Advance Booking Amount" value={editForm.advanceBookingAmount}
+                onChange={(e) => setEditForm({ ...editForm, advanceBookingAmount: e.target.value })} />
             </Grid>
-
             <Grid item xs={12}>
-              <TextField
-                fullWidth label="Cancellation Policy" multiline rows={2}
-                value={editForm.cancellationPolicy}
-                onChange={(e) => setEditForm({ ...editForm, cancellationPolicy: e.target.value })}
-              />
+              <TextField fullWidth label="Cancellation Policy" multiline rows={2} value={editForm.cancellationPolicy}
+                onChange={(e) => setEditForm({ ...editForm, cancellationPolicy: e.target.value })} />
             </Grid>
-
             <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox checked={editForm.travelToVenue} onChange={(e) => setEditForm({ ...editForm, travelToVenue: e.target.checked })} />}
-                label="Travel to Venue"
-              />
-              <FormControlLabel
-                control={<Checkbox checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} />}
-                label="Package is Active (Visible to customers)"
-              />
+              <FormControlLabel control={<Checkbox checked={editForm.travelToVenue}
+                onChange={(e) => setEditForm({ ...editForm, travelToVenue: e.target.checked })} />} label="Travel to Venue" />
+              <FormControlLabel control={<Checkbox checked={editForm.isActive}
+                onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} />} label="Package is Active" />
             </Grid>
 
-            {/* Included Services */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>Included Services</Typography>
@@ -535,50 +643,29 @@ export default function PhotographyList() {
               ))}
 
               <Box sx={{ mt: 2, p: 2, border: "2px dashed #ccc", borderRadius: 2 }}>
-                <TextField
-                  fullWidth label="Service Title (e.g. Photography)" size="small"
-                  value={newServiceTitle}
-                  onChange={(e) => setNewServiceTitle(e.target.value)}
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  fullWidth label="Items (one per line)"
-                  multiline rows={4} size="small"
+                <TextField fullWidth label="Service Title" size="small" value={newServiceTitle}
+                  onChange={(e) => setNewServiceTitle(e.target.value)} sx={{ mb: 2 }} />
+                <TextField fullWidth label="Items (one per line)" multiline rows={4} size="small"
                   placeholder="Candid Photography&#10;Traditional Photography&#10;Drone Shots"
-                  value={newServiceItems}
-                  onChange={(e) => setNewServiceItems(e.target.value)}
-                />
+                  value={newServiceItems} onChange={(e) => setNewServiceItems(e.target.value)} />
                 <Button variant="outlined" sx={{ mt: 2 }} onClick={addService} disabled={!newServiceTitle.trim()}>
                   Add Service
                 </Button>
               </Box>
             </Grid>
 
-            {/* Gallery */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>Gallery Images</Typography>
-              <Button variant="contained" onClick={() => fileInputRef.current?.click()}>
-                Upload New Images
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                hidden
-                onChange={handleImageChange}
-              />
+              <Button variant="contained" onClick={() => fileInputRef.current?.click()}>Upload New Images</Button>
+              <input ref={fileInputRef} type="file" multiple accept="image/*" hidden onChange={handleImageChange} />
               <Grid container spacing={2} sx={{ mt: 2 }}>
                 {imagePreviews.map((src, i) => (
                   <Grid item xs={6} sm={4} md={3} key={i}>
                     <Box sx={{ position: "relative" }}>
                       <img src={src} alt="" style={{ width: "100%", height: 150, objectFit: "cover", borderRadius: 8 }} />
-                      <IconButton
-                        size="small"
-                        sx={{ position: "absolute", top: 4, right: 4, bgcolor: "rgba(0,0,0,0.5)", color: "white" }}
-                        onClick={() => removeImage(i)}
-                      >
+                      <IconButton size="small" sx={{ position: "absolute", top: 4, right: 4, bgcolor: "rgba(0,0,0,0.5)", color: "white" }}
+                        onClick={() => removeImage(i)}>
                         <Close />
                       </IconButton>
                     </Box>
@@ -596,7 +683,7 @@ export default function PhotographyList() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation & Toast - unchanged */}
+      {/* DELETE CONFIRMATION */}
       <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
         <DialogTitle>Delete Package?</DialogTitle>
         <DialogContent><DialogContentText>This action cannot be undone.</DialogContentText></DialogContent>
@@ -606,7 +693,9 @@ export default function PhotographyList() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast({ ...toast, open: false })} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+      {/* TOAST */}
+      <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast({ ...toast, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}>
         <Alert severity={toast.severity} variant="filled">{toast.message}</Alert>
       </Snackbar>
     </Box>
