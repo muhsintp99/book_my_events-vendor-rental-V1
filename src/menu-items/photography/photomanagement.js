@@ -57,13 +57,13 @@ const photomanagement = {
           url: 'photography/packagelist',
           icon: icons.IconList
         },
-        {
-          id: 'portfolio',
-          title: 'Portfolio',
-          type: 'item',
-          url: 'photography/portfolio',
-          icon: icons.IconPhoto // 🖼 Updated Portfolio Icon
-        }
+        // {
+        //   id: 'portfolio',
+        //   title: 'Portfolio',
+        //   type: 'item',
+        //   url: 'photography/portfolio',
+        //   icon: icons.IconPhoto // 🖼 Updated Portfolio Icon
+        // }
       ]
     },
 
