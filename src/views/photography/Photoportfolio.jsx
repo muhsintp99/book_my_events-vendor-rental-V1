@@ -23,29 +23,37 @@ import {
   Snackbar,
   Dialog,
   DialogContent,
-  DialogActions,
   FormControl,
   Select,
   MenuItem
 } from '@mui/material';
 
-import { CloudUpload, Close, VideoLibrary, Delete, ChevronLeft, ChevronRight, Link as LinkIcon } from '@mui/icons-material';
+import {
+  CloudUpload,
+  Close,
+  VideoLibrary,
+  Delete,
+  ChevronLeft,
+  ChevronRight,
+  Link as LinkIcon
+} from '@mui/icons-material';
 
 import axios from 'axios';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 const api = axios.create({ baseURL: API_BASE_URL });
 
-export default function PortfolioManagement({ providerId: propProviderId }) {
+// ALWAYS DEFAULT PHOTOGRAPHY
+const PHOTOGRAPHY_MODULE_ID = '68e5fb0fa4b2718b6cbf64e9';
+
+export default function PhotoPortfolio({ providerId: propProviderId }) {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // MODULE STATES
   const [modules, setModules] = useState([]);
-  const [selectedModule, setSelectedModule] = useState('');
+  const [selectedModule, setSelectedModule] = useState(PHOTOGRAPHY_MODULE_ID);
 
-  // MODAL
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [currentMediaUrls, setCurrentMediaUrls] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,7 +66,7 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
 
   const providerId = getProviderId();
 
-  // IMAGE STATES
+  // Images
   const [portfolioTitle, setPortfolioTitle] = useState('');
   const [portfolioDesc, setPortfolioDesc] = useState('');
   const [portfolioTags, setPortfolioTags] = useState([]);
@@ -66,7 +74,7 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [portfolioList, setPortfolioList] = useState([]);
 
-  // VIDEO STATES
+  // Videos
   const [videoTitle, setVideoTitle] = useState('');
   const [videoDesc, setVideoDesc] = useState('');
   const [videoTags, setVideoTags] = useState([]);
@@ -76,59 +84,60 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
   const [videoLinkInput, setVideoLinkInput] = useState('');
   const [videoList, setVideoList] = useState([]);
 
-  // -------------------------------
-  //  LOAD MODULES & auto-select Makeup
-  // -------------------------------
+  // -----------------------------------------
+  // ALWAYS LOAD PHOTOGRAPHY MODULE AS DEFAULT
+  // -----------------------------------------
   useEffect(() => {
     const loadModules = async () => {
       try {
         const res = await api.get('/api/modules');
 
-        if (!Array.isArray(res.data)) return;
+        if (Array.isArray(res.data)) {
+          setModules(res.data);
 
-        setModules(res.data);
+          // check if photography exists in backend
+          const photo = res.data.find(
+            m => m._id === PHOTOGRAPHY_MODULE_ID || m.title?.toLowerCase().includes('photo')
+          );
 
-        // Find Makeup module
-        const makeup = res.data.find(m =>
-          m.title?.toLowerCase().includes("makeup")
-        );
+          const finalModule = photo?._id || PHOTOGRAPHY_MODULE_ID;
 
-        const defaultModule = makeup?._id || res.data[0]?._id || "";
-
-        setSelectedModule(defaultModule);
-        localStorage.setItem("moduleId", defaultModule);
-
+          setSelectedModule(finalModule);
+          localStorage.setItem('moduleId', finalModule);
+        } else {
+          setSelectedModule(PHOTOGRAPHY_MODULE_ID);
+        }
       } catch (err) {
-        console.error("Failed to load modules", err);
+        setSelectedModule(PHOTOGRAPHY_MODULE_ID);
       }
     };
 
     loadModules();
   }, []);
 
-  // Fetch portfolio after module loads
+  // Fetch portfolio
   useEffect(() => {
     if (providerId && selectedModule) fetchPortfolioData();
   }, [providerId, selectedModule]);
 
-  // -------------------------------
-  //  FETCH PORTFOLIO DATA
-  // -------------------------------
   const fetchPortfolioData = async () => {
     try {
       setLoading(true);
+
       const res = await api.get(`/api/portfolio/provider/${providerId}`);
 
       if (!res.data.success) return;
 
-      const filtered = (res.data.data || []).filter(
-        i => i.module === selectedModule
-      );
+      const items = res.data.data || [];
+      const filtered = items.filter(i => i.module === selectedModule);
 
       // IMAGES
-      const imageItems = filtered.filter(i =>
-        i.media?.some(m => m.type === 'image')
-      );
+      const imageItems = filtered
+        .map(i => ({
+          ...i,
+          imageMedia: i.media.filter(m => m.type === 'image').flatMap(m => m.images || [])
+        }))
+        .filter(i => i.imageMedia.length > 0);
 
       setPortfolioList(
         imageItems.map(i => ({
@@ -136,16 +145,38 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
           title: i.workTitle || 'Untitled',
           description: i.description || '',
           tags: Array.isArray(i.tags) ? i.tags : [],
-          media: i.media
-            .filter(m => m.type === 'image')
-            .flatMap(m => m.images || [])
+          media: i.imageMedia
         }))
       );
 
       // VIDEOS
-      const videoItems = filtered.filter(i =>
-        i.media?.some(m => m.type === 'video' || m.type === 'videoLink')
-      );
+      const videoItems = filtered
+        .map(i => ({
+          ...i,
+          videoMedia: i.media.reduce((acc, m) => {
+            if (m.type === 'video') {
+              const vids = (m.videos || []).map(url => ({ type: 'video', url }));
+              return [...acc, ...vids];
+            }
+
+            if (m.type === 'videoLink') {
+              const links = [];
+
+              if (Array.isArray(m.videoLinks)) {
+                m.videoLinks.forEach(url => links.push({ type: 'videoLink', url }));
+              }
+
+              if (typeof m.url === 'string') {
+                links.push({ type: 'videoLink', url: m.url });
+              }
+
+              return [...acc, ...links];
+            }
+
+            return acc;
+          }, [])
+        }))
+        .filter(i => i.videoMedia.length > 0);
 
       setVideoList(
         videoItems.map(i => ({
@@ -153,34 +184,42 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
           title: i.workTitle || 'Untitled',
           description: i.description || '',
           tags: Array.isArray(i.tags) ? i.tags : [],
-          media: i.media.reduce((acc, m) => {
-            if (m.type === "video") {
-              return [...acc, ...(m.videos || []).map(v => ({ type: "video", url: v }))];
-            }
-            if (m.type === "videoLink") {
-              return [...acc, ...(m.videoLinks || []).map(v => ({ type: "videoLink", url: v }))];
-            }
-            return acc;
-          }, [])
+          media: i.videoMedia
         }))
       );
     } catch (err) {
-      showSnackbar("Unable to load portfolio", "error");
+      showSnackbar('Failed to load portfolio', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const showSnackbar = (msg, sev = "success") => {
+  const showSnackbar = (msg, sev = 'success') =>
     setSnackbar({ open: true, message: msg, severity: sev });
+
+  const formatVideoUrl = url => {
+    if (!url) return url;
+
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      if (url.includes('watch?v=')) return url.replace('watch?v=', 'embed/');
+      if (url.includes('youtu.be/')) {
+        const id = url.split('youtu.be/')[1]?.split('?')[0];
+        return `https://www.youtube.com/embed/${id}`;
+      }
+    }
+
+    if (url.includes('vimeo.com')) {
+      const id = url.split('/').pop()?.split('?')[0];
+      return `https://player.vimeo.com/video/${id}`;
+    }
+
+    return url;
   };
 
-  // -------------------------------
-  //  FULLSCREEN MEDIA
-  // -------------------------------
   const openFullscreen = (mediaArray, index = 0, isVideo = false) => {
     const urls = mediaArray.map(item => {
-      if (item.type === "videoLink") return formatVideoUrl(item.url);
+      if (typeof item === 'string') return `${API_BASE_URL}/${item}`;
+      if (item.type === 'videoLink') return formatVideoUrl(item.url);
       return `${API_BASE_URL}/${item.url}`;
     });
 
@@ -188,17 +227,6 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
     setCurrentIndex(index);
     setIsVideoMode(isVideo);
     setMediaModalOpen(true);
-  };
-
-  const formatVideoUrl = (url) => {
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-      return url.replace("watch?v=", "embed/").split("&")[0];
-    }
-    if (url.includes("vimeo.com")) {
-      const id = url.split("/").pop().split("?")[0];
-      return `https://player.vimeo.com/video/${id}`;
-    }
-    return url;
   };
 
   const closeFullscreen = () => setMediaModalOpen(false);
@@ -211,9 +239,6 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
       i === currentMediaUrls.length - 1 ? 0 : i + 1
     );
 
-  // -------------------------------
-  //  TAG HELPERS
-  // -------------------------------
   const addTag = (input, setInput, setTags) => {
     if (input.trim()) {
       setTags(prev => [...prev, input.trim()]);
@@ -221,31 +246,25 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
     }
   };
 
-  // -------------------------------
-  //  IMAGE HANDLERS
-  // -------------------------------
-  const handlePortfolioImages = (e) => {
+  const handlePortfolioImages = e => {
     const files = Array.from(e.target.files);
     const previews = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
     setPortfolioImages(prev => [...prev, ...previews]);
   };
 
-  const removePortfolioImage = (i) => {
-    URL.revokeObjectURL(portfolioImages[i].preview);
+  const removePortfolioImage = i => {
+    URL.revokeObjectURL(portfolioImages[i]?.preview);
     setPortfolioImages(prev => prev.filter((_, idx) => idx !== i));
   };
 
-  // -------------------------------
-  //  VIDEO HANDLERS
-  // -------------------------------
-  const handleVideoFiles = (e) => {
+  const handleVideoFiles = e => {
     const files = Array.from(e.target.files);
     const previews = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
     setVideoFiles(prev => [...prev, ...previews]);
   };
 
-  const removeVideoFile = (i) => {
-    URL.revokeObjectURL(videoFiles[i].preview);
+  const removeVideoFile = i => {
+    URL.revokeObjectURL(videoFiles[i]?.preview);
     setVideoFiles(prev => prev.filter((_, idx) => idx !== i));
   };
 
@@ -256,50 +275,50 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
     }
   };
 
-  const removeVideoLink = (i) => {
+  const removeVideoLink = i =>
     setVideoLinks(prev => prev.filter((_, idx) => idx !== i));
-  };
 
-  // -------------------------------
-  //  UPLOAD MEDIA
-  // -------------------------------
   const uploadMedia = async (
-    title, desc, tags, files, links,
-    setTitle, setDesc, setTags, setFiles, setLinks,
+    title,
+    desc,
+    tags,
+    files,
+    links,
+    setTitle,
+    setDesc,
+    setTags,
+    setFiles,
+    setLinks,
     isVideo = false
   ) => {
-    if (!title.trim() || (files.length === 0 && links.length === 0)) {
-      return showSnackbar("Title and media required", "warning");
-    }
+    if (!title.trim() || (files.length === 0 && links.length === 0))
+      return showSnackbar('Title and media required', 'warning');
 
-    if (!providerId || !selectedModule) {
-      return showSnackbar("Missing provider/module", "error");
-    }
+    if (!providerId) return showSnackbar('Login required', 'error');
 
     const formData = new FormData();
-    formData.append("providerId", providerId);
-    formData.append("module", selectedModule);
-    formData.append("workTitle", title);
-    formData.append("description", desc);
-    formData.append("tags", JSON.stringify(tags));
+    formData.append('providerId', providerId);
+    formData.append('module', selectedModule);
+    formData.append('workTitle', title);
+    formData.append('description', desc);
+    formData.append('tags', JSON.stringify(tags));
 
     if (isVideo) {
-      files.forEach(f => formData.append("videos", f.file));
-      if (links.length > 0) formData.append("videoLinks", JSON.stringify(links));
+      files.forEach(f => formData.append('videos', f.file));
+      if (links.length > 0) formData.append('videoLinks', JSON.stringify(links));
     } else {
-      files.forEach(f => formData.append("images", f.file));
+      files.forEach(f => formData.append('images', f.file));
     }
 
     try {
       setLoading(true);
-      const res = await api.post("/api/portfolio", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+      const res = await api.post('/api/portfolio', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (res.data.success) {
-        showSnackbar(`${isVideo ? "Video" : "Images"} added!`, "success");
+        showSnackbar(`${isVideo ? 'Video' : 'Images'} added!`, 'success');
         fetchPortfolioData();
-
         setTitle('');
         setDesc('');
         setTags([]);
@@ -307,25 +326,22 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         if (setLinks) setLinks([]);
       }
     } catch (err) {
-      showSnackbar(err.response?.data?.message || "Upload failed", "error");
+      showSnackbar(err.response?.data?.message || 'Upload failed', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // -------------------------------
-  // DELETE MEDIA
-  // -------------------------------
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete permanently?")) return;
+  const handleDelete = async id => {
+    if (!window.confirm('Delete permanently?')) return;
 
     try {
       setLoading(true);
       await api.delete(`/api/portfolio/${id}`);
-      showSnackbar("Deleted!", "success");
+      showSnackbar('Deleted!', 'success');
       fetchPortfolioData();
     } catch {
-      showSnackbar("Delete failed", "error");
+      showSnackbar('Delete failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -333,104 +349,118 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
 
   return (
     <Box sx={{ p: 3 }}>
-
-      {/* LOADER */}
       {loading && (
-        <Box sx={{
-          position: 'fixed',
-          inset: 0,
-          bgcolor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
-        }}>
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            bgcolor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}
+        >
           <CircularProgress size={60} />
         </Box>
       )}
 
-      {/* SNACKBAR */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
 
       {/* MODULE SELECT */}
       <Card sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Select Module</Typography>
-
+        <Typography variant="h6">Module</Typography>
         <FormControl fullWidth>
           <Select
             value={selectedModule}
-            onChange={(e) => {
-              setSelectedModule(e.target.value);
-              localStorage.setItem('moduleId', e.target.value);
+            onChange={e => {
+              const val = e.target.value;
+              setSelectedModule(val);
+              localStorage.setItem('moduleId', val);
             }}
           >
-            {modules.map(m => (
-              <MenuItem key={m._id} value={m._id}>{m.title}</MenuItem>
-            ))}
+            {modules.length === 0 ? (
+              <MenuItem value={PHOTOGRAPHY_MODULE_ID}>Photography</MenuItem>
+            ) : (
+              modules.map(m => (
+                <MenuItem key={m._id} value={m._id}>
+                  {m.title}
+                </MenuItem>
+              ))
+            )}
           </Select>
         </FormControl>
       </Card>
 
-      {/* TABS */}
       <Card>
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab label="Images" />
           <Tab label="Videos" />
         </Tabs>
 
-        {/* ------------------  IMAGES TAB ------------------ */}
+        {/* ------------------ IMAGES TAB ------------------ */}
         {tabValue === 0 && (
           <>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Add Portfolio Images</Typography>
+              <Typography variant="h6">Add Images</Typography>
 
               <TextField
-                fullWidth label="Title"
+                fullWidth
+                label="Title"
                 value={portfolioTitle}
-                onChange={(e) => setPortfolioTitle(e.target.value)}
+                onChange={e => setPortfolioTitle(e.target.value)}
                 sx={{ mb: 3 }}
               />
 
               <TextField
-                fullWidth multiline rows={3}
+                fullWidth
+                multiline
+                rows={3}
                 label="Description"
                 value={portfolioDesc}
-                onChange={(e) => setPortfolioDesc(e.target.value)}
+                onChange={e => setPortfolioDesc(e.target.value)}
                 sx={{ mb: 3 }}
               />
 
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 {portfolioTags.map((t, i) => (
-                  <Chip key={i} label={t} onDelete={() => setPortfolioTags(p => p.filter((_, x) => x !== i))} sx={{ mr: 1 }} />
+                  <Chip
+                    key={i}
+                    label={t}
+                    onDelete={() =>
+                      setPortfolioTags(prev => prev.filter((_, idx) => idx !== i))
+                    }
+                    sx={{ mr: 1 }}
+                  />
                 ))}
               </Box>
 
               <TextField
-                fullWidth label="Add Tag (Enter)"
+                fullWidth
+                label="Add Tag (Enter)"
                 value={portfolioTagInput}
-                onChange={(e) => setPortfolioTagInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag(portfolioTagInput, setPortfolioTagInput, setPortfolioTags))}
+                onChange={e => setPortfolioTagInput(e.target.value)}
+                onKeyDown={e =>
+                  e.key === 'Enter' &&
+                  (e.preventDefault(),
+                  addTag(portfolioTagInput, setPortfolioTagInput, setPortfolioTags))
+                }
                 sx={{ mb: 3 }}
               />
 
-              <Button
-                variant="contained"
-                component="label"
-                startIcon={<CloudUpload />}
-                sx={{ mb: 2 }}
-              >
+              <Button variant="contained" component="label" startIcon={<CloudUpload />}>
                 Upload Images
-                <input hidden type="file" multiple accept="image/*" onChange={handlePortfolioImages} />
+                <input type="file" hidden multiple accept="image/*" onChange={handlePortfolioImages} />
               </Button>
 
-              <Grid container spacing={2}>
+              <Grid container spacing={2} sx={{ mt: 2 }}>
                 {portfolioImages.map((img, i) => (
                   <Grid item xs={6} sm={4} md={3} key={i}>
                     <Box sx={{ position: 'relative' }}>
@@ -438,9 +468,9 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                         src={img.preview}
                         alt=""
                         style={{
-                          width: "100%",
+                          width: '100%',
                           height: 150,
-                          objectFit: "cover",
+                          objectFit: 'cover',
                           borderRadius: 8
                         }}
                       />
@@ -463,7 +493,9 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
               </Grid>
 
               <Button
-                fullWidth variant="contained" sx={{ mt: 4 }}
+                fullWidth
+                variant="contained"
+                sx={{ mt: 4 }}
                 onClick={() =>
                   uploadMedia(
                     portfolioTitle,
@@ -480,12 +512,12 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                   )
                 }
               >
-                Add Portfolio
+                Add Images
               </Button>
             </CardContent>
 
             <CardContent>
-              <Typography variant="h6" gutterBottom>Portfolio List</Typography>
+              <Typography variant="h6">Portfolio Images</Typography>
 
               <TableContainer component={Paper}>
                 <Table>
@@ -503,7 +535,9 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                   <TableBody>
                     {portfolioList.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">No images</TableCell>
+                        <TableCell colSpan={6} align="center">
+                          No images yet
+                        </TableCell>
                       </TableRow>
                     ) : (
                       portfolioList.map((item, i) => (
@@ -512,47 +546,37 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                           <TableCell>{item.title}</TableCell>
 
                           <TableCell>
-                            <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                               {item.media.slice(0, 3).map((url, idx) => (
                                 <img
                                   key={idx}
                                   src={`${API_BASE_URL}/${url}`}
+                                  alt=""
+                                  onClick={() => openFullscreen(item.media, idx, false)}
                                   style={{
                                     width: 70,
                                     height: 60,
-                                    objectFit: "cover",
+                                    objectFit: 'cover',
                                     borderRadius: 4,
-                                    cursor: "pointer"
+                                    cursor: 'pointer'
                                   }}
-                                  onClick={() =>
-                                    openFullscreen(
-                                      item.media.map(u => ({ type: "image", url: u })),
-                                      idx,
-                                      false
-                                    )
-                                  }
                                 />
                               ))}
+
                               {item.media.length > 3 && (
                                 <Box
+                                  onClick={() => openFullscreen(item.media, 0, false)}
                                   sx={{
                                     width: 70,
                                     height: 60,
-                                    bgcolor: "rgba(0,0,0,0.6)",
-                                    color: "white",
+                                    bgcolor: 'rgba(0,0,0,0.7)',
+                                    color: 'white',
                                     borderRadius: 1,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    cursor: "pointer"
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer'
                                   }}
-                                  onClick={() =>
-                                    openFullscreen(
-                                      item.media.map(u => ({ type: "image", url: u })),
-                                      0,
-                                      false
-                                    )
-                                  }
                                 >
                                   +{item.media.length - 3}
                                 </Box>
@@ -564,7 +588,7 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
 
                           <TableCell>
                             {item.tags.map((t, idx) => (
-                              <Chip key={idx} size="small" label={t} sx={{ mr: 0.5 }} />
+                              <Chip key={idx} label={t} size="small" sx={{ mr: 0.5 }} />
                             ))}
                           </TableCell>
 
@@ -587,65 +611,67 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         {tabValue === 1 && (
           <>
             <CardContent>
-              <Typography variant="h6">Add Portfolio Videos</Typography>
+              <Typography variant="h6">Add Videos</Typography>
 
               <TextField
-                fullWidth label="Title"
+                fullWidth
+                label="Title"
                 value={videoTitle}
-                onChange={(e) => setVideoTitle(e.target.value)}
+                onChange={e => setVideoTitle(e.target.value)}
                 sx={{ mb: 3 }}
               />
 
               <TextField
-                fullWidth multiline rows={3}
+                fullWidth
+                multiline
+                rows={3}
                 label="Description"
                 value={videoDesc}
-                onChange={(e) => setVideoDesc(e.target.value)}
+                onChange={e => setVideoDesc(e.target.value)}
                 sx={{ mb: 3 }}
               />
 
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 {videoTags.map((t, i) => (
                   <Chip
                     key={i}
                     label={t}
-                    onDelete={() => setVideoTags(p => p.filter((_, x) => x !== i))}
+                    onDelete={() =>
+                      setVideoTags(prev => prev.filter((_, idx) => idx !== i))
+                    }
                     sx={{ mr: 1 }}
                   />
                 ))}
               </Box>
 
               <TextField
-                fullWidth label="Add Tag (Enter)"
+                fullWidth
+                label="Add Tag (Enter)"
                 value={videoTagInput}
-                onChange={(e) => setVideoTagInput(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" &&
+                onChange={e => setVideoTagInput(e.target.value)}
+                onKeyDown={e =>
+                  e.key === 'Enter' &&
                   (e.preventDefault(),
-                    addTag(videoTagInput, setVideoTagInput, setVideoTags))
+                  addTag(videoTagInput, setVideoTagInput, setVideoTags))
                 }
                 sx={{ mb: 3 }}
               />
 
-              <Button
-                variant="contained"
-                component="label"
-                startIcon={<CloudUpload />}
-                sx={{ mb: 2 }}
-              >
+              <Button variant="contained" component="label" startIcon={<CloudUpload />}>
                 Upload Videos
-                <input hidden multiple type="file" accept="video/*" onChange={handleVideoFiles} />
+                <input type="file" hidden multiple accept="video/*" onChange={handleVideoFiles} />
               </Button>
 
               <Typography variant="body2" sx={{ my: 2 }}>
-                Or add video links (YouTube / Vimeo)
+                Or add YouTube/Vimeo links
               </Typography>
 
-              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
-                  fullWidth label="Video Link"
+                  fullWidth
+                  label="Video Link"
                   value={videoLinkInput}
-                  onChange={(e) => setVideoLinkInput(e.target.value)}
+                  onChange={e => setVideoLinkInput(e.target.value)}
                 />
                 <Button
                   variant="contained"
@@ -657,7 +683,7 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
               </Box>
 
               {videoLinks.length > 0 && (
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mt: 2 }}>
                   {videoLinks.map((l, i) => (
                     <Chip
                       key={i}
@@ -669,24 +695,28 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                 </Box>
               )}
 
-              <Grid container spacing={2}>
+              <Grid container spacing={2} sx={{ mt: 2 }}>
                 {videoFiles.map((vid, i) => (
                   <Grid item xs={6} sm={4} md={3} key={i}>
-                    <Box sx={{ position: "relative" }}>
+                    <Box sx={{ position: 'relative' }}>
                       <video
                         src={vid.preview}
                         controls
-                        style={{ width: "100%", height: 150, borderRadius: 8 }}
+                        style={{
+                          width: '100%',
+                          height: 150,
+                          borderRadius: 8
+                        }}
                       />
                       <IconButton
                         size="small"
                         onClick={() => removeVideoFile(i)}
                         sx={{
-                          position: "absolute",
+                          position: 'absolute',
                           top: 4,
                           right: 4,
-                          bgcolor: "rgba(0,0,0,0.6)",
-                          color: "white"
+                          bgcolor: 'rgba(0,0,0,0.6)',
+                          color: 'white'
                         }}
                       >
                         <Close />
@@ -697,7 +727,9 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
               </Grid>
 
               <Button
-                fullWidth variant="contained" sx={{ mt: 4 }}
+                fullWidth
+                variant="contained"
+                sx={{ mt: 4 }}
                 onClick={() =>
                   uploadMedia(
                     videoTitle,
@@ -737,7 +769,9 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                   <TableBody>
                     {videoList.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">No videos</TableCell>
+                        <TableCell colSpan={6} align="center">
+                          No videos yet
+                        </TableCell>
                       </TableRow>
                     ) : (
                       videoList.map((item, i) => (
@@ -746,42 +780,51 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
                           <TableCell>{item.title}</TableCell>
 
                           <TableCell>
-                            <Box sx={{ display: "flex", gap: 1 }}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
                               {item.media.slice(0, 3).map((m, idx) => (
                                 <Box
                                   key={idx}
-                                  onClick={() => openFullscreen(item.media, idx, true)}
+                                  onClick={() =>
+                                    openFullscreen(item.media, idx, true)
+                                  }
                                   sx={{
                                     width: 80,
                                     height: 60,
                                     borderRadius: 1,
-                                    cursor: "pointer",
-                                    border: "2px solid #ddd",
-                                    bgcolor: m.type === "videoLink" ? "#d32f2f" : "#000",
-                                    color: "white",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center"
+                                    cursor: 'pointer',
+                                    border: '2px solid #ddd',
+                                    bgcolor:
+                                      m.type === 'videoLink' ? '#d32f2f' : '#000',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                   }}
                                 >
-                                  {m.type === "videoLink" ? <LinkIcon /> : <VideoLibrary />}
+                                  {m.type === 'videoLink' ? (
+                                    <LinkIcon />
+                                  ) : (
+                                    <VideoLibrary />
+                                  )}
                                 </Box>
                               ))}
 
                               {item.media.length > 3 && (
                                 <Box
-                                  onClick={() => openFullscreen(item.media, 0, true)}
+                                  onClick={() =>
+                                    openFullscreen(item.media, 0, true)
+                                  }
                                   sx={{
                                     width: 80,
                                     height: 60,
-                                    bgcolor: "rgba(211,47,47,0.9)",
-                                    color: "white",
+                                    bgcolor: 'rgba(211,47,47,0.9)',
+                                    color: 'white',
                                     borderRadius: 1,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    cursor: "pointer",
-                                    fontWeight: "bold"
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
                                   }}
                                 >
                                   +{item.media.length - 3}
@@ -814,34 +857,58 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         )}
       </Card>
 
-      {/* ------------------ FULLSCREEN VIEW ------------------ */}
+      {/* FULLSCREEN MODAL */}
       <Dialog open={mediaModalOpen} onClose={closeFullscreen} maxWidth="lg" fullWidth>
-        <DialogContent sx={{ bgcolor: "black", position: "relative", minHeight: "80vh", p: 0 }}>
+        <DialogContent
+          sx={{
+            bgcolor: 'black',
+            position: 'relative',
+            minHeight: '80vh',
+            p: 0
+          }}
+        >
           <IconButton
             onClick={closeFullscreen}
-            sx={{ position: "absolute", top: 10, right: 10, color: "white", zIndex: 10 }}
+            sx={{ position: 'absolute', top: 10, right: 10, color: 'white', zIndex: 10 }}
           >
             <Close />
           </IconButton>
 
-          <Box sx={{ textAlign: "center", color: "white", py: 2 }}>
+          <Box sx={{ color: 'white', textAlign: 'center', py: 2 }}>
             {currentIndex + 1} / {currentMediaUrls.length}
           </Box>
 
           {isVideoMode ? (
-            <iframe
-              src={currentMediaUrls[currentIndex]}
-              style={{ width: "100%", height: "70vh", border: "none" }}
-              allow="autoplay; fullscreen"
-              allowFullScreen
-            />
+            currentMediaUrls[currentIndex]?.includes('embed') ||
+            currentMediaUrls[currentIndex]?.includes('player.vimeo') ? (
+              <iframe
+                src={currentMediaUrls[currentIndex]}
+                style={{
+                  width: '100%',
+                  height: '70vh',
+                  border: 'none'
+                }}
+                allow="autoplay; fullscreen; encrypted-media"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={currentMediaUrls[currentIndex]}
+                controls
+                style={{
+                  maxWidth: '100%',
+                  height: '70vh'
+                }}
+              />
+            )
           ) : (
             <img
               src={currentMediaUrls[currentIndex]}
+              alt=""
               style={{
-                maxWidth: "100%",
-                maxHeight: "70vh",
-                objectFit: "contain"
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                objectFit: 'contain'
               }}
             />
           )}
@@ -851,11 +918,12 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
               <IconButton
                 onClick={prevMedia}
                 sx={{
-                  position: "absolute",
-                  top: "50%",
+                  position: 'absolute',
                   left: 10,
-                  color: "white",
-                  bgcolor: "rgba(0,0,0,0.5)"
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'white',
+                  bgcolor: 'rgba(0,0,0,0.5)'
                 }}
               >
                 <ChevronLeft fontSize="large" />
@@ -864,11 +932,12 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
               <IconButton
                 onClick={nextMedia}
                 sx={{
-                  position: "absolute",
-                  top: "50%",
+                  position: 'absolute',
                   right: 10,
-                  color: "white",
-                  bgcolor: "rgba(0,0,0,0.5)"
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'white',
+                  bgcolor: 'rgba(0,0,0,0.5)'
                 }}
               >
                 <ChevronRight fontSize="large" />

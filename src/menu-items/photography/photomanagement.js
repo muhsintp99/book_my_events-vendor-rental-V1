@@ -74,6 +74,14 @@ const photomanagement = {
       url: '/venue/categories',
       icon: icons.IconCategory,
       breadcrumbs: false
+    },
+     {
+      id: 'portfolio',
+      title: 'Portfolio',
+      type: 'item',
+      url: '/photography/portfolio',
+      icon: icons.IconCategory,
+      breadcrumbs: false
     }
   ]
 };

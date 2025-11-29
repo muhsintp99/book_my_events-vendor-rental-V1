@@ -105,7 +105,7 @@ const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpen
 // MAKEUP
 const AddmakeupPackage = Loadable(lazy(() => import('../views/makeup/AddmakePackage')));
 const MakeupList = Loadable(lazy(() => import('../views/makeup/Makeuplist')));
-// const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio')));
+const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio')));
 // const EmployeRole = Loadable(lazy(() => import('views/catering/EmployeRole')));
 // const CateringtaxReport = Loadable(lazy(() => import('views/catering/CateringTax')));
 // const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisburse')));
@@ -115,7 +115,7 @@ const MakeupList = Loadable(lazy(() => import('../views/makeup/Makeuplist')));
 // photographyy
 const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
-// const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Portfolio')));
+const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
 //----------------------------------------------------------------------------//
 
 // ==============================|| MAIN ROUTING ||============================== //
@@ -309,7 +309,7 @@ const MainRoutes = {
           children: [
             { path: 'addpackage', element: <AddmakeupPackage /> },
             { path: 'packagelist', element: <MakeupList /> },
-            // { path: 'Portfolio', element: <Portfolio /> }
+            { path: 'portfolio', element: <Portfolio /> }
           ]
         },
         {
@@ -334,7 +334,7 @@ const MainRoutes = {
           children: [
             { path: 'addpackage', element: <AddphotographyPackage /> },
             { path: 'packagelist', element: <Photographylist /> },
-            // { path: 'Portfolio', element: <PhotographyPortfolio /> }
+            { path: 'portfolio', element: <PhotographyPortfolio /> }
           ]
         },
         {

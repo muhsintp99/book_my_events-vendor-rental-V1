@@ -55,6 +55,14 @@ const makeupmanagement = {
       url: '/venue/categories',
       icon: icons.IconCategory2,
       breadcrumbs: false
+    },
+     {
+      id: 'portfolio',
+      title: 'Portfolio',
+      type: 'item',
+      url: '/makeup/portfolio',
+      icon: icons.IconCategory2,
+      breadcrumbs: false
     }
   ]
 };
