@@ -121,9 +121,12 @@ import Reportmakeup from './makeup/reportmakeup';
 import photomanagement from './photography/photomanagement';
 import Photographysection from './photography/photographysession';
 import Reportphotography from './photography/reportphotography';
+import management from './venues/management';
 
 // ==============================|| MENU ITEMS ||============================== //
-const logRes = (localStorage.getItem('logRes') || '').toLowerCase(); 
+const logRes = (localStorage.getItem('logRes') || '')
+  .toLowerCase()
+  .replace(/\s+/g, '');   // remove spaces
 console.log("logRes:", logRes);
 
 // Common sections for all
@@ -135,7 +138,7 @@ let specificSections = [];
 if (logRes === 'transport') {
   specificSections = [ vehiclemanagement,Reportsection,Employeesection];
 } else if (logRes === 'venues') {
-  specificSections = [venuemanagement, Businessection, Report, Employee];
+  specificSections = [management, venuemanagement, Businessection, Report, Employee];
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
 } else if (logRes === 'mehandi') {
@@ -144,7 +147,7 @@ if (logRes === 'transport') {
   specificSections = [photomanagement,Photographysection,Reportphotography];
 } else if (logRes === 'catering') {
   specificSections = [cateringmanagement, Reports, Employees];
-} else if (logRes === 'makeup') {
+} else if (logRes === 'makeupartist') {
     specificSections = [Makeupmanagement,Businessection,Employee,Reportmakeup];      
 }else if (logRes === 'dj_music') {
   // specificSections = [djmusicmanagement];

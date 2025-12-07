@@ -100,6 +100,15 @@ const CateringtaxReport = Loadable(lazy(() => import('views/catering/CateringTax
 const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisburse')));
 const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
 
+// Bookings
+const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
+const Scheduledbookings = Loadable(lazy(() => import('../views/Scheduled')));
+const Pendingbookings = Loadable(lazy(() => import('../views/Pendings')));
+const Confirmedbookings = Loadable(lazy(() => import('../views/Confirmed')));
+const Ongoingbookings = Loadable(lazy(() => import('../views/Ongoing')));
+const Completedbookings = Loadable(lazy(() => import('../views/Completed')));
+const Cancelledbookings = Loadable(lazy(() => import('../views/Canceled')));
+const Paymentfailedbookings = Loadable(lazy(() => import('../views/PaymentFailed')));
 
 
 // MAKEUP
@@ -116,7 +125,7 @@ const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio'))
 const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
-//----------------------------------------------------------------------------//
+//-----------------------------------------------import Pendingbookings from './../views/Pendings';
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -219,6 +228,18 @@ const MainRoutes = {
             { path: 'venuetax', element: <VenueTaxReport /> }
           ]
         },
+
+         // Bookingssss
+
+    { path: 'bookings/all', element: <Allbookings /> },
+    { path: 'bookings/scheduled', element: <Scheduledbookings /> },
+    { path: 'bookings/Pending', element: <Pendingbookings /> },
+    { path: 'bookings/confirmed', element: <Confirmedbookings /> },
+    { path: 'bookings/ongoing', element: <Ongoingbookings /> },
+    { path: 'bookings/completed', element: <Completedbookings /> },
+    { path: 'bookings/cancelled', element: <Cancelledbookings /> },
+    { path: 'bookings/paymentfailedbookings', element: <Paymentfailedbookings /> },
+
         {
           path: 'employee',
           children: [
@@ -305,7 +326,7 @@ const MainRoutes = {
 
          //MAKEUP
         {
-          path: 'makeup',
+          path: 'makeupartist',
           children: [
             { path: 'addpackage', element: <AddmakeupPackage /> },
             { path: 'packagelist', element: <MakeupList /> },

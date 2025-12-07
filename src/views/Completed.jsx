@@ -1,11 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Typography,
   Table,
@@ -15,123 +11,60 @@ import {
   TableBody,
   Paper,
   TableContainer,
-  useMediaQuery,
   Stack,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
 
 const Completed = () => {
-  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [formData, setFormData] = useState({
-    tripId: "",
-    bookingDate: "",
-    scheduleAt: "",
-    customerInfo: "",
-    driverInfo: "",
-    vehicleInfo: "",
-    tripType: "",
-    tripAmount: "",
-    tripStatus: "",
-  });
+  const [completedTrips, setCompletedTrips] = useState([]);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const navigate = useNavigate();
+  const providerId = localStorage.getItem("providerId"); // 👉 where you store provider ID
+  const API_URL = `https://your-api.com/api/bookings/provider/${providerId}/payment-status/Paid`;
 
-  // Static trips data (same as AllTrips but we’ll filter completed ones)
-  const tripsData = [
-    { 
-      id: 1, 
-      tripId: 100036, 
-      bookingDate: "08 Feb 2025", 
-      scheduleAt: "08 Feb 2025 12:40pm", 
-      customerInfo: "Jhon j*********@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Hourly\nInstant", 
-      tripAmount: "247.50", 
-      tripStatus: "Pending\nUnpaid" 
-    },
-    { 
-      id: 2, 
-      tripId: 100035, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 05:56pm", 
-      customerInfo: "Jonathon Jack s*********@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Hourly\nInstant", 
-      tripAmount: "33.75", 
-      tripStatus: "Confirmed\nUnpaid" 
-    },
-    { 
-      id: 3, 
-      tripId: 100033, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 05:43pm", 
-      customerInfo: "MS 133 m*******@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Distance wise\nInstant", 
-      tripAmount: "180.60", 
-      tripStatus: "Pending\nUnpaid" 
-    },
-    { 
-      id: 4, 
-      tripId: 100031, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 03:22pm", 
-      customerInfo: "Jonathon Jack s*********@gmail.com", 
-      driverInfo: "Ruth Kerry kuzo****@gmail.com", 
-      vehicleInfo: "1 Vehicles", 
-      tripType: "Distance wise\nInstant", 
-      tripAmount: "180.60", 
-      tripStatus: "Completed\nPaid" 
-    },
-  ];
+  // ===========================
+  // 🔥 FETCH COMPLETED BOOKINGS
+  // ===========================
+  const fetchCompletedBookings = async () => {
+    try {
+      const res = await fetch(API_URL);
+      const json = await res.json();
 
-  // Only completed trips
-  const completedTrips = tripsData.filter(trip =>
-    trip.tripStatus.toLowerCase().includes("completed")
-  );
+      if (json.success) {
+        const formatted = json.data.map((b, index) => ({
+          id: b._id,
+          tripId: b._id.slice(-6),
+          bookingDate: new Date(b.bookingDate).toLocaleDateString(),
+          scheduleAt: Array.isArray(b.timeSlot) ? b.timeSlot[0] : b.timeSlot,
+          customerInfo: b.fullName + " " + b.emailAddress,
+          driverInfo: b.driverInfo || "Unassigned",
+          vehicleInfo: b.vehicleInfo || "Unassigned",
+          tripType: b.moduleType,
+          tripAmount: b.finalPrice?.toFixed(2),
+          tripStatus: b.paymentStatus,
+        }));
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => {
-    setOpen(false);
-    setFormData({
-      tripId: "",
-      bookingDate: "",
-      scheduleAt: "",
-      customerInfo: "",
-      driverInfo: "",
-      vehicleInfo: "",
-      tripType: "",
-      tripAmount: "",
-      tripStatus: "",
-    });
+        setCompletedTrips(formatted);
+      }
+    } catch (err) {
+      console.log("Error fetching completed bookings:", err);
+    }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  useEffect(() => {
+    fetchCompletedBookings();
+  }, []);
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-  };
-
-  // Search inside completed trips
-  const filteredTrips = completedTrips.filter(trip =>
-    trip.tripId.toString().includes(search) ||
-    trip.customerInfo.toLowerCase().includes(search.toLowerCase())
+  // SEARCH FILTER
+  const filteredTrips = completedTrips.filter(
+    (trip) =>
+      trip.tripId.toString().includes(search) ||
+      trip.customerInfo.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
-        Completed Trips
+        Completed Bookings
       </Typography>
 
       <Paper sx={{ mt: 2, width: "100%" }}>
@@ -142,19 +75,20 @@ const Completed = () => {
           alignItems={{ xs: "stretch", sm: "center" }}
           p={2}
         >
-          <Button variant="contained" onClick={handleOpen} sx={{color:'white',bgcolor:'#E15B65'}}>
-            Add New Trip
-          </Button>
           <TextField
-            label="Search by trip ID, customer name, email"
-            variant="outlined"
+            label="Search by ID, customer name"
             size="small"
             value={search}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearch(e.target.value)}
             sx={{ maxWidth: { sm: 300 } }}
           />
-          <Button variant="contained" color="#E15B65" sx={{color:'white',bgcolor:'#E15B65'}}>
-            Export
+
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#E15B65", color: "white" }}
+            onClick={fetchCompletedBookings}
+          >
+            Refresh
           </Button>
         </Stack>
 
@@ -163,18 +97,18 @@ const Completed = () => {
             <TableHead>
               <TableRow>
                 <TableCell>S#</TableCell>
-                <TableCell>Trip ID</TableCell>
+                <TableCell>Booking ID</TableCell>
                 <TableCell>Booking Date</TableCell>
                 <TableCell>Schedule At</TableCell>
-                <TableCell>Customer Info</TableCell>
-                <TableCell>Driver Info</TableCell>
-                <TableCell>Vehicle Info</TableCell>
-                <TableCell>Trip Type</TableCell>
-                <TableCell>Trip Amount</TableCell>
-                <TableCell>Trip Status</TableCell>
-                <TableCell>Action</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Driver</TableCell>
+                <TableCell>Vehicle</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {filteredTrips.map((trip, index) => (
                 <TableRow key={trip.id}>
@@ -188,106 +122,12 @@ const Completed = () => {
                   <TableCell>{trip.tripType}</TableCell>
                   <TableCell>{trip.tripAmount}</TableCell>
                   <TableCell>{trip.tripStatus}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>Download</Button>
-                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>View</Button>
-                    </Stack>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
-
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth
-        fullScreen={fullScreen}
-      >
-        <DialogTitle>Add New Trip</DialogTitle>
-        <DialogContent dividers>
-          <TextField
-            fullWidth
-            label="Trip ID"
-            name="tripId"
-            value={formData.tripId}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Booking Date"
-            name="bookingDate"
-            value={formData.bookingDate}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Schedule At"
-            name="scheduleAt"
-            value={formData.scheduleAt}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Customer Info"
-            name="customerInfo"
-            value={formData.customerInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Driver Info"
-            name="driverInfo"
-            value={formData.driverInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Vehicle Info"
-            name="vehicleInfo"
-            value={formData.vehicleInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Type"
-            name="tripType"
-            value={formData.tripType}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Amount"
-            name="tripAmount"
-            value={formData.tripAmount}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Status"
-            name="tripStatus"
-            value={formData.tripStatus}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button sx={{color:'#E15B65'}} onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleClose} sx={{color:'white',bgcolor:'#E15B65'}}>Save</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

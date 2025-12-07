@@ -35,14 +35,14 @@ const makeupmanagement = {
           id: 'add-package',
           title: 'Add Package',
           type: 'item',
-          url: '/makeup/addpackage',       // Fixed URL
+          url: '/makeupartist/addpackage',       // Fixed URL
           icon: icons.IconPlus
         },
         {
           id: 'makeup-list',
           title: 'Makeup List',
           type: 'item',
-          url: '/makeup/packagelist',      // Fixed URL
+          url: '/makeupartist/packagelist',      // Fixed URL
           icon: icons.IconListDetails
         }
       ]
@@ -60,7 +60,7 @@ const makeupmanagement = {
       id: 'portfolio',
       title: 'Portfolio',
       type: 'item',
-      url: '/makeup/portfolio',
+      url: '/makeupartist/portfolio',
       icon: icons.IconCategory2,
       breadcrumbs: false
     }

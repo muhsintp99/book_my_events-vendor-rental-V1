@@ -3253,12 +3253,18 @@ const handleSubmit = async (event) => {
                     placeholder="Ex: 10"  type="number"
                     inputProps={{ min: 0, max: 100 }}  sx={inputSx} />
                 </Box>
-                <TextField
-                  fullWidth
-                  label="Advance Payment / Deposit (%)"
-                  name="advanceDeposit" value={formData.advanceDeposit}
-                  onChange={handleInputChange} placeholder="Ex: 20"
-                  type="number"  inputProps={{ min: 0, max: 100 }} sx={{ mb: 2, ...inputSx }} />
+               <TextField
+  fullWidth
+  label="Advance Payment / Deposit (₹)"
+  name="advanceDeposit"
+  value={formData.advanceDeposit}
+  onChange={handleInputChange}
+  placeholder="Enter advance amount"
+  type="number"
+  inputProps={{ min: 0 }}   // ✅ No max, any amount allowed
+  sx={{ mb: 2, ...inputSx }}
+/>
+
                 <TextField
                   fullWidth
                   label="Cancellation Policy"  name="cancellationPolicy"
