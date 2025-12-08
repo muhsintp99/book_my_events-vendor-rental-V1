@@ -2,42 +2,28 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Paper,
-  TableContainer,
-  useMediaQuery,
+  CircularProgress,
+  Collapse,
   Stack,
+  Divider,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 
 const Pendingbookings = () => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [pendingBookings, setPendingBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-
-  // FETCH BOOKINGS
+  // FETCH PENDING BOOKINGS
   useEffect(() => {
     const fetchPending = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/bookings");
         const allBookings = res.data.bookings || [];
 
-        // Filter only Pending bookings
+        // Only show pending
         const filtered = allBookings.filter(
           (b) =>
             b.status?.toLowerCase() === "pending" ||
@@ -55,123 +41,172 @@ const Pendingbookings = () => {
     fetchPending();
   }, []);
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const handleSearchChange = (e) => setSearch(e.target.value);
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
-  // Search filtering
-  const filteredTrips = pendingBookings.filter(
-    (b) =>
-      b._id.includes(search) ||
-      (b.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (b.emailAddress || "").toLowerCase().includes(search.toLowerCase())
-  );
+  // ⭐ ACCEPT BOOKING
+  const handleConfirm = async (id, e) => {
+    e.stopPropagation();
+
+    try {
+      await axios.patch(`http://localhost:5000/api/bookings/${id}/accept`);
+
+      setPendingBookings((prev) => prev.filter((b) => b._id !== id));
+
+      alert("Booking Confirmed");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to confirm booking");
+    }
+  };
+
+  // ❌ REJECT BOOKING
+  const handleReject = async (id, e) => {
+    e.stopPropagation();
+    id = id.trim(); // fix accidental space
+
+    try {
+      await axios.patch(`http://localhost:5000/api/bookings/${id}/reject`);
+      setPendingBookings((prev) => prev.filter((b) => b._id !== id));
+      alert("Booking Rejected");
+    } catch (err) {
+      console.error(err?.response?.data || err);
+      alert("Failed to reject");
+    }
+  };
 
   return (
-    <Box p={2}>
-      <Typography variant="h4" gutterBottom>
-        Pending Bookings
-      </Typography>
+    <Box p={2} sx={{ background: "#f4f7fb", minHeight: "100vh" }}>
+      {/* Center Container */}
+      <Box sx={{ maxWidth: "850px", margin: "0 auto" }}>
+        <Typography variant="h4" fontWeight={600} mb={3}>
+          Pending Bookings
+        </Typography>
 
-      <Paper sx={{ mt: 2, width: "100%" }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
-          p={2}
-        >
-          <TextField
-            label="Search by Booking ID, Customer Name, Email"
-            variant="outlined"
-            size="small"
-            value={search}
-            onChange={handleSearchChange}
-            sx={{ maxWidth: { sm: 300 } }}
-          />
-          <Button variant="contained" color="primary">
-            Export
-          </Button>
-        </Stack>
+        {loading ? (
+          <Box display="flex" justifyContent="center" mt={4}>
+            <CircularProgress />
+          </Box>
+        ) : pendingBookings.length === 0 ? (
+          <Typography>No Pending Bookings Found</Typography>
+        ) : (
+          pendingBookings.map((b) => (
+            <Paper
+              key={b._id}
+              elevation={2}
+              sx={{
+                p: 2.5,
+                mt: 2,
+                borderRadius: "16px",
+                cursor: "pointer",
+                transition: "0.2s",
+                background: "#fff",
+                "&:hover": {
+                  boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+              onClick={() => toggleExpand(b._id)}
+            >
+              {/* TOP SECTION */}
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Box>
+                  <Typography fontWeight={700} fontSize={16}>
+                    Booking ID:{" "}
+                    <span style={{ color: "#1976d2" }}>#{b._id.slice(-6)}</span>
+                  </Typography>
 
-        <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>S#</TableCell>
-                <TableCell>Booking ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Guests</TableCell>
-                <TableCell>Booking Date</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Payment Status</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
+                  <Typography color="gray" fontSize={14}>
+                    {b.eventType || "Corporate Conference"}
+                  </Typography>
 
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              )}
+                  <Typography color="gray" fontSize={13} mt={0.5}>
+                    {new Date(b.bookingDate).toDateString()}
+                  </Typography>
+                </Box>
 
-              {!loading &&
-                filteredTrips.map((b, index) => (
-                  <TableRow key={b._id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{b._id}</TableCell>
-                    <TableCell>{b.fullName}</TableCell>
-                    <TableCell>{b.emailAddress}</TableCell>
-                    <TableCell>{b.numberOfGuests}</TableCell>
-                    <TableCell>
-                      {new Date(b.bookingDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{b.finalPrice}</TableCell>
-                    <TableCell>{b.status}</TableCell>
-                    <TableCell>{b.paymentStatus}</TableCell>
+                <Typography
+                  fontWeight={700}
+                  sx={{ color: "#16a34a", fontSize: "18px" }}
+                >
+                  ₹{b.finalPrice}
+                </Typography>
+              </Stack>
 
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <Button variant="outlined" size="small">
-                          View
-                        </Button>
-                        <Button variant="outlined" size="small">
-                          Download
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {/* EXPANDED DETAILS */}
+              <Collapse in={expandedId === b._id}>
+                <Divider sx={{ my: 2 }} />
 
-              {!loading && filteredTrips.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    No Pending Bookings Found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                <Box
+                  sx={{
+                    background: "#f9fafb",
+                    p: 2,
+                    borderRadius: "12px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  <Detail label="Customer" value={b.fullName} />
+                  <Detail label="Guests" value={b.numberOfGuests} />
+                  <Detail label="Email" value={b.emailAddress} />
+                  <Detail label="Setup" value={b.setupTime || "9:00 AM - 10:00 AM"} />
+                  <Detail label="Event" value={b.eventTime || "10:00 AM - 6:00 PM"} />
+                  <Detail label="Capacity" value={b.capacity || "500 guests"} />
+                  <Detail label="Catering" value={b.catering || "External"} />
+                </Box>
 
-      {/* Add New Trip Modal (Optional – you can remove if not needed) */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth fullScreen={fullScreen}>
-        <DialogTitle>Add New Pending Trip</DialogTitle>
-        <DialogContent dividers>
-          <Typography>This form is optional. You can remove it.</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
-        </DialogActions>
-      </Dialog>
+                {/* ACTION BUTTONS */}
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  mt={2}
+                  justifyContent="center"
+                >
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      width: "130px",
+                      borderRadius: "30px",
+                      color: "#e11d48",
+                      borderColor: "#e11d48",
+                      "&:hover": { background: "#ffe4e6" },
+                    }}
+                    onClick={(e) => handleReject(b._id, e)}
+                  >
+                    Reject
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    sx={{
+                      width: "130px",
+                      borderRadius: "30px",
+                      bgcolor: "#16a34a",
+                      "&:hover": { bgcolor: "#15803d" },
+                    }}
+                    onClick={(e) => handleConfirm(b._id, e)}
+                  >
+                    Confirm
+                  </Button>
+                </Stack>
+              </Collapse>
+            </Paper>
+          ))
+        )}
+      </Box>
     </Box>
   );
 };
+
+// Helper component for cleaner detail rendering
+const Detail = ({ label, value }) => (
+  <Typography fontSize={14} sx={{ mb: 0.5 }}>
+    <strong>{label}:</strong> {value}
+  </Typography>
+);
 
 export default Pendingbookings;

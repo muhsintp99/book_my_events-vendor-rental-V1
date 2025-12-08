@@ -1,304 +1,164 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Paper,
-  TableContainer,
-  useMediaQuery,
+  Collapse,
   Stack,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const CanceledTrips = () => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [formData, setFormData] = useState({
-    tripId: "",
-    bookingDate: "",
-    scheduleAt: "",
-    customerInfo: "",
-    driverInfo: "",
-    vehicleInfo: "",
-    tripType: "",
-    tripAmount: "",
-    tripStatus: "",
-  });
+  const [expandedId, setExpandedId] = useState(null);
+  const [canceledBookings, setCanceledBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const navigate = useNavigate();
+  // 🔥 FETCH CANCELED (REJECTED) BOOKINGS FROM BACKEND
+  useEffect(() => {
+    const fetchCanceled = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/bookings");
 
-  // Static trips data
-  const tripsData = [
-    { 
-      id: 1, 
-      tripId: 100036, 
-      bookingDate: "08 Feb 2025", 
-      scheduleAt: "08 Feb 2025 12:40pm", 
-      customerInfo: "Jhon j*********@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Hourly\nInstant", 
-      tripAmount: "247.50", 
-      tripStatus: "Pending\nUnpaid" 
-    },
-    { 
-      id: 2, 
-      tripId: 100035, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 05:56pm", 
-      customerInfo: "Jonathon Jack s*********@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Hourly\nInstant", 
-      tripAmount: "33.75", 
-      tripStatus: "Confirmed\nUnpaid" 
-    },
-    { 
-      id: 3, 
-      tripId: 100033, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 05:43pm", 
-      customerInfo: "MS 133 m*******@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Distance wise\nInstant", 
-      tripAmount: "180.60", 
-      tripStatus: "Pending\nUnpaid" 
-    },
-    { 
-      id: 4, 
-      tripId: 100031, 
-      bookingDate: "06 Feb 2025", 
-      scheduleAt: "06 Feb 2025 03:22pm", 
-      customerInfo: "Jonathon Jack s*********@gmail.com", 
-      driverInfo: "Ruth Kerry kuzo****@gmail.com", 
-      vehicleInfo: "1 Vehicles", 
-      tripType: "Distance wise\nInstant", 
-      tripAmount: "180.60", 
-      tripStatus: "Completed\nPaid" 
-    },
-    { 
-      id: 5, 
-      tripId: 100037, 
-      bookingDate: "09 Feb 2025", 
-      scheduleAt: "09 Feb 2025 11:00am", 
-      customerInfo: "Alice M********@gmail.com", 
-      driverInfo: "Unassigned", 
-      vehicleInfo: "Unassigned", 
-      tripType: "Hourly\nInstant", 
-      tripAmount: "50.00", 
-      tripStatus: "Cancelled\nUnpaid" 
-    },
-  ];
+        const allBookings = res.data.bookings || [];
 
-  // Filter only canceled trips
-  const canceledTrips = tripsData.filter(trip =>
-    trip.tripStatus.toLowerCase().includes("cancelled")
-  );
+        // Show Rejected bookings
+        const canceled = allBookings.filter(
+          (b) =>
+            b.status?.toLowerCase() === "rejected" ||
+            b.status?.toLowerCase() === "cancelled" // if you add this in future
+        );
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => {
-    setOpen(false);
-    setFormData({
-      tripId: "",
-      bookingDate: "",
-      scheduleAt: "",
-      customerInfo: "",
-      driverInfo: "",
-      vehicleInfo: "",
-      tripType: "",
-      tripAmount: "",
-      tripStatus: "",
-    });
+        setCanceledBookings(canceled);
+      } catch (err) {
+        console.error("Failed to fetch canceled bookings", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCanceled();
+  }, []);
+
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const filteredTrips = canceledTrips.filter(trip =>
-    trip.tripId.toString().includes(search) ||
-    trip.customerInfo.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
-        Canceled Trips
+        Canceled / Rejected Bookings
       </Typography>
 
-      <Paper sx={{ mt: 2, width: "100%" }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
-          p={2}
-        >
-          <Button variant="contained" onClick={handleOpen} sx={{color:'white',bgcolor:'#E15B65'}}>
-            Add New Trip
-          </Button>
-          <TextField
-            label="Search by trip ID, customer name, email"
-            variant="outlined"
-            size="small"
-            value={search}
-            onChange={handleSearchChange}
-            sx={{ maxWidth: { sm: 300 } }}
-          />
-          <Button variant="contained" color="primary" sx={{color:'white',bgcolor:'#E15B65'}}>
-            Export
-          </Button>
-        </Stack>
+      {loading ? (
+        <CircularProgress />
+      ) : canceledBookings.length === 0 ? (
+        <Typography>No canceled bookings found</Typography>
+      ) : (
+        canceledBookings.map((b) => (
+          <Paper
+            key={b._id}
+            elevation={3}
+            sx={{
+              p: 2,
+              mt: 2,
+              borderRadius: "12px",
+              cursor: "pointer",
+            }}
+            onClick={() => toggleExpand(b._id)}
+          >
+            {/* ------- Top Section ------- */}
+            <Stack direction="row" justifyContent="space-between">
+              <Box>
+                <Typography fontWeight={600}>
+                  Booking ID: #{b._id?.slice(-6)}
+                </Typography>
 
-        <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>S#</TableCell>
-                <TableCell>Trip ID</TableCell>
-                <TableCell>Booking Date</TableCell>
-                <TableCell>Schedule At</TableCell>
-                <TableCell>Customer Info</TableCell>
-                <TableCell>Driver Info</TableCell>
-                <TableCell>Vehicle Info</TableCell>
-                <TableCell>Trip Type</TableCell>
-                <TableCell>Trip Amount</TableCell>
-                <TableCell>Trip Status</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredTrips.map((trip, index) => (
-                <TableRow key={trip.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{trip.tripId}</TableCell>
-                  <TableCell>{trip.bookingDate}</TableCell>
-                  <TableCell>{trip.scheduleAt}</TableCell>
-                  <TableCell>{trip.customerInfo}</TableCell>
-                  <TableCell>{trip.driverInfo}</TableCell>
-                  <TableCell>{trip.vehicleInfo}</TableCell>
-                  <TableCell>{trip.tripType}</TableCell>
-                  <TableCell>{trip.tripAmount}</TableCell>
-                  <TableCell>{trip.tripStatus}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" color="#E15B65"size="small" sx={{color:'#E15B65'}}>Download</Button>
-                      <Button variant="outlined" color="#E15B65" size="small" sx={{color:'#E15B65'}}>View</Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                <Typography color="gray" fontSize={14}>
+                  {new Date(b.bookingDate).toDateString()}
+                </Typography>
 
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth
-        fullScreen={fullScreen}
-      >
-        <DialogTitle>Add New Trip</DialogTitle>
-        <DialogContent dividers>
-          <TextField
-            fullWidth
-            label="Trip ID"
-            name="tripId"
-            value={formData.tripId}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Booking Date"
-            name="bookingDate"
-            value={formData.bookingDate}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Schedule At"
-            name="scheduleAt"
-            value={formData.scheduleAt}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Customer Info"
-            name="customerInfo"
-            value={formData.customerInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Driver Info"
-            name="driverInfo"
-            value={formData.driverInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Vehicle Info"
-            name="vehicleInfo"
-            value={formData.vehicleInfo}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Type"
-            name="tripType"
-            value={formData.tripType}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Amount"
-            name="tripAmount"
-            value={formData.tripAmount}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Trip Status"
-            name="tripStatus"
-            value={formData.tripStatus}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button sx={{color:"#E15B65"}} onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleClose}  sx={{color:'white',bgcolor:'#E15B65'}}>Save</Button>
-        </DialogActions>
-      </Dialog>
+                <Typography color="gray" fontSize={13}>
+                  {b.timeSlot || "N/A"}
+                </Typography>
+              </Box>
+
+              <Typography fontWeight={700} color="red">
+                ₹{b.finalPrice}
+              </Typography>
+            </Stack>
+
+            <Collapse in={expandedId === b._id}>
+              <Divider sx={{ my: 2 }} />
+
+              <Box
+                sx={{
+                  background: "#f8f8f8",
+                  p: 2,
+                  borderRadius: "10px",
+                }}
+              >
+                <Typography fontSize={14}>
+                  <strong>Customer:</strong> {b.fullName}
+                </Typography>
+
+                <Typography fontSize={14}>
+                  <strong>Email:</strong> {b.emailAddress}
+                </Typography>
+
+                <Typography fontSize={14}>
+                  <strong>Contact:</strong> {b.contactNumber}
+                </Typography>
+
+                <Typography fontSize={14}>
+                  <strong>Guests:</strong> {b.numberOfGuests}
+                </Typography>
+
+                <Typography fontSize={14} mt={1}>
+                  <strong>Status:</strong>{" "}
+                  <span style={{ color: "red" }}>{b.status}</span>
+                </Typography>
+
+                <Typography fontSize={14}>
+                  <strong>Payment:</strong> {b.paymentStatus}
+                </Typography>
+              </Box>
+
+              <Stack
+                direction="row"
+                spacing={2}
+                mt={2}
+                justifyContent="center"
+              >
+                <Button
+                  variant="outlined"
+                  sx={{
+                    width: "120px",
+                    borderRadius: "30px",
+                    color: "#E15B65",
+                  }}
+                >
+                  Download
+                </Button>
+
+                <Button
+                  variant="contained"
+                  sx={{
+                    width: "120px",
+                    borderRadius: "30px",
+                    bgcolor: "#E15B65",
+                    color: "white",
+                  }}
+                >
+                  View
+                </Button>
+              </Stack>
+            </Collapse>
+          </Paper>
+        ))
+      )}
     </Box>
   );
 };

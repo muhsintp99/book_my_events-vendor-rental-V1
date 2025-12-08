@@ -12,6 +12,7 @@ import {
   Paper,
   TableContainer,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import axios from "axios";
 
@@ -20,11 +21,11 @@ const Allbookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Fetch ALL bookings (no provider filter)
+  // 🔥 Fetch ALL bookings from backend
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bookings"); 
+        const res = await axios.get("http://localhost:5000/api/bookings");
         setBookings(res.data.bookings || []);
       } catch (error) {
         console.error("Error fetching bookings:", error);
@@ -38,11 +39,11 @@ const Allbookings = () => {
 
   const handleSearchChange = (e) => setSearch(e.target.value);
 
-  // 🔍 Search by bookingId, name, email
+  // 🔍 Search: ID, name, email
   const filteredBookings = bookings.filter((b) =>
     (b.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
     (b.emailAddress || "").toLowerCase().includes(search.toLowerCase()) ||
-    b._id.includes(search)
+    b._id.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -51,7 +52,8 @@ const Allbookings = () => {
         All Bookings
       </Typography>
 
-      <Paper sx={{ mt: 2, width: "100%" }}>
+      <Paper sx={{ mt: 2, width: "100%", borderRadius: "10px" }}>
+        {/* 🔍 Search + Export */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
@@ -67,11 +69,13 @@ const Allbookings = () => {
             onChange={handleSearchChange}
             sx={{ maxWidth: { sm: 300 } }}
           />
+
           <Button variant="contained" color="primary">
             Export
           </Button>
         </Stack>
 
+        {/* TABLE */}
         <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
           <Table stickyHeader>
             <TableHead>
@@ -90,35 +94,68 @@ const Allbookings = () => {
             </TableHead>
 
             <TableBody>
+              {/* LOADING STATE */}
               {loading && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
-                    Loading...
+                    <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
               )}
 
+              {/* DATA LIST */}
               {!loading &&
                 filteredBookings.map((b, index) => (
                   <TableRow key={b._id}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>{b._id}</TableCell>
+                    <TableCell>#{b._id.slice(-6)}</TableCell>
                     <TableCell>{b.fullName || "N/A"}</TableCell>
                     <TableCell>{b.emailAddress || "N/A"}</TableCell>
                     <TableCell>
                       {new Date(b.bookingDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>{b.numberOfGuests}</TableCell>
-                    <TableCell>{b.finalPrice}</TableCell>
-                    <TableCell>{b.status}</TableCell>
-                    <TableCell>{b.paymentStatus}</TableCell>
+                    <TableCell>{b.numberOfGuests || "-"}</TableCell>
+
+                    <TableCell>
+                      ₹{b.finalPrice?.toLocaleString() || 0}
+                    </TableCell>
+
+                    <TableCell
+                      style={{
+                        color:
+                          b.status === "Accepted"
+                            ? "green"
+                            : b.status === "Rejected"
+                            ? "red"
+                            : "orange",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {b.status}
+                    </TableCell>
+
+                    <TableCell
+                      style={{
+                        textTransform: "capitalize",
+                        color:
+                          b.paymentStatus === "completed"
+                            ? "green"
+                            : b.paymentStatus === "failed"
+                            ? "red"
+                            : "orange",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {b.paymentStatus}
+                    </TableCell>
 
                     <TableCell>
                       <Stack direction="row" spacing={1}>
-                        <Button variant="outlined" size="small">
+                        <Button variant="outlined" size="small" color="primary">
                           View
                         </Button>
-                        <Button variant="outlined" size="small">
+
+                        <Button variant="outlined" size="small" color="secondary">
                           Download
                         </Button>
                       </Stack>
@@ -126,6 +163,7 @@ const Allbookings = () => {
                   </TableRow>
                 ))}
 
+              {/* EMPTY STATE */}
               {!loading && filteredBookings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
