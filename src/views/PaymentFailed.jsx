@@ -24,7 +24,7 @@ const PaymentFailedbookings = () => {
   useEffect(() => {
     const fetchFailed = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bookings");
+        const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
         const all = res.data.bookings || [];
 
         // Filter payment failed

@@ -20,7 +20,7 @@ const CanceledTrips = () => {
   useEffect(() => {
     const fetchCanceled = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bookings");
+        const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
 
         const allBookings = res.data.bookings || [];
 
