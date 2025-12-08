@@ -20,7 +20,7 @@ const Pendingbookings = () => {
   useEffect(() => {
     const fetchPending = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bookings");
+        const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
         const allBookings = res.data.bookings || [];
 
         // Only show pending
@@ -50,7 +50,7 @@ const Pendingbookings = () => {
     e.stopPropagation();
 
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/${id}/accept`);
+      await axios.patch(`https://api.bookmyevent.ae/api/bookings/${id}/accept`);
 
       setPendingBookings((prev) => prev.filter((b) => b._id !== id));
 
@@ -67,7 +67,7 @@ const Pendingbookings = () => {
     id = id.trim(); // fix accidental space
 
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/${id}/reject`);
+      await axios.patch(`https://api.bookmyevent.ae/api/bookings/${id}/reject`);
       setPendingBookings((prev) => prev.filter((b) => b._id !== id));
       alert("Booking Rejected");
     } catch (err) {
