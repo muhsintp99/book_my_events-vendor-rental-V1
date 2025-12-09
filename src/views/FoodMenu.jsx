@@ -911,30 +911,24 @@ const FoodMenu = () => {
     }
   }, []);
 
-  const fetchPackages = async () => {
-    const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
-    if (!providerId) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/packages/provider/${providerId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const result = await response.json();
-        setPackages(result.packages || []);
-      } else {
-        throw new Error('Failed to fetch packages');
-      }
-    } catch (error) {
-      console.error('Error fetching packages:', error);
-      setToastMessage('Failed to fetch packages');
-      setToastSeverity('error');
-      setOpenToast(true);
-    }
-  };
+ const fetchPackages = async () => {
+  const providerId = getProviderId();
+  if (!providerId) return;
+
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/packages/provider/${providerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const result = await response.json();
+    setPackages(result.packages || []);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
 
   const toggleSelection = (pkg) => {
     console.log('Toggling package:', pkg);
@@ -1029,6 +1023,19 @@ const FoodMenu = () => {
     setGalleryFiles([]);
   };
 
+
+  // --- Helper to get providerId ---
+const getProviderId = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    return user?._id || null;  // providerId = vendor _id
+  } catch {
+    return null;
+  }
+};
+
   const handleEdit = () => {
     if (currentPackage) {
       populateForm(currentPackage);
@@ -1104,7 +1111,9 @@ const FoodMenu = () => {
       setOpenToast(true);
       return;
     }
-    const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
+    // const providerId = localStorage.getItem('providerId') || localStorage.getItem('moduleId');
+    const providerId = getProviderId();
+
     if (!providerId) {
       setToastMessage('Provider ID is missing. Please log in again.');
       setToastSeverity('error');

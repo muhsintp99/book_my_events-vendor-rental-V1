@@ -59,12 +59,12 @@ const management = {
           type: 'item',
           url: '/bookings/all'
         },
-        {
-          id: 'new-leads',
-          title: 'Scheduled',
-          type: 'item',
-          url: '/bookings/scheduled'
-        },
+        // {
+        //   id: 'new-leads',
+        //   title: 'Scheduled',
+        //   type: 'item',
+        //   url: '/bookings/scheduled'
+        // },
         {
           id: 'follow-up',
           title: 'Pending',
@@ -77,12 +77,12 @@ const management = {
           type: 'item',
           url: '/bookings/confirmed'
         },
-        {
-          id: 'converted',
-          title: 'Ongoing',
-          type: 'item',
-          url: '/bookings/ongoing'
-        },
+        // {
+        //   id: 'converted',
+        //   title: 'Ongoing',
+        //   type: 'item',
+        //   url: '/bookings/ongoing'
+        // },
         {
           id: 'converted',
           title: 'Completed',

@@ -13,6 +13,7 @@ import {
   TableContainer,
   Stack,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import axios from "axios";
 
@@ -20,22 +21,52 @@ const Allbookings = () => {
   const [search, setSearch] = useState("");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [providerId, setProviderId] = useState(null);
 
-  // 🔥 Fetch ALL bookings from backend
+  // 🔥 Get logged-in vendor's providerId from localStorage or context
+  useEffect(() => {
+    // Method 1: Get from localStorage (assuming you store user data there)
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setProviderId(user._id || user.id || user.providerId);
+    }
+
+    // Method 2: If you have a context or different storage
+    // const user = getCurrentUser(); // Your auth function
+    // setProviderId(user?.providerId);
+  }, []);
+
+  // 🔥 Fetch bookings for THIS PROVIDER ONLY
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!providerId) {
+        setError("Provider ID not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
-        setBookings(res.data.bookings || []);
+        // ✅ Use provider-specific endpoint
+        const res = await axios.get(
+          `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
+        );
+        
+        // The backend returns data in { success: true, data: [...] } format
+        setBookings(res.data.data || res.data.bookings || []);
+        setError(null);
       } catch (error) {
         console.error("Error fetching bookings:", error);
+        setError(error.response?.data?.message || "Failed to fetch bookings");
+        setBookings([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookings();
-  }, []);
+  }, [providerId]);
 
   const handleSearchChange = (e) => setSearch(e.target.value);
 
@@ -43,14 +74,20 @@ const Allbookings = () => {
   const filteredBookings = bookings.filter((b) =>
     (b.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
     (b.emailAddress || "").toLowerCase().includes(search.toLowerCase()) ||
-    b._id.toLowerCase().includes(search.toLowerCase())
+    (b._id || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
-        All Bookings
+        My Bookings
       </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <Paper sx={{ mt: 2, width: "100%", borderRadius: "10px" }}>
         {/* 🔍 Search + Export */}
@@ -82,6 +119,7 @@ const Allbookings = () => {
               <TableRow>
                 <TableCell>S#</TableCell>
                 <TableCell>Booking ID</TableCell>
+                <TableCell>Module</TableCell>
                 <TableCell>Customer</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Booking Date</TableCell>
@@ -97,7 +135,7 @@ const Allbookings = () => {
               {/* LOADING STATE */}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
+                  <TableCell colSpan={11} align="center">
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -109,6 +147,7 @@ const Allbookings = () => {
                   <TableRow key={b._id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>#{b._id.slice(-6)}</TableCell>
+                    <TableCell>{b.moduleType || "N/A"}</TableCell>
                     <TableCell>{b.fullName || "N/A"}</TableCell>
                     <TableCell>{b.emailAddress || "N/A"}</TableCell>
                     <TableCell>
@@ -166,8 +205,8 @@ const Allbookings = () => {
               {/* EMPTY STATE */}
               {!loading && filteredBookings.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    No bookings found
+                  <TableCell colSpan={11} align="center">
+                    {search ? "No matching bookings found" : "No bookings yet"}
                   </TableCell>
                 </TableRow>
               )}
@@ -175,6 +214,15 @@ const Allbookings = () => {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Summary */}
+      {!loading && bookings.length > 0 && (
+        <Box mt={2}>
+          <Typography variant="body2" color="textSecondary">
+            Showing {filteredBookings.length} of {bookings.length} bookings
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };
