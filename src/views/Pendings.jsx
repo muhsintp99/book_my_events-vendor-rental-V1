@@ -21,7 +21,7 @@ const getProviderId = () => {
     const user = JSON.parse(userStr);
     return user?._id || null;
   } catch (err) {
-    console.error("Error parsing user from localStorage:", err);
+    console.error("Error parsing user:", err);
     return null;
   }
 };
@@ -32,17 +32,16 @@ const Pendingbookings = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [providerId, setProviderId] = useState(null);
 
-  /* ----------------------------------------------------
-     1️⃣ Load providerId when component mounts
-  ---------------------------------------------------- */
+  /* ------------------------------------------
+     Load Vendor ID
+  --------------------------------------------*/
   useEffect(() => {
-    const id = getProviderId();
-    setProviderId(id);
+    setProviderId(getProviderId());
   }, []);
 
-  /* ----------------------------------------------------
-     2️⃣ Fetch pending bookings for the vendor
-  ---------------------------------------------------- */
+  /* ------------------------------------------
+     Fetch Pending Bookings
+  --------------------------------------------*/
   useEffect(() => {
     if (!providerId) return;
 
@@ -52,13 +51,11 @@ const Pendingbookings = () => {
           `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
         );
 
-        const allBookings = res.data?.data || [];
+        const all = res.data?.data || [];
 
-        // Only pending bookings
-        const pending = allBookings.filter(
-          (b) =>
-            b.status?.toLowerCase() === "pending" ||
-            b.paymentStatus?.toLowerCase() === "pending"
+        // 🚀 FIX: Only filter by booking.status
+        const pending = all.filter(
+          (b) => b.status?.toLowerCase() === "pending"
         );
 
         setPendingBookings(pending);
@@ -72,16 +69,16 @@ const Pendingbookings = () => {
     fetchPending();
   }, [providerId]);
 
-  /* ----------------------------------------------------
-     Toggle card expansion
-  ---------------------------------------------------- */
+  /* ------------------------------------------
+     Expand / Collapse Booking
+  --------------------------------------------*/
   const toggleExpand = (id) => {
-    setExpandedId(expandedId === id ? null : id);
+    setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  /* ----------------------------------------------------
-     3️⃣ Confirm Booking
-  ---------------------------------------------------- */
+  /* ------------------------------------------
+     Confirm Booking
+  --------------------------------------------*/
   const handleConfirm = async (id, e) => {
     e.stopPropagation();
 
@@ -90,18 +87,19 @@ const Pendingbookings = () => {
         `https://api.bookmyevent.ae/api/bookings/${id}/accept`
       );
 
+      // Remove from list immediately
       setPendingBookings((prev) => prev.filter((b) => b._id !== id));
 
       alert("Booking Confirmed ✔️");
     } catch (err) {
-      console.error(err);
+      console.error("Confirm error:", err);
       alert("Failed to confirm booking");
     }
   };
 
-  /* ----------------------------------------------------
-     4️⃣ Reject Booking
-  ---------------------------------------------------- */
+  /* ------------------------------------------
+     Reject Booking
+  --------------------------------------------*/
   const handleReject = async (id, e) => {
     e.stopPropagation();
 
@@ -114,7 +112,7 @@ const Pendingbookings = () => {
 
       alert("Booking Rejected ❌");
     } catch (err) {
-      console.error(err);
+      console.error("Reject error:", err);
       alert("Failed to reject booking");
     }
   };
@@ -126,7 +124,7 @@ const Pendingbookings = () => {
           Pending Bookings
         </Typography>
 
-        {/* Loading State */}
+        {/* Loading */}
         {loading ? (
           <Box display="flex" justifyContent="center" mt={4}>
             <CircularProgress />
@@ -152,7 +150,7 @@ const Pendingbookings = () => {
               }}
               onClick={() => toggleExpand(b._id)}
             >
-              {/* Top (summary) section */}
+              {/* Summary Row */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
@@ -168,22 +166,17 @@ const Pendingbookings = () => {
                     {b.moduleType || "Event Booking"}
                   </Typography>
 
-                  <Typography color="gray" fontSize={13} mt={0.5}>
-                    {b.bookingDate
-                      ? new Date(b.bookingDate).toDateString()
-                      : "No date"}
+                  <Typography color="gray" fontSize={13}>
+                    {new Date(b.bookingDate).toDateString()}
                   </Typography>
                 </Box>
 
-                <Typography
-                  fontWeight={700}
-                  sx={{ color: "#16a34a", fontSize: "18px" }}
-                >
-                  ₹{b.finalPrice || "0"}
+                <Typography fontWeight={700} sx={{ color: "#16a34a" }}>
+                  ₹{b.finalPrice}
                 </Typography>
               </Stack>
 
-              {/* Expanded section on click */}
+              {/* Expanded Details */}
               <Collapse in={expandedId === b._id}>
                 <Divider sx={{ my: 2 }} />
 
@@ -198,17 +191,12 @@ const Pendingbookings = () => {
                   <Detail label="Customer" value={b.fullName} />
                   <Detail label="Guests" value={b.numberOfGuests} />
                   <Detail label="Email" value={b.emailAddress} />
-                  <Detail label="Phone" value={b.contactNumber || "N/A"} />
+                  <Detail label="Phone" value={b.contactNumber} />
                   <Detail label="Booking Type" value={b.bookingType} />
                 </Box>
 
-                {/* Action Buttons */}
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  mt={2}
-                  justifyContent="center"
-                >
+                {/* Actions */}
+                <Stack direction="row" spacing={2} mt={2} justifyContent="center">
                   <Button
                     variant="outlined"
                     sx={{
@@ -245,10 +233,9 @@ const Pendingbookings = () => {
   );
 };
 
-
-/* --------------------------------------------------
-   Reusable Detail Row
----------------------------------------------------- */
+/* ------------------------------------------
+   Reusable Detail Component
+--------------------------------------------*/
 const Detail = ({ label, value }) => (
   <Typography fontSize={14} sx={{ mb: 0.5 }}>
     <strong>{label}:</strong> {value}

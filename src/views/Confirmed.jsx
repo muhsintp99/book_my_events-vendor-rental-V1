@@ -22,7 +22,7 @@ const Confirmed = () => {
   // Fetch confirmed bookings
   const fetchConfirmed = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/bookings");
+      const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
       const all = res.data.bookings || [];
 
       // FILTER ONLY ACCEPTED BOOKINGS
