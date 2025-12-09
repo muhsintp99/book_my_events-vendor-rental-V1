@@ -11,39 +11,51 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
+/* ----------------------------------------------------
+   Helper: Safely extract providerId (Vendor _id)
+---------------------------------------------------- */
+const getProviderId = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    return user?._id || null;
+  } catch (err) {
+    console.error("Error parsing user from localStorage:", err);
+    return null;
+  }
+};
+
 const Pendingbookings = () => {
   const [pendingBookings, setPendingBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [providerId, setProviderId] = useState(null);
 
-  /* ------------------------------------------
-     1️⃣ Get providerId from localStorage
-  --------------------------------------------*/
+  /* ----------------------------------------------------
+     1️⃣ Load providerId when component mounts
+  ---------------------------------------------------- */
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setProviderId(user._id || user.id || user.providerId);
-    }
+    const id = getProviderId();
+    setProviderId(id);
   }, []);
 
-  /* ------------------------------------------
-     2️⃣ Fetch Pending Bookings by PROVIDER ID
-  --------------------------------------------*/
+  /* ----------------------------------------------------
+     2️⃣ Fetch pending bookings for the vendor
+  ---------------------------------------------------- */
   useEffect(() => {
-    const fetchPending = async () => {
-      if (!providerId) return;
+    if (!providerId) return;
 
+    const fetchPending = async () => {
       try {
         const res = await axios.get(
           `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
         );
 
-        const all = res.data.data || [];
+        const allBookings = res.data?.data || [];
 
-        // Filter only pending bookings
-        const pending = all.filter(
+        // Only pending bookings
+        const pending = allBookings.filter(
           (b) =>
             b.status?.toLowerCase() === "pending" ||
             b.paymentStatus?.toLowerCase() === "pending"
@@ -60,13 +72,16 @@ const Pendingbookings = () => {
     fetchPending();
   }, [providerId]);
 
+  /* ----------------------------------------------------
+     Toggle card expansion
+  ---------------------------------------------------- */
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  /* ------------------------------------------
-     3️⃣ ACCEPT BOOKING
-  --------------------------------------------*/
+  /* ----------------------------------------------------
+     3️⃣ Confirm Booking
+  ---------------------------------------------------- */
   const handleConfirm = async (id, e) => {
     e.stopPropagation();
 
@@ -84,9 +99,9 @@ const Pendingbookings = () => {
     }
   };
 
-  /* ------------------------------------------
-     4️⃣ REJECT BOOKING
-  --------------------------------------------*/
+  /* ----------------------------------------------------
+     4️⃣ Reject Booking
+  ---------------------------------------------------- */
   const handleReject = async (id, e) => {
     e.stopPropagation();
 
@@ -111,7 +126,7 @@ const Pendingbookings = () => {
           Pending Bookings
         </Typography>
 
-        {/* Loading */}
+        {/* Loading State */}
         {loading ? (
           <Box display="flex" justifyContent="center" mt={4}>
             <CircularProgress />
@@ -137,7 +152,7 @@ const Pendingbookings = () => {
               }}
               onClick={() => toggleExpand(b._id)}
             >
-              {/* Top Section */}
+              {/* Top (summary) section */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
@@ -154,7 +169,9 @@ const Pendingbookings = () => {
                   </Typography>
 
                   <Typography color="gray" fontSize={13} mt={0.5}>
-                    {new Date(b.bookingDate).toDateString()}
+                    {b.bookingDate
+                      ? new Date(b.bookingDate).toDateString()
+                      : "No date"}
                   </Typography>
                 </Box>
 
@@ -162,11 +179,11 @@ const Pendingbookings = () => {
                   fontWeight={700}
                   sx={{ color: "#16a34a", fontSize: "18px" }}
                 >
-                  ₹{b.finalPrice}
+                  ₹{b.finalPrice || "0"}
                 </Typography>
               </Stack>
 
-              {/* Expanded section */}
+              {/* Expanded section on click */}
               <Collapse in={expandedId === b._id}>
                 <Divider sx={{ my: 2 }} />
 
@@ -228,7 +245,9 @@ const Pendingbookings = () => {
   );
 };
 
-/* Reusable detail row */
+/* ----------------------------------------------------
+   Reusable Detail Row
+---------------------------------------------------- */
 const Detail = ({ label, value }) => (
   <Typography fontSize={14} sx={{ mb: 0.5 }}>
     <strong>{label}:</strong> {value}
