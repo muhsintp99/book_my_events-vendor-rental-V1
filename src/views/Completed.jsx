@@ -19,7 +19,7 @@ const Completed = () => {
   const [completedTrips, setCompletedTrips] = useState([]);
 
   const providerId = localStorage.getItem("providerId"); // 👉 where you store provider ID
-  const API_URL = `hhttps://api.bookmyevent.ae/api/bookings/provider/${providerId}/payment-status/Paid`;
+  const API_URL = `https://api.bookmyevent.ae/api/bookings/provider/${providerId}/payment-status/Paid`;
 
   // ===========================
   // 🔥 FETCH COMPLETED BOOKINGS
