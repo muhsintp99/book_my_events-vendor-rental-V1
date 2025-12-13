@@ -57,13 +57,13 @@ const management = {
           id: 'all-makeup',
           title: 'All',
           type: 'item',
-          url: '/bookings/all'
+          url: '/bookings/allmakeup'
         },
         {
           id: 'pending-makeup',
           title: 'Pending',
           type: 'item',
-          url: '/bookings/pending'
+          url: '/bookings/pendingmakeup'
         },
         {
           id: 'confirmed-makeup',

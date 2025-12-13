@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -14,16 +14,16 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Chip,
-} from "@mui/material";
-import axios from "axios";
+  Chip
+} from '@mui/material';
+import axios from 'axios';
 
 /* ---------------------------------------
    Helper: Get logged-in vendor ID
 ---------------------------------------- */
 const getProviderId = () => {
   try {
-    const userStr = localStorage.getItem("user");
+    const userStr = localStorage.getItem('user');
     if (!userStr) return null;
     const user = JSON.parse(userStr);
     return user?._id || null;
@@ -34,7 +34,7 @@ const getProviderId = () => {
 
 const MakeupConfirmed = () => {
   const [confirmedBookings, setConfirmedBookings] = useState([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
@@ -45,7 +45,7 @@ const MakeupConfirmed = () => {
   ---------------------------------------- */
   useEffect(() => {
     if (!providerId) {
-      setError("No provider ID found. Please log in.");
+      setError('No provider ID found. Please log in.');
       setLoading(false);
       return;
     }
@@ -53,70 +53,52 @@ const MakeupConfirmed = () => {
     const fetchConfirmed = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
-        );
+        const res = await axios.get(`https://api.bookmyevent.ae/api/bookings/provider/${providerId}`);
 
         const all = res.data?.data || [];
 
-        console.log("=== MAKEUP CONFIRMED BOOKINGS DEBUG ===");
-        console.log("Total bookings fetched:", all.length);
-        console.log("Provider ID:", providerId);
-        
+        console.log('=== MAKEUP CONFIRMED BOOKINGS DEBUG ===');
+        console.log('Total bookings fetched:', all.length);
+        console.log('Provider ID:', providerId);
+
         // Log sample booking structure
         if (all.length > 0) {
-          console.log("Sample booking:", all[0]);
+          console.log('Sample booking:', all[0]);
         }
 
         // Count by status and module
         const statusCounts = {};
         const moduleCounts = {};
-        all.forEach(b => {
-          const status = String(b.status || "undefined").toLowerCase();
-          const module = String(b.moduleType || "undefined").toLowerCase();
+        all.forEach((b) => {
+          const status = String(b.status || 'undefined').toLowerCase();
+          const module = String(b.moduleType || 'undefined').toLowerCase();
           statusCounts[status] = (statusCounts[status] || 0) + 1;
           moduleCounts[module] = (moduleCounts[module] || 0) + 1;
         });
-        
-        console.log("Bookings by status:", statusCounts);
-        console.log("Bookings by module:", moduleCounts);
+
+        console.log('Bookings by status:', statusCounts);
+        console.log('Bookings by module:', moduleCounts);
 
         // ✅ STRICT FILTER: Only Accepted + Makeup bookings
-        const confirmed = all.filter((b) => {
-          const status = String(b.status || "").trim().toLowerCase();
-          const moduleType = String(b.moduleType || "").trim().toLowerCase();
-          
-          // Check for various status variations
-          const isAccepted = 
-            status === "accepted" || 
-            status === "confirmed" || 
-            status === "approve" ||
-            status === "approved";
-          
-          // Check for makeup module variations
-          const isMakeup = 
-            moduleType === "makeup" || 
-            moduleType === "makeup artist" ||
-            moduleType === "makeupartist";
-          
-          console.log(`Booking ${b._id}: status=${status}, module=${moduleType}, isAccepted=${isAccepted}, isMakeup=${isMakeup}`);
-          
-          return isAccepted && isMakeup;
-        });
+        // ✅ FIXED FILTER (LIVE SAFE)
+const confirmed = all.filter((b) => {
+  const status = (b.status || "").toLowerCase().trim();
+  return ["accepted", "confirmed", "approved"].includes(status);
+});
 
-        console.log("✅ Filtered confirmed makeup bookings:", confirmed.length);
-        console.log("Confirmed bookings:", confirmed);
-        
+        console.log('✅ Filtered confirmed makeup bookings:', confirmed.length);
+        console.log('Confirmed bookings:', confirmed);
+
         // Set debug info
         setDebugInfo({
           total: all.length,
-          accepted: all.filter(b => {
-            const s = String(b.status || "").toLowerCase();
-            return s === "accepted" || s === "confirmed" || s === "approved";
+          accepted: all.filter((b) => {
+            const s = String(b.status || '').toLowerCase();
+            return s === 'accepted' || s === 'confirmed' || s === 'approved';
           }).length,
-          makeup: all.filter(b => {
-            const mt = String(b.moduleType || "").toLowerCase();
-            return mt === "makeup" || mt === "makeup artist" || mt === "makeupartist";
+          makeup: all.filter((b) => {
+            const mt = String(b.moduleType || '').toLowerCase();
+            return mt === 'makeup' || mt === 'makeup artist' || mt === 'makeupartist';
           }).length,
           confirmedMakeup: confirmed.length,
           statusCounts,
@@ -126,8 +108,8 @@ const MakeupConfirmed = () => {
         setConfirmedBookings(confirmed);
         setError(null);
       } catch (err) {
-        console.error("❌ Error loading confirmed bookings:", err);
-        setError(err.response?.data?.message || "Failed to load bookings");
+        console.error('❌ Error loading confirmed bookings:', err);
+        setError(err.response?.data?.message || 'Failed to load bookings');
       } finally {
         setLoading(false);
       }
@@ -141,7 +123,7 @@ const MakeupConfirmed = () => {
   ---------------------------------------- */
   const filteredBookings = useMemo(() => {
     if (!search.trim()) return confirmedBookings;
-    
+
     const searchLower = search.toLowerCase();
     return confirmedBookings.filter(
       (b) =>
@@ -158,24 +140,20 @@ const MakeupConfirmed = () => {
   const handleDelete = async (id, e) => {
     e.stopPropagation();
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this booking? This action cannot be undone."
-    );
+    const confirmed = window.confirm('Are you sure you want to delete this booking? This action cannot be undone.');
 
     if (!confirmed) return;
 
     try {
-      await axios.delete(
-        `https://api.bookmyevent.ae/api/bookings/${id}`
-      );
+      await axios.delete(`https://api.bookmyevent.ae/api/bookings/${id}`);
 
       // Remove from list immediately
       setConfirmedBookings((prev) => prev.filter((b) => b._id !== id));
 
-      alert("✅ Booking Deleted Successfully!");
+      alert('✅ Booking Deleted Successfully!');
     } catch (err) {
-      console.error("❌ Delete error:", err);
-      alert(err.response?.data?.message || "Failed to delete booking");
+      console.error('❌ Delete error:', err);
+      alert(err.response?.data?.message || 'Failed to delete booking');
     }
   };
 
@@ -184,7 +162,7 @@ const MakeupConfirmed = () => {
   ---------------------------------------- */
   const handleView = (booking, e) => {
     e.stopPropagation();
-    console.log("View booking:", booking);
+    console.log('View booking:', booking);
     // Add your view logic here - maybe navigate to detail page or open modal
   };
 
@@ -193,7 +171,7 @@ const MakeupConfirmed = () => {
   ---------------------------------------- */
   const handleDownload = (booking, e) => {
     e.stopPropagation();
-    console.log("Download invoice for:", booking._id);
+    console.log('Download invoice for:', booking._id);
     // Add your download logic here
   };
 
@@ -223,10 +201,8 @@ const MakeupConfirmed = () => {
       {debugInfo && (
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="body2">
-            <strong>Debug Info:</strong> Total Bookings: {debugInfo.total} | 
-            Accepted/Confirmed: {debugInfo.accepted} | 
-            Makeup Module: {debugInfo.makeup} | 
-            <strong> Confirmed Makeup: {debugInfo.confirmedMakeup}</strong>
+            <strong>Debug Info:</strong> Total Bookings: {debugInfo.total} | Accepted/Confirmed: {debugInfo.accepted} | Makeup Module:{' '}
+            {debugInfo.makeup} |<strong> Confirmed Makeup: {debugInfo.confirmedMakeup}</strong>
           </Typography>
           <Typography variant="caption" display="block" sx={{ mt: 1 }}>
             Status breakdown: {JSON.stringify(debugInfo.statusCounts)}
@@ -238,13 +214,7 @@ const MakeupConfirmed = () => {
       )}
 
       <Paper sx={{ mt: 2 }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          justifyContent="space-between"
-          alignItems="center"
-          p={2}
-        >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center" p={2}>
           <TextField
             label="Search by Booking ID, Name, Email, or Phone"
             value={search}
@@ -263,119 +233,116 @@ const MakeupConfirmed = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell><strong>S#</strong></TableCell>
-                <TableCell><strong>Booking ID</strong></TableCell>
-                <TableCell><strong>Module</strong></TableCell>
-                <TableCell><strong>Customer</strong></TableCell>
-                <TableCell><strong>Email</strong></TableCell>
-                <TableCell><strong>Guests</strong></TableCell>
-                <TableCell><strong>Booking Date</strong></TableCell>
-                <TableCell><strong>Amount</strong></TableCell>
-                <TableCell><strong>Payment Status</strong></TableCell>
-                <TableCell><strong>Action</strong></TableCell>
+                <TableCell>
+                  <strong>S#</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Booking ID</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Module</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Customer</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Email</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Guests</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Booking Date</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Amount</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Payment Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Action</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
               {filteredBookings.length > 0 ? (
                 filteredBookings.map((booking, index) => (
-                  <TableRow 
-                    key={booking._id}
-                    hover
-                    sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}
-                  >
+                  <TableRow key={booking._id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                     <TableCell>{index + 1}</TableCell>
-                    
+
                     <TableCell>
                       <Typography variant="body2" fontWeight={600} color="primary">
                         #{booking._id?.slice(-8).toUpperCase() || 'N/A'}
                       </Typography>
                     </TableCell>
-                    
+
                     <TableCell>
-                      <Chip 
-                        label={booking.moduleType || "Makeup"} 
+                      <Chip
+                        label={booking.moduleType || 'Makeup'}
                         size="small"
-                        sx={{ 
-                          bgcolor: "#fef3c7", 
-                          color: "#92400e",
+                        sx={{
+                          bgcolor: '#fef3c7',
+                          color: '#92400e',
                           fontWeight: 600
                         }}
                       />
                     </TableCell>
-                    
+
                     <TableCell>
-                      <Typography variant="body2">{booking.fullName || "-"}</Typography>
+                      <Typography variant="body2">{booking.fullName || '-'}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {booking.contactNumber || "-"}
+                        {booking.contactNumber || '-'}
                       </Typography>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
-                        {booking.emailAddress || "-"}
+                        {booking.emailAddress || '-'}
                       </Typography>
                     </TableCell>
-                    
+
                     <TableCell>
-                      <Typography variant="body2">
-                        {booking.numberOfGuests || booking.guests || "-"}
-                      </Typography>
+                      <Typography variant="body2">{booking.numberOfGuests || booking.guests || '-'}</Typography>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Typography variant="body2">
-                        {booking.bookingDate
-                          ? new Date(booking.bookingDate).toLocaleDateString('en-GB')
-                          : "-"}
+                        {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-GB') : '-'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {booking.timeSlot || ""}
+                        {booking.timeSlot || ''}
                       </Typography>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Typography variant="body2" fontWeight={700} color="success.main">
                         ₹{booking.finalPrice?.toLocaleString() || booking.totalAmount?.toLocaleString() || 0}
                       </Typography>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Chip
-                        label={booking.status || "Accepted"}
+                        label={booking.status || 'Accepted'}
                         size="small"
                         sx={{
-                          bgcolor: "#dcfce7",
-                          color: "#16a34a",
-                          fontWeight: 600,
+                          bgcolor: '#dcfce7',
+                          color: '#16a34a',
+                          fontWeight: 600
                         }}
                       />
                     </TableCell>
 
                     <TableCell>
                       <Stack direction="row" spacing={1}>
-                        <Button 
-                          variant="outlined" 
-                          size="small"
-                          color="primary"
-                          onClick={(e) => handleView(booking, e)}
-                        >
+                        <Button variant="outlined" size="small" color="primary" onClick={(e) => handleView(booking, e)}>
                           View
                         </Button>
-                        <Button 
-                          variant="outlined" 
-                          size="small"
-                          color="info"
-                          onClick={(e) => handleDownload(booking, e)}
-                        >
+                        <Button variant="outlined" size="small" color="info" onClick={(e) => handleDownload(booking, e)}>
                           Download
                         </Button>
-                        <Button 
-                          variant="outlined" 
-                          size="small"
-                          color="error"
-                          onClick={(e) => handleDelete(booking._id, e)}
-                        >
+                        <Button variant="outlined" size="small" color="error" onClick={(e) => handleDelete(booking._id, e)}>
                           Delete
                         </Button>
                       </Stack>
@@ -387,12 +354,10 @@ const MakeupConfirmed = () => {
                   <TableCell colSpan={10} align="center">
                     <Box py={4}>
                       <Typography variant="h6" color="text.secondary" gutterBottom>
-                        {search ? "No matching bookings found" : "No Confirmed Makeup Bookings"}
+                        {search ? 'No matching bookings found' : 'No Confirmed Makeup Bookings'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {search 
-                          ? "Try adjusting your search criteria" 
-                          : "Confirmed makeup bookings will appear here"}
+                        {search ? 'Try adjusting your search criteria' : 'Confirmed makeup bookings will appear here'}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -404,27 +369,17 @@ const MakeupConfirmed = () => {
 
         {/* Summary Footer */}
         {filteredBookings.length > 0 && (
-          <Box 
-            p={2} 
-            bgcolor="#f9fafb" 
-            borderTop="1px solid #e5e7eb"
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
+          <Box p={2} bgcolor="#f9fafb" borderTop="1px solid #e5e7eb" display="flex" justifyContent="space-between" alignItems="center">
             <Stack direction="row" spacing={4}>
               <Typography variant="body2" fontWeight={600}>
                 Total Bookings: <strong>{filteredBookings.length}</strong>
               </Typography>
               <Typography variant="body2" fontWeight={600} color="success.main">
-                Total Revenue: <strong>₹
-                {filteredBookings
-                  .reduce((sum, b) => sum + (b.finalPrice || b.totalAmount || 0), 0)
-                  .toLocaleString()}
-                </strong>
+                Total Revenue:{' '}
+                <strong>₹{filteredBookings.reduce((sum, b) => sum + (b.finalPrice || b.totalAmount || 0), 0).toLocaleString()}</strong>
               </Typography>
             </Stack>
-            
+
             <Typography variant="caption" color="text.secondary">
               Showing {filteredBookings.length} of {confirmedBookings.length} bookings
             </Typography>

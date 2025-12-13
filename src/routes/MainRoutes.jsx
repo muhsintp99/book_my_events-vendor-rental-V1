@@ -244,8 +244,8 @@ const MainRoutes = {
             { path: 'cancelled', element: <Cancelledbookings /> },
             { path: 'paymentfailedbookings', element: <Paymentfailedbookings /> },
             // MAKEUP BOOKINGS
-            { path: 'all', element: <AllMakeup /> },
-            { path: 'Pending', element: <MakeupPending /> },
+            { path: 'allmakeup', element: <AllMakeup /> },
+            { path: 'pendingmakeup', element: <MakeupPending /> },
             { path: 'makeupconfirmed', element: <MakeupConfirmed /> },
             { path: 'completedmakeup', element: <MakeupCompleted /> },
             { path: 'cancelledmakeup', element: <MakeupCancelled /> },
