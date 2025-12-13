@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -13,12 +13,12 @@ import {
   TableContainer,
   Stack,
   CircularProgress,
-  Alert,
-} from "@mui/material";
-import axios from "axios";
+  Alert
+} from '@mui/material';
+import axios from 'axios';
 
 const Allbookings = () => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,39 +26,46 @@ const Allbookings = () => {
 
   // 🔥 Get logged-in vendor's providerId from localStorage or context
   useEffect(() => {
-    // Method 1: Get from localStorage (assuming you store user data there)
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setProviderId(user._id || user.id || user.providerId);
-    }
+  const userData = localStorage.getItem('user');
 
-    // Method 2: If you have a context or different storage
-    // const user = getCurrentUser(); // Your auth function
-    // setProviderId(user?.providerId);
-  }, []);
+  if (!userData) {
+    setError('User not logged in');
+    setLoading(false);
+    return;
+  }
+
+  const user = JSON.parse(userData);
+  const pid = user._id || user.id || user.providerId;
+
+  if (!pid || pid === 'null') {
+    setError('Invalid provider ID. Please login again.');
+    setLoading(false);
+    return;
+  }
+
+  setProviderId(pid);
+}, []);
+
 
   // 🔥 Fetch bookings for THIS PROVIDER ONLY
   useEffect(() => {
     const fetchBookings = async () => {
       if (!providerId) {
-        setError("Provider ID not found. Please login again.");
+        setError('Provider ID not found. Please login again.');
         setLoading(false);
         return;
       }
 
       try {
         // ✅ Use provider-specific endpoint
-        const res = await axios.get(
-          `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
-        );
-        
+        const res = await axios.get(`https://api.bookmyevent.ae/api/bookings/provider/${providerId}`);
+
         // The backend returns data in { success: true, data: [...] } format
         setBookings(res.data.data || res.data.bookings || []);
         setError(null);
       } catch (error) {
-        console.error("Error fetching bookings:", error);
-        setError(error.response?.data?.message || "Failed to fetch bookings");
+        console.error('Error fetching bookings:', error);
+        setError(error.response?.data?.message || 'Failed to fetch bookings');
         setBookings([]);
       } finally {
         setLoading(false);
@@ -71,10 +78,11 @@ const Allbookings = () => {
   const handleSearchChange = (e) => setSearch(e.target.value);
 
   // 🔍 Search: ID, name, email
-  const filteredBookings = bookings.filter((b) =>
-    (b.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-    (b.emailAddress || "").toLowerCase().includes(search.toLowerCase()) ||
-    (b._id || "").toLowerCase().includes(search.toLowerCase())
+  const filteredBookings = bookings.filter(
+    (b) =>
+      (b.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.emailAddress || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b._id || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -89,13 +97,13 @@ const Allbookings = () => {
         </Alert>
       )}
 
-      <Paper sx={{ mt: 2, width: "100%", borderRadius: "10px" }}>
+      <Paper sx={{ mt: 2, width: '100%', borderRadius: '10px' }}>
         {/* 🔍 Search + Export */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
           justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
           p={2}
         >
           <TextField
@@ -113,7 +121,7 @@ const Allbookings = () => {
         </Stack>
 
         {/* TABLE */}
-        <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
+        <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -147,27 +155,18 @@ const Allbookings = () => {
                   <TableRow key={b._id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>#{b._id.slice(-6)}</TableCell>
-                    <TableCell>{b.moduleType || "N/A"}</TableCell>
-                    <TableCell>{b.fullName || "N/A"}</TableCell>
-                    <TableCell>{b.emailAddress || "N/A"}</TableCell>
-                    <TableCell>
-                      {new Date(b.bookingDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{b.numberOfGuests || "-"}</TableCell>
+                    <TableCell>{b.moduleType || 'N/A'}</TableCell>
+                    <TableCell>{b.fullName || 'N/A'}</TableCell>
+                    <TableCell>{b.emailAddress || 'N/A'}</TableCell>
+                    <TableCell>{new Date(b.bookingDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{b.numberOfGuests || '-'}</TableCell>
 
-                    <TableCell>
-                      ₹{b.finalPrice?.toLocaleString() || 0}
-                    </TableCell>
+                    <TableCell>₹{b.finalPrice?.toLocaleString() || 0}</TableCell>
 
                     <TableCell
                       style={{
-                        color:
-                          b.status === "Accepted"
-                            ? "green"
-                            : b.status === "Rejected"
-                            ? "red"
-                            : "orange",
-                        fontWeight: 600,
+                        color: b.status === 'Accepted' ? 'green' : b.status === 'Rejected' ? 'red' : 'orange',
+                        fontWeight: 600
                       }}
                     >
                       {b.status}
@@ -175,14 +174,9 @@ const Allbookings = () => {
 
                     <TableCell
                       style={{
-                        textTransform: "capitalize",
-                        color:
-                          b.paymentStatus === "completed"
-                            ? "green"
-                            : b.paymentStatus === "failed"
-                            ? "red"
-                            : "orange",
-                        fontWeight: 600,
+                        textTransform: 'capitalize',
+                        color: b.paymentStatus === 'completed' ? 'green' : b.paymentStatus === 'failed' ? 'red' : 'orange',
+                        fontWeight: 600
                       }}
                     >
                       {b.paymentStatus}
@@ -206,7 +200,7 @@ const Allbookings = () => {
               {!loading && filteredBookings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={11} align="center">
-                    {search ? "No matching bookings found" : "No bookings yet"}
+                    {search ? 'No matching bookings found' : 'No bookings yet'}
                   </TableCell>
                 </TableRow>
               )}
