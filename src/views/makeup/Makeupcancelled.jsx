@@ -69,7 +69,7 @@ const CanceledTrips = () => {
             }}
             onClick={() => toggleExpand(b._id)}
           >
-            {/* ------- Top Section ------- */}
+            {/* ----- Top Section ------- */}
             <Stack direction="row" justifyContent="space-between">
               <Box>
                 <Typography fontWeight={600}>
