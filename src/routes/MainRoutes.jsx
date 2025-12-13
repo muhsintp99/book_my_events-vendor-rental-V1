@@ -125,7 +125,7 @@ const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/A
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
 
-// ==============================|| MAIN ROUTING ||============================== //
+// ===========================|| MAIN ROUTING ||============================ //
 
 const MainRoutes = {
   path: '/',
