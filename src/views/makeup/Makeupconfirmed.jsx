@@ -80,11 +80,24 @@ const MakeupConfirmed = () => {
         console.log('Bookings by module:', moduleCounts);
 
         // ✅ STRICT FILTER: Only Accepted + Makeup bookings
-        // ✅ FIXED FILTER (LIVE SAFE)
-const confirmed = all.filter((b) => {
-  const status = (b.status || "").toLowerCase().trim();
-  return ["accepted", "confirmed", "approved"].includes(status);
-});
+        const confirmed = all.filter((b) => {
+          const status = String(b.status || '')
+            .trim()
+            .toLowerCase();
+          const moduleType = String(b.moduleType || '')
+            .trim()
+            .toLowerCase();
+
+          // Check for various status variations
+          const isAccepted = status === 'accepted' || status === 'confirmed' || status === 'approve' || status === 'approved';
+
+          // Check for makeup module variations
+          const isMakeup = moduleType === 'makeup' || moduleType === 'makeup artist' || moduleType === 'makeupartist';
+
+          console.log(`Booking ${b._id}: status=${status}, module=${moduleType}, isAccepted=${isAccepted}, isMakeup=${isMakeup}`);
+
+          return isAccepted && isMakeup;
+        });
 
         console.log('✅ Filtered confirmed makeup bookings:', confirmed.length);
         console.log('Confirmed bookings:', confirmed);

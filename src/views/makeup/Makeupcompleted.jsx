@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -11,14 +11,14 @@ import {
   TableBody,
   Paper,
   TableContainer,
-  Stack,
-} from "@mui/material";
+  Stack
+} from '@mui/material';
 
 const Completed = () => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [completedTrips, setCompletedTrips] = useState([]);
 
-  const providerId = localStorage.getItem("providerId"); // 👉 where you store provider ID
+  const providerId = localStorage.getItem('providerId'); // 👉 where you store provider ID
   const API_URL = `hhttps://api.bookmyevent.ae/api/bookings/provider/${providerId}/payment-status/Paid`;
 
   // ===============
@@ -35,18 +35,18 @@ const Completed = () => {
           tripId: b._id.slice(-6),
           bookingDate: new Date(b.bookingDate).toLocaleDateString(),
           scheduleAt: Array.isArray(b.timeSlot) ? b.timeSlot[0] : b.timeSlot,
-          customerInfo: b.fullName + " " + b.emailAddress,
-          driverInfo: b.driverInfo || "Unassigned",
-          vehicleInfo: b.vehicleInfo || "Unassigned",
+          customerInfo: b.fullName + ' ' + b.emailAddress,
+          driverInfo: b.driverInfo || 'Unassigned',
+          vehicleInfo: b.vehicleInfo || 'Unassigned',
           tripType: b.moduleType,
           tripAmount: b.finalPrice?.toFixed(2),
-          tripStatus: b.paymentStatus,
+          tripStatus: b.paymentStatus
         }));
 
         setCompletedTrips(formatted);
       }
     } catch (err) {
-      console.log("Error fetching completed bookings:", err);
+      console.log('Error fetching completed bookings:', err);
     }
   };
 
@@ -56,9 +56,7 @@ const Completed = () => {
 
   // SEARCH FILTER
   const filteredTrips = completedTrips.filter(
-    (trip) =>
-      trip.tripId.toString().includes(search) ||
-      trip.customerInfo.toLowerCase().includes(search.toLowerCase())
+    (trip) => trip.tripId.toString().includes(search) || trip.customerInfo.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -67,12 +65,12 @@ const Completed = () => {
         Completed Bookings
       </Typography>
 
-      <Paper sx={{ mt: 2, width: "100%" }}>
+      <Paper sx={{ mt: 2, width: '100%' }}>
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
           justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
           p={2}
         >
           <TextField
@@ -83,16 +81,12 @@ const Completed = () => {
             sx={{ maxWidth: { sm: 300 } }}
           />
 
-          <Button
-            variant="contained"
-            sx={{ bgcolor: "#E15B65", color: "white" }}
-            onClick={fetchCompletedBookings}
-          >
+          <Button variant="contained" sx={{ bgcolor: '#E15B65', color: 'white' }} onClick={fetchCompletedBookings}>
             Refresh
           </Button>
         </Stack>
 
-        <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
+        <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
