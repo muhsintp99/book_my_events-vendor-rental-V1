@@ -80,7 +80,6 @@ const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const VenueMyShop = Loadable(lazy(() => import('views/VenueMyShop')));
 
 //venuereport
-
 const VenueReport = Loadable(lazy(() => import('views/Venuereport')));
 const VenueTaxReport = Loadable(lazy(() => import('views/VenueTaxReport')));
 const VenueExpReport = Loadable(lazy(() => import('views/VenueExpReport')));
@@ -88,8 +87,6 @@ const VenueDisburseRepo = Loadable(lazy(() => import('views/VenueDisburseRepo'))
 
 //venue employee
 const VenueEmpRole = Loadable(lazy(() => import('views/VenueEmpRole')));
-
-//----------------------------------------------------------------------------//
 
 //CATERING
 const AddPackage = Loadable(lazy(() => import('views/catering/AddPackage')));
@@ -110,22 +107,23 @@ const Completedbookings = Loadable(lazy(() => import('../views/Completed')));
 const Cancelledbookings = Loadable(lazy(() => import('../views/Canceled')));
 const Paymentfailedbookings = Loadable(lazy(() => import('../views/PaymentFailed')));
 
-
 // MAKEUP
 const AddmakeupPackage = Loadable(lazy(() => import('../views/makeup/AddmakePackage')));
 const MakeupList = Loadable(lazy(() => import('../views/makeup/Makeuplist')));
 const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio')));
-// const EmployeRole = Loadable(lazy(() => import('views/catering/EmployeRole')));
-// const CateringtaxReport = Loadable(lazy(() => import('views/catering/CateringTax')));
-// const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisburse')));
-// const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
 
+// MAKEUP BOOKINGS
+const AllMakeup = Loadable(lazy(() => import('views/makeup/Allmakeup')));
+const MakeupPending = Loadable(lazy(() => import('views/makeup/Makeuppending')));
+const MakeupConfirmed = Loadable(lazy(() => import('views/makeup/Makeupconfirmed')));
+const MakeupCompleted = Loadable(lazy(() => import('views/makeup/Makeupcompleted')));
+const MakeupCancelled = Loadable(lazy(() => import('views/makeup/Makeupcancelled')));
+const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 
-// photographyy
+// PHOTOGRAPHY
 const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
-//-----------------------------------------------import Pendingbookings from './../views/Pendings';
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -189,7 +187,6 @@ const MainRoutes = {
             { path: 'add', element: <Drivers /> },
             { path: 'driverview', element: <DriverView /> },
             { path: 'newcoupon', element: <Coupon /> }
-            // { path: 'banners', element: <VehicleBanners/> }
           ]
         },
         {
@@ -205,7 +202,8 @@ const MainRoutes = {
             { path: 'export', element: <Wallet /> },
             { path: 'disburse', element: <Disbursement /> },
             { path: 'review', element: <Review /> },
-            { path: 'chat', element: <Chat /> }
+            { path: 'chat', element: <Chat /> },
+            { path: 'myshop', element: <VenueMyShop /> }
           ]
         },
         {
@@ -215,80 +213,75 @@ const MainRoutes = {
             { path: 'disburse', element: <DisbursementReport /> },
             { path: 'trip', element: <TripReport /> },
             { path: 'tripdetail', element: <TripDetail /> },
-            { path: 'vat', element: <VatReport /> }
-          ]
-        },
-        //venue report
-        {
-          path: 'report',
-          children: [
+            { path: 'vat', element: <VatReport /> },
             { path: 'venueexp', element: <VenueExpReport /> },
             { path: 'disbursement', element: <VenueDisburseRepo /> },
             { path: 'venuereport', element: <VenueReport /> },
-            { path: 'venuetax', element: <VenueTaxReport /> }
+            { path: 'venuetax', element: <VenueTaxReport /> },
+            { path: 'cateringreport', element: <CateringReport /> },
+            { path: 'cateringtax', element: <CateringtaxReport /> },
+            { path: 'cater-disburse', element: <CateringDisburse /> },
+            { path: 'cateringexp', element: <CateringExpense /> },
+            { path: 'makeupreport', element: <CateringReport /> },
+            { path: 'makeuptax', element: <CateringtaxReport /> },
+            { path: 'makeupexp', element: <CateringExpense /> },
+            { path: 'photographyreport', element: <CateringReport /> },
+            { path: 'phoographytax', element: <CateringtaxReport /> },
+            { path: 'photographyexp', element: <CateringExpense /> }
           ]
         },
 
-         // Bookingssss
-
-    { path: 'bookings/all', element: <Allbookings /> },
-    { path: 'bookings/scheduled', element: <Scheduledbookings /> },
-    { path: 'bookings/Pending', element: <Pendingbookings /> },
-    { path: 'bookings/confirmed', element: <Confirmedbookings /> },
-    { path: 'bookings/ongoing', element: <Ongoingbookings /> },
-    { path: 'bookings/completed', element: <Completedbookings /> },
-    { path: 'bookings/cancelled', element: <Cancelledbookings /> },
-    { path: 'bookings/paymentfailedbookings', element: <Paymentfailedbookings /> },
+        // Bookings (General)
+        {
+          path: 'bookings',
+          children: [
+            { path: 'all', element: <Allbookings /> },
+            { path: 'scheduled', element: <Scheduledbookings /> },
+            { path: 'Pending', element: <Pendingbookings /> },
+            { path: 'confirmed', element: <Confirmedbookings /> },
+            { path: 'ongoing', element: <Ongoingbookings /> },
+            { path: 'completed', element: <Completedbookings /> },
+            { path: 'cancelled', element: <Cancelledbookings /> },
+            { path: 'paymentfailedbookings', element: <Paymentfailedbookings /> },
+            // MAKEUP BOOKINGS
+            { path: 'allmakeup', element: <AllMakeup /> },
+            { path: 'pendingmakeup', element: <MakeupPending /> },
+            { path: 'makeupconfirmed', element: <MakeupConfirmed /> },
+            { path: 'completedmakeup', element: <MakeupCompleted /> },
+            { path: 'cancelledmakeup', element: <MakeupCancelled /> },
+            { path: 'paymentfailedmakeup', element: <MakeupPaymentFailed /> }
+          ]
+        },
 
         {
           path: 'employee',
           children: [
             { path: 'role', element: <EmployeeRole /> },
             { path: 'new', element: <AddEmployee /> },
-            { path: 'list', element: <EmployeeList /> }
+            { path: 'list', element: <EmployeeList /> },
+            { path: 'venuerole', element: <VenueEmpRole /> },
+            { path: 'cateringrole', element: <EmployeRole /> }
           ]
         },
         { path: 'sample-page', element: <SamplePage /> },
-        {
-          path: 'bookings',
-          children: [
-            { path: '', element: <AllTrips /> },
-            { path: 'scheduled', element: <Scheduled /> },
-            { path: 'pending', element: <Pendings /> },
-            { path: 'confirmed', element: <Confirmed /> },
-            { path: 'ongoing', element: <Ongoing /> },
-            { path: 'completed', element: <Completed /> },
-            { path: 'canceled', element: <Canceled /> },
-            { path: 'payment-failed', element: <PaymentFailed /> }
-          ]
-        },
         { path: '/page-not-found', element: <PageNotFound /> },
 
         {
           path: 'venue-setup',
           children: [
-            { path: '/venue-setup/new', element: <VenueCreate /> },
-            { path: '/venue-setup/new/:id', element: <VenueCreate /> },
-            { path: '/venue-setup/lists', element: <VenueList /> },
-            { path: '/venue-setup/foodmenu', element: <FoodMenu /> },
-            { path: '/venue-setup/listview/:id', element: <VenueListView /> }
+            { path: 'new', element: <VenueCreate /> },
+            { path: 'new/:id', element: <VenueCreate /> },
+            { path: 'lists', element: <VenueList /> },
+            { path: 'foodmenu', element: <FoodMenu /> },
+            { path: 'listview/:id', element: <VenueListView /> }
           ]
         },
         {
           path: 'venue',
           children: [
-            { path: '/venue/categories', element: <VenueCategory /> },
-            { path: '/venue/schedules', element: <Schedules /> }
+            { path: 'categories', element: <VenueCategory /> },
+            { path: 'schedules', element: <Schedules /> }
           ]
-        },
-        //venue employee
-        {
-          path: 'employee',
-          children: [{ path: '/employee/venuerole', element: <VenueEmpRole /> }]
-        },
-        {
-          path: 'business',
-          children: [{ path: '/business/myshop', element: <VenueMyShop /> }]
         },
         {
           path: 'providers',
@@ -298,7 +291,7 @@ const MainRoutes = {
           ]
         },
 
-        //CATERING
+        // CATERING
         {
           path: 'catering',
           children: [
@@ -307,24 +300,8 @@ const MainRoutes = {
             { path: 'cateringreport', element: <CateringReport /> }
           ]
         },
-        {
-          path: 'report',
-          children: [
-            { path: 'cateringreport', element: <CateringReport /> },
-            { path: 'cateringtax', element: <CateringtaxReport /> },
-            { path: 'cater-disburse', element: <CateringDisburse /> },
-            { path: 'cateringexp', element: <CateringExpense /> }
-          ]
-        },
-        {
-          path: 'employee',
-          children: [{ path: 'cateringrole', element: <EmployeRole /> }]
-        },
 
-
-
-
-         //MAKEUP
+        // MAKEUP
         {
           path: 'makeupartist',
           children: [
@@ -333,23 +310,8 @@ const MainRoutes = {
             { path: 'portfolio', element: <Portfolio /> }
           ]
         },
-        {
-          path: 'report',
-          children: [
-            { path: 'makeupreport', element: <CateringReport /> },
-            { path: 'makeuptax', element: <CateringtaxReport /> },
-            { path: 'disbursement', element: <CateringDisburse /> },
-            { path: 'makeupexp', element: <CateringExpense /> }
-          ]
-        },
-        {
-          path: 'employee',
-          children: [{ path: 'cateringrole', element: <EmployeRole /> }]
-        },
 
-
-
-        // photographyyyyy
+        // PHOTOGRAPHY
         {
           path: 'photography',
           children: [
@@ -357,22 +319,10 @@ const MainRoutes = {
             { path: 'packagelist', element: <Photographylist /> },
             { path: 'portfolio', element: <PhotographyPortfolio /> }
           ]
-        },
-        {
-          path: 'report',
-          children: [
-            { path: 'photographyreport', element: <CateringReport /> },
-            { path: 'phoographytax', element: <CateringtaxReport /> },
-            { path: 'disbursement', element: <CateringDisburse /> },
-            { path: 'photographyexp', element: <CateringExpense /> }
-          ]
-        },
-        {
-          path: 'employee',
-          children: [{ path: 'cateringrole', element: <EmployeRole /> }]
         }
       ]
     }
   ]
 };
+
 export default MainRoutes;

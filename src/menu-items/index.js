@@ -122,6 +122,7 @@ import photomanagement from './photography/photomanagement';
 import Photographysection from './photography/photographysession';
 import Reportphotography from './photography/reportphotography';
 import management from './venues/management';
+import makeupManagement from './makeup/Managementmakeup';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -148,7 +149,7 @@ if (logRes === 'transport') {
 } else if (logRes === 'catering') {
   specificSections = [cateringmanagement, Reports, Employees];
 } else if (logRes === 'makeupartist') {
-    specificSections = [Makeupmanagement,Businessection,Employee,Reportmakeup];      
+    specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];      
 }else if (logRes === 'dj_music') {
   // specificSections = [djmusicmanagement];
   specificSections = [];
