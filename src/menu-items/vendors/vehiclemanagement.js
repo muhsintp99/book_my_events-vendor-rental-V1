@@ -88,6 +88,14 @@ const vehiclemanagement = {
       url: '/venue/schedules',
       icon: icons.IconCalendar,
       breadcrumbs: false
+    },
+    {
+      id: 'upgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/vehicles/upgrade',
+      icon: icons.IconCalendar,
+      breadcrumbs: false
     }
   ]
 };

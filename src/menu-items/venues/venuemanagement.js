@@ -99,6 +99,14 @@ const venuemanagement = {
       url: '/venue/schedules',
       icon: icons.IconCalendar,
       breadcrumbs: false
+    },
+     {
+      id: 'Vnueupgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/venue/upgrade',
+      icon: icons.IconCalendar,
+      breadcrumbs: false
     }
   ]
 };

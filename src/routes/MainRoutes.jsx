@@ -34,6 +34,8 @@ const VenueList = Loadable(lazy(() => import('views/VenueList')));
 const VenueCategory = Loadable(lazy(() => import('views/VenueCategory')));
 const FoodMenu = Loadable(lazy(() => import('views/FoodMenu')));
 const VenueListView = Loadable(lazy(() => import('views/VenueListView')));
+const Upgradevenue = Loadable(lazy(() => import('../views/audiupgrade')));
+
 
 // reports
 const ExpenseReport = Loadable(lazy(() => import('views/ExpenseReport')));
@@ -48,6 +50,8 @@ const List = Loadable(lazy(() => import('views/List')));
 const ListView = Loadable(lazy(() => import('views/ListView')));
 const Category = Loadable(lazy(() => import('views/Category')));
 const Brandlist = Loadable(lazy(() => import('views/BrandList')));
+const Upgrade = Loadable(lazy(() => import('../views/upgrade')));
+
 // driver
 const AddDriver = Loadable(lazy(() => import('views/AddDriver')));
 const Drivers = Loadable(lazy(() => import('views/Drivers')));
@@ -177,7 +181,9 @@ const MainRoutes = {
           path: 'vehicles',
           children: [
             { path: 'categories', element: <Category /> },
-            { path: 'brands', element: <Brandlist /> }
+            { path: 'brands', element: <Brandlist /> },
+            { path: 'upgrade', element: <Upgrade /> }
+
           ]
         },
         {
@@ -280,7 +286,10 @@ const MainRoutes = {
           path: 'venue',
           children: [
             { path: 'categories', element: <VenueCategory /> },
-            { path: 'schedules', element: <Schedules /> }
+            { path: 'schedules', element: <Schedules /> },
+                        { path: 'upgrade', element: <Upgradevenue /> }
+
+            
           ]
         },
         {
