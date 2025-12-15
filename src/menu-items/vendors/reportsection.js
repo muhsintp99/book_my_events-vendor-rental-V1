@@ -16,7 +16,7 @@ const icons = {
   IconDownload
 };
 
-// ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
+// ==============================|| DASHBOARD FULL MENU GROUP ||======================== //
 
 const Reportsection = {
   id: 'report-management',
