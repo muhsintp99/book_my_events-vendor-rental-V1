@@ -123,6 +123,8 @@ import Photographysection from './photography/photographysession';
 import Reportphotography from './photography/reportphotography';
 import management from './venues/management';
 import makeupManagement from './makeup/Managementmakeup';
+import cateringManagementMenu from './catering/Managementcatering';
+import photographyManagementMenu from './photography/Managementphotography';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -145,9 +147,9 @@ if (logRes === 'transport') {
 } else if (logRes === 'mehandi') {
   specificSections = [mehandimanagement];
 } else if (logRes === 'photography') {
-  specificSections = [photomanagement,Photographysection,Reportphotography];
+  specificSections = [ photographyManagementMenu ,photomanagement,Photographysection,Reportphotography];
 } else if (logRes === 'catering') {
-  specificSections = [cateringmanagement, Reports, Employees];
+  specificSections = [ cateringManagementMenu,cateringmanagement, Reports, Employees];
 } else if (logRes === 'makeupartist') {
     specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];      
 }else if (logRes === 'dj_music') {

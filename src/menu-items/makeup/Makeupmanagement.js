@@ -63,6 +63,14 @@ const makeupmanagement = {
       url: '/makeupartist/portfolio',
       icon: icons.IconCategory2,
       breadcrumbs: false
+    },
+     {
+      id: 'upgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/makeupartist/upgrade',
+      icon: icons.IconCategory2,
+      breadcrumbs: false
     }
   ]
 };

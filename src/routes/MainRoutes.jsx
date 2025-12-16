@@ -100,6 +100,8 @@ const EmployeRole = Loadable(lazy(() => import('views/catering/EmployeRole')));
 const CateringtaxReport = Loadable(lazy(() => import('views/catering/CateringTax')));
 const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisburse')));
 const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
+const Cateringupgrade = Loadable(lazy(() => import('../views/catering/cateringupgrade')));
+
 
 // Bookings
 const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
@@ -123,11 +125,32 @@ const MakeupConfirmed = Loadable(lazy(() => import('views/makeup/Makeupconfirmed
 const MakeupCompleted = Loadable(lazy(() => import('views/makeup/Makeupcompleted')));
 const MakeupCancelled = Loadable(lazy(() => import('views/makeup/Makeupcancelled')));
 const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
+const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade')));
+
+//PHOTOGRAPHY BOOKINGS
+const AllPhotography = Loadable(lazy(() => import('../views/photography/Allphotography')));
+const PhotographyPending = Loadable(lazy(() => import('../views/photography/Photographypending')));
+const PhotographyConfirmed = Loadable(lazy(() => import('../views/photography/Photographyconfirmed')));
+const PhotographyCompleted = Loadable(lazy(() => import('../views/photography/Photographycompleted')));
+const PhotographyCancelled = Loadable(lazy(() => import('../views/photography/Allphotography')));
+const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
+
+
+// CATERING BOOKINGS
+const AllCatering = Loadable(lazy(() => import('../views/catering/AllCatering')));
+const CateringPending = Loadable(lazy(() => import('../views/catering/CateringPending')));
+const CateringConfirmed = Loadable(lazy(() => import('../views/catering/CateringConfirmed')));
+const CateringCompleted = Loadable(lazy(() => import('../views/catering/CateringCompleted')));
+const CateringCancelled = Loadable(lazy(() => import('../views/catering/CateringCancelled')));
+const CateringPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 
 // PHOTOGRAPHY
 const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
+const Photographyupgrade = Loadable(lazy(() => import('../views/photography/photoupgrade')));
+
+
 
 // ===========================|| MAIN ROUTING ||============================ //
 
@@ -255,7 +278,23 @@ const MainRoutes = {
             { path: 'makeupconfirmed', element: <MakeupConfirmed /> },
             { path: 'completedmakeup', element: <MakeupCompleted /> },
             { path: 'cancelledmakeup', element: <MakeupCancelled /> },
-            { path: 'paymentfailedmakeup', element: <MakeupPaymentFailed /> }
+            { path: 'paymentfailedmakeup', element: <MakeupPaymentFailed /> },
+
+            // CATERING BOOKINGS
+             { path: 'allcatering', element: <AllCatering /> },
+            { path: 'pendingcatering', element: <CateringPending /> },
+            { path: 'cateringconfirmed', element: <CateringConfirmed /> },
+            { path: 'completedcatering', element: <CateringCompleted /> },
+            { path: 'cancelledcatering', element: <CateringCancelled /> },
+            { path: 'paymentfailedcatering', element: <CateringPaymentFailed /> },
+
+            // PHOTOGRAPHY BOOKINGS
+              { path: 'allphotography', element: <AllPhotography /> },
+            { path: 'pendingphotography', element: <PhotographyPending /> },
+            { path: 'photographyconfirmed', element: <PhotographyConfirmed /> },
+            { path: 'completedphotography', element: <PhotographyCompleted /> },
+            { path: 'cancelledphotography', element: <PhotographyCancelled /> },
+            { path: 'paymentfailedphotography', element: <PhotographyPaymentFailed /> },
           ]
         },
 
@@ -306,7 +345,9 @@ const MainRoutes = {
           children: [
             { path: 'addpackage', element: <AddPackage /> },
             { path: 'packagelist', element: <PackageList /> },
-            { path: 'cateringreport', element: <CateringReport /> }
+            { path: 'cateringreport', element: <CateringReport /> },
+            { path: 'upgrade', element: <Cateringupgrade /> },
+
           ]
         },
 
@@ -316,7 +357,9 @@ const MainRoutes = {
           children: [
             { path: 'addpackage', element: <AddmakeupPackage /> },
             { path: 'packagelist', element: <MakeupList /> },
-            { path: 'portfolio', element: <Portfolio /> }
+            { path: 'portfolio', element: <Portfolio /> },
+             { path: 'upgrade', element: <Makeupupgrade /> },
+
           ]
         },
 
@@ -326,7 +369,9 @@ const MainRoutes = {
           children: [
             { path: 'addpackage', element: <AddphotographyPackage /> },
             { path: 'packagelist', element: <Photographylist /> },
-            { path: 'portfolio', element: <PhotographyPortfolio /> }
+            { path: 'portfolio', element: <PhotographyPortfolio /> },
+            { path: 'upgrade', element: <Photographyupgrade /> }
+
           ]
         }
       ]

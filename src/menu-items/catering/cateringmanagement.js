@@ -71,6 +71,14 @@ const venuemanagement = {
       breadcrumbs: false
     },
     
+    {
+      id: 'upgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/catering/upgrade',
+      icon: icons.IconCategory,
+      breadcrumbs: false
+    },
   ]
 };
 

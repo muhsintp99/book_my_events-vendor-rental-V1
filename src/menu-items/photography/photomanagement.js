@@ -82,6 +82,14 @@ const photomanagement = {
       url: '/photography/portfolio',
       icon: icons.IconCategory,
       breadcrumbs: false
+    },
+     {
+      id: 'upgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/photography/upgrade',
+      icon: icons.IconCategory,
+      breadcrumbs: false
     }
   ]
 };
