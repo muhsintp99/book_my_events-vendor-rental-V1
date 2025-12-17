@@ -1,69 +1,55 @@
-// assets
+// ==============================|| PHOTOGRAPHY MANAGEMENT MENU ||============================== //
+
+// Tabler Icons
 import {
-  IconBuilding,
-  IconCategory,
-  IconTrademark,
-  IconPlus,
-  IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
-  IconEngine,
-  IconCalendar,
   IconCamera,
-  IconPhoto
+  IconSettings,
+  IconPlus,
+  IconListDetails,
+  IconCategory2,
+  IconPhoto,
+  IconRocket,
+  IconMessageCircle
 } from '@tabler/icons-react';
 
-// constants
+// Icons object
 const icons = {
-  IconBuilding,
-  IconCategory,
-  IconTrademark,
-  IconPlus,
-  IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
-  IconEngine,
-  IconCalendar,
   IconCamera,
-  IconPhoto
+  IconSettings,
+  IconPlus,
+  IconListDetails,
+  IconCategory2,
+  IconPhoto,
+  IconRocket,
+  IconMessageCircle
 };
-
-// ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
 
 const photomanagement = {
   id: 'photo-management',
   title: 'PHOTOGRAPHY MANAGEMENT',
   type: 'group',
+  icon: icons.IconCamera,
   children: [
     {
       id: 'photography-setup',
       title: 'Photography Setup',
       type: 'collapse',
-      icon: icons.IconCamera, // 📸 Updated Photography Icon
+      icon: icons.IconSettings,
       children: [
         {
           id: 'add-package',
           title: 'Add Package',
           type: 'item',
-          url: 'photography/addpackage',
+          url: '/photography/addpackage',
           icon: icons.IconPlus
         },
         {
           id: 'list',
           title: 'Package List',
           type: 'item',
-          url: 'photography/packagelist',
-          icon: icons.IconList
-        },
-        // {
-        //   id: 'portfolio',
-        //   title: 'Portfolio',
-        //   type: 'item',
-        //   url: 'photography/portfolio',
-        //   icon: icons.IconPhoto // 🖼 Updated Portfolio Icon
-        // }
+          url: '/photography/packagelist',
+          icon: icons.IconListDetails
+        }
       ]
     },
 
@@ -72,23 +58,34 @@ const photomanagement = {
       title: 'Categories',
       type: 'item',
       url: '/venue/categories',
-      icon: icons.IconCategory,
+      icon: icons.IconCategory2,
       breadcrumbs: false
     },
-     {
+
+    {
       id: 'portfolio',
       title: 'Portfolio',
       type: 'item',
       url: '/photography/portfolio',
-      icon: icons.IconCategory,
+      icon: icons.IconPhoto,
       breadcrumbs: false
     },
-     {
+
+    {
       id: 'upgrade',
       title: 'Upgrade',
       type: 'item',
       url: '/photography/upgrade',
-      icon: icons.IconCategory,
+      icon: icons.IconRocket,
+      breadcrumbs: false
+    },
+
+    {
+      id: 'enquiry',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/photography/enquiry',
+      icon: icons.IconMessageCircle,
       breadcrumbs: false
     }
   ]

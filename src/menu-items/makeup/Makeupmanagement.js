@@ -2,20 +2,26 @@
 
 // Tabler Icons
 import {
-  IconBrush,        // Main makeup icon
-  IconPalette,      // Makeup setup icon
-  IconPlus,         // Add package icon
-  IconListDetails,  // Makeup list icon
-  IconCategory2     // Categories icon
-} from '@tabler/icons-react';
-
-// Icons object for easy access
-const icons = {
   IconBrush,
-  IconPalette,
+  IconSettings,
   IconPlus,
   IconListDetails,
-  IconCategory2
+  IconCategory2,
+  IconPhoto,
+  IconRocket,
+  IconMessageCircle
+} from '@tabler/icons-react';
+
+// Icons object
+const icons = {
+  IconBrush,
+  IconSettings,
+  IconPlus,
+  IconListDetails,
+  IconCategory2,
+  IconPhoto,
+  IconRocket,
+  IconMessageCircle
 };
 
 // Makeup Menu Structure
@@ -23,26 +29,26 @@ const makeupmanagement = {
   id: 'makeup-management',
   title: 'MAKEUP MANAGEMENT',
   type: 'group',
-  icon: icons.IconBrush,        // Main group icon
+  icon: icons.IconBrush,
   children: [
     {
       id: 'makeup-setup',
       title: 'Makeup Setup',
       type: 'collapse',
-      icon: icons.IconPalette,
+      icon: icons.IconSettings,
       children: [
         {
           id: 'add-package',
           title: 'Add Package',
           type: 'item',
-          url: '/makeupartist/addpackage',       // Fixed URL
+          url: '/makeupartist/addpackage',
           icon: icons.IconPlus
         },
         {
           id: 'makeup-list',
           title: 'Makeup List',
           type: 'item',
-          url: '/makeupartist/packagelist',      // Fixed URL
+          url: '/makeupartist/packagelist',
           icon: icons.IconListDetails
         }
       ]
@@ -56,20 +62,31 @@ const makeupmanagement = {
       icon: icons.IconCategory2,
       breadcrumbs: false
     },
-     {
+
+    {
       id: 'portfolio',
       title: 'Portfolio',
       type: 'item',
       url: '/makeupartist/portfolio',
-      icon: icons.IconCategory2,
+      icon: icons.IconPhoto,
       breadcrumbs: false
     },
-     {
+
+    {
       id: 'upgrade',
       title: 'Upgrade',
       type: 'item',
       url: '/makeupartist/upgrade',
-      icon: icons.IconCategory2,
+      icon: icons.IconRocket,
+      breadcrumbs: false
+    },
+
+    {
+      id: 'enquiries',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/makeupartist/Enqury',
+      icon: icons.IconMessageCircle,
       breadcrumbs: false
     }
   ]

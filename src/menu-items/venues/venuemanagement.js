@@ -107,7 +107,23 @@ const venuemanagement = {
       url: '/venue/upgrade',
       icon: icons.IconCalendar,
       breadcrumbs: false
-    }
+    },
+    //  {
+    //   id: 'Venueenquiries',
+    //   title: 'Enquiries',
+    //   type: 'item',
+    //   url: '/venue/enquiries',
+    //   icon: icons.IconCalendar,
+    //   breadcrumbs: false
+    // },
+    //  {
+    //   id: 'Venueenquirieschat',
+    //   title: 'Enquiries chat',
+    //   type: 'item',
+    //   url: '/venue/enquirieschat',
+    //   icon: icons.IconCalendar,
+    //   breadcrumbs: false
+    // }
   ]
 };
 

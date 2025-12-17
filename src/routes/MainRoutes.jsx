@@ -35,6 +35,10 @@ const VenueCategory = Loadable(lazy(() => import('views/VenueCategory')));
 const FoodMenu = Loadable(lazy(() => import('views/FoodMenu')));
 const VenueListView = Loadable(lazy(() => import('views/VenueListView')));
 const Upgradevenue = Loadable(lazy(() => import('../views/audiupgrade')));
+// const Enquiryvenue = Loadable(lazy(() => import('../views/Enquiries')));
+
+
+
 
 
 // reports
@@ -126,6 +130,10 @@ const MakeupCompleted = Loadable(lazy(() => import('views/makeup/Makeupcompleted
 const MakeupCancelled = Loadable(lazy(() => import('views/makeup/Makeupcancelled')));
 const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade')));
+const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/makeupenquiries')));
+const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatpage')));
+
+
 
 //PHOTOGRAPHY BOOKINGS
 const AllPhotography = Loadable(lazy(() => import('../views/photography/Allphotography')));
@@ -149,6 +157,10 @@ const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/A
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
 const Photographyupgrade = Loadable(lazy(() => import('../views/photography/photoupgrade')));
+const Photographyenquiry = Loadable(lazy(() => import('../views/photography/photoenquiry')));
+const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
+
+
 
 
 
@@ -326,9 +338,10 @@ const MainRoutes = {
           children: [
             { path: 'categories', element: <VenueCategory /> },
             { path: 'schedules', element: <Schedules /> },
-                        { path: 'upgrade', element: <Upgradevenue /> }
+            { path: 'upgrade', element: <Upgradevenue /> },
 
-            
+
+
           ]
         },
         {
@@ -358,7 +371,11 @@ const MainRoutes = {
             { path: 'addpackage', element: <AddmakeupPackage /> },
             { path: 'packagelist', element: <MakeupList /> },
             { path: 'portfolio', element: <Portfolio /> },
-             { path: 'upgrade', element: <Makeupupgrade /> },
+            { path: 'upgrade', element: <Makeupupgrade /> },
+            { path: 'Enqury', element: <Makeupenquiry /> },
+            { path: 'Enqurychat', element: <Enquirychat /> }
+
+
 
           ]
         },
@@ -370,7 +387,11 @@ const MainRoutes = {
             { path: 'addpackage', element: <AddphotographyPackage /> },
             { path: 'packagelist', element: <Photographylist /> },
             { path: 'portfolio', element: <PhotographyPortfolio /> },
-            { path: 'upgrade', element: <Photographyupgrade /> }
+            { path: 'upgrade', element: <Photographyupgrade /> },
+            { path: 'enquiry', element: <Photographyenquiry /> },
+            { path: 'Enqurychat', element: <Photographyenquirychat /> }
+
+
 
           ]
         }
