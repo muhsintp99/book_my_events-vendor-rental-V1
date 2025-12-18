@@ -91,93 +91,131 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
     setMessage("");
   };
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      {/* HEADER */}
-      <Box
-        sx={{
-          p: 2,
-          background: "linear-gradient(135deg,#1976d2,#42a5f5)",
-          color: "#fff",
-        }}
-      >
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar sx={{ bgcolor: "#fff", color: "#1976d2" }}>
-            {enquiry.fullName?.charAt(0)}
-          </Avatar>
+ return (
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    {/* HEADER */}
+    <Box
+      sx={{
+        px: 2,
+        py: 1.5,
+        bgcolor: "#075E54",
+        color: "#fff"
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <Avatar sx={{ bgcolor: "#25D366" }}>
+          {enquiry.fullName?.charAt(0)}
+        </Avatar>
 
-          <Box flex={1}>
-            <Typography fontWeight={600}>{enquiry.fullName}</Typography>
-            <Typography variant="caption">
-              {enquiry.moduleId?.title} • Vendor Chat
-            </Typography>
-          </Box>
+        <Box flex={1}>
+          <Typography fontWeight={600}>
+            {enquiry.fullName}
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            Vendor Chat
+          </Typography>
+        </Box>
 
-          <IconButton onClick={onClose} sx={{ color: "#fff" }}>
-            <CloseIcon />
-          </IconButton>
-        </Stack>
-      </Box>
+        <IconButton onClick={onClose} sx={{ color: "#fff" }}>
+          <CloseIcon />
+        </IconButton>
+      </Stack>
+    </Box>
 
-      <Divider />
+    {/* CHAT BODY */}
+    <Box
+      sx={{
+        height: 420,
+        px: 2,
+        py: 1,
+        overflowY: "auto",
+        bgcolor: "#ECE5DD"
+      }}
+    >
+      {messages.map((msg, i) => {
+        const isMe = msg.senderId === user._id;
 
-      {/* CHAT BODY */}
-      <Box sx={{ height: 380, p: 2, overflowY: "auto", bgcolor: "#f4f6f8" }}>
-        {messages.map((msg, i) => (
+        return (
           <Box
             key={i}
             display="flex"
-            justifyContent={
-              msg.senderId === user._id ? "flex-end" : "flex-start"
-            }
-            mb={1.5}
+            justifyContent={isMe ? "flex-end" : "flex-start"}
+            mb={1}
           >
             <Box
               sx={{
                 px: 2,
-                py: 1,
-                borderRadius: 2,
+                py: 1.2,
                 maxWidth: "75%",
-                bgcolor:
-                  msg.senderId === user._id ? "#1976d2" : "#fff",
-                color:
-                  msg.senderId === user._id ? "#fff" : "#000",
-                boxShadow: 1,
+                borderRadius: 2,
+                bgcolor: isMe ? "#DCF8C6" : "#fff",
+                boxShadow: "0 1px 1px rgba(0,0,0,0.15)"
               }}
             >
-              <Typography variant="body2">{msg.text}</Typography>
-              <Typography variant="caption" sx={{ opacity: 0.6 }}>
+              <Typography
+                variant="body2"
+                sx={{ wordBreak: "break-word" }}
+              >
+                {msg.text}
+              </Typography>
+
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  textAlign: "right",
+                  opacity: 0.6,
+                  mt: 0.5,
+                  fontSize: "0.7rem"
+                }}
+              >
                 {msg.time}
               </Typography>
             </Box>
           </Box>
-        ))}
-        <div ref={messagesEndRef} />
-      </Box>
+        );
+      })}
+      <div ref={messagesEndRef} />
+    </Box>
 
-      {/* INPUT */}
-      <Box sx={{ p: 1.5, borderTop: "1px solid #e0e0e0" }}>
-        <Stack direction="row" spacing={1}>
-          <ChatBubbleOutlineIcon color="action" />
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Type a message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          />
-          <Button
-            variant="contained"
-            endIcon={<SendIcon />}
-            onClick={handleSend}
-          >
-            Send
-          </Button>
-        </Stack>
-      </Box>
-    </Dialog>
-  );
+    {/* INPUT */}
+    <Box
+      sx={{
+        p: 1.5,
+        bgcolor: "#f7f7f7",
+        borderTop: "1px solid #ddd"
+      }}
+    >
+      <Stack direction="row" spacing={1} alignItems="center">
+        <ChatBubbleOutlineIcon sx={{ color: "#888" }} />
+
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Type a message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          sx={{
+            bgcolor: "#fff",
+            borderRadius: 5
+          }}
+        />
+
+        <IconButton
+          onClick={handleSend}
+          sx={{
+            bgcolor: "#25D366",
+            color: "#fff",
+            "&:hover": { bgcolor: "#1ebd5a" }
+          }}
+        >
+          <SendIcon />
+        </IconButton>
+      </Stack>
+    </Box>
+  </Dialog>
+);
 };
 
 export default EnquiryChatDialog;
