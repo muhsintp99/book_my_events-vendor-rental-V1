@@ -13,35 +13,64 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import CloseIcon from "@mui/icons-material/Close";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import { socket } from "../../socket";
 
 const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]); // 🔥 LIVE MESSAGES
   const messagesEndRef = useRef(null);
 
-  if (!enquiry) return null;
+  const user = JSON.parse(localStorage.getItem("user")); // vendor or user
 
-  const messages = [
-    {
-      sender: "user",
-      text: enquiry.description,
-      time: "10:10 AM",
-    },
-    {
-      sender: "vendor",
-      text: "Thanks for contacting us! 😊",
-      time: "10:12 AM",
-    },
-  ];
+  /* ===============================
+     CONNECT SOCKET & JOIN ROOM
+  =============================== */
+  useEffect(() => {
+    if (!enquiry?._id) return;
 
+    socket.connect();
+
+    socket.emit("join_enquiry", {
+      enquiryId: enquiry._id
+    });
+
+    socket.on("receive_message", (data) => {
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off("receive_message");
+      socket.disconnect();
+    };
+  }, [enquiry]);
+
+  /* ===============================
+     AUTO SCROLL
+  =============================== */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
-    console.log("Send message:", message);
-    setMessage("");
+  /* ===============================
+     SEND MESSAGE
+  =============================== */
+ const handleSend = () => {
+  if (!message.trim()) return;
+
+  const payload = {
+    enquiryId: enquiry._id,
+    senderId: user._id,
+    senderRole: user.role,
+    text: message,
+    time: new Date().toLocaleTimeString()
   };
+
+  socket.emit("send_message", payload);
+  setMessage("");
+};
+
+
+  if (!enquiry) return null;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -61,7 +90,7 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
           <Box flex={1}>
             <Typography fontWeight={600}>{enquiry.fullName}</Typography>
             <Typography variant="caption">
-              {enquiry.moduleId?.title} • Enquiry Chat
+              {enquiry.moduleId?.title} • Live Chat
             </Typography>
           </Box>
 
@@ -74,19 +103,14 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
       <Divider />
 
       {/* CHAT BODY */}
-      <Box
-        sx={{
-          height: 380,
-          p: 2,
-          overflowY: "auto",
-          bgcolor: "#f4f6f8",
-        }}
-      >
+      <Box sx={{ height: 380, p: 2, overflowY: "auto", bgcolor: "#f4f6f8" }}>
         {messages.map((msg, i) => (
           <Box
             key={i}
             display="flex"
-            justifyContent={msg.sender === "vendor" ? "flex-end" : "flex-start"}
+            justifyContent={
+              msg.senderId === user._id ? "flex-end" : "flex-start"
+            }
             mb={1.5}
           >
             <Box
@@ -95,8 +119,10 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
                 py: 1,
                 borderRadius: 2,
                 maxWidth: "75%",
-                bgcolor: msg.sender === "vendor" ? "#1976d2" : "#fff",
-                color: msg.sender === "vendor" ? "#fff" : "#000",
+                bgcolor:
+                  msg.senderId === user._id ? "#1976d2" : "#fff",
+                color:
+                  msg.senderId === user._id ? "#fff" : "#000",
                 boxShadow: 1,
               }}
             >
@@ -122,11 +148,7 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
-          <Button
-            variant="contained"
-            endIcon={<SendIcon />}
-            onClick={handleSend}
-          >
+          <Button variant="contained" endIcon={<SendIcon />} onClick={handleSend}>
             Send
           </Button>
         </Stack>
