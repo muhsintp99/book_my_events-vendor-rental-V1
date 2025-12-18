@@ -17,21 +17,43 @@ import { socket } from "../../socket";
 
 const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]); // 🔥 LIVE MESSAGES
+  const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
 
-  const user = JSON.parse(localStorage.getItem("user")); // vendor or user
+  const user = JSON.parse(localStorage.getItem("user")); // logged-in vendor
 
-  /* ===============================
-     CONNECT SOCKET & JOIN ROOM
-  =============================== */
+  if (!enquiry || !user) return null;
+
+  /* =================================================
+     🔐 ALLOW ONLY OWNER VENDOR
+  ================================================= */
+  const isOwnerVendor =
+    enquiry.vendorId === user._id ||
+    enquiry.vendorId?._id === user._id;
+
+  if (!isOwnerVendor) {
+    return (
+      <Dialog open={open} onClose={onClose}>
+        <Box p={4} textAlign="center">
+          <Typography color="error" fontWeight={600}>
+            You are not authorized to view this chat
+          </Typography>
+        </Box>
+      </Dialog>
+    );
+  }
+
+  /* =================================================
+     SOCKET CONNECT & JOIN ROOM
+  ================================================= */
   useEffect(() => {
     if (!enquiry?._id) return;
 
     socket.connect();
 
     socket.emit("join_enquiry", {
-      enquiryId: enquiry._id
+      enquiryId: enquiry._id,
+      vendorId: user._id,
     });
 
     socket.on("receive_message", (data) => {
@@ -42,35 +64,32 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
       socket.off("receive_message");
       socket.disconnect();
     };
-  }, [enquiry]);
+  }, [enquiry, user._id]);
 
-  /* ===============================
+  /* =================================================
      AUTO SCROLL
-  =============================== */
+  ================================================= */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ===============================
-     SEND MESSAGE
-  =============================== */
- const handleSend = () => {
-  if (!message.trim()) return;
+  /* =================================================
+     SEND MESSAGE (NO DUPLICATES)
+  ================================================= */
+  const handleSend = () => {
+    if (!message.trim()) return;
 
-  const payload = {
-    enquiryId: enquiry._id,
-    senderId: user._id,
-    senderRole: user.role,
-    text: message,
-    time: new Date().toLocaleTimeString()
+    const payload = {
+      enquiryId: enquiry._id,
+      senderId: user._id,
+      senderRole: "vendor",
+      text: message,
+      time: new Date().toLocaleTimeString(),
+    };
+
+    socket.emit("send_message", payload);
+    setMessage("");
   };
-
-  socket.emit("send_message", payload);
-  setMessage("");
-};
-
-
-  if (!enquiry) return null;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -90,7 +109,7 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
           <Box flex={1}>
             <Typography fontWeight={600}>{enquiry.fullName}</Typography>
             <Typography variant="caption">
-              {enquiry.moduleId?.title} • Live Chat
+              {enquiry.moduleId?.title} • Vendor Chat
             </Typography>
           </Box>
 
@@ -148,7 +167,11 @@ const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
-          <Button variant="contained" endIcon={<SendIcon />} onClick={handleSend}>
+          <Button
+            variant="contained"
+            endIcon={<SendIcon />}
+            onClick={handleSend}
+          >
             Send
           </Button>
         </Stack>
