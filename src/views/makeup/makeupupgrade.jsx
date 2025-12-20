@@ -37,6 +37,61 @@ export default function UpgradePlanUI() {
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?._id;
 
+
+
+  /* ---------- HANDLE JUSPAY RETURN ---------- */
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get("order_id");
+
+  if (!orderId) return;
+
+  const verifyPayment = async () => {
+    try {
+      setSnackbar({
+        open: true,
+        message: "Verifying payment, please wait..."
+      });
+
+      const res = await axios.post(
+        "https://api.bookmyevent.ae/api/subscription/verify",
+        { orderId }
+      );
+
+      if (res.data.success) {
+        setSnackbar({
+          open: true,
+          message: "🎉 Premium Plan Activated Successfully!"
+        });
+
+        // 🔄 Refresh subscription status
+        setSubscriptionLoading(true);
+        const subRes = await axios.get(
+          `https://api.bookmyevent.ae/api/subscription/status/${userId}`
+        );
+
+        if (subRes.data.success) {
+          setCurrentSubscription(subRes.data.subscription);
+        }
+
+        // 🧹 Clean URL (remove order_id)
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: "Payment verification failed"
+      });
+    } finally {
+      setSubscriptionLoading(false);
+      localStorage.removeItem("pendingUpgrade");
+    }
+  };
+
+  verifyPayment();
+}, [userId]);
+
+
   /* ---------- FETCH CURRENT SUBSCRIPTION ---------- */
   useEffect(() => {
     const fetchCurrentSubscription = async () => {

@@ -48,11 +48,15 @@ const RED = "#e53935";
 export default function PortfolioManagement({ providerId: propProviderId }) {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
+
+  // 🔐 SUBSCRIPTION
+  const [isFreePlan, setIsFreePlan] = useState(false);
 
   const providerId =
     propProviderId ||
@@ -85,19 +89,36 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
 
   // FETCH DATA
   useEffect(() => {
-    if (providerId) fetchPortfolioData();
+    if (providerId) {
+      fetchPortfolioData();
+      fetchSubscription();
+    }
   }, [providerId]);
+
+  // 🔐 SUBSCRIPTION CHECK
+  const fetchSubscription = async () => {
+    try {
+      const res = await api.get(`/api/subscriptions/user/${providerId}`);
+      const plan = res.data.subscription?.planId;
+
+      if (!plan || plan.price === 0 || plan.planType === "free") {
+        setIsFreePlan(true);
+      } else {
+        setIsFreePlan(false);
+      }
+    } catch {
+      setIsFreePlan(true);
+    }
+  };
 
   const fetchPortfolioData = async () => {
     try {
       setLoading(true);
       const res = await api.get(`/api/portfolio/provider/${providerId}`);
-
       if (!res.data.success) return;
 
       const all = res.data.data || [];
 
-      // IMAGES
       const imageItems = all.filter(i =>
         i.media?.some(m => m.type === 'image')
       );
@@ -114,7 +135,6 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         }))
       );
 
-      // VIDEOS
       const videoItems = all.filter(i =>
         i.media?.some(m => m.type === 'video' || m.type === 'videoLink')
       );
@@ -135,21 +155,22 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         }))
       );
 
-    } catch (err) {
+    } catch {
       showSnackbar("Unable to load portfolio", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const showSnackbar = (msg, sev = "success") => {
+  const showSnackbar = (msg, sev = "success") =>
     setSnackbar({ open: true, message: msg, severity: sev });
-  };
 
-  //  FULLSCREEN MEDIA
+  // FULLSCREEN MEDIA
   const openFullscreen = (mediaArray, index = 0, isVideo = false) => {
     const urls = mediaArray.map(item =>
-      item.type === "videoLink" ? formatVideoUrl(item.url) : `${API_BASE_URL}/${item.url}`
+      item.type === "videoLink"
+        ? formatVideoUrl(item.url)
+        : `${API_BASE_URL}/${item.url}`
     );
     setCurrentMediaUrls(urls);
     setCurrentIndex(index);
@@ -226,15 +247,15 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
     isVideo = false
   ) => {
 
+    if (isFreePlan)
+      return showSnackbar("Upgrade your plan to add portfolio", "warning");
+
     if (!title.trim() || (files.length === 0 && links.length === 0))
       return showSnackbar("Title and media required", "warning");
 
     const formData = new FormData();
     formData.append("providerId", providerId);
-
-    // 🔥 FIX
     formData.append("module", "default");
-
     formData.append("workTitle", title);
     formData.append("description", desc);
     formData.append("tags", JSON.stringify(tags));
@@ -249,22 +270,19 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
 
     try {
       setLoading(true);
-      const res = await api.post("/api/portfolio", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-
-      if (res.data.success) {
-        showSnackbar(`${isVideo ? "Video" : "Images"} added!`);
-        fetchPortfolioData();
-        setTitle('');
-        setDesc('');
-        setTags([]);
-        setFiles([]);
-        if (setLinks) setLinks([]);
-      }
-
+      await api.post("/api/portfolio", formData);
+      showSnackbar("Added successfully");
+      fetchPortfolioData();
+      setTitle('');
+      setDesc('');
+      setTags([]);
+      setFiles([]);
+      if (setLinks) setLinks([]);
     } catch (err) {
-      showSnackbar(err.response?.data?.message || "Upload failed", "error");
+      if (err.response?.status === 403)
+        showSnackbar(err.response.data.message, "warning");
+      else
+        showSnackbar("Upload failed", "error");
     } finally {
       setLoading(false);
     }
@@ -287,7 +305,6 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
   return (
     <Box sx={{ p: 3 }}>
 
-      {/* LOADER */}
       {loading && (
         <Box sx={{
           position: 'fixed',
@@ -300,6 +317,15 @@ export default function PortfolioManagement({ providerId: propProviderId }) {
         }}>
           <CircularProgress size={60} sx={{ color: RED }} />
         </Box>
+      )}
+
+      {isFreePlan && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3, border: `1px solid ${RED}`, color: RED }}
+        >
+          You are on a FREE plan. Upgrade to add portfolio.
+        </Alert>
       )}
 
       {/* SNACKBAR */}
