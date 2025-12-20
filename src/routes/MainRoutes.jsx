@@ -9,6 +9,9 @@ import Schedules from '../views/Schedules';
 import Register from '../views/pages/authentication/Register';
 
 const DeleteProfile = Loadable(lazy(() => import('views/DeleteProfile')));
+const PaymentSuccess = Loadable(
+  lazy(() => import('views/PaymentSuccess'))
+);
 
 // auth pages
 const Login = Loadable(lazy(() => import('views/pages/authentication/Login')));
@@ -174,6 +177,8 @@ const MainRoutes = {
     { path: 'register', element: <Register /> },
     { path: 'forgot-password', element: <Forgotpass /> },
     { path: 'delete-profile', element: <DeleteProfile /> },
+    { path: 'payment-success', element: <PaymentSuccess /> },
+
 
     {
       path: '/',
