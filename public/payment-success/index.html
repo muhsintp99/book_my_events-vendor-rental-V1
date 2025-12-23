@@ -16,7 +16,7 @@
       return;
     }
 
-    fetch("https://api.bookmyevent.ae/api/payment/verify-subscription-payment", {
+    fetch("http://localhost:5000/api/payment/verify-subscription-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId })

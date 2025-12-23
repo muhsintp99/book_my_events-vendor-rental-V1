@@ -3,12 +3,13 @@ import { Box, Typography, CircularProgress } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE = "http://localhost:5000";
+// ✅ USE PROD API
+const API_BASE = "https://api.bookmyevent.ae";
 
 export default function PaymentSuccess() {
   const [params] = useSearchParams();
-
   const orderId = params.get("orderId");
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user?._id;
   const moduleId = localStorage.getItem("moduleId");
@@ -16,37 +17,58 @@ export default function PaymentSuccess() {
   useEffect(() => {
     if (!orderId || !userId || !moduleId) return;
 
-    const interval = setInterval(async () => {
+    let interval;
+
+    const startVerification = async () => {
       try {
-        const res = await axios.get(
-          `${API_BASE}/api/subscription/status/${userId}?moduleId=${moduleId}`
+        // 🔥 STEP 1: VERIFY PAYMENT (IMPORTANT)
+        await axios.post(
+          `${API_BASE}/api/payment/verify-subscription-payment`,
+          { orderId }
         );
 
-        if (res.data?.subscription?.status === "active") {
-          clearInterval(interval);
-
-          localStorage.setItem(
-            "upgrade",
-            JSON.stringify({
-              isSubscribed: true,
-              status: "active",
-              plan: res.data.subscription.planId,
-              module: res.data.subscription.moduleId,
-              access: {
-                canAccess: true,
-                isExpired: false
-              }
-            })
+        // 🔁 STEP 2: POLL SUBSCRIPTION STATUS
+        interval = setInterval(async () => {
+          const res = await axios.get(
+            `${API_BASE}/api/subscription/status/${userId}?moduleId=${moduleId}`
           );
 
-          window.location.href = "/makeupartist/portfolio";
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-    }, 3000);
+          const sub = res.data?.subscription;
 
-    return () => clearInterval(interval);
+          if (sub?.status === "active" && sub?.isCurrent) {
+            clearInterval(interval);
+
+            localStorage.setItem(
+              "upgrade",
+              JSON.stringify({
+                isSubscribed: true,
+                status: "active",
+                plan: sub.planId,
+                module: sub.moduleId,
+                access: {
+                  canAccess: true,
+                  isExpired: false
+                }
+              })
+            );
+
+            // ✅ CLEAN URL
+            window.history.replaceState({}, "", "/payment-success");
+
+            // ✅ REDIRECT
+            window.location.href = "/makeupartist/portfolio";
+          }
+        }, 3000);
+      } catch (err) {
+        console.error("Payment verification failed:", err);
+      }
+    };
+
+    startVerification();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [orderId, userId, moduleId]);
 
   return (
