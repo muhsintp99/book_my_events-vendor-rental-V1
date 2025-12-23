@@ -54,15 +54,17 @@ export default function UpgradePlanUI() {
           });
 
           // ✅ Fetch the updated subscription
-          const subRes = await axios.get(
-            `${API_BASE}/api/subscription/status/${userId}?moduleId=${moduleId}`
-          );
+        const subRes = await axios.get(
+  `${API_BASE}/api/subscription/status/${userId}?moduleId=${res.data.subscription.moduleId}`
+);
+
 
           console.log('✅ Subscription response:', subRes.data);
 
           if (subRes.data.success && subRes.data.subscription) {
             const subscription = subRes.data.subscription;
-            
+            localStorage.setItem("moduleId", subscription.moduleId);
+
             // Calculate days left
             const endDate = new Date(subscription.endDate);
             const now = new Date();
