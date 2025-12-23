@@ -1,63 +1,139 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useTheme } from '@mui/material/styles';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { useTheme } from "@mui/material/styles";
 import {
-  Button, Checkbox, FormControl, FormControlLabel, FormHelperText,
-  Grid, IconButton, InputAdornment, InputLabel, OutlinedInput,
-  Typography, Box
-} from '@mui/material';
-import AnimateButton from 'ui-component/extended/AnimateButton';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+  Button,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  Grid,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  OutlinedInput,
+  Typography,
+  Box
+} from "@mui/material";
+import AnimateButton from "ui-component/extended/AnimateButton";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 export default function AuthLogin() {
   const theme = useTheme();
-  const navigate = useNavigate();
+
   const [checked, setChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleClickShowPassword = () => setShowPassword(!showPassword);
-  const handleMouseDownPassword = (event) => event.preventDefault();
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
 
     try {
-      const response = await axios.post('https://api.bookmyevent.ae/api/auth/login', { email, password });
-      const { token, user } = response.data;
-      console.log(response.data.profile.module.title);
+      /* ================= LOGIN ================= */
+      const res = await axios.post(
+        "https://api.bookmyevent.ae/api/auth/login",
+        { email, password }
+      );
 
-      // Store token consistently
+      const { token, user, profile } = res.data;
+
+      /* ================= TOKEN ================= */
       if (checked) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('logRes', response.data.profile.module.title);
-        localStorage.setItem('moduleId', response.data.profile.module._id);
+        localStorage.setItem("token", token);
       } else {
-        sessionStorage.setItem('token', token);
+        sessionStorage.setItem("token", token);
       }
 
-      localStorage.setItem('user', JSON.stringify(user));
-      window.location.href = '/dashboard/default';
-      // navigate('/dashboard/default', { replace: true });
+      /* ================= USER ================= */
+      localStorage.setItem("user", JSON.stringify(user));
+
+      /* ================= MODULE ================= */
+      let moduleId = null;
+      if (profile?.module?._id) {
+        moduleId = profile.module._id;
+        localStorage.setItem("moduleId", moduleId);
+        localStorage.setItem("logRes", profile.module.title);
+      }
+
+      /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
+     /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
+if (user?._id && moduleId) {
+  try {
+    const subRes = await axios.get(
+      `https://api.bookmyevent.ae/api/subscription/status/${user._id}?moduleId=${moduleId}`
+    );
+
+    const subscription = subRes.data?.subscription;
+
+    if (subscription?.status === "active" && subscription?.isCurrent) {
+      const endDate = new Date(subscription.endDate);
+      const now = new Date();
+      const daysLeft = Math.max(
+        0,
+        Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+      );
+
+      // ✅ ACTIVE SUBSCRIPTION
+      localStorage.setItem(
+        "upgrade",
+        JSON.stringify({
+          isSubscribed: true,
+          status: "active",
+          plan: subscription.planId,
+          module: subscription.moduleId,
+          access: {
+            canAccess: true,
+            isExpired: false,
+            daysLeft: daysLeft
+          }
+        })
+      );
+    } else {
+      // ❌ NO ACTIVE SUBSCRIPTION
+      localStorage.setItem(
+        "upgrade",
+        JSON.stringify({
+          isSubscribed: false,
+          status: "free",
+          access: { canAccess: false }
+        })
+      );
+    }
+  } catch (err) {
+    console.error("Subscription fetch failed:", err);
+    // Set FREE on error
+    localStorage.setItem(
+      "upgrade",
+      JSON.stringify({
+        isSubscribed: false,
+        status: "free",
+        access: { canAccess: false }
+      })
+    );
+  }
+}
+
+      /* ================= REDIRECT ================= */
+      window.location.href = "/dashboard/default";
 
     } catch (err) {
-      let errorMessage = 'Invalid email or password';
-      if (err.response && err.response.data) {
-        errorMessage = err.response.data.message || err.response.data.error || errorMessage;
-      }
-      setError(errorMessage);
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Invalid email or password"
+      );
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <FormControl fullWidth sx={{ ...theme.typography.customInput, mb: 2 }}>
-        <InputLabel>Email Address / Username</InputLabel>
+        <InputLabel>Email Address</InputLabel>
         <OutlinedInput
           type="email"
           value={email}
@@ -69,14 +145,13 @@ export default function AuthLogin() {
       <FormControl fullWidth sx={{ ...theme.typography.customInput, mb: 2 }}>
         <InputLabel>Password</InputLabel>
         <OutlinedInput
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           endAdornment={
             <InputAdornment position="end">
               <IconButton
-                onClick={handleClickShowPassword}
-                onMouseDown={handleMouseDownPassword}
+                onClick={() => setShowPassword(!showPassword)}
                 edge="end"
               >
                 {showPassword ? <Visibility /> : <VisibilityOff />}
@@ -87,21 +162,37 @@ export default function AuthLogin() {
         />
       </FormControl>
 
-      {error && <FormHelperText error sx={{ mb: 2 }}>{error}</FormHelperText>}
+      {error && <FormHelperText error>{error}</FormHelperText>}
 
-      <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Grid container justifyContent="space-between" alignItems="center">
         <FormControlLabel
-          control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} color="primary" />}
+          control={
+            <Checkbox
+              checked={checked}
+              onChange={(e) => setChecked(e.target.checked)}
+            />
+          }
           label="Keep me logged in"
         />
-        <Typography component={Link} to="/forgot-password" color="#E15B65" sx={{ textDecoration: 'none' }}>
+        <Typography
+          component={Link}
+          to="/forgot-password"
+          color="#E15B65"
+          sx={{ textDecoration: "none" }}
+        >
           Forgot Password?
         </Typography>
       </Grid>
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
-          <Button color="secondary" fullWidth size="large" type="submit" variant="contained" sx={{ bgcolor:"#E15B65"}}>
+          <Button
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            sx={{ bgcolor: "#E15B65" }}
+          >
             Sign In
           </Button>
         </AnimateButton>

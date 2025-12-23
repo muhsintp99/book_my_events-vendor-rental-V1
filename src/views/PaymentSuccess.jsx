@@ -1,39 +1,53 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Box, Typography, CircularProgress } from "@mui/material";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
+
+const API_BASE = "http://localhost:5000";
 
 export default function PaymentSuccess() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
-  const [message, setMessage] = useState("Verifying payment...");
+
+  const orderId = params.get("orderId");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user?._id;
+  const moduleId = localStorage.getItem("moduleId");
 
   useEffect(() => {
-    const orderId = params.get("order_id");
-    if (!orderId) {
-      setMessage("Invalid payment session");
-      return;
-    }
+    if (!orderId || !userId || !moduleId) return;
 
-    const verify = async () => {
+    const interval = setInterval(async () => {
       try {
-        await axios.post(
-          "https://api.bookmyevent.ae/api/subscription/verify",
-          { orderId }
+        const res = await axios.get(
+          `${API_BASE}/api/subscription/status/${userId}?moduleId=${moduleId}`
         );
 
-        setMessage("✅ Payment successful! Activating plan…");
+        if (res.data?.subscription?.status === "active") {
+          clearInterval(interval);
 
-        setTimeout(() => {
-          navigate("/makeupartist/upgrade", { replace: true });
-        }, 1500);
+          localStorage.setItem(
+            "upgrade",
+            JSON.stringify({
+              isSubscribed: true,
+              status: "active",
+              plan: res.data.subscription.planId,
+              module: res.data.subscription.moduleId,
+              access: {
+                canAccess: true,
+                isExpired: false
+              }
+            })
+          );
+
+          window.location.href = "/makeupartist/portfolio";
+        }
       } catch (err) {
-        setMessage("❌ Payment verification failed");
+        console.error("Polling error:", err);
       }
-    };
+    }, 3000);
 
-    verify();
-  }, [params, navigate]);
+    return () => clearInterval(interval);
+  }, [orderId, userId, moduleId]);
 
   return (
     <Box
@@ -41,13 +55,15 @@ export default function PaymentSuccess() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
         justifyContent: "center",
+        alignItems: "center",
         gap: 2
       }}
     >
       <CircularProgress />
-      <Typography fontWeight={600}>{message}</Typography>
+      <Typography fontWeight={600}>
+        Activating your subscription, please wait…
+      </Typography>
     </Box>
   );
 }
