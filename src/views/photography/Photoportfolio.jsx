@@ -29,7 +29,7 @@ import { Close, Delete, CloudUpload, VideoLibrary, Link as LinkIcon } from '@mui
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://api.bookmyevent.ae';
 const api = axios.create({ baseURL: API_BASE_URL });
 const RED = '#e53935';
 

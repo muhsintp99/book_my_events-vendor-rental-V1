@@ -7,7 +7,7 @@ import axios from 'axios';
 /* ---------- CONFIG ---------- */
 const MAX_DESC_CHARS = 120;
 const MAX_FEATURES = 3;
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://api.bookmyevent.ae';
 
 export default function UpgradePlanUI() {
   const [plans, setPlans] = useState([]);
