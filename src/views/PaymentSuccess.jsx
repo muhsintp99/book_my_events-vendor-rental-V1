@@ -18,9 +18,23 @@ export default function PaymentSuccess() {
   const [message, setMessage] = useState("Verifying payment...");
 
   useEffect(() => {
-    if (!orderId || !userId || !moduleId) {
+    console.log("🚀 PaymentSuccess component mounted");
+    console.log("📋 URL params - orderId:", orderId);
+    console.log("📋 localStorage - userId:", userId);
+    console.log("📋 localStorage - moduleId:", moduleId);
+    console.log("📋 Full URL:", window.location.href);
+
+    if (!orderId) {
+      console.error("❌ No orderId in URL!");
       setStatus("error");
-      setMessage("Missing required information. Please contact support.");
+      setMessage("No order ID found. Please check the URL.");
+      return;
+    }
+
+    if (!userId || !moduleId) {
+      console.error("❌ Missing userId or moduleId in localStorage!");
+      setStatus("error");
+      setMessage("Missing user information. Please login again.");
       return;
     }
 
@@ -30,7 +44,9 @@ export default function PaymentSuccess() {
 
     const verifyAndActivate = async () => {
       try {
-        console.log("🔍 Starting payment verification for:", orderId);
+        console.log("🔍 Starting payment verification...");
+        console.log("🔗 Calling:", `${API_BASE}/api/payment/verify-subscription-payment`);
+        console.log("📦 Payload:", { orderId });
 
         // 🔥 STEP 1: VERIFY PAYMENT (Backend checks Juspay + activates)
         const verifyRes = await axios.post(
@@ -38,7 +54,7 @@ export default function PaymentSuccess() {
           { orderId }
         );
 
-        console.log("✅ Verify response:", verifyRes.data);
+        console.log("✅ Verify API Response:", JSON.stringify(verifyRes.data, null, 2));
 
         // 🔥 STEP 2: CHECK IF IMMEDIATELY ACTIVATED
         if (
@@ -46,9 +62,14 @@ export default function PaymentSuccess() {
           verifyRes.data.subscription?.status === "active" &&
           verifyRes.data.subscription?.isCurrent
         ) {
-          console.log("✅ Payment verified and subscription active!");
+          console.log("✅ Payment verified and subscription ACTIVE!");
           updateLocalStorageAndRedirect(verifyRes.data.subscription);
           return;
+        }
+
+        // Check if success but subscription not active yet
+        if (verifyRes.data.success && verifyRes.data.subscription) {
+          console.log("⚠️ Subscription exists but status:", verifyRes.data.subscription.status);
         }
 
         // 🔁 STEP 3: PAYMENT PENDING - START POLLING
@@ -74,6 +95,8 @@ export default function PaymentSuccess() {
               `${API_BASE}/api/subscription/status/${userId}?moduleId=${moduleId}`
             );
 
+            console.log("📡 Poll response:", subRes.data);
+
             const sub = subRes.data?.subscription;
 
             if (sub?.status === "active" && sub?.isCurrent) {
@@ -82,26 +105,29 @@ export default function PaymentSuccess() {
               updateLocalStorageAndRedirect(sub);
             }
           } catch (err) {
-            console.error("Polling error:", err);
+            console.error("Polling error:", err.message);
             // Continue polling despite errors
           }
         }, 3000);
       } catch (err) {
-        console.error("❌ Payment verification failed:", err);
+        console.error("❌ Payment verification FAILED!");
+        console.error("❌ Error:", err.message);
+        console.error("❌ Response:", err.response?.data);
 
         // Check if it's a payment pending error (still success)
         if (
           err.response?.data?.status === "pending" ||
           err.response?.data?.message?.includes("pending")
         ) {
+          console.log("⏳ Payment is pending, will poll...");
           setMessage("Payment is being processed. Checking status...");
           // Don't set error - payment might still succeed
         } else {
           setStatus("error");
           setMessage(
             err.response?.data?.message ||
-              "Payment verification failed. Please contact support with order ID: " +
-                orderId
+            "Payment verification failed. Please contact support with order ID: " +
+            orderId
           );
         }
       }
@@ -119,6 +145,7 @@ export default function PaymentSuccess() {
 
   const updateLocalStorageAndRedirect = (subscription) => {
     console.log("💾 Updating localStorage...");
+    console.log("📦 Subscription data:", subscription);
 
     const endDate = new Date(subscription.endDate);
     const now = new Date();
@@ -127,27 +154,39 @@ export default function PaymentSuccess() {
       Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
     );
 
-    // ✅ UPDATE LOCALSTORAGE
+    // 🔧 FIX: Extract moduleId as string (handle both object and string)
+    const moduleIdString = typeof subscription.moduleId === 'object'
+      ? subscription.moduleId?._id || subscription.moduleId
+      : subscription.moduleId;
+
+    // 🔧 FIX: Extract planId as string or object properly
+    const planData = subscription.planId;
+
+    console.log("📝 Storing moduleId:", moduleIdString);
+    console.log("📝 Storing plan:", planData);
+
+    // ✅ UPDATE LOCALSTORAGE - Store moduleId as string for reliable comparison
     localStorage.setItem(
-  "upgrade",
-  JSON.stringify({
-    isSubscribed: true,
-    status: "active",
-    plan: subscription.planId,
-    module: subscription.moduleId,
-    access: {
-      canAccess: true,
-      isExpired: false,
-      daysLeft: daysLeft,
-    },
-  })
-);
+      "upgrade",
+      JSON.stringify({
+        isSubscribed: true,
+        status: "active",
+        plan: planData,
+        module: moduleIdString, // 🔧 FIX: Always store as string
+        access: {
+          canAccess: true,
+          isExpired: false,
+          daysLeft: daysLeft,
+        },
+      })
+    );
 
-// 🔥 ADD THIS LINE (VERY IMPORTANT)
-localStorage.setItem("moduleId", subscription.moduleId);
-
+    // 🔥 Update moduleId in localStorage
+    localStorage.setItem("moduleId", moduleIdString);
 
     console.log("✅ LocalStorage updated successfully");
+    console.log("🔍 Verification - upgrade:", localStorage.getItem("upgrade"));
+    console.log("🔍 Verification - moduleId:", localStorage.getItem("moduleId"));
 
     setStatus("success");
     setMessage("🎉 Subscription activated successfully! Redirecting...");
@@ -155,9 +194,9 @@ localStorage.setItem("moduleId", subscription.moduleId);
     // ✅ CLEAN URL
     window.history.replaceState({}, "", "/payment-success");
 
-    // ✅ REDIRECT
+    // ✅ REDIRECT (use window.location.replace for full page reload to ensure state sync)
     setTimeout(() => {
-      window.location.href = "/makeupartist/portfolio";
+      window.location.replace("/makeupartist/portfolio");
     }, 2000);
   };
 

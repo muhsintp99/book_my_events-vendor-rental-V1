@@ -29,7 +29,7 @@ import { Close, Delete, CloudUpload, VideoLibrary, Link as LinkIcon } from '@mui
 
 import axios from 'axios';
 
-const API_BASE_URL = 'https://api.bookmyevent.ae';
+const API_BASE_URL = 'http://localhost:5000';
 const api = axios.create({ baseURL: API_BASE_URL });
 const RED = '#e53935';
 
@@ -71,35 +71,100 @@ export default function PortfolioManagement() {
   /* ================= SUBSCRIPTION CHECK ================= */
   useEffect(() => {
     const checkSubscription = async () => {
+      // 🔧 Get FRESH moduleId from localStorage
+      const freshModuleId = localStorage.getItem('moduleId');
+      const effectiveModuleId = freshModuleId || moduleId;
+
+      console.log("🔍 ========== PORTFOLIO SUBSCRIPTION CHECK ==========");
+      console.log("🔍 providerId:", providerId);
+      console.log("🔍 moduleId (component):", moduleId);
+      console.log("🔍 moduleId (fresh):", freshModuleId);
+      console.log("🔍 upgrade localStorage:", localStorage.getItem("upgrade"));
+
+      // 🔧 Helper function to check localStorage fallback
+      const checkLocalStorageFallback = () => {
+        try {
+          const upgrade = JSON.parse(localStorage.getItem("upgrade") || "{}");
+          // Extract moduleId string (handle both string and object)
+          const upgradeModuleId = typeof upgrade?.module === 'object'
+            ? upgrade?.module?._id
+            : upgrade?.module;
+
+          console.log("🔍 Fallback check:");
+          console.log("  - upgrade.status:", upgrade?.status);
+          console.log("  - upgrade.module (upgradeModuleId):", upgradeModuleId);
+          console.log("  - effectiveModuleId:", effectiveModuleId);
+          console.log("  - Match?", upgrade?.status === "active" && upgradeModuleId === effectiveModuleId);
+
+          if (upgrade?.status === "active" && upgradeModuleId === effectiveModuleId) {
+            console.log("✅ Premium access granted via localStorage!");
+            setIsPremium(true);
+            return true;
+          }
+        } catch (e) {
+          console.error("localStorage parse error:", e);
+        }
+        return false;
+      };
+
       try {
-        if (!providerId || !moduleId) {
+        if (!providerId || !effectiveModuleId) {
+          console.log("⚠️ Missing providerId or moduleId, checking fallback...");
+          checkLocalStorageFallback();
           setIsPremium(false);
+          setSubLoading(false);
           return;
         }
 
-        const res = await api.get(`/api/subscription/status/${providerId}?moduleId=${moduleId}`);
+        console.log("📡 Calling API:", `/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
+        const res = await api.get(`/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
+        const subscription = res.data?.subscription;
 
-       const subscription = res.data?.subscription;
+        console.log("📡 API Response:", res.data);
+        console.log("📡 Subscription:", subscription);
 
-if (subscription?.status === "active" && subscription?.isCurrent) {
-  setIsPremium(true);
-  return;
-}
+        // ✅ Check API response first
+        if (subscription?.status === "active" && subscription?.isCurrent) {
+          console.log("✅ Premium access granted via API!");
 
-// 🔁 FALLBACK (instant UI sync after payment)
-const upgrade = JSON.parse(localStorage.getItem("upgrade") || "{}");
+          // 🔧 FIX: Also update localStorage to keep it in sync
+          const subModuleId = typeof subscription.moduleId === 'object'
+            ? subscription.moduleId?._id || subscription.moduleId
+            : subscription.moduleId;
 
-if (
-  upgrade?.status === "active" &&
-  upgrade?.module === moduleId
-) {
-  setIsPremium(true);
-} else {
-  setIsPremium(false);
-}
+          const endDate = new Date(subscription.endDate);
+          const now = new Date();
+          const daysLeft = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
 
-      } catch {
-        setIsPremium(false);
+          localStorage.setItem("upgrade", JSON.stringify({
+            isSubscribed: true,
+            status: "active",
+            plan: subscription.planId,
+            module: subModuleId,
+            access: { canAccess: true, isExpired: false, daysLeft }
+          }));
+          localStorage.setItem("moduleId", subModuleId);
+          console.log("✅ localStorage synced with API data");
+
+          setIsPremium(true);
+          setSubLoading(false);
+          return;
+        }
+
+        // 🔁 FALLBACK: Check localStorage (instant UI sync after payment)
+        console.log("🔄 No active subscription from API, checking localStorage...");
+        if (!checkLocalStorageFallback()) {
+          console.log("❌ No Premium access found");
+          setIsPremium(false);
+        }
+
+      } catch (error) {
+        console.error("❌ Subscription API error:", error.message);
+
+        // 🔧 FIX: Always check localStorage fallback even on API error
+        if (!checkLocalStorageFallback()) {
+          setIsPremium(false);
+        }
       } finally {
         setSubLoading(false);
       }
@@ -397,7 +462,7 @@ if (
 
                     <TableCell>
                       {images[0] ? (
-                        <img src={`${API_BASE_URL}${images[0]}`} style={{ width: 60, height: 50, objectFit: 'cover' }} />
+                        <img src={`${API_BASE_URL}/${images[0]}`} style={{ width: 60, height: 50, objectFit: 'cover' }} />
                       ) : (
                         <VideoLibrary color="action" />
                       )}
