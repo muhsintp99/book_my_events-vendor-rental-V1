@@ -51,6 +51,7 @@ export default function PortfolioManagement() {
   // videos
   const [videoFiles, setVideoFiles] = useState([]);
   const [videoLink, setVideoLink] = useState('');
+  const [videoThumbnail, setVideoThumbnail] = useState(null); // ✅ NEW
 
   /* ---------- LIST ---------- */
   const [listTab, setListTab] = useState(0);
@@ -91,40 +92,54 @@ export default function PortfolioManagement() {
 
   /* ================= ADD ================= */
   const addPortfolio = async () => {
-    if (!isPremium) return alert('Upgrade plan required');
-    if (!title.trim()) return alert('Title required');
+  if (!isPremium) return alert('Upgrade plan required');
+  if (!title.trim()) return alert('Title required');
 
-    const fd = new FormData();
-    fd.append('providerId', providerId);
-    fd.append('module', moduleId);
-    fd.append('workTitle', title);
-    fd.append('description', desc);
-    fd.append('tags', tags);
-
-    if (addTab === 0) {
-      if (!thumbnail) return alert('Thumbnail required');
-      fd.append('thumbnail', thumbnail);
-      gallery.forEach((g) => fd.append('images', g));
-    } else {
-      videoFiles.forEach((v) => fd.append('videos', v));
-      if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
+  // ✅ ADD THIS BLOCK HERE
+  if (addTab === 1) {
+    if (!videoFiles.length && !videoLink) {
+      return alert('Please upload a video or add a video link');
     }
 
-    setLoading(true);
-    await api.post('/api/portfolio', fd);
-    setLoading(false);
+    if (!videoThumbnail) {
+      return alert('Video thumbnail is required');
+    }
+  }
 
-    // reset
-    setTitle('');
-    setDesc('');
-    setTags('');
-    setThumbnail(null);
-    setGallery([]);
-    setVideoFiles([]);
-    setVideoLink('');
+  const fd = new FormData();
+  fd.append('providerId', providerId);
+  fd.append('module', moduleId);
+  fd.append('workTitle', title);
+  fd.append('description', desc);
+  fd.append('tags', tags);
 
-    fetchPortfolio();
-  };
+  if (addTab === 0) {
+    if (!thumbnail) return alert('Thumbnail required');
+    fd.append('thumbnail', thumbnail);
+    gallery.forEach((g) => fd.append('images', g));
+  } else {
+    videoFiles.forEach((v) => fd.append('videos', v));
+    if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
+    if (videoThumbnail) fd.append('videoThumbnail', videoThumbnail);
+  }
+
+  setLoading(true);
+  await api.post('/api/portfolio', fd);
+  setLoading(false);
+
+  // reset
+  setTitle('');
+  setDesc('');
+  setTags('');
+  setThumbnail(null);
+  setGallery([]);
+  setVideoFiles([]);
+  setVideoLink('');
+  setVideoThumbnail(null);
+
+  fetchPortfolio();
+};
+
 
   /* ================= DELETE ================= */
   const remove = async (id) => {
@@ -199,14 +214,16 @@ export default function PortfolioManagement() {
           )}
 
           {/* VIDEO TAB ✅ FIXED */}
+          {/* VIDEO TAB */}
           {addTab === 1 && (
             <>
+              {/* 🎬 Upload Video */}
               <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
                 <VideoLibrary sx={{ mr: 1 }} /> Upload Videos
                 <input hidden multiple type="file" accept="video/*" onChange={(e) => setVideoFiles(Array.from(e.target.files))} />
               </Button>
 
-              {/* ✅ VIDEO PREVIEW */}
+              {/* 🎬 Video Preview */}
               {videoFiles.map((v, i) => (
                 <Box key={i} sx={{ mb: 2 }}>
                   <video src={URL.createObjectURL(v)} controls style={{ width: 260, borderRadius: 8 }} />
@@ -216,6 +233,31 @@ export default function PortfolioManagement() {
                 </Box>
               ))}
 
+              {/* 🖼️ Upload Video Thumbnail */}
+              <Button component="label" variant="outlined" sx={{ mb: 2 }}>
+                <CloudUpload sx={{ mr: 1 }} /> Upload Video Thumbnail
+                <input hidden type="file" accept="image/*" onChange={(e) => setVideoThumbnail(e.target.files[0])} />
+              </Button>
+
+              {/* 🖼️ Thumbnail Preview */}
+              {videoThumbnail && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption">Video Thumbnail Preview</Typography>
+                  <img
+                    src={URL.createObjectURL(videoThumbnail)}
+                    style={{
+                      width: 160,
+                      height: 100,
+                      objectFit: 'cover',
+                      borderRadius: 8,
+                      display: 'block',
+                      marginTop: 8
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* 🔗 Video Link */}
               <TextField
                 fullWidth
                 label="Video Link (YouTube / Vimeo)"
@@ -301,11 +343,10 @@ export default function PortfolioManagement() {
                         }}
                       >
                         {/* ✅ Uploaded video */}
-                        {videoMedia.videos?.[0] && (
-                          <video
-                            src={`${API_BASE}/${videoMedia.videos[0]}`}
-                            preload="metadata"
-                            muted
+                        {videoMedia.thumbnail && (
+                          <img
+                            src={`${API_BASE}/${videoMedia.thumbnail}`}
+                            alt="video thumbnail"
                             style={{
                               width: 80,
                               height: 60,
