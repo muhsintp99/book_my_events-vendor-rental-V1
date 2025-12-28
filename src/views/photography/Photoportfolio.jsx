@@ -317,7 +317,7 @@ export default function PortfolioManagement() {
         </Table>
       </TableContainer>
 
-      {/* ================= IMAGE GALLERY MODAL ================= */}
+      {/* ========== IMAGE GALLERY MODAL ========== */}
       <Dialog open={openGallery} onClose={() => setOpenGallery(false)} fullScreen>
         <Box sx={{ bgcolor: '#000', height: '100vh', p: 2 }}>
           <IconButton onClick={() => setOpenGallery(false)} sx={{ color: '#fff' }}>
