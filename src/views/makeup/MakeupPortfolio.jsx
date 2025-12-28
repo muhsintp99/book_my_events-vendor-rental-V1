@@ -83,6 +83,12 @@ export default function PortfolioManagement() {
     fetchPortfolio();
   }, []);
 
+  const getYoutubeThumbnail = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
+    return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+  };
+
   /* ================= ADD ================= */
   const addPortfolio = async () => {
     if (!isPremium) return alert('Upgrade plan required');
@@ -286,16 +292,43 @@ export default function PortfolioManagement() {
 
                     {/* VIDEO PREVIEW */}
                     {listTab === 1 && videoMedia && (
-                      <IconButton
-                        color="primary"
+                      <Box
+                        sx={{ cursor: 'pointer' }}
                         onClick={() => {
                           const src = videoMedia.videos?.[0] ? `${API_BASE}/${videoMedia.videos[0]}` : videoMedia.videoLinks?.[0];
                           setActiveVideo(src);
                           setOpenVideo(true);
                         }}
                       >
-                        <VideoLibrary />
-                      </IconButton>
+                        {/* ✅ Uploaded video */}
+                        {videoMedia.videos?.[0] && (
+                          <video
+                            src={`${API_BASE}/${videoMedia.videos[0]}`}
+                            preload="metadata"
+                            muted
+                            style={{
+                              width: 80,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 6
+                            }}
+                          />
+                        )}
+
+                        {/* ✅ YouTube video */}
+                        {!videoMedia.videos?.length && videoMedia.videoLinks?.[0] && (
+                          <img
+                            src={getYoutubeThumbnail(videoMedia.videoLinks[0]) || '/video-placeholder.png'}
+                            alt="video thumbnail"
+                            style={{
+                              width: 80,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 6
+                            }}
+                          />
+                        )}
+                      </Box>
                     )}
                   </TableCell>
 
