@@ -1,18 +1,12 @@
-// ================= COMPLETE UPDATED FILE (BACKEND-DRIVEN PREMIUM LOGIC) =================
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Tabs,
-  Tab,
   TextField,
   Button,
   IconButton,
-  Grid,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -22,472 +16,339 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  Snackbar
-} from '@mui/material';
+  Dialog,
+  Divider,
+  Tabs,
+  Tab
+} from "@mui/material";
 
-import { Close, Delete, CloudUpload, VideoLibrary, Link as LinkIcon } from '@mui/icons-material';
+import {
+  CloudUpload,
+  Delete,
+  Close,
+  Collections,
+  VideoLibrary
+} from "@mui/icons-material";
 
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'https://api.bookmyevent.ae';
-const api = axios.create({ baseURL: API_BASE_URL });
-const RED = '#e53935';
+const API_BASE = "https://api.bookmyevent.ae";
+const api = axios.create({ baseURL: API_BASE });
+const RED = "#e53935";
 
 export default function PortfolioManagement() {
-  /* ================= AUTH ================= */
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const providerId = user?._id;
-  const moduleId = localStorage.getItem('moduleId');
+  const moduleId = localStorage.getItem("moduleId");
 
-  /* ================= SUBSCRIPTION STATE (SOURCE OF TRUTH) ================= */
   const [isPremium, setIsPremium] = useState(false);
-  const [subLoading, setSubLoading] = useState(true);
-
-  /* ================= UI STATE ================= */
-  const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [portfolioList, setPortfolioList] = useState([]);
 
-  // COMMON
-  const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
+  /* ---------- ADD STATES ---------- */
+  const [addTab, setAddTab] = useState(0); // 0 = images, 1 = videos
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [tags, setTags] = useState("");
 
-  // IMAGES
-  const [images, setImages] = useState([]);
+  // images
+  const [thumbnail, setThumbnail] = useState(null);
+  const [gallery, setGallery] = useState([]);
 
-  // VIDEOS
+  // videos
   const [videoFiles, setVideoFiles] = useState([]);
-  const [videoLinks, setVideoLinks] = useState([]);
-  const [videoLinkInput, setVideoLinkInput] = useState('');
+  const [videoLink, setVideoLink] = useState("");
 
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
+  /* ---------- LIST STATES ---------- */
+  const [listTab, setListTab] = useState(0); // 0 = images, 1 = videos
+  const [portfolio, setPortfolio] = useState([]);
 
-  /* ================= SUBSCRIPTION CHECK ================= */
+  /* ---------- MODALS ---------- */
+  const [openGallery, setOpenGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [activeImage, setActiveImage] = useState(0);
+
+  const [openVideo, setOpenVideo] = useState(false);
+  const [activeVideo, setActiveVideo] = useState("");
+
+  /* ================= SUBSCRIPTION ================= */
   useEffect(() => {
-    const checkSubscription = async () => {
-      // 🔧 Get FRESH moduleId from localStorage
-      const freshModuleId = localStorage.getItem('moduleId');
-      const effectiveModuleId = freshModuleId || moduleId;
-
-      console.log("🔍 ========== PORTFOLIO SUBSCRIPTION CHECK ==========");
-      console.log("🔍 providerId:", providerId);
-      console.log("🔍 moduleId (component):", moduleId);
-      console.log("🔍 moduleId (fresh):", freshModuleId);
-      console.log("🔍 upgrade localStorage:", localStorage.getItem("upgrade"));
-
-      // 🔧 Helper function to check localStorage fallback
-      const checkLocalStorageFallback = () => {
-        try {
-          const upgrade = JSON.parse(localStorage.getItem("upgrade") || "{}");
-          // Extract moduleId string (handle both string and object)
-          const upgradeModuleId = typeof upgrade?.module === 'object'
-            ? upgrade?.module?._id
-            : upgrade?.module;
-
-          console.log("🔍 Fallback check:");
-          console.log("  - upgrade.status:", upgrade?.status);
-          console.log("  - upgrade.module (upgradeModuleId):", upgradeModuleId);
-          console.log("  - effectiveModuleId:", effectiveModuleId);
-          console.log("  - Match?", upgrade?.status === "active" && upgradeModuleId === effectiveModuleId);
-
-          if (upgrade?.status === "active" && upgradeModuleId === effectiveModuleId) {
-            console.log("✅ Premium access granted via localStorage!");
-            setIsPremium(true);
-            return true;
-          }
-        } catch (e) {
-          console.error("localStorage parse error:", e);
-        }
-        return false;
-      };
-
-      try {
-        if (!providerId || !effectiveModuleId) {
-          console.log("⚠️ Missing providerId or moduleId, checking fallback...");
-          checkLocalStorageFallback();
-          setIsPremium(false);
-          setSubLoading(false);
-          return;
-        }
-
-        console.log("📡 Calling API:", `/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
-        const res = await api.get(`/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
-        const subscription = res.data?.subscription;
-
-        console.log("📡 API Response:", res.data);
-        console.log("📡 Subscription:", subscription);
-
-        // ✅ Check API response first
-        if (subscription?.status === "active" && subscription?.isCurrent) {
-          console.log("✅ Premium access granted via API!");
-
-          // 🔧 FIX: Also update localStorage to keep it in sync
-          const subModuleId = typeof subscription.moduleId === 'object'
-            ? subscription.moduleId?._id || subscription.moduleId
-            : subscription.moduleId;
-
-          const endDate = new Date(subscription.endDate);
-          const now = new Date();
-          const daysLeft = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
-
-          localStorage.setItem("upgrade", JSON.stringify({
-            isSubscribed: true,
-            status: "active",
-            plan: subscription.planId,
-            module: subModuleId,
-            access: { canAccess: true, isExpired: false, daysLeft }
-          }));
-          localStorage.setItem("moduleId", subModuleId);
-          console.log("✅ localStorage synced with API data");
-
-          setIsPremium(true);
-          setSubLoading(false);
-          return;
-        }
-
-        // 🔁 FALLBACK: Check localStorage (instant UI sync after payment)
-        console.log("🔄 No active subscription from API, checking localStorage...");
-        if (!checkLocalStorageFallback()) {
-          console.log("❌ No Premium access found");
-          setIsPremium(false);
-        }
-
-      } catch (error) {
-        console.error("❌ Subscription API error:", error.message);
-
-        // 🔧 FIX: Always check localStorage fallback even on API error
-        if (!checkLocalStorageFallback()) {
-          setIsPremium(false);
-        }
-      } finally {
-        setSubLoading(false);
-      }
-    };
-
-    checkSubscription();
+    if (!providerId || !moduleId) return;
+    api
+      .get(`/api/subscription/status/${providerId}?moduleId=${moduleId}`)
+      .then((res) => {
+        const s = res.data?.subscription;
+        setIsPremium(s?.status === "active" && s?.isCurrent);
+      });
   }, [providerId, moduleId]);
 
-  /* ================= FETCH PORTFOLIO ================= */
-  useEffect(() => {
-    if (providerId) fetchPortfolio();
-  }, [providerId]);
-
+  /* ================= FETCH ================= */
   const fetchPortfolio = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get(`/api/portfolio/provider/${providerId}`);
-      setPortfolioList(res.data.data || []);
-    } catch {
-      showSnackbar('Failed to load portfolio', 'error');
-    } finally {
-      setLoading(false);
-    }
+    const res = await api.get(`/api/portfolio/provider/${providerId}`);
+    setPortfolio(res.data.data || []);
   };
 
-  /* ================= HELPERS ================= */
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
 
-  const addTag = (e) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      setTags((prev) => [...prev, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
+  /* ================= ADD ================= */
+  const addPortfolio = async () => {
+    if (!isPremium) return alert("Upgrade plan required");
+    if (!title.trim()) return alert("Title required");
 
-  /* ================= IMAGE HANDLING ================= */
-  const handleImages = (e) => {
-    const files = Array.from(e.target.files);
-    setImages((prev) => prev.concat(files.map((f) => ({ file: f, preview: URL.createObjectURL(f) }))));
-  };
+    const fd = new FormData();
+    fd.append("providerId", providerId);
+    fd.append("module", moduleId);
+    fd.append("workTitle", title);
+    fd.append("description", desc);
+    fd.append("tags", tags);
 
-  const removeImage = (index) => {
-    URL.revokeObjectURL(images[index].preview);
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  /* ================= VIDEO HANDLING ================= */
-  const handleVideoFiles = (e) => {
-    const files = Array.from(e.target.files);
-    setVideoFiles((prev) => prev.concat(files.map((f) => ({ file: f, preview: URL.createObjectURL(f) }))));
-  };
-
-  const removeVideoFile = (index) => {
-    URL.revokeObjectURL(videoFiles[index].preview);
-    setVideoFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addVideoLink = () => {
-    if (videoLinkInput.trim()) {
-      setVideoLinks((prev) => [...prev, videoLinkInput.trim()]);
-      setVideoLinkInput('');
-    }
-  };
-
-  /* ================= UPLOAD ================= */
-  const uploadPortfolio = async (isVideo) => {
-    if (!isPremium) return showSnackbar('Upgrade to Premium to add portfolio', 'warning');
-
-    if (!title.trim()) return showSnackbar('Title is required', 'warning');
-
-    if (!isVideo && images.length === 0) return showSnackbar('Add at least one image', 'warning');
-
-    if (isVideo && videoFiles.length === 0 && videoLinks.length === 0) return showSnackbar('Add video file or link', 'warning');
-
-    if (!moduleId) return showSnackbar('Module missing. Re-login.', 'error');
-
-    const formData = new FormData();
-    formData.append('providerId', providerId);
-    formData.append('module', moduleId);
-    formData.append('workTitle', title);
-    formData.append('description', desc);
-    formData.append('tags', JSON.stringify(tags));
-
-    if (isVideo) {
-      videoFiles.forEach((v) => formData.append('videos', v.file));
-      if (videoLinks.length > 0) {
-        formData.append('videoLinks', JSON.stringify(videoLinks));
-      }
+    if (addTab === 0) {
+      if (!thumbnail) return alert("Thumbnail required");
+      fd.append("thumbnail", thumbnail);
+      gallery.forEach((g) => fd.append("images", g));
     } else {
-      images.forEach((i) => formData.append('images', i.file));
+      videoFiles.forEach((v) => fd.append("videos", v));
+      if (videoLink) fd.append("videoLinks", JSON.stringify([videoLink]));
     }
 
-    try {
-      setLoading(true);
-      await api.post('/api/portfolio', formData);
-      showSnackbar('Portfolio added');
-      resetForm();
-      fetchPortfolio();
-    } catch (e) {
-      showSnackbar(e.response?.data?.message || 'Upload failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setLoading(true);
+    await api.post("/api/portfolio", fd);
+    setLoading(false);
 
-  const resetForm = () => {
-    setTitle('');
-    setDesc('');
-    setTags([]);
-    setImages([]);
+    // reset
+    setTitle("");
+    setDesc("");
+    setTags("");
+    setThumbnail(null);
+    setGallery([]);
     setVideoFiles([]);
-    setVideoLinks([]);
+    setVideoLink("");
+
+    fetchPortfolio();
   };
 
   /* ================= DELETE ================= */
-  const deletePortfolio = async (id) => {
-    if (!window.confirm('Delete portfolio?')) return;
-    try {
-      await api.delete(`/api/portfolio/${id}`);
-      fetchPortfolio();
-      showSnackbar('Deleted');
-    } catch {
-      showSnackbar('Delete failed', 'error');
-    }
+  const remove = async (id) => {
+    if (!window.confirm("Delete portfolio?")) return;
+    await api.delete(`/api/portfolio/${id}`);
+    fetchPortfolio();
   };
 
-  /* ================= LOADING GUARD ================= */
-  if (subLoading) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <CircularProgress sx={{ color: RED }} />
-      </Box>
-    );
-  }
+  /* ================= FILTER LIST ================= */
+  const filteredPortfolio =
+    listTab === 0
+      ? portfolio.filter((p) => p.media?.some((m) => m.type === "image"))
+      : portfolio.filter((p) =>
+          p.media?.some(
+            (m) => m.type === "video" || m.type === "videoLink"
+          )
+        );
 
-  /* ================= RENDER ================= */
   return (
-    <Box sx={{ p: 3 }}>
-      {loading && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            bgcolor: 'rgba(0,0,0,.4)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <CircularProgress sx={{ color: RED }} />
-        </Box>
-      )}
-
+    <Box sx={{ p: 3, maxWidth: 1600, mx: "auto" }}>
       {!isPremium && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          You are on a FREE plan. Upgrade to add portfolio.
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Upgrade to premium to add portfolio works
         </Alert>
       )}
 
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      {/* ================= ADD PORTFOLIO ================= */}
+<Card sx={{ mb: 5, borderRadius: 3, width: "100%" }}>
+        <CardContent>
+          <Typography variant="h5" fontWeight={700} mb={2}>
+            Add Portfolio Work
+          </Typography>
 
-      {/* ================= TABS ================= */}
-      <Card>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} TabIndicatorProps={{ style: { backgroundColor: RED } }}>
-          <Tab label="Images" />
-          <Tab label="Videos" />
-        </Tabs>
+          <Tabs value={addTab} onChange={(_, v) => setAddTab(v)} sx={{ mb: 3 }}>
+            <Tab label="Images" />
+            <Tab label="Videos" />
+          </Tabs>
 
-        {/* ================= IMAGES TAB ================= */}
-        {tabValue === 0 && (
-          <CardContent>
-            <Typography variant="h6" sx={{ color: RED }}>
-              Add Portfolio Images
-            </Typography>
+          <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ mb: 3 }} />
+          <TextField fullWidth multiline rows={3} label="Description" value={desc} onChange={(e) => setDesc(e.target.value)} sx={{ mb: 3 }} />
+          <TextField fullWidth label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} sx={{ mb: 4 }} />
 
-            <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ mb: 2 }} />
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Add Tag (Enter)"
-              value={tagInput}
-              onKeyDown={addTag}
-              onChange={(e) => setTagInput(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-
-            <Button component="label" variant="contained" sx={{ bgcolor: RED }} disabled={!isPremium}>
-              <CloudUpload sx={{ mr: 1 }} /> Upload Images
-              <input hidden multiple type="file" accept="image/*" onChange={handleImages} />
-            </Button>
-
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              {images.map((img, i) => (
-                <Grid item xs={6} md={3} key={i}>
-                  <Box sx={{ position: 'relative' }}>
-                    <img src={img.preview} alt="" style={{ width: '100%', height: 120, objectFit: 'cover' }} />
-                    <IconButton onClick={() => removeImage(i)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: RED, color: '#fff' }}>
-                      <Close />
-                    </IconButton>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-
-            <Button fullWidth sx={{ mt: 3, bgcolor: RED }} variant="contained" disabled={!isPremium} onClick={() => uploadPortfolio(false)}>
-              Add Portfolio
-            </Button>
-          </CardContent>
-        )}
-
-        {/* ================= VIDEOS TAB ================= */}
-        {tabValue === 1 && (
-          <CardContent>
-            <Typography variant="h6" sx={{ color: RED }}>
-              Add Portfolio Videos
-            </Typography>
-
-            <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ mb: 2 }} />
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-
-            <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }} disabled={!isPremium}>
-              <VideoLibrary sx={{ mr: 1 }} /> Upload Videos
-              <input hidden multiple type="file" accept="video/*" onChange={handleVideoFiles} />
-            </Button>
-
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField fullWidth label="Video Link" value={videoLinkInput} onChange={(e) => setVideoLinkInput(e.target.value)} />
-              <Button variant="contained" sx={{ bgcolor: RED }} onClick={addVideoLink} disabled={!isPremium}>
-                <LinkIcon />
+          {/* ---------- IMAGE TAB ---------- */}
+          {addTab === 0 && (
+            <>
+              <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
+                <CloudUpload sx={{ mr: 1 }} /> Upload Thumbnail
+                <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
               </Button>
-            </Box>
 
-            <Button fullWidth sx={{ bgcolor: RED }} variant="contained" disabled={!isPremium} onClick={() => uploadPortfolio(true)}>
-              Add Video
-            </Button>
-          </CardContent>
-        )}
+              {thumbnail && (
+                <Box sx={{ mb: 3 }}>
+                  <img src={URL.createObjectURL(thumbnail)} style={{ width: 180, height: 180, objectFit: "cover", borderRadius: 12 }} />
+                </Box>
+              )}
+
+              <Button component="label" variant="outlined" sx={{ mb: 2 }}>
+                <Collections sx={{ mr: 1 }} /> Upload Gallery Images
+                <input hidden multiple type="file" accept="image/*" onChange={(e) => setGallery([...e.target.files])} />
+              </Button>
+
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
+                {gallery.map((g, i) => (
+                  <img key={i} src={URL.createObjectURL(g)} style={{ width: 100, height: 100, borderRadius: 10 }} />
+                ))}
+              </Box>
+            </>
+          )}
+
+          {/* ---------- VIDEO TAB ---------- */}
+          {addTab === 1 && (
+            <>
+              <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
+                <VideoLibrary sx={{ mr: 1 }} /> Upload Videos
+                <input hidden multiple type="file" accept="video/*" onChange={(e) => setVideoFiles([...e.target.files])} />
+              </Button>
+
+              <TextField
+                fullWidth
+                label="Video Link (YouTube / Vimeo)"
+                value={videoLink}
+                onChange={(e) => setVideoLink(e.target.value)}
+                sx={{ mb: 3 }}
+              />
+            </>
+          )}
+
+          <Button fullWidth variant="contained" sx={{ bgcolor: RED, py: 1.4 }} onClick={addPortfolio}>
+            Add Portfolio
+          </Button>
+        </CardContent>
       </Card>
 
       {/* ================= LIST ================= */}
-      <Typography sx={{ mt: 4, mb: 1, color: RED }} variant="h6">
-        Portfolio List
-      </Typography>
+      <Tabs value={listTab} onChange={(_, v) => setListTab(v)} sx={{ mb: 2 }}>
+        <Tab label="Images" />
+        <Tab label="Videos" />
+      </Tabs>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
         <Table>
-          <TableHead sx={{ bgcolor: '#fdeaea' }}>
+          <TableHead sx={{ bgcolor: "#fdeaea" }}>
             <TableRow>
-              <TableCell>SI</TableCell>
-              <TableCell>Title</TableCell>
+              <TableCell>Work</TableCell>
               <TableCell>Preview</TableCell>
-              <TableCell>Count</TableCell>
-              <TableCell>Tags</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="center">Count</TableCell>
+              <TableCell align="right">Action</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {portfolioList.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  No portfolio found
-                </TableCell>
-              </TableRow>
-            ) : (
-              portfolioList.map((p, i) => {
-                const images = p.media?.find((m) => m.type === 'image')?.images || [];
-                const videos = p.media?.find((m) => m.type === 'video')?.videos || [];
-                const links = p.media?.find((m) => m.type === 'videoLink')?.videoLinks || [];
+            {filteredPortfolio.map((p) => {
+              const imageMedia = p.media.find((m) => m.type === "image");
+              const videoMedia = p.media.find(
+                (m) => m.type === "video" || m.type === "videoLink"
+              );
 
-                return (
-                  <TableRow key={p._id}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{p.workTitle}</TableCell>
+              return (
+                <TableRow key={p._id} hover>
+                  <TableCell>
+                    <Typography fontWeight={600}>{p.workTitle}</Typography>
+                    <Typography variant="caption">{p.description}</Typography>
+                  </TableCell>
 
-                    <TableCell>
-                      {images[0] ? (
-                        <img src={`${API_BASE_URL}/${images[0]}`} style={{ width: 60, height: 50, objectFit: 'cover' }} />
-                      ) : (
-                        <VideoLibrary color="action" />
-                      )}
-                    </TableCell>
+                  <TableCell>
+                    {listTab === 0 && imageMedia && (
+                      <img
+                        src={`${API_BASE}/${imageMedia.thumbnail}`}
+                        style={{ width: 70, height: 70, borderRadius: 10, cursor: "pointer" }}
+                        onClick={() => {
+                          setGalleryImages(imageMedia.gallery || []);
+                          setActiveImage(0);
+                          setOpenGallery(true);
+                        }}
+                      />
+                    )}
 
-                    <TableCell>{images.length + videos.length + links.length}</TableCell>
-
-                    <TableCell>
-                      {p.tags?.map((t, idx) => (
-                        <Chip key={idx} size="small" label={t} sx={{ mr: 0.5 }} />
-                      ))}
-                    </TableCell>
-
-                    <TableCell>
-                      <IconButton color="error" onClick={() => deletePortfolio(p._id)}>
-                        <Delete />
+                    {listTab === 1 && videoMedia && (
+                      <IconButton
+                        color="primary"
+                        onClick={() => {
+                          const src =
+                            videoMedia.videos?.[0]
+                              ? `${API_BASE}/${videoMedia.videos[0]}`
+                              : videoMedia.videoLinks?.[0];
+                          setActiveVideo(src);
+                          setOpenVideo(true);
+                        }}
+                      >
+                        <VideoLibrary />
                       </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {listTab === 0
+                      ? imageMedia?.gallery?.length || 0
+                      : (videoMedia?.videos?.length || 0) +
+                        (videoMedia?.videoLinks?.length || 0)}
+                  </TableCell>
+
+                  <TableCell align="right">
+                    <IconButton color="error" onClick={() => remove(p._id)}>
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* ================= GALLERY MODAL ================= */}
+      <Dialog open={openGallery} onClose={() => setOpenGallery(false)} fullScreen>
+        <Box sx={{ bgcolor: "#000", height: "100vh", p: 2 }}>
+          <IconButton onClick={() => setOpenGallery(false)} sx={{ color: "#fff" }}>
+            <Close />
+          </IconButton>
+
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <img src={`${API_BASE}/${galleryImages[activeImage]}`} style={{ maxHeight: "70vh", maxWidth: "100%" }} />
+          </Box>
+
+          <Divider sx={{ my: 2, bgcolor: "#333" }} />
+
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+            {galleryImages.map((img, i) => (
+              <img
+                key={i}
+                src={`${API_BASE}/${img}`}
+                onClick={() => setActiveImage(i)}
+                style={{
+                  width: 60,
+                  height: 60,
+                  border: activeImage === i ? "2px solid #fff" : "1px solid #444",
+                  cursor: "pointer"
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      </Dialog>
+
+      {/* ================= VIDEO MODAL ================= */}
+      <Dialog open={openVideo} onClose={() => setOpenVideo(false)} fullScreen>
+        <Box sx={{ bgcolor: "#000", height: "100vh", p: 2 }}>
+          <IconButton onClick={() => setOpenVideo(false)} sx={{ color: "#fff" }}>
+            <Close />
+          </IconButton>
+
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80%" }}>
+            {activeVideo?.includes("http") ? (
+              <iframe src={activeVideo} width="80%" height="80%" frameBorder="0" allowFullScreen />
+            ) : (
+              <video src={activeVideo} controls style={{ maxWidth: "80%" }} />
+            )}
+          </Box>
+        </Box>
+      </Dialog>
+
+      {loading && <CircularProgress />}
     </Box>
   );
 }
