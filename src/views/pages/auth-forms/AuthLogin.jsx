@@ -19,6 +19,8 @@ import {
 import AnimateButton from "ui-component/extended/AnimateButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import usePWAInstall from 'hooks/usePWAInstall';
+import InstallMobileIcon from '@mui/icons-material/InstallMobile';
 
 export default function AuthLogin() {
   const theme = useTheme();
@@ -27,7 +29,10 @@ export default function AuthLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+
+  const { supportsPWA, installPWA } = usePWAInstall();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,62 +66,62 @@ export default function AuthLogin() {
       }
 
       /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
-     /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
-if (user?._id && moduleId) {
-  try {
-    const subRes = await axios.get(
-      `https://api.bookmyevent.ae/api/subscription/status/${user._id}?moduleId=${moduleId}`
-    );
+      /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
+      if (user?._id && moduleId) {
+        try {
+          const subRes = await axios.get(
+            `https://api.bookmyevent.ae/api/subscription/status/${user._id}?moduleId=${moduleId}`
+          );
 
-    const subscription = subRes.data?.subscription;
+          const subscription = subRes.data?.subscription;
 
-    if (subscription?.status === "active" && subscription?.isCurrent) {
-      const endDate = new Date(subscription.endDate);
-      const now = new Date();
-      const daysLeft = Math.max(
-        0,
-        Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
-      );
+          if (subscription?.status === "active" && subscription?.isCurrent) {
+            const endDate = new Date(subscription.endDate);
+            const now = new Date();
+            const daysLeft = Math.max(
+              0,
+              Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+            );
 
-      // ✅ ACTIVE SUBSCRIPTION
-      localStorage.setItem(
-        "upgrade",
-        JSON.stringify({
-          isSubscribed: true,
-          status: "active",
-          plan: subscription.planId,
-          module: subscription.moduleId,
-          access: {
-            canAccess: true,
-            isExpired: false,
-            daysLeft: daysLeft
+            // ✅ ACTIVE SUBSCRIPTION
+            localStorage.setItem(
+              "upgrade",
+              JSON.stringify({
+                isSubscribed: true,
+                status: "active",
+                plan: subscription.planId,
+                module: subscription.moduleId,
+                access: {
+                  canAccess: true,
+                  isExpired: false,
+                  daysLeft: daysLeft
+                }
+              })
+            );
+          } else {
+            // ❌ NO ACTIVE SUBSCRIPTION
+            localStorage.setItem(
+              "upgrade",
+              JSON.stringify({
+                isSubscribed: false,
+                status: "free",
+                access: { canAccess: false }
+              })
+            );
           }
-        })
-      );
-    } else {
-      // ❌ NO ACTIVE SUBSCRIPTION
-      localStorage.setItem(
-        "upgrade",
-        JSON.stringify({
-          isSubscribed: false,
-          status: "free",
-          access: { canAccess: false }
-        })
-      );
-    }
-  } catch (err) {
-    console.error("Subscription fetch failed:", err);
-    // Set FREE on error
-    localStorage.setItem(
-      "upgrade",
-      JSON.stringify({
-        isSubscribed: false,
-        status: "free",
-        access: { canAccess: false }
-      })
-    );
-  }
-}
+        } catch (err) {
+          console.error("Subscription fetch failed:", err);
+          // Set FREE on error
+          localStorage.setItem(
+            "upgrade",
+            JSON.stringify({
+              isSubscribed: false,
+              status: "free",
+              access: { canAccess: false }
+            })
+          );
+        }
+      }
 
       /* ================= REDIRECT ================= */
       window.location.href = "/dashboard/default";
@@ -197,6 +202,23 @@ if (user?._id && moduleId) {
           </Button>
         </AnimateButton>
       </Box>
-    </form>
+
+      {
+        supportsPWA && (
+          <Box sx={{ mt: 2 }}>
+            <Button
+              fullWidth
+              size="large"
+              variant="outlined"
+              onClick={installPWA}
+              startIcon={<InstallMobileIcon />}
+              sx={{ color: theme.palette.primary.main, borderColor: theme.palette.primary.main }}
+            >
+              Install App
+            </Button>
+          </Box>
+        )
+      }
+    </form >
   );
 }
