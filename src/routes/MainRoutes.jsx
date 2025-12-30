@@ -133,8 +133,8 @@ const MakeupCompleted = Loadable(lazy(() => import('views/makeup/Makeupcompleted
 const MakeupCancelled = Loadable(lazy(() => import('views/makeup/Makeupcancelled')));
 const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade')));
-const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/makeupenquiries')));
-const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatpage')));
+const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/Makeupenquiries')));
+const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatPage')));
 
 
 
@@ -160,7 +160,7 @@ const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/A
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
 const Photographyupgrade = Loadable(lazy(() => import('../views/photography/photoupgrade')));
-const Photographyenquiry = Loadable(lazy(() => import('../views/photography/photoenquiry')));
+const Photographyenquiry = Loadable(lazy(() => import('../views/photography/Photoenquiry')));
 const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
 
 
