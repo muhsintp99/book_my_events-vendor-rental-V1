@@ -36,265 +36,197 @@ export default function PopularCard({ isLoading }) {
     setAnchorEl(null);
   };
 
-  return (
-    <>
-      {isLoading ? (
-        <SkeletonPopularCard />
-      ) : (
-        <MainCard content={false}>
-          <CardContent>
-            <Grid container spacing={gridSpacing}>
-              <Grid size={12}>
-                <Grid container sx={{ alignContent: 'center', justifyContent: 'space-between' }}>
-                  <Grid>
-                    <Typography variant="h4">Popular Venues</Typography>
-                  </Grid>
-                  <Grid>
-                    <IconButton size="small" sx={{ mt: -0.625 }}>
-                      <MoreHorizOutlinedIcon
-                        fontSize="small"
-                        sx={{ cursor: 'pointer' }}
-                        aria-controls="menu-popular-card"
-                        aria-haspopup="true"
-                        onClick={handleClick}
-                      />
-                    </IconButton>
-                    <Menu
-                      id="menu-popular-card"
-                      anchorEl={anchorEl}
-                      keepMounted
-                      open={Boolean(anchorEl)}
-                      onClose={handleClose}
-                      variant="selectedMenu"
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    >
-                      <MenuItem onClick={handleClose}> Today</MenuItem>
-                      <MenuItem onClick={handleClose}> This Month</MenuItem>
-                      <MenuItem onClick={handleClose}> This Year </MenuItem>
-                    </Menu>
-                  </Grid>
+ return (
+  <>
+    {isLoading ? (
+      <SkeletonPopularCard />
+    ) : (
+      <MainCard content={false}>
+        <CardContent>
+          <Grid container spacing={gridSpacing}>
+            {/* ================= HEADER ================= */}
+            <Grid xs={12}>
+              <Grid container alignItems="center" justifyContent="space-between">
+                <Grid>
+                  <Typography variant="h4">Top Booked Venues</Typography>
                 </Grid>
-              </Grid>
-              <Grid size={12} sx={{ mt: -1 }}>
-                <BajajAreaChartCard />
-              </Grid>
-              <Grid size={12}>
-                <Grid container direction="column">
-                  <Grid>
-                    <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Grid>
-                        <Typography variant="subtitle1" color="inherit">
-                            Grand Mirage Palace
-                        </Typography>
-                      </Grid>
-                      <Grid>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Grid>
-                            <Typography variant="subtitle1" color="inherit">
-                              1839.00
-                            </Typography>
-                          </Grid>
-                          <Grid>
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '5px',
-                                bgcolor: 'success.light',
-                                color: 'success.dark',
-                                ml: 2
-                              }}
-                            >
-                              <KeyboardArrowUpOutlinedIcon fontSize="small" color="inherit" />
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid>
-                    <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                      10% Profit
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Divider sx={{ my: 1.5 }} />
-                <Grid container direction="column">
-                  <Grid>
-                    <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Grid>
-                        <Typography variant="subtitle1" color="inherit">
-  The Loft Studio                        </Typography>
-                      </Grid>
-                      <Grid>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Grid>
-                            <Typography variant="subtitle1" color="inherit">
-                              100.00
-                            </Typography>
-                          </Grid>
-                          <Grid>
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '5px',
-                                bgcolor: 'orange.light',
-                                color: 'orange.dark',
-                                marginLeft: 1.875
-                              }}
-                            >
-                              <KeyboardArrowDownOutlinedIcon fontSize="small" color="inherit" />
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid>
-                    <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                      10% loss
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Divider sx={{ my: 1.5 }} />
-                <Grid container direction="column">
-                  <Grid>
-                    <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Grid>
-                        <Typography variant="subtitle1" color="inherit">
-  Serene Meadows                        </Typography>
-                      </Grid>
-                      <Grid>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Grid>
-                            <Typography variant="subtitle1" color="inherit">
-                              200.00
-                            </Typography>
-                          </Grid>
-                          <Grid>
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '5px',
-                                bgcolor: 'success.light',
-                                color: 'success.dark',
-                                ml: 2
-                              }}
-                            >
-                              <KeyboardArrowUpOutlinedIcon fontSize="small" color="inherit" />
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid>
-                    <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                      10% Profit
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Divider sx={{ my: 1.5 }} />
-                <Grid container direction="column">
-                  <Grid>
-                    <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Grid>
-                        <Typography variant="subtitle1" color="inherit">
-                            Aurora Event Palace
-                        </Typography>
-                      </Grid>
-                      <Grid>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Grid>
-                            <Typography variant="subtitle1" color="inherit">
-                              189.00
-                            </Typography>
-                          </Grid>
-                          <Grid>
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '5px',
-                                bgcolor: 'orange.light',
-                                color: 'orange.dark',
-                                ml: 2
-                              }}
-                            >
-                              <KeyboardArrowDownOutlinedIcon fontSize="small" color="inherit" />
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid>
-                    <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                      10% loss
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Divider sx={{ my: 1.5 }} />
-                <Grid container direction="column">
-                  <Grid>
-                    <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Grid>
-                        <Typography variant="subtitle1" color="inherit">
-                          Stolon
-                        </Typography>
-                      </Grid>
-                      <Grid>
-                        <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Grid>
-                            <Typography variant="subtitle1" color="inherit">
-                              189.00
-                            </Typography>
-                          </Grid>
-                          <Grid>
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '5px',
-                                bgcolor: 'orange.light',
-                                color: 'orange.dark',
-                                ml: 2
-                              }}
-                            >
-                              <KeyboardArrowDownOutlinedIcon fontSize="small" color="inherit" />
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid>
-                    <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                      10% loss
-                    </Typography>
-                  </Grid>
+                <Grid>
+                  <IconButton size="small" sx={{ mt: -0.625 }}>
+                    <MoreHorizOutlinedIcon
+                      fontSize="small"
+                      sx={{ cursor: 'pointer' }}
+                      aria-controls="menu-popular-card"
+                      aria-haspopup="true"
+                      onClick={handleClick}
+                    />
+                  </IconButton>
+                  <Menu
+                    id="menu-popular-card"
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  >
+                    <MenuItem onClick={handleClose}>Today</MenuItem>
+                    <MenuItem onClick={handleClose}>This Month</MenuItem>
+                    <MenuItem onClick={handleClose}>This Year</MenuItem>
+                  </Menu>
                 </Grid>
               </Grid>
             </Grid>
-          </CardContent>
-          <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
-            <Button size="small" disableElevation>
-              View All
-              <ChevronRightOutlinedIcon />
-            </Button>
-          </CardActions>
-        </MainCard>
-      )}
-    </>
-  );
+
+            {/* ================= CHART ================= */}
+            <Grid xs={12} sx={{ mt: -1 }}>
+              <BajajAreaChartCard />
+            </Grid>
+
+            {/* ================= VENUE LIST ================= */}
+            <Grid xs={12}>
+              {/* GRAND MIRAGE */}
+              <Grid container direction="column">
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle1">Grand Mirage Palace</Typography>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1">1,839 bookings</Typography>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: 'success.light',
+                        color: 'success.dark'
+                      }}
+                    >
+                      <KeyboardArrowUpOutlinedIcon fontSize="small" />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
+                  +10% booking growth
+                </Typography>
+              </Grid>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* LOFT STUDIO */}
+              <Grid container direction="column">
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle1">The Loft Studio</Typography>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1">100 bookings</Typography>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: 'orange.light',
+                        color: 'orange.dark'
+                      }}
+                    >
+                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
+                  -10% booking decline
+                </Typography>
+              </Grid>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* SERENE MEADOWS */}
+              <Grid container direction="column">
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle1">Serene Meadows</Typography>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1">200 bookings</Typography>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: 'success.light',
+                        color: 'success.dark'
+                      }}
+                    >
+                      <KeyboardArrowUpOutlinedIcon fontSize="small" />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
+                  +12% demand growth
+                </Typography>
+              </Grid>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* AURORA */}
+              <Grid container direction="column">
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle1">Aurora Event Palace</Typography>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1">189 bookings</Typography>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: 'orange.light',
+                        color: 'orange.dark'
+                      }}
+                    >
+                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
+                  Slight drop this period
+                </Typography>
+              </Grid>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* STOLON */}
+              <Grid container direction="column">
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle1">Stolon Venue</Typography>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1">189 bookings</Typography>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: 'orange.light',
+                        color: 'orange.dark'
+                      }}
+                    >
+                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
+                    </Avatar>
+                  </Grid>
+                </Grid>
+                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
+                  Low utilization rate
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+        </CardContent>
+
+        {/* ================= FOOTER ================= */}
+        <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
+          <Button size="small" disableElevation>
+            View All Venues
+            <ChevronRightOutlinedIcon />
+          </Button>
+        </CardActions>
+      </MainCard>
+    )}
+  </>
+);
+
 }
 
 PopularCard.propTypes = { isLoading: PropTypes.bool };
