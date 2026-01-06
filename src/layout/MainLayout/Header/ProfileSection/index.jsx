@@ -21,11 +21,8 @@ import {
   IconButton,
   AppBar,
   Toolbar,
-
   Snackbar,
   Alert,
-
-
 } from '@mui/material';
 import { ArrowBack, Phone, Language, Business, Store, Email, Web } from '@mui/icons-material';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -225,23 +222,27 @@ export default function ProfileSection() {
   };
 
   const handleResetPassword = () => {
-    navigate('/reset-password');
-    setOpen(false);
+    setToastMessage('Reset Password feature is coming soon!');
+    setToastSeverity('info');
+    setShowToast(true);
   };
 
   const handleBusinessDetails = () => {
-    navigate('/business-details');
-    setOpen(false);
+    setToastMessage('Business Details feature is coming soon!');
+    setToastSeverity('info');
+    setShowToast(true);
   };
 
   const handlePaymentSettings = () => {
-    navigate('/payment-settings');
-    setOpen(false);
+    setToastMessage('Payment Settings feature is coming soon!');
+    setToastSeverity('info');
+    setShowToast(true);
   };
 
   const handleHelpSupport = () => {
-    navigate('/help-support');
-    setOpen(false);
+    setToastMessage('Help & Support feature is coming soon!');
+    setToastSeverity('info');
+    setShowToast(true);
   };
 
   const prevOpen = useRef(open);
