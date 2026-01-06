@@ -87,7 +87,7 @@ export default function Dashboard() {
               <TotalIncomeLightCard
                 {...{
                   isLoading,
-                  total: 203,
+                  total: 0,
                   label: 'Total Income',
                   icon: <StorefrontTwoToneIcon fontSize="inherit" />
                 }}

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import { useState } from 'react';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -19,23 +19,22 @@ import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import EarningIcon from 'assets/images/icons/earning.svg';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import GetAppTwoToneIcon from '@mui/icons-material/GetAppOutlined';
 import FileCopyTwoToneIcon from '@mui/icons-material/FileCopyOutlined';
 import PictureAsPdfTwoToneIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 
-export default function EarningCard({ isLoading }) {
+export default function EarningCard({
+  isLoading = false,
+  amount = 0,
+  label = 'Total Earnings',
+  trend = 'up' // 'up' | 'down'
+}) {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const isUp = trend === 'up';
 
   return (
     <>
@@ -46,7 +45,7 @@ export default function EarningCard({ isLoading }) {
           border={false}
           content={false}
           sx={{
-            bgcolor: ' #E15B65',
+            bgcolor: '#E15B65',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
@@ -57,117 +56,114 @@ export default function EarningCard({ isLoading }) {
               height: 210,
               background: '#C2444E',
               borderRadius: '50%',
-              top: { xs: -85 },
-              right: { xs: -95 }
+              top: -85,
+              right: -95
             },
             '&:before': {
               content: '""',
               position: 'absolute',
               width: 210,
               height: 210,
-              background: '#fba7adff',
+              background: '#FBA7AD',
               borderRadius: '50%',
-              top: { xs: -125 },
-              right: { xs: -15 },
+              top: -125,
+              right: -15,
               opacity: 0.5
             }
           }}
         >
           <Box sx={{ p: 2.25 }}>
             <Grid container direction="column">
+              {/* ================= HEADER ================= */}
               <Grid>
-                <Grid container sx={{ justifyContent: 'space-between' }}>
-                  <Grid>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        ...theme.typography.commonAvatar,
-                        ...theme.typography.largeAvatar,
-                        bgcolor: '#cf2836ff',
-                        mt: 1
-                      }}
-                    >
-                      <CardMedia sx={{ width: 24, height: 24 }} component="img" src={EarningIcon} alt="Notification" />
-                    </Avatar>
-                  </Grid>
-                  <Grid>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        ...theme.typography.commonAvatar,
-                        ...theme.typography.mediumAvatar,
-                        bgcolor: '#ad2430ff',
-                        color: 'secondary.200',
-                        zIndex: 1
-                      }}
-                      aria-controls="menu-earning-card"
-                      aria-haspopup="true"
-                      onClick={handleClick}
-                    >
-                      <MoreHorizIcon fontSize="inherit" />
-                    </Avatar>
-                    <Menu
-                      id="menu-earning-card"
-                      anchorEl={anchorEl}
-                      keepMounted
-                      open={Boolean(anchorEl)}
-                      onClose={handleClose}
-                      variant="selectedMenu"
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right'
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right'
-                      }}
-                    >
-                      <MenuItem onClick={handleClose}>
-                        <GetAppTwoToneIcon sx={{ mr: 1.75 }} /> Import Card
-                      </MenuItem>
-                      <MenuItem onClick={handleClose}>
-                        <FileCopyTwoToneIcon sx={{ mr: 1.75 }} /> Copy Data
-                      </MenuItem>
-                      <MenuItem onClick={handleClose}>
-                        <PictureAsPdfTwoToneIcon sx={{ mr: 1.75 }} /> Export
-                      </MenuItem>
-                      <MenuItem onClick={handleClose}>
-                        <ArchiveTwoToneIcon sx={{ mr: 1.75 }} /> Archive File
-                      </MenuItem>
-                    </Menu>
-                  </Grid>
+                <Grid container justifyContent="space-between">
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.largeAvatar,
+                      bgcolor: '#CF2836',
+                      mt: 1
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      src={EarningIcon}
+                      sx={{ width: 24, height: 24 }}
+                    />
+                  </Avatar>
+
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.mediumAvatar,
+                      bgcolor: '#AD2430',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                  >
+                    <MoreHorizIcon fontSize="inherit" />
+                  </Avatar>
+
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={() => setAnchorEl(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  >
+                    <MenuItem onClick={() => setAnchorEl(null)}>
+                      <GetAppTwoToneIcon sx={{ mr: 1.5 }} /> Import
+                    </MenuItem>
+                    <MenuItem onClick={() => setAnchorEl(null)}>
+                      <FileCopyTwoToneIcon sx={{ mr: 1.5 }} /> Copy
+                    </MenuItem>
+                    <MenuItem onClick={() => setAnchorEl(null)}>
+                      <PictureAsPdfTwoToneIcon sx={{ mr: 1.5 }} /> Export
+                    </MenuItem>
+                    <MenuItem onClick={() => setAnchorEl(null)}>
+                      <ArchiveTwoToneIcon sx={{ mr: 1.5 }} /> Archive
+                    </MenuItem>
+                  </Menu>
                 </Grid>
               </Grid>
+
+              {/* ================= VALUE ================= */}
               <Grid>
-                <Grid container sx={{ alignItems: 'center' }}>
-                  <Grid>
-                    <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹1000</Typography>
-                  </Grid>
-                  <Grid>
-                    <Avatar
-                      sx={{
-                        cursor: 'pointer',
-                        ...theme.typography.smallAvatar,
-                        bgcolor: '#f0c4c8ff',
-                        color: 'secondary.dark'
-                      }}
-                    >
-                      <ArrowUpwardIcon fontSize="inherit" sx={{ transform: 'rotate3d(1, 1, 1, 45deg)' }} />
-                    </Avatar>
-                  </Grid>
+                <Grid container alignItems="center">
+                  <Typography
+                    sx={{
+                      fontSize: '2.125rem',
+                      fontWeight: 500,
+                      mr: 1,
+                      mt: 1.75,
+                      mb: 0.75
+                    }}
+                  >
+                    ₹{amount.toLocaleString()}
+                  </Typography>
+
+                  <Avatar
+                    sx={{
+                      ...theme.typography.smallAvatar,
+                      bgcolor: '#F0C4C8',
+                      color: 'secondary.dark'
+                    }}
+                  >
+                    {isUp ? (
+                      <ArrowUpwardIcon fontSize="inherit" />
+                    ) : (
+                      <ArrowDownwardIcon fontSize="inherit" />
+                    )}
+                  </Avatar>
                 </Grid>
               </Grid>
-              <Grid sx={{ mb: 1.25 }}>
-                <Typography
-                  sx={{
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    color: 'white'
-                  }}
-                >
-                  Total Earnings
-                </Typography>
-              </Grid>
+
+              {/* ================= LABEL ================= */}
+              <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
+                {label}
+              </Typography>
             </Grid>
           </Box>
         </MainCard>
@@ -176,4 +172,9 @@ export default function EarningCard({ isLoading }) {
   );
 }
 
-EarningCard.propTypes = { isLoading: PropTypes.bool };
+EarningCard.propTypes = {
+  isLoading: PropTypes.bool,
+  amount: PropTypes.number,
+  label: PropTypes.string,
+  trend: PropTypes.oneOf(['up', 'down'])
+};

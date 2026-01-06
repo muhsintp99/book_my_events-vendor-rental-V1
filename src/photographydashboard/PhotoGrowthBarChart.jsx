@@ -16,41 +16,33 @@ import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowth
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
-// chart data
-import barChartOptions from './chartdata/photogrowth-barchart';
+// chart base options
+import baseChartOptions from './chartdata/photogrowth-barchart';
 
-const status = [
+const STATUS_OPTIONS = [
   { value: 'today', label: 'Today' },
   { value: 'month', label: 'This Month' },
   { value: 'year', label: 'This Year' }
 ];
 
-const series = [
-  { name: 'Investment', data: [35, 125, 35, 35, 35, 80, 35, 20, 35, 45, 15, 75] },
-  { name: 'Loss', data: [35, 15, 15, 35, 65, 40, 80, 25, 15, 85, 25, 75] },
-  { name: 'Profit', data: [35, 145, 35, 35, 20, 105, 100, 10, 65, 45, 30, 10] },
-  { name: 'Maintenance', data: [0, 0, 75, 0, 0, 115, 0, 0, 0, 0, 150, 0] }
-];
-
-export default function TotalGrowthBarChart({ isLoading }) {
+export default function TotalGrowthBarChart({
+  isLoading = false,
+  total = 0,
+  series = [],
+  onRangeChange
+}) {
   const theme = useTheme();
-
-  const [value, setValue] = useState('today');
-  const [chartOptions, setChartOptions] = useState(barChartOptions);
+  const [range, setRange] = useState('today');
+  const [chartOptions, setChartOptions] = useState(baseChartOptions);
 
   const { primary } = theme.palette.text;
   const divider = theme.palette.divider;
   const grey500 = theme.palette.grey[500];
 
-  const primary200 = theme.palette.primary[200];
-  const primaryDark = theme.palette.primary.dark;
-  const secondaryMain = theme.palette.secondary.main;
-  const secondaryLight = theme.palette.secondary.light;
-
   useEffect(() => {
     setChartOptions((prev) => ({
       ...prev,
-      colors: ['#C2444E', '#F09898', '#ff7f87ff', '#FCE9E9'],
+      colors: ['#C2444E', '#F09898', '#FF7F87', '#FCE9E9'],
       xaxis: {
         ...prev.xaxis,
         labels: { style: { colors: primary } }
@@ -65,8 +57,12 @@ export default function TotalGrowthBarChart({ isLoading }) {
         labels: { ...prev.legend?.labels, colors: grey500 }
       }
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme.palette]);
+  }, [theme.palette, primary, divider, grey500]);
+
+  const handleRangeChange = (e) => {
+    setRange(e.target.value);
+    onRangeChange?.(e.target.value);
+  };
 
   return (
     <>
@@ -75,51 +71,65 @@ export default function TotalGrowthBarChart({ isLoading }) {
       ) : (
         <MainCard>
           <Grid container spacing={gridSpacing}>
-            <Grid size={12}>
-              <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* ================= HEADER ================= */}
+            <Grid xs={12}>
+              <Grid container alignItems="center" justifyContent="space-between">
                 <Grid>
-                  <Grid container direction="column" spacing={1}>
-                    <Grid>
-                      <Typography variant="subtitle2">Total Growth</Typography>
-                    </Grid>
-                    <Grid>
-                      <Typography variant="h3">₹2,500.00</Typography>
-                    </Grid>
-                  </Grid>
+                  <Typography variant="subtitle2">Total Growth</Typography>
+                  <Typography variant="h3">
+                    ₹{total.toLocaleString()}
+                  </Typography>
                 </Grid>
-                <Grid>
-                  <TextField id="standard-select-currency" select value={value} onChange={(e) => setValue(e.target.value)}>
-                    {status.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
+
+                <TextField
+                  select
+                  value={range}
+                  onChange={handleRangeChange}
+                  size="small"
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
             </Grid>
+
+            {/* ================= CHART ================= */}
             <Grid
-              size={12}
+              xs={12}
               sx={{
                 ...theme.applyStyles('light', {
                   '& .apexcharts-series:nth-of-type(4) path:hover': {
-                    filter: `brightness(0.95)`,
+                    filter: 'brightness(0.95)',
                     transition: 'all 0.3s ease'
                   }
                 }),
-                '& .apexcharts-menu': {
-                  bgcolor: 'background.paper'
-                },
+                '& .apexcharts-menu': { bgcolor: 'background.paper' },
                 '.apexcharts-theme-light .apexcharts-menu-item:hover': {
                   bgcolor: 'grey.200'
                 },
-                '& .apexcharts-theme-light .apexcharts-menu-icon:hover svg, .apexcharts-theme-light .apexcharts-reset-icon:hover svg, .apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoomin-icon:hover svg, .apexcharts-theme-light .apexcharts-zoomout-icon:hover svg':
-                  {
-                    fill: theme.palette.grey[400]
-                  }
+                '& .apexcharts-theme-light svg:hover': {
+                  fill: theme.palette.grey[400]
+                }
               }}
             >
-              <Chart options={chartOptions} series={series} type="bar" height={480} />
+              {series.length ? (
+                <Chart
+                  options={chartOptions}
+                  series={series}
+                  type="bar"
+                  height={480}
+                />
+              ) : (
+                <Typography
+                  variant="subtitle2"
+                  sx={{ textAlign: 'center', py: 8 }}
+                >
+                  No growth data available
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </MainCard>
@@ -128,4 +138,9 @@ export default function TotalGrowthBarChart({ isLoading }) {
   );
 }
 
-TotalGrowthBarChart.propTypes = { isLoading: PropTypes.bool };
+TotalGrowthBarChart.propTypes = {
+  isLoading: PropTypes.bool,
+  total: PropTypes.number,
+  series: PropTypes.array,
+  onRangeChange: PropTypes.func
+};

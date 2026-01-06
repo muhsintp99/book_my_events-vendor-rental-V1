@@ -14,7 +14,7 @@ import Box from '@mui/material/Box';
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 
-// styles
+/* ================= STYLED CARD ================= */
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   overflow: 'hidden',
   position: 'relative',
@@ -23,7 +23,11 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(210.04deg, ${theme.palette.warning.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+    background: `linear-gradient(
+      210.04deg,
+      ${theme.palette.warning.dark} -50.94%,
+      rgba(144, 202, 249, 0) 83.49%
+    )`,
     borderRadius: '50%',
     top: -30,
     right: -180
@@ -33,15 +37,28 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(140.9deg, ${theme.palette.warning.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
+    background: `linear-gradient(
+      140.9deg,
+      ${theme.palette.warning.dark} -14.02%,
+      rgba(144, 202, 249, 0) 70.5%
+    )`,
     borderRadius: '50%',
     top: -160,
     right: -130
   }
 }));
 
-export default function TotalIncomeLightCard({ isLoading, total, icon, label }) {
+/* ================= COMPONENT ================= */
+export default function TotalIncomeLightCard({
+  isLoading = false,
+  total = 0,
+  label = 'Total Income',
+  icon,
+  variant = 'warning' // 'warning' | 'error' | 'success' | 'primary'
+}) {
   const theme = useTheme();
+
+  const palette = theme.palette[variant] || theme.palette.warning;
 
   return (
     <>
@@ -51,25 +68,32 @@ export default function TotalIncomeLightCard({ isLoading, total, icon, label }) 
         <CardWrapper border={false} content={false}>
           <Box sx={{ p: 2 }}>
             <List sx={{ py: 0 }}>
-              <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
+              <ListItem disableGutters sx={{ py: 0 }}>
                 <ListItemAvatar>
                   <Avatar
                     variant="rounded"
                     sx={{
                       ...theme.typography.commonAvatar,
                       ...theme.typography.largeAvatar,
-                      bgcolor: label === 'Meeting attends' ? alpha(theme.palette.error.light, 0.25) : 'warning.light',
-                      color: label === 'Meeting attends' ? 'error.dark' : 'warning.dark'
+                      bgcolor: alpha(palette.light, 0.25),
+                      color: palette.dark
                     }}
                   >
                     {icon}
                   </Avatar>
                 </ListItemAvatar>
+
                 <ListItemText
-                  sx={{ py: 0, mt: 0.45, mb: 0.45 }}
-                  primary={<Typography variant="h4">₹{total}k</Typography>}
+                  primary={
+                    <Typography variant="h4">
+                      ₹{total.toLocaleString()}
+                    </Typography>
+                  }
                   secondary={
-                    <Typography variant="subtitle2" sx={{ color: 'grey.500', mt: 0.5 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: 'grey.500', mt: 0.5 }}
+                    >
                       {label}
                     </Typography>
                   }
@@ -83,4 +107,11 @@ export default function TotalIncomeLightCard({ isLoading, total, icon, label }) 
   );
 }
 
-TotalIncomeLightCard.propTypes = { isLoading: PropTypes.bool, total: PropTypes.number, icon: PropTypes.node, label: PropTypes.string };
+/* ================= PROPS ================= */
+TotalIncomeLightCard.propTypes = {
+  isLoading: PropTypes.bool,
+  total: PropTypes.number,
+  label: PropTypes.string,
+  icon: PropTypes.node,
+  variant: PropTypes.oneOf(['warning', 'error', 'success', 'primary'])
+};

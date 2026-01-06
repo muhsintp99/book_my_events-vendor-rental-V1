@@ -13,22 +13,27 @@ import Box from '@mui/material/Box';
 import Chart from 'react-apexcharts';
 
 // project imports
-import ChartDataMonth from './chartdata/photo-ordermonthline-chart';
-import ChartDataYear from './chartdata/photo-orderyear-linechart';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonTotalOrderCard from 'ui-component/cards/Skeleton/EarningCard';
 
 // assets
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-export default function TotalOrderLineChartCard({ isLoading }) {
+export default function TotalOrderLineChartCard({
+  isLoading = false,
+  title = 'Total Orders',
+  monthValue = 0,
+  yearValue = 0,
+  monthChart,
+  yearChart,
+  trend = 'down'
+}) {
   const theme = useTheme();
+  const [isMonth, setIsMonth] = React.useState(true);
 
-  const [timeValue, setTimeValue] = React.useState(false);
-  const handleChangeTime = (event, newValue) => {
-    setTimeValue(newValue);
-  };
+  const TrendIcon = trend === 'up' ? ArrowUpwardIcon : ArrowDownwardIcon;
 
   return (
     <>
@@ -39,14 +44,11 @@ export default function TotalOrderLineChartCard({ isLoading }) {
           border={false}
           content={false}
           sx={{
-            bgcolor: ' #E15B65',
+            bgcolor: '#E15B65',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
-            '&>div': {
-              position: 'relative',
-              zIndex: 5
-            },
+            '&>div': { position: 'relative', zIndex: 5 },
             '&:after': {
               content: '""',
               position: 'absolute',
@@ -54,8 +56,8 @@ export default function TotalOrderLineChartCard({ isLoading }) {
               height: 210,
               background: '#C2444E',
               borderRadius: '50%',
-              top: { xs: -85 },
-              right: { xs: -95 }
+              top: -85,
+              right: -95
             },
             '&:before': {
               content: '""',
@@ -64,90 +66,91 @@ export default function TotalOrderLineChartCard({ isLoading }) {
               height: 210,
               background: '#FF8A8A',
               borderRadius: '50%',
-              top: { xs: -125 },
-              right: { xs: -15 },
+              top: -125,
+              right: -15,
               opacity: 0.5
             }
           }}
         >
           <Box sx={{ p: 2.25 }}>
             <Grid container direction="column">
-              <Grid>
-                <Grid container sx={{ justifyContent: 'space-between' }}>
-                  <Grid>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        ...theme.typography.commonAvatar,
-                        ...theme.typography.largeAvatar,
-                        bgcolor: '#C41E3A',
-                        color: '#fff',
-                        mt: 1
-                      }}
-                    >
-                      <LocalMallOutlinedIcon fontSize="inherit" />
-                    </Avatar>
-                  </Grid>
-                  <Grid>
-                    <Button
-                      disableElevation
-                      variant={timeValue ? 'contained' : 'text'}
-                      size="small"
-                      sx={{ color: 'inherit' }}
-                      onClick={(e) => handleChangeTime(e, true)}
-                    >
-                      Month
-                    </Button>
-                    <Button
-                      disableElevation
-                      variant={!timeValue ? 'contained' : 'text'}
-                      size="small"
-                      sx={{ color: '#A33A43', backgroundColor: '#F1C6C6'}}
-                      onClick={(e) => handleChangeTime(e, false)}
-                    >
-                      Year
-                    </Button>
-                  </Grid>
+              {/* ================= HEADER ================= */}
+              <Grid container justifyContent="space-between">
+                <Avatar
+                  variant="rounded"
+                  sx={{
+                    ...theme.typography.commonAvatar,
+                    ...theme.typography.largeAvatar,
+                    bgcolor: '#C41E3A',
+                    color: '#fff',
+                    mt: 1
+                  }}
+                >
+                  <LocalMallOutlinedIcon fontSize="inherit" />
+                </Avatar>
+
+                <Grid>
+                  <Button
+                    size="small"
+                    variant={isMonth ? 'contained' : 'text'}
+                    sx={{ color: 'inherit' }}
+                    onClick={() => setIsMonth(true)}
+                  >
+                    Month
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={!isMonth ? 'contained' : 'text'}
+                    sx={{
+                      color: '#A33A43',
+                      backgroundColor: !isMonth ? '#F1C6C6' : 'transparent'
+                    }}
+                    onClick={() => setIsMonth(false)}
+                  >
+                    Year
+                  </Button>
                 </Grid>
               </Grid>
-              <Grid sx={{ mb: 0.75 }}>
-                <Grid container sx={{ alignItems: 'center' }}>
-                  <Grid size={6}>
-                    <Grid container sx={{ alignItems: 'center' }}>
-                      <Grid>
-                        {timeValue ? (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹108</Typography>
-                        ) : (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹250</Typography>
-                        )}
-                      </Grid>
-                      <Grid>
-                        <Avatar
-                          sx={{
-                            ...theme.typography.smallAvatar,
-                            cursor: 'pointer',
-                            bgcolor: '#FAEBEB',
-                            color: 'primary.dark'
-                          }}
-                        >
-                          <ArrowDownwardIcon fontSize="inherit" sx={{ transform: 'rotate3d(1, 1, 1, 45deg)' }} />
-                        </Avatar>
-                      </Grid>
-                      <Grid size={12}>
-                        <Typography
-                          sx={{
-                            fontSize: '1rem',
-                            fontWeight: 500,
-                            color: 'white'
-                          }}
-                        >
-                          Total Orders
+
+              {/* ================= CONTENT ================= */}
+              <Grid sx={{ mt: 1 }}>
+                <Grid container alignItems="center">
+                  {/* LEFT */}
+                  <Grid xs={6}>
+                    <Grid container alignItems="center">
+                      <Typography
+                        sx={{
+                          fontSize: '2.125rem',
+                          fontWeight: 500,
+                          mr: 1,
+                          mt: 1.75,
+                          mb: 0.75
+                        }}
+                      >
+                        ₹{(isMonth ? monthValue : yearValue).toLocaleString()}
+                      </Typography>
+
+                      <Avatar
+                        sx={{
+                          ...theme.typography.smallAvatar,
+                          bgcolor: '#FAEBEB',
+                          color: 'primary.dark'
+                        }}
+                      >
+                        <TrendIcon fontSize="inherit" />
+                      </Avatar>
+
+                      <Grid xs={12}>
+                        <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
+                          {title}
                         </Typography>
                       </Grid>
                     </Grid>
                   </Grid>
+
+                  {/* RIGHT */}
                   <Grid
-                    size={6}
+                    xs={6}
                     sx={{
                       '.apexcharts-tooltip.apexcharts-theme-light': {
                         color: theme.palette.text.primary,
@@ -155,7 +158,18 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                       }
                     }}
                   >
-                    {timeValue ? <Chart {...ChartDataMonth} /> : <Chart {...ChartDataYear} />}
+                    {isMonth && monthChart ? (
+                      <Chart {...monthChart} />
+                    ) : !isMonth && yearChart ? (
+                      <Chart {...yearChart} />
+                    ) : (
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ textAlign: 'center', mt: 4 }}
+                      >
+                        No chart data
+                      </Typography>
+                    )}
                   </Grid>
                 </Grid>
               </Grid>
@@ -167,4 +181,12 @@ export default function TotalOrderLineChartCard({ isLoading }) {
   );
 }
 
-TotalOrderLineChartCard.propTypes = { isLoading: PropTypes.bool };
+TotalOrderLineChartCard.propTypes = {
+  isLoading: PropTypes.bool,
+  title: PropTypes.string,
+  monthValue: PropTypes.number,
+  yearValue: PropTypes.number,
+  trend: PropTypes.oneOf(['up', 'down']),
+  monthChart: PropTypes.object,
+  yearChart: PropTypes.object
+};

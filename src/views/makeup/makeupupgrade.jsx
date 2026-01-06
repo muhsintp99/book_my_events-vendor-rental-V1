@@ -261,6 +261,34 @@ export default function UpgradePlanUI() {
     if (moduleId) fetchPlans();
   }, [moduleId]);
 
+  // ✅ Load Razorpay Checkout Script
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    // Already loaded
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+
+    script.onload = () => {
+      console.log("✅ Razorpay SDK loaded");
+      resolve(true);
+    };
+
+    script.onerror = () => {
+      console.error("❌ Razorpay SDK failed to load");
+      resolve(false);
+    };
+
+    document.body.appendChild(script);
+  });
+};
+
+
   /* ---------- HANDLE UPGRADE - DIRECT TO PAYMENT ---------- */
   const handleUpgrade = async (plan) => {
     if (!userId || !moduleId) {
@@ -271,38 +299,86 @@ export default function UpgradePlanUI() {
     try {
       setPayingPlanId(plan._id);
 
-      console.log('🚀 Creating payment session...');
-      console.log('Plan:', plan.name, 'Price:', plan.price);
+      // ✅ Ensure Razorpay SDK loaded
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        throw new Error('Razorpay SDK failed to load');
+      }
 
-      const paymentRes = await axios.post(`${API_BASE}/api/payment/create-subscription-payment`, {
+      // 1️⃣ Create subscription
+      const res = await axios.post(`${API_BASE}/api/razorpay/subscription/create`, {
         providerId: userId,
         planId: plan._id,
-        amount: plan.price,
         customerEmail: user.email,
-        customerPhone: user.mobile || user.phone || '9999999999'
+        customerPhone: user.mobile || '9999999999'
       });
 
-      console.log('✅ Payment response:', paymentRes.data);
+      const { razorpay, customer } = res.data;
+      console.log("🔑 Razorpay Key:", razorpay.key);
+console.log(
+  "🧪 Razorpay Mode:",
+  razorpay.key.startsWith("rzp_test_") ? "TEST MODE" : "LIVE MODE"
+);
 
-      if (paymentRes.data?.payment_links?.web) {
-        setSnackbar({
-          open: true,
-          message: 'Redirecting to payment page...',
-          severity: 'info'
-        });
 
-        // Redirect to payment page
-        setTimeout(() => {
-          window.location.href = paymentRes.data.payment_links.web;
-        }, 1000);
-      } else {
-        throw new Error('Payment link not available');
+      if (!razorpay?.subscriptionId) {
+        throw new Error('Subscription ID missing from backend');
       }
+
+      // 2️⃣ Open Razorpay Checkout
+      const options = {
+        key: razorpay.key,
+        subscription_id: razorpay.subscriptionId,
+        name: 'Book My Event',
+        description: `${plan.name} Subscription`,
+        image: '/logo.png',
+
+        handler: async function (response) {
+          console.log('✅ Razorpay Response:', response);
+
+          try {
+            const verifyRes = await axios.post(`${API_BASE}/api/razorpay/subscription/verify`, response);
+
+            if (verifyRes.data.success) {
+              setSnackbar({
+                open: true,
+                message: '🎉 Subscription Activated!',
+                severity: 'success'
+              });
+
+              setTimeout(() => {
+                window.location.replace('/makeupartist/portfolio');
+              }, 1500);
+            } else {
+              throw new Error('Verification failed');
+            }
+          } catch (err) {
+            console.error('❌ Verification error:', err);
+            setSnackbar({
+              open: true,
+              message: err.response?.data?.message || 'Payment verification failed',
+              severity: 'error'
+            });
+          }
+        },
+
+        prefill: {
+          email: customer.email,
+          contact: customer.phone
+        },
+
+        theme: {
+          color: '#c62828'
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
-      console.error('❌ Payment error:', error);
+      console.error('❌ Razorpay Error:', error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || error.message || 'Payment initiation failed',
+        message: error.message || 'Payment failed',
         severity: 'error'
       });
       setPayingPlanId(null);

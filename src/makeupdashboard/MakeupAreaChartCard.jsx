@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import Chart from 'react-apexcharts';
 
 // project imports
-import chartData from './chartdata/arechart';
+import chartData from './chartdata/areachart';
 
 // ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
 

@@ -25,45 +25,38 @@ import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 
-export default function PopularCard({ isLoading }) {
+/* ================= DEFAULT EMPTY DATA ================= */
+const defaultPackages = [];
+
+export default function PopularCard({
+  isLoading = false,
+  title = 'Top Selling Catering Packages',
+  packages = defaultPackages
+}) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
 
   return (
-  <>
-    {isLoading ? (
-      <SkeletonPopularCard />
-    ) : (
-      <MainCard content={false}>
-        <CardContent>
-          <Grid container spacing={gridSpacing}>
-            {/* ================= HEADER ================= */}
-            <Grid xs={12}>
-              <Grid container alignItems="center" justifyContent="space-between">
-                <Grid>
-                  <Typography variant="h4">Top Selling Catering Packages</Typography>
-                </Grid>
-                <Grid>
-                  <IconButton size="small" sx={{ mt: -0.625 }}>
-                    <MoreHorizOutlinedIcon
-                      fontSize="small"
-                      sx={{ cursor: 'pointer' }}
-                      aria-controls="menu-popular-card"
-                      aria-haspopup="true"
-                      onClick={handleClick}
-                    />
+    <>
+      {isLoading ? (
+        <SkeletonPopularCard />
+      ) : (
+        <MainCard content={false}>
+          <CardContent>
+            <Grid container spacing={gridSpacing}>
+              {/* ================= HEADER ================= */}
+              <Grid xs={12}>
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Typography variant="h4">{title}</Typography>
+
+                  <IconButton size="small" onClick={handleClick}>
+                    <MoreHorizOutlinedIcon fontSize="small" />
                   </IconButton>
+
                   <Menu
-                    id="menu-popular-card"
                     anchorEl={anchorEl}
-                    keepMounted
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -75,158 +68,104 @@ export default function PopularCard({ isLoading }) {
                   </Menu>
                 </Grid>
               </Grid>
-            </Grid>
 
-            {/* ================= CHART ================= */}
-            <Grid xs={12} sx={{ mt: -1 }}>
-              <CateringAreaChartCard />
-            </Grid>
-
-            {/* ================= PACKAGE LIST ================= */}
-            <Grid xs={12}>
-              {/* PREMIUM */}
-              <Grid container direction="column">
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle1">Premium Catering Package</Typography>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Typography variant="subtitle1">₹18,390</Typography>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: 'success.light',
-                        color: 'success.dark'
-                      }}
-                    >
-                      <KeyboardArrowUpOutlinedIcon fontSize="small" />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-                <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                  +12% revenue growth
-                </Typography>
+              {/* ================= CHART ================= */}
+              <Grid xs={12} sx={{ mt: -1 }}>
+                <CateringAreaChartCard />
               </Grid>
 
-              <Divider sx={{ my: 1.5 }} />
+              {/* ================= PACKAGE LIST ================= */}
+              <Grid xs={12}>
+                {packages.length === 0 ? (
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ textAlign: 'center', py: 2 }}
+                  >
+                    No package data available
+                  </Typography>
+                ) : (
+                  packages.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <Grid container direction="column">
+                        <Grid container alignItems="center" justifyContent="space-between">
+                          <Typography variant="subtitle1">
+                            {item.name}
+                          </Typography>
 
-              {/* SILVER */}
-              <Grid container direction="column">
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle1">Silver Catering Package</Typography>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Typography variant="subtitle1">₹10,000</Typography>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: 'orange.light',
-                        color: 'orange.dark'
-                      }}
-                    >
-                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  -8% order drop
-                </Typography>
-              </Grid>
+                          <Grid container alignItems="center" spacing={1} sx={{ width: 'auto' }}>
+                            <Typography variant="subtitle1">
+                              ₹{item.amount.toLocaleString()}
+                            </Typography>
 
-              <Divider sx={{ my: 1.5 }} />
+                            <Avatar
+                              variant="rounded"
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                bgcolor:
+                                  item.trend === 'up'
+                                    ? 'success.light'
+                                    : 'orange.light',
+                                color:
+                                  item.trend === 'up'
+                                    ? 'success.dark'
+                                    : 'orange.dark'
+                              }}
+                            >
+                              {item.trend === 'up' ? (
+                                <KeyboardArrowUpOutlinedIcon fontSize="small" />
+                              ) : (
+                                <KeyboardArrowDownOutlinedIcon fontSize="small" />
+                              )}
+                            </Avatar>
+                          </Grid>
+                        </Grid>
 
-              {/* PLATINUM */}
-              <Grid container direction="column">
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle1">Platinum Catering Package</Typography>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Typography variant="subtitle1">₹20,500</Typography>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: 'success.light',
-                        color: 'success.dark'
-                      }}
-                    >
-                      <KeyboardArrowUpOutlinedIcon fontSize="small" />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-                <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                  +15% monthly growth
-                </Typography>
-              </Grid>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            color:
+                              item.trend === 'up'
+                                ? 'success.dark'
+                                : 'orange.dark'
+                          }}
+                        >
+                          {item.note}
+                        </Typography>
+                      </Grid>
 
-              <Divider sx={{ my: 1.5 }} />
-
-              {/* DIAMOND */}
-              <Grid container direction="column">
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle1">Diamond Catering Package</Typography>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Typography variant="subtitle1">₹18,900</Typography>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: 'orange.light',
-                        color: 'orange.dark'
-                      }}
-                    >
-                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  -5% booking decline
-                </Typography>
-              </Grid>
-
-              <Divider sx={{ my: 1.5 }} />
-
-              {/* BRONZE */}
-              <Grid container direction="column">
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle1">Bronze Catering Package</Typography>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Typography variant="subtitle1">₹8,900</Typography>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: 'orange.light',
-                        color: 'orange.dark'
-                      }}
-                    >
-                      <KeyboardArrowDownOutlinedIcon fontSize="small" />
-                    </Avatar>
-                  </Grid>
-                </Grid>
-                <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  Low demand this period
-                </Typography>
+                      {index !== packages.length - 1 && (
+                        <Divider sx={{ my: 1.5 }} />
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
               </Grid>
             </Grid>
-          </Grid>
-        </CardContent>
+          </CardContent>
 
-        {/* ================= FOOTER ================= */}
-        <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
-          <Button size="small" disableElevation>
-            View All Packages
-            <ChevronRightOutlinedIcon />
-          </Button>
-        </CardActions>
-      </MainCard>
-    )}
-  </>
-);
-
+          {/* ================= FOOTER ================= */}
+          <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
+            <Button size="small" disableElevation>
+              View All Packages
+              <ChevronRightOutlinedIcon />
+            </Button>
+          </CardActions>
+        </MainCard>
+      )}
+    </>
+  );
 }
 
-PopularCard.propTypes = { isLoading: PropTypes.bool };
+PopularCard.propTypes = {
+  isLoading: PropTypes.bool,
+  title: PropTypes.string,
+  packages: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      amount: PropTypes.number,
+      trend: PropTypes.oneOf(['up', 'down']),
+      note: PropTypes.string
+    })
+  )
+};

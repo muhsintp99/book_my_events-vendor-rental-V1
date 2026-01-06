@@ -1,3 +1,93 @@
+// import { useEffect, useState } from 'react';
+
+// // material-ui
+// import { useTheme } from '@mui/material/styles';
+// import Card from '@mui/material/Card';
+// import Grid from '@mui/material/Grid';
+// import Typography from '@mui/material/Typography';
+
+// // third party
+// import Chart from 'react-apexcharts';
+
+// // project imports
+// import chartData from './chart-data/bajaj-area-chart';
+
+// // ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
+
+// export default function BajajAreaChartCard() {
+//   const theme = useTheme();
+
+//   // Custom coral-red color theme
+//   const coralMain = '#dd666eff';
+//   const coralDark = '#A33A43';
+//   const coralLight = '#FF8A92';
+
+//   const [chartConfig, setChartConfig] = useState(chartData);
+
+//   useEffect(() => {
+//     setChartConfig((prevState) => ({
+//       ...prevState,
+//       options: {
+//         ...prevState.options,
+//         colors: [coralMain],
+//         tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
+//         fill: {
+//           type: 'gradient',
+//           gradient: {
+//             shadeIntensity: 1,
+//             opacityFrom: 0.7,
+//             opacityTo: 0.2,
+//             stops: [0, 90, 100],
+//             colorStops: [
+//               { offset: 0, color: coralLight, opacity: 0.8 },
+//               { offset: 50, color: coralMain, opacity: 0.6 },
+//               { offset: 100, color: coralDark, opacity: 0.3 }
+//             ]
+//           }
+//         }
+//       }
+//     }));
+//   }, []);
+
+//   return (
+//     <Card
+//       sx={{
+//         bgcolor: coralLight,
+//         border: `1px solid ${coralMain}`,
+//         boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
+//         borderRadius: 3
+//       }}
+//     >
+//       <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
+//         <Grid item xs={12}>
+//           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+//             <Grid item>
+//               <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
+//                 Venue
+//               </Typography>
+//             </Grid>
+//             <Grid item>
+//               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+//                 ₹1839.00
+//               </Typography>
+//             </Grid>
+//           </Grid>
+//         </Grid>
+//         {/* <Grid item xs={12}>
+//           <Typography variant="subtitle2" sx={{ color: coralMain }}>
+//             10% Profit
+//           </Typography>
+//         </Grid> */}
+//       </Grid>
+
+//       {/* Chart */}
+//       <Chart {...chartConfig} />
+//     </Card>
+//   );
+// }
+
+
+import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 
 // material-ui
@@ -9,28 +99,35 @@ import Typography from '@mui/material/Typography';
 // third party
 import Chart from 'react-apexcharts';
 
-// project imports
-import chartData from './chart-data/bajaj-area-chart';
+// ===========================|| BAJAJ AREA CHART CARD (FRESH START) ||=========================== //
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
-
-export default function BajajAreaChartCard() {
+export default function BajajAreaChartCard({
+  title = 'Venue',
+  amount = 0,
+  chartConfig,
+  height = 160
+}) {
   const theme = useTheme();
 
-  // Custom coral-red color theme
+  // Coral theme colors
   const coralMain = '#dd666eff';
   const coralDark = '#A33A43';
   const coralLight = '#FF8A92';
 
-  const [chartConfig, setChartConfig] = useState(chartData);
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    setChartConfig((prevState) => ({
-      ...prevState,
+    if (!chartConfig) return;
+
+    setConfig({
+      ...chartConfig,
       options: {
-        ...prevState.options,
+        ...chartConfig.options,
         colors: [coralMain],
-        tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
+        tooltip: {
+          ...chartConfig.options?.tooltip,
+          theme: 'light'
+        },
         fill: {
           type: 'gradient',
           gradient: {
@@ -46,8 +143,8 @@ export default function BajajAreaChartCard() {
           }
         }
       }
-    }));
-  }, []);
+    });
+  }, [chartConfig]);
 
   return (
     <Card
@@ -58,30 +155,42 @@ export default function BajajAreaChartCard() {
         borderRadius: 3
       }}
     >
+      {/* ================= HEADER ================= */}
       <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-        <Grid item xs={12}>
-          <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid item>
-              <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
-                Venue
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹1839.00
-              </Typography>
-            </Grid>
+        <Grid xs={12}>
+          <Grid container alignItems="center" justifyContent="space-between">
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {title}
+            </Typography>
+
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{amount.toLocaleString()}
+            </Typography>
           </Grid>
         </Grid>
-        {/* <Grid item xs={12}>
-          <Typography variant="subtitle2" sx={{ color: coralMain }}>
-            10% Profit
-          </Typography>
-        </Grid> */}
       </Grid>
 
-      {/* Chart */}
-      <Chart {...chartConfig} />
+      {/* ================= CHART ================= */}
+      {config ? (
+        <Chart {...config} height={height} />
+      ) : (
+        <Typography
+          variant="subtitle2"
+          sx={{ textAlign: 'center', py: 4, color: '#fff' }}
+        >
+          No chart data
+        </Typography>
+      )}
     </Card>
   );
 }
+
+BajajAreaChartCard.propTypes = {
+  title: PropTypes.string,
+  amount: PropTypes.number,
+  height: PropTypes.number,
+  chartConfig: PropTypes.shape({
+    series: PropTypes.array,
+    options: PropTypes.object
+  })
+};

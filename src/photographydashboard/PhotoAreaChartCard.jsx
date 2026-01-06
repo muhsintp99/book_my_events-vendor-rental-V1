@@ -1,7 +1,7 @@
+import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -10,27 +10,30 @@ import Typography from '@mui/material/Typography';
 import Chart from 'react-apexcharts';
 
 // project imports
-import chartData from './chartdata/arechart';
+import defaultChartData from './chartdata/arechart';
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
-
-export default function VehicleAreaChartCard() {
-  const theme = useTheme();
-
-  // Custom coral-red color theme
-  const coralMain = '#dd666eff';
+export default function VehicleAreaChartCard({
+  title = 'Packages',
+  amount = 0,
+  chartData = defaultChartData
+}) {
+  // Coral-red theme
+  const coralMain = '#DD666E';
   const coralDark = '#A33A43';
   const coralLight = '#FF8A92';
 
   const [chartConfig, setChartConfig] = useState(chartData);
 
   useEffect(() => {
-    setChartConfig((prevState) => ({
-      ...prevState,
+    setChartConfig((prev) => ({
+      ...prev,
       options: {
-        ...prevState.options,
+        ...prev.options,
         colors: [coralMain],
-        tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
+        tooltip: {
+          ...prev?.options?.tooltip,
+          theme: 'light'
+        },
         fill: {
           type: 'gradient',
           gradient: {
@@ -54,28 +57,33 @@ export default function VehicleAreaChartCard() {
       sx={{
         bgcolor: coralLight,
         border: `1px solid ${coralMain}`,
-        boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
+        boxShadow: '0 4px 12px rgba(225, 91, 101, 0.3)',
         borderRadius: 3
       }}
     >
+      {/* ================= HEADER ================= */}
       <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
         <Grid item xs={12}>
-          <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid item>
-              <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
-                Packages
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹1800.00
-              </Typography>
-            </Grid>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {title}
+            </Typography>
+
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ₹{amount.toLocaleString()}
+            </Typography>
           </Grid>
         </Grid>
       </Grid>
 
+      {/* ================= CHART ================= */}
       <Chart {...chartConfig} />
     </Card>
   );
 }
+
+VehicleAreaChartCard.propTypes = {
+  title: PropTypes.string,
+  amount: PropTypes.number,
+  chartData: PropTypes.object
+};
