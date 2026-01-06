@@ -82,22 +82,35 @@ export default function ProfileSection() {
     if (savedDarkMode !== null) setDarkModeEnabled(savedDarkMode === 'true');
   }, []);
 
-  const fetchProfile = async () => {
+    const fetchProfile = async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    const storedUser = localStorage.getItem('user'); // Get user string
+    
+    if (!token || !storedUser) return;
+    
+    // Parse user to get the ID
+    const currentUser = JSON.parse(storedUser);
+    const userId = currentUser._id || currentUser.id; // Support both _id and id
+
     try {
-      const { data } = await axios.get(PROFILE_API, {
+      // Use the new provider-specific endpoint
+      const { data } = await axios.get(`${PROFILE_API}provider/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (data.success && data.data.length > 0) {
-        const prof = data.data[0];
+
+      // Backend returns { success: true, data: { ...profile } } -> Single Object
+      if (data.success && data.data) {
+        const prof = data.data; // Directly use data.data
+        
         setProfile(prof);
         setProfilePreview(prof.profilePhoto ? `https://api.bookmyevent.ae${prof.profilePhoto}` : null);
+        
         const socialLinks = prof.socialLinks
           ? typeof prof.socialLinks === 'string'
             ? JSON.parse(prof.socialLinks)
             : prof.socialLinks
           : {};
+        
         setFormData({
           profilePhoto: null,
           vendorName: prof.vendorName || prof.name || '',
