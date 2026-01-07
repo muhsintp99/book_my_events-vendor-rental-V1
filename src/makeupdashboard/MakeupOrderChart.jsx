@@ -102,7 +102,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                       disableElevation
                       variant={!timeValue ? 'contained' : 'text'}
                       size="small"
-                      sx={{ color: '#A33A43', backgroundColor: '#F1C6C6'}}
+                      sx={{ color: '#A33A43', backgroundColor: '#F1C6C6' }}
                       onClick={(e) => handleChangeTime(e, false)}
                     >
                       Year
@@ -116,9 +116,9 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center' }}>
                       <Grid>
                         {timeValue ? (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹108</Typography>
+                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹0.00</Typography>
                         ) : (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹250</Typography>
+                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>₹0.00</Typography>
                         )}
                       </Grid>
                       <Grid>

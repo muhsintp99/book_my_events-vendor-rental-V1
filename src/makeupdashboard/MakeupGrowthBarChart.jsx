@@ -83,7 +83,7 @@ export default function TotalGrowthBarChart({ isLoading }) {
                       <Typography variant="subtitle2">Total Growth</Typography>
                     </Grid>
                     <Grid>
-                      <Typography variant="h3">₹2,500.00</Typography>
+                      <Typography variant="h3">₹0.00</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
@@ -114,9 +114,9 @@ export default function TotalGrowthBarChart({ isLoading }) {
                   bgcolor: 'grey.200'
                 },
                 '& .apexcharts-theme-light .apexcharts-menu-icon:hover svg, .apexcharts-theme-light .apexcharts-reset-icon:hover svg, .apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoomin-icon:hover svg, .apexcharts-theme-light .apexcharts-zoomout-icon:hover svg':
-                  {
-                    fill: theme.palette.grey[400]
-                  }
+                {
+                  fill: theme.palette.grey[400]
+                }
               }}
             >
               <Chart options={chartOptions} series={series} type="bar" height={480} />

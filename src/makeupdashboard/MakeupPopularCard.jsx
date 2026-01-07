@@ -85,14 +85,14 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                            Premium Package
+                          Premium Package
                         </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           <Grid>
                             <Typography variant="subtitle1" color="inherit">
-                              1839.00
+                              0.00
                             </Typography>
                           </Grid>
                           <Grid>
@@ -126,13 +126,13 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                        Silver Package                     </Typography>
+                          Silver Package                     </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           <Grid>
                             <Typography variant="subtitle1" color="inherit">
-                              100.00
+                              0.00
                             </Typography>
                           </Grid>
                           <Grid>
@@ -166,13 +166,13 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                                       Platinum Package                   </Typography>
+                          Platinum Package                   </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           <Grid>
                             <Typography variant="subtitle1" color="inherit">
-                              200.00
+                              0.00
                             </Typography>
                           </Grid>
                           <Grid>
@@ -206,14 +206,14 @@ export default function PopularCard({ isLoading }) {
                     <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                       <Grid>
                         <Typography variant="subtitle1" color="inherit">
-                            Diamond Package
+                          Diamond Package
                         </Typography>
                       </Grid>
                       <Grid>
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           <Grid>
                             <Typography variant="subtitle1" color="inherit">
-                              189.00
+                              0.00
                             </Typography>
                           </Grid>
                           <Grid>
@@ -254,7 +254,7 @@ export default function PopularCard({ isLoading }) {
                         <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           <Grid>
                             <Typography variant="subtitle1" color="inherit">
-                              189.00
+                              0.00
                             </Typography>
                           </Grid>
                           <Grid>

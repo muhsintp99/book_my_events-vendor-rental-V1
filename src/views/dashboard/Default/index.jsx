@@ -48,7 +48,7 @@ export default function Dashboard() {
     return <CateringIndex isLoading={isLoading} />;
   }
 
-  if (Module === 'Makeup') {
+  if (Module === 'Makeup Artist') {
     return <MakeupIndex isLoading={isLoading} />;
   }
 

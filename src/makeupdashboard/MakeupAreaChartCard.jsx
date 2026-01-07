@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
+// import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -15,7 +15,7 @@ import chartData from './chartdata/areachart';
 // ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
 
 export default function VehicleAreaChartCard() {
-  const theme = useTheme();
+  // const theme = useTheme();
 
   // Custom coral-red color theme
   const coralMain = '#dd666eff';
@@ -68,7 +68,7 @@ export default function VehicleAreaChartCard() {
             </Grid>
             <Grid item>
               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹1800.00
+                ₹0.00
               </Typography>
             </Grid>
           </Grid>
