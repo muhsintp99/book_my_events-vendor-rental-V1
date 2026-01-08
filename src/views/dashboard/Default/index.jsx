@@ -49,7 +49,7 @@ export default function Dashboard() {
   // ================= MODULE ROUTING =================
   if (Module === 'Transport') return <VehicleIndex isLoading={isLoading} />;
   if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
-  if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
+  if (Module === 'Makeup') return <MakeupIndex isLoading={isLoading} />;
   if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
 
   // ================= DEFAULT DASHBOARD =================
