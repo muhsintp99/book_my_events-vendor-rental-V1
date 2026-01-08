@@ -9,7 +9,9 @@ import {
   IconCategory2,
   IconPhoto,
   IconRocket,
-  IconMessageCircle
+  IconMessageCircle,
+  IconCalendarEvent   
+
 } from '@tabler/icons-react';
 
 // Icons object
@@ -21,7 +23,9 @@ const icons = {
   IconCategory2,
   IconPhoto,
   IconRocket,
-  IconMessageCircle
+  IconMessageCircle,
+    IconCalendarEvent   
+
 };
 
 const photomanagement = {
@@ -86,6 +90,14 @@ const photomanagement = {
       type: 'item',
       url: '/photography/enquiry',
       icon: icons.IconMessageCircle,
+      breadcrumbs: false
+    },
+     {
+      id: 'schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/photography/schedules',
+      icon: icons.IconCalendarEvent,
       breadcrumbs: false
     }
   ]

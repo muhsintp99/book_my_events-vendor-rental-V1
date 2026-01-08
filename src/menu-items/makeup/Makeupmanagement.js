@@ -9,7 +9,8 @@ import {
   IconCategory2,
   IconPhoto,
   IconRocket,
-  IconMessageCircle
+  IconMessageCircle,
+  IconCalendarEvent   
 } from '@tabler/icons-react';
 
 // Icons object
@@ -21,7 +22,8 @@ const icons = {
   IconCategory2,
   IconPhoto,
   IconRocket,
-  IconMessageCircle
+  IconMessageCircle,
+  IconCalendarEvent   
 };
 
 // Makeup Menu Structure
@@ -87,6 +89,14 @@ const makeupmanagement = {
       type: 'item',
       url: '/makeupartist/Enqury',
       icon: icons.IconMessageCircle,
+      breadcrumbs: false
+    },
+    {
+      id: 'Schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/makeupartist/schedules',
+      icon: icons.IconCalendarEvent,
       breadcrumbs: false
     }
   ]

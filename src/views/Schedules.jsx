@@ -96,6 +96,16 @@ function BookingCalendar() {
     }
   }, [currentDate, providerId]);
 
+  // Auto-select module if only one is available
+  useEffect(() => {
+    if (modules.length === 1 && !formData.moduleId) {
+      setFormData(prev => ({
+        ...prev,
+        moduleId: modules[0]._id
+      }));
+    }
+  }, [modules]);
+
   const fetchBookings = async () => {
     if (!providerId) {
       setError('Provider ID is required');
@@ -160,10 +170,21 @@ function BookingCalendar() {
         modulesList = data;
       }
       
-      setModules(modulesList);
+      console.log('All modules fetched:', modulesList);
       
-      if (modulesList.length === 0) {
-        console.warn('No modules found in response');
+      // Filter modules: Only show "Venues" module by default
+      // Or filter by modules that this provider has venues for
+      const filteredModules = modulesList.filter(module => {
+        const moduleTitle = (module.title || module.name || '').toLowerCase();
+        // Only show Venues module (you can adjust this logic)
+        return moduleTitle === 'venues';
+      });
+      
+      console.log('Filtered modules for provider:', filteredModules);
+      setModules(filteredModules);
+      
+      if (filteredModules.length === 0) {
+        console.warn('No modules available for this provider');
       }
     } catch (err) {
       console.error('Fetch modules error:', err);
@@ -393,29 +414,11 @@ function BookingCalendar() {
     setError(null);
 
     try {
-      if (!formData.moduleId) {
-        setError('Please select a module');
-        setSubmitLoading(false);
-        return;
-      }
-      
-      if (!formData.venueId) {
-        setError('Please select a venue');
-        setSubmitLoading(false);
-        return;
-      }
-
-      if (!formData.numberOfGuests) {
-        setError('Please enter number of guests');
-        setSubmitLoading(false);
-        return;
-      }
-
-      if (formData.timeSlot.length === 0) {
-        setError('Please select at least one time slot');
-        setSubmitLoading(false);
-        return;
-      }
+    if (!formData.bookingDate) {
+      setError('Please select booking date');
+      setSubmitLoading(false);
+      return;
+    }
 
       const bookingData = {
         moduleId: formData.moduleId,

@@ -139,7 +139,9 @@ let specificSections = [];
 
 // handle conditions
 if (logRes === 'transport') {
-  specificSections = [ vehiclemanagement,Reportsection,Employeesection];
+  // specificSections = [ vehiclemanagement,Reportsection,Employeesection];
+    specificSections = [ vehiclemanagement];
+
 } else if (logRes === 'venues') {
   specificSections = [management, venuemanagement, Businessection, Report, Employee];
 } else if (logRes === 'event') {

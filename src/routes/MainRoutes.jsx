@@ -135,6 +135,8 @@ const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')
 const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade')));
 const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/Makeupenquiries')));
 const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatPage')));
+const MakeupSchedules = Loadable(lazy(() => import('../views/makeup/Schedulesmakeup')));
+
 
 
 
@@ -162,6 +164,8 @@ const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Ph
 const Photographyupgrade = Loadable(lazy(() => import('../views/photography/photoupgrade')));
 const Photographyenquiry = Loadable(lazy(() => import('../views/photography/Photoenquiry')));
 const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
+const PhotographySchedules = Loadable(lazy(() => import('../views/photography/photoschedule')));
+
 
 
 
@@ -378,7 +382,9 @@ const MainRoutes = {
             { path: 'portfolio', element: <Portfolio /> },
             { path: 'upgrade', element: <Makeupupgrade /> },
             { path: 'Enqury', element: <Makeupenquiry /> },
-            { path: 'Enqurychat', element: <Enquirychat /> }
+            { path: 'Enqurychat', element: <Enquirychat /> },
+            { path: 'schedules', element: <MakeupSchedules /> },
+
 
 
 
@@ -394,7 +400,9 @@ const MainRoutes = {
             { path: 'portfolio', element: <PhotographyPortfolio /> },
             { path: 'upgrade', element: <Photographyupgrade /> },
             { path: 'enquiry', element: <Photographyenquiry /> },
-            { path: 'Enqurychat', element: <Photographyenquirychat /> }
+            { path: 'Enqurychat', element: <Photographyenquirychat /> },
+            { path: 'schedules', element: <PhotographySchedules /> },
+
 
 
 
