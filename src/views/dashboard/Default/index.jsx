@@ -46,15 +46,13 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  // ================= MODULE ROUTING =================
-  if (Module === 'Transport') return <VehicleIndex isLoading={isLoading} />;
-  if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
-  if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
-  if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
+  const renderDashboard = () => {
+    if (Module === 'Transport') return <VehicleIndex isLoading={isLoading} />;
+    if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
+    if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
+    if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
 
-  // ================= DEFAULT DASHBOARD =================
-  return (
-    <>
+    return (
       <Grid container spacing={gridSpacing}>
         <Grid size={12}>
           <WelcomeBanner />
@@ -99,6 +97,12 @@ export default function Dashboard() {
           </Grid>
         </Grid>
       </Grid>
+    );
+  };
+
+  return (
+    <>
+      {renderDashboard()}
 
       {/* ================= KYC POPUP ================= */}
       <KycUpdateDialog

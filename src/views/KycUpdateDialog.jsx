@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,281 +9,275 @@ import {
   Box,
   TextField,
   Grid,
-  MenuItem,
-  Stepper,
-  Step,
-  StepLabel
+  InputAdornment,
+  IconButton,
+  Avatar
 } from '@mui/material';
+import {
+  AccountBalanceRounded,
+  AccountCircleRounded,
+  NumbersRounded,
+  CodeRounded,
+  AccountBalanceWalletRounded,
+  CloseRounded
+} from '@mui/icons-material';
 
 export default function KycUpdateDialog({ open, onClose }) {
-  const [activeStep, setActiveStep] = useState(0);
   const [form, setForm] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    idType: '',
-    idNumber: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
     accountHolder: '',
     bankName: '',
     accountNumber: '',
+    confirmAccountNumber: '',
     ifsc: ''
   });
-
-  const steps = ['Personal Details', 'Address Details', 'Bank Details'];
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (error) setError('');
   };
 
-  const handleNext = () => {
-    setActiveStep((prev) => prev + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
-
-  const handleSubmit = () => {
-    console.log('KYC FORM DATA:', form);
-    onClose();
-    setActiveStep(0);
-  };
-
-  const renderStepContent = (step) => {
-    switch (step) {
-      case 0:
-        return (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Full Name" 
-                name="fullName" 
-                value={form.fullName} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Mobile Number" 
-                name="phone" 
-                value={form.phone} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Email" 
-                name="email" 
-                type="email"
-                value={form.email} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                fullWidth
-                label="Government ID Type"
-                name="idType"
-                value={form.idType}
-                onChange={handleChange}
-                required
-              >
-                <MenuItem value="aadhaar">Aadhaar</MenuItem>
-                <MenuItem value="pan">PAN</MenuItem>
-                <MenuItem value="passport">Passport</MenuItem>
-                <MenuItem value="driving">Driving License</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Government ID Number" 
-                name="idNumber" 
-                value={form.idNumber} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-          </Grid>
-        );
-
-      case 1:
-        return (
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField 
-                fullWidth 
-                label="Address" 
-                name="address" 
-                value={form.address} 
-                onChange={handleChange}
-                multiline
-                rows={2}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField 
-                fullWidth 
-                label="City" 
-                name="city" 
-                value={form.city} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField 
-                fullWidth 
-                label="State" 
-                name="state" 
-                value={form.state} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField 
-                fullWidth 
-                label="Pincode" 
-                name="pincode" 
-                value={form.pincode} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-          </Grid>
-        );
-
-      case 2:
-        return (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Account Holder Name" 
-                name="accountHolder" 
-                value={form.accountHolder} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Bank Name" 
-                name="bankName" 
-                value={form.bankName} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="Account Number" 
-                name="accountNumber" 
-                value={form.accountNumber} 
-                onChange={handleChange}
-                type="number"
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField 
-                fullWidth 
-                label="IFSC Code" 
-                name="ifsc" 
-                value={form.ifsc} 
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-          </Grid>
-        );
-
-      default:
-        return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (form.accountNumber !== form.confirmAccountNumber) {
+      setError('Account numbers do not match');
+      return;
     }
+    console.log('BANK DETAILS DATA:', form);
+    // Add validation logic here if needed
+    onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Action Required ⚠️
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          boxShadow: '0 24px 48px -12px rgba(0,0,0,0.18)',
+          overflow: 'hidden'
+        }
+      }}
+    >
+      <DialogTitle sx={{
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'linear-gradient(45deg, #1e3c72 0%, #2a5298 100%)',
+        color: '#fff'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 40, height: 40 }}>
+            <AccountBalanceWalletRounded sx={{ color: '#fff' }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>
+              Bank Details
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+              Secure payment settlements
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} sx={{ color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+          <CloseRounded />
+        </IconButton>
       </DialogTitle>
 
-      <DialogContent>
-        <Typography sx={{ mb: 3 }}>
-          Please update your KYC and bank details to ensure smooth and timely
-          payment settlements for your bookings.
-        </Typography>
+      <form onSubmit={handleSubmit} autoComplete="off">
+        <DialogContent sx={{ p: 4 }}>
+          <Typography variant="body2" sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}>
+            Please provide your accurate bank information to ensure timely and secure settlement of your earnings.
+          </Typography>
 
-        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 2 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Account Holder Name"
+                name="accountHolder"
+                value={form.accountHolder}
+                onChange={handleChange}
+                required
+                variant="outlined"
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccountCircleRounded color="primary" sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
 
-        <Box sx={{ mt: 3 }}>
-          {renderStepContent(activeStep)}
-        </Box>
-      </DialogContent>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Bank Name"
+                name="bankName"
+                value={form.bankName}
+                onChange={handleChange}
+                required
+                variant="outlined"
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccountBalanceRounded color="primary" sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
 
-      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-        <Button onClick={onClose} color="inherit">
-          Later
-        </Button>
-        
-        <Box>
-          {activeStep > 0 && (
-            <Button onClick={handleBack} sx={{ mr: 1 }}>
-              Back
-            </Button>
-          )}
-          
-          {activeStep < steps.length - 1 ? (
-            <Button 
-              variant="contained" 
-              sx={{ bgcolor: '#E15B65', '&:hover': { bgcolor: '#C84B55' } }} 
-              onClick={handleNext}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button 
-              variant="contained" 
-              sx={{ bgcolor: '#E15B65', '&:hover': { bgcolor: '#C84B55' } }} 
-              onClick={handleSubmit}
-            >
-              Submit KYC
-            </Button>
-          )}
-        </Box>
-      </DialogActions>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Account Number"
+                name="accountNumber"
+                value={form.accountNumber}
+                onChange={handleChange}
+                type="text"
+                required
+                variant="outlined"
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <NumbersRounded color="primary" sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Confirm Account Number"
+                name="confirmAccountNumber"
+                value={form.confirmAccountNumber}
+                onChange={handleChange}
+                type="text"
+                required
+                error={!!error}
+                helperText={error}
+                variant="outlined"
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <NumbersRounded color={error ? 'error' : 'primary'} sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: error ? 'error.main' : 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="IFSC Code"
+                name="ifsc"
+                value={form.ifsc}
+                onChange={handleChange}
+                required
+                variant="outlined"
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CodeRounded color="primary" sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{
+            mt: 4,
+            p: 2,
+            borderRadius: '12px',
+            bgcolor: 'rgba(30, 60, 114, 0.04)',
+            border: '1px dashed rgba(30, 60, 114, 0.2)'
+          }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center' }}>
+              ℹ️ Your data is encrypted and securely stored for payout purposes only.
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, pt: 0, justifyContent: 'center', gap: 2 }}>
+          <Button
+            onClick={onClose}
+            sx={{
+              px: 4,
+              py: 1.2,
+              borderRadius: '12px',
+              color: 'text.secondary',
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
+              px: 6,
+              py: 1.2,
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #1e3c72 0%, #2a5298 100%)',
+              boxShadow: '0 8px 16px -4px rgba(30, 60, 114, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #2a5298 0%, #1e3c72 100%)',
+                boxShadow: '0 12px 20px -6px rgba(30, 60, 114, 0.4)',
+              }
+            }}
+          >
+            Save Bank Details
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }
