@@ -1,11 +1,12 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { keyframes } from '@mui/system';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 const fadeSlide = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -13,102 +14,118 @@ const fadeSlide = keyframes`
   }
 `;
 
-const float = keyframes`
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-`;
-
-export default function WelcomeBanner() {
+export default function WelcomeBanner({ hasSubscription = false }) {
   return (
     <Box
       sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        background:
-          'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
-        borderRadius: 4,
-        px: { xs: 3, md: 6 },
-        py: { xs: 4, md: 5 },
-        minHeight: { xs: 170, md: 220 },
-        color: '#fff',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
+        gap: 3,
         mb: 4,
-        display: 'flex',
-        alignItems: 'center',
-        animation: `${fadeSlide} 0.8s ease-out`,
-        transition: 'all 0.4s ease',
-        boxShadow: '0 18px 45px rgba(225, 29, 72, 0.35)',
-
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 26px 60px rgba(225, 29, 72, 0.45)'
-        }
+        animation: `${fadeSlide} 0.6s ease-out`
       }}
     >
-      {/* Floating background elements */}
+      {/* ================= LEFT : WELCOME BANNER ================= */}
       <Box
         sx={{
-          position: 'absolute',
-          top: -60,
-          right: -60,
-          width: 220,
-          height: 220,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.18)',
-          filter: 'blur(10px)',
-          animation: `${float} 8s ease-in-out infinite`
-        }}
-      />
+          position: 'relative',
+          overflow: 'hidden',
+          background:
+            'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
+          borderRadius: 3,
+          px: { xs: 3, md: 4 },
+          py: { xs: 2.5, md: 3 },
+          minHeight: 135,
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          boxShadow: '0 14px 35px rgba(225, 29, 72, 0.35)',
+          transition: '0.3s ease',
 
+          '&:hover': {
+            transform: 'translateY(-3px)',
+            boxShadow: '0 22px 45px rgba(225, 29, 72, 0.45)'
+          }
+        }}
+      >
+        {/* Decorative circle */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 160,
+            height: 160,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.18)'
+          }}
+        />
+
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Typography
+            sx={{
+              fontSize: { xs: '1.45rem', md: '1.9rem' },
+              fontWeight: 800,
+              mb: 0.5,
+              letterSpacing: '-0.4px'
+            }}
+          >
+            Welcome aboard! 🎉
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: '0.95rem',
+              opacity: 0.95,
+              maxWidth: 520,
+              lineHeight: 1.5
+            }}
+          >
+            Your profile is under verification and will be approved within
+            <strong> 48 hours</strong>.  
+            Sit back while we prepare everything for you.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ================= RIGHT : SUBSCRIPTION BOX ================= */}
       <Box
         sx={{
-          position: 'absolute',
-          bottom: -70,
-          left: -70,
-          width: 260,
-          height: 260,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.1)',
-          filter: 'blur(14px)',
-          animation: `${float} 10s ease-in-out infinite`
+          background: '#3',
+          borderRadius: 3,
+          px: 3,
+          py: 2.5,
+          minHeight: 135,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          boxShadow: '0 10px 26px rgba(0,0,0,0.08)',
+          transition: '0.3s ease',
+
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 16px 34px rgba(0,0,0,0.12)'
+          }
         }}
-      />
-
-      {/* Content */}
-      <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Typography
+      >
+        <WorkspacePremiumIcon
           sx={{
-            fontSize: { xs: '1.9rem', md: '2.7rem' },
-            fontWeight: 800,
-            letterSpacing: '-0.6px',
-            mb: 1
+            fontSize: 34,
+            mb: 1,
+            color: hasSubscription ? '#16a34a' : '#e11d48'
           }}
-        >
-          Welcome aboard! 🎉
+        />
+
+        <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+          Subscription
         </Typography>
 
-        <Typography
-          sx={{
-            fontSize: { xs: '1.05rem', md: '1.2rem' },
-            opacity: 0.95,
-            mb: 0.6
-          }}
-        >
-          Thanks for registering with us.
-        </Typography>
-
-        <Typography
-          sx={{
-            fontSize: { xs: '0.95rem', md: '1rem' },
-            opacity: 0.85,
-            maxWidth: 540,
-            lineHeight: 1.6
-          }}
-        >
-          Your profile is currently under verification and will be approved within
-          <strong> 48 hours</strong>.  
-          Sit back while we prepare everything for you.
-        </Typography>
+        <Chip
+          label={hasSubscription ? 'Active Plan' : 'No Active Plan'}
+          color={hasSubscription ? 'success' : 'error'}
+          size="small"
+          sx={{ fontWeight: 600, width: 'fit-content' }}
+        />
       </Box>
     </Box>
   );
