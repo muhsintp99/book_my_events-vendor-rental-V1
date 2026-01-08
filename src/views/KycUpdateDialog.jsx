@@ -25,15 +25,51 @@ import {
 export default function KycUpdateDialog({ open, onClose }) {
   const [form, setForm] = useState({
     accountHolder: '',
-    bankName: '',
+    ifsc: '',
     accountNumber: '',
     confirmAccountNumber: '',
-    ifsc: ''
+    bankName: ''
   });
   const [error, setError] = useState('');
+  const [loadingBank, setLoadingBank] = useState(false);
+
+  const fetchBankName = async (ifscCode) => {
+    if (ifscCode.length === 11) {
+      setLoadingBank(true);
+      try {
+        const response = await fetch(`https://ifsc.razorpay.com/${ifscCode}`);
+        if (response.ok) {
+          const data = await response.json();
+          setForm((prev) => ({ ...prev, bankName: data.BANK }));
+        }
+      } catch (err) {
+        console.error('Error fetching bank details:', err);
+      } finally {
+        setLoadingBank(false);
+      }
+    }
+  };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Strict validation logic
+    if (name === 'accountHolder') {
+      const filteredValue = value.replace(/[^A-Za-z\s]/g, '');
+      setForm((prev) => ({ ...prev, [name]: filteredValue }));
+    } else if (name === 'accountNumber' || name === 'confirmAccountNumber') {
+      const filteredValue = value.replace(/[^0-9]/g, '');
+      setForm((prev) => ({ ...prev, [name]: filteredValue }));
+    } else if (name === 'ifsc') {
+      const upperValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      setForm((prev) => ({ ...prev, ifsc: upperValue }));
+      if (upperValue.length === 11) {
+        fetchBankName(upperValue);
+      }
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+
     if (error) setError('');
   };
 
@@ -121,31 +157,6 @@ export default function KycUpdateDialog({ open, onClose }) {
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Bank Name"
-                name="bankName"
-                value={form.bankName}
-                onChange={handleChange}
-                required
-                variant="outlined"
-                inputProps={{ autoComplete: 'new-password' }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AccountBalanceRounded color="primary" sx={{ opacity: 0.7 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    '&:hover fieldset': { borderColor: 'primary.main' },
-                  }
-                }}
-              />
-            </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
@@ -212,11 +223,39 @@ export default function KycUpdateDialog({ open, onClose }) {
                 onChange={handleChange}
                 required
                 variant="outlined"
-                inputProps={{ autoComplete: 'new-password' }}
+                inputProps={{ autoComplete: 'new-password', maxLength: 11 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <CodeRounded color="primary" sx={{ opacity: 0.7 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                  }
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Bank Name"
+                name="bankName"
+                value={form.bankName}
+                onChange={handleChange}
+                required
+                variant="outlined"
+                disabled={loadingBank}
+                placeholder={loadingBank ? 'Fetching bank name...' : ''}
+                inputProps={{ autoComplete: 'new-password' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccountBalanceRounded color="primary" sx={{ opacity: 0.7 }} />
                     </InputAdornment>
                   ),
                 }}
@@ -274,7 +313,7 @@ export default function KycUpdateDialog({ open, onClose }) {
               }
             }}
           >
-            Save Bank Details
+            Verify KYC
           </Button>
         </DialogActions>
       </form>
