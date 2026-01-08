@@ -17,7 +17,8 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -30,6 +31,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -44,6 +46,7 @@ function BookingCalendar() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -58,16 +61,14 @@ function BookingCalendar() {
     packageId: '',
     bookingDate: new Date().toISOString().split('T')[0],
     timeSlot: [],
-    paymentType: 'Cash', // Default payment type
+    paymentType: 'Cash',
     bookingType: 'Direct'
   });
 
-  // Get providerId from localStorage - extract from user object
+  // Get providerId from localStorage
   const getProviderId = () => {
-    // Try to get from direct keys first
     let id = localStorage.getItem('providerId') || localStorage.getItem('userId');
     
-    // If not found, try to extract from user object
     if (!id) {
       const userStr = localStorage.getItem('user');
       if (userStr) {
@@ -85,7 +86,6 @@ function BookingCalendar() {
 
   const providerId = getProviderId();
 
-  // Fetch bookings for the provider
   useEffect(() => {
     if (providerId) {
       fetchBookings();
@@ -128,16 +128,10 @@ function BookingCalendar() {
     }
     
     try {
-      console.log('Fetching venues from:', `${API_BASE_URL}/api/venues/provider/${providerId}`);
       const response = await fetch(`${API_BASE_URL}/api/venues/provider/${providerId}`);
-      console.log('Venues response status:', response.status);
-      
       const data = await response.json();
-      console.log('Venues data received:', data);
       
       if (response.ok && data.success && data.data) {
-        console.log('Setting venues:', data.data.length, 'venues found');
-        console.log('First venue sample:', data.data[0]);
         setVenues(data.data);
       } else {
         console.error('Failed to fetch venues:', data);
@@ -153,14 +147,9 @@ function BookingCalendar() {
 
   const fetchModules = async () => {
     try {
-      console.log('Fetching modules from:', `${API_BASE_URL}/api/modules`);
       const response = await fetch(`${API_BASE_URL}/api/modules`);
-      console.log('Modules response status:', response.status);
-      
       const data = await response.json();
-      console.log('Modules full response:', data);
       
-      // Handle different response formats
       let modulesList = [];
       
       if (data.success && data.data && Array.isArray(data.data)) {
@@ -171,7 +160,6 @@ function BookingCalendar() {
         modulesList = data;
       }
       
-      console.log('Parsed modules list:', modulesList);
       setModules(modulesList);
       
       if (modulesList.length === 0) {
@@ -186,23 +174,49 @@ function BookingCalendar() {
 
   const fetchPackages = async (venueId) => {
     try {
-      console.log('Fetching packages for venue:', venueId);
-      
-      // Get packages from the selected venue
       const venue = venues.find(v => v._id === venueId);
-      console.log('Found venue:', venue);
       
       if (venue && venue.packages && Array.isArray(venue.packages)) {
-        console.log('Packages found in venue:', venue.packages.length);
-        console.log('Sample package:', venue.packages[0]);
         setPackages(venue.packages);
       } else {
-        console.log('No packages found for venue');
         setPackages([]);
       }
     } catch (err) {
       console.error('Fetch packages error:', err);
       setPackages([]);
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to delete this booking?')) {
+      return;
+    }
+
+    setDeleteLoading(bookingId);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove from local state immediately
+        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
+        alert('Booking deleted successfully!');
+      } else {
+        setError(data.message || 'Failed to delete booking');
+      }
+    } catch (err) {
+      setError('Error deleting booking: ' + err.message);
+      console.error('Delete error:', err);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -219,11 +233,13 @@ function BookingCalendar() {
     const status = {};
     
     for (let day = 1; day <= daysInMonth; day++) {
+      // Only count Direct bookings
       const dayBookings = bookings.filter(booking => {
         const bookingDate = new Date(booking.bookingDate);
         return bookingDate.getDate() === day && 
                bookingDate.getMonth() === month && 
-               bookingDate.getFullYear() === year;
+               bookingDate.getFullYear() === year &&
+               booking.bookingType === 'Direct';
       });
 
       if (dayBookings.length === 0) {
@@ -243,9 +259,12 @@ function BookingCalendar() {
   const getBookingsForSelectedDate = () => {
     return bookings.filter(booking => {
       const bookingDate = new Date(booking.bookingDate);
-      return bookingDate.getDate() === selectedDate && 
+      const isSelectedDate = bookingDate.getDate() === selectedDate && 
              bookingDate.getMonth() === currentDate.getMonth() && 
              bookingDate.getFullYear() === currentDate.getFullYear();
+      
+      // Only show Direct bookings
+      return isSelectedDate && booking.bookingType === 'Direct';
     });
   };
 
@@ -374,7 +393,6 @@ function BookingCalendar() {
     setError(null);
 
     try {
-      // Validate required fields
       if (!formData.moduleId) {
         setError('Please select a module');
         setSubmitLoading(false);
@@ -399,7 +417,6 @@ function BookingCalendar() {
         return;
       }
 
-      // Build booking data - packageId is optional
       const bookingData = {
         moduleId: formData.moduleId,
         venueId: formData.venueId,
@@ -414,12 +431,9 @@ function BookingCalendar() {
         bookingType: 'Direct'
       };
 
-      // Only add packageId if one was selected
       if (formData.packageId) {
         bookingData.packageId = formData.packageId;
       }
-
-      console.log('Submitting booking:', bookingData);
 
       const response = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: 'POST',
@@ -430,7 +444,6 @@ function BookingCalendar() {
       });
 
       const data = await response.json();
-      console.log('Booking response:', data);
 
       if (data.success) {
         alert('Booking created successfully!');
@@ -727,6 +740,9 @@ function BookingCalendar() {
           <Typography variant="caption" color="primary">
             Logged in as Provider: {providerId}
           </Typography>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+            📋 Showing only Direct Bookings (Indirect bookings are hidden)
+          </Typography>
         </Box>
       )}
 
@@ -812,14 +828,34 @@ function BookingCalendar() {
               >
                 <div style={styles.bookingHeader}>
                   <span style={styles.bookingTime}>{booking.timeSlot || 'All Day'}</span>
-                  <Chip 
-                    label={booking.status}
-                    size="small"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.3)',
-                      color: booking.status === 'Pending' ? '#000' : '#fff'
-                    }}
-                  />
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Chip 
+                      label={booking.status}
+                      size="small"
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.3)',
+                        color: booking.status === 'Pending' ? '#000' : '#fff'
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteBooking(booking._id)}
+                      disabled={deleteLoading === booking._id}
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(0,0,0,0.3)'
+                        }
+                      }}
+                    >
+                      {deleteLoading === booking._id ? (
+                        <CircularProgress size={20} sx={{ color: 'white' }} />
+                      ) : (
+                        <DeleteIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Box>
                 </div>
                 <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
                 <p style={styles.bookingLocation}>
@@ -1080,6 +1116,7 @@ function BookingCalendar() {
                     </InputAdornment>
                   )
                 }}
+                helperText="Select any date - past, present, or future"
               />
 
               <Typography variant="h6" sx={sectionHeaderStyle}>
