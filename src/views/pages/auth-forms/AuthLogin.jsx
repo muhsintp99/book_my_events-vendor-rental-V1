@@ -66,7 +66,6 @@ export default function AuthLogin() {
       }
 
       /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
-      /* ================= SUBSCRIPTION (SOURCE OF TRUTH) ================= */
       if (user?._id && moduleId) {
         try {
           const subRes = await axios.get(
