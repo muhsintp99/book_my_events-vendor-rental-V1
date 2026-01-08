@@ -1,430 +1,24 @@
-// import React, { useState } from 'react';
-
-// function BookingCalendar() {
-//   const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 15)); // October 15, 2025
-//   const [selectedDate, setSelectedDate] = useState(15);
-
-//   // Dummy booking data (only a few booked/pending days, rest are free)
-//   const bookingStatus = {
-//     1: 'free', 2: 'free', 3: 'free', 4: 'free',
-//     5: 'free', 6: 'free', 7: 'free', 8: 'free', 9: 'free', 10: 'free', 11: 'free',
-//     12: 'free', 13: 'free', 14: 'free', 15: 'pending', 16: 'free', 17: 'booked',
-//     18: 'free', 19: 'booked', 20: 'pending', 21: 'free', 22: 'free', 23: 'booked',
-//     24: 'free', 25: 'free', 26: 'free', 27: 'free', 28: 'free', 29: 'free', 30: 'free', 31: 'free'
-//   };
-
-//   const bookings = {
-//     15: [
-//       {
-//         id: 1,
-//         time: '10:00 am - 2:00 pm',
-//         bookedBy: 'Demo User 1',
-//         location: 'Auditorium A',
-//         status: 'PENDING',
-//         color: '#ffd54f'
-//       }
-//     ],
-//     17: [
-//       {
-//         id: 2,
-//         time: '9:00 am - 3:00 pm',
-//         bookedBy: 'John Smith',
-//         location: 'Banquet Hall',
-//         status: 'CONFIRMED',
-//         color: '#ef5350'
-//       }
-//     ],
-//     19: [
-//       {
-//         id: 3,
-//         time: '1:00 pm - 6:00 pm',
-//         bookedBy: 'Priya Sharma',
-//         location: 'Conference Room 2',
-//         status: 'CONFIRMED',
-//         color: '#ef5350'
-//       }
-//     ],
-//     20: [
-//       {
-//         id: 4,
-//         time: '11:00 am - 4:00 pm',
-//         bookedBy: 'Raj Patel',
-//         location: 'Exhibition Hall',
-//         status: 'PENDING',
-//         color: '#ffd54f'
-//       }
-//     ],
-//     23: [
-//       {
-//         id: 5,
-//         time: '2:00 pm - 8:00 pm',
-//         bookedBy: 'Alice Brown',
-//         location: 'Ballroom',
-//         status: 'CONFIRMED',
-//         color: '#ef5350'
-//       }
-//     ]
-//   };
-
-//   const getDaysInMonth = (date) => {
-//     const year = date.getFullYear();
-//     const month = date.getMonth();
-//     const firstDay = new Date(year, month, 1).getDay();
-//     const daysInMonth = new Date(year, month + 1, 0).getDate();
-//     return { firstDay, daysInMonth };
-//   };
-
-//   const { firstDay, daysInMonth } = getDaysInMonth(currentDate);
-//   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-//   const getStatusColor = (status) => {
-//     switch(status) {
-//       case 'booked': return '#ef5350'; // red
-//       case 'pending': return '#ffd54f'; // yellow
-//       case 'free': return '#66bb6a'; // green
-//       default: return '#66bb6a';
-//     }
-//   };
-
-//   const changeMonth = (direction) => {
-//     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
-//     setSelectedDate(null); // Reset selected date when month changes
-//   };
-
-//   const renderCalendarDays = () => {
-//     const days = [];
-//     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-//     // Week day headers
-//     weekDays.forEach(day => (
-//       days.push(
-//         <div key={day} style={styles.weekDay}>
-//           {day}
-//         </div>
-//       )
-//     ));
-
-//     // Empty cells before month starts
-//     for (let i = 0; i < firstDay; i++) {
-//       days.push(<div key={`empty-${i}`} />);
-//     }
-
-//     // Calendar days
-//     for (let day = 1; day <= daysInMonth; day++) {
-//       const status = bookingStatus[day] || 'free';
-//       const isSelected = day === selectedDate;
-
-//       days.push(
-//         <div
-//           key={day}
-//           onClick={() => setSelectedDate(day)}
-//           style={{
-//             ...styles.dayCell,
-//             ...(isSelected ? { backgroundColor: '#ef5350', color: '#fff' } : {})
-//           }}
-//         >
-//           <div style={styles.dayNumber}>{day}</div>
-//           <div style={{
-//             ...styles.statusDot,
-//             backgroundColor: getStatusColor(status)
-//           }} />
-//         </div>
-//       );
-//     }
-
-//     return days;
-//   };
-
-//   const selectedBookings = bookings[selectedDate] || [];
-//   const selectedStatus = bookingStatus[selectedDate] || 'free';
-
-//   const getStatusText = () => {
-//     if (selectedBookings.length === 0) return 'No bookings - All slots available';
-//     if (selectedStatus === 'booked') return `${selectedBookings.length} bookings - Fully booked`;
-//     if (selectedStatus === 'pending') return `${selectedBookings.length} booking - Pending confirmation`;
-//     return 'All slots available';
-//   };
-
-//   const getDayName = () => {
-//     if (!selectedDate) return '';
-//     return new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate)
-//       .toLocaleDateString('en-US', { weekday: 'short' });
-//   };
-
-//   const styles = {
-//     container: {
-//       width: '100%',
-//       margin: '0 auto',
-//       padding: '40px',
-//       backgroundColor: '#fafafa',
-//       minHeight: '100vh',
-//       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-//     },
-//     navigation: {
-//       display: 'flex',
-//       alignItems: 'center',
-//       justifyContent: 'space-between',
-//       marginBottom: '32px',
-//       padding: '0 20px'
-//     },
-//     navButton: {
-//       padding: '12px',
-//       border: 'none',
-//       background: '#fff',
-//       cursor: 'pointer',
-//       borderRadius: '50%',
-//       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-//     },
-//     monthTitle: {
-//       fontSize: '28px',
-//       fontStyle: 'italic',
-//       fontWeight: '400',
-//       color: '#333'
-//     },
-//     calendarGrid: {
-//       backgroundColor: '#fff',
-//       borderRadius: '16px',
-//       marginBottom: '32px',
-//       padding: '40px',
-//       boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-//     },
-//     grid: {
-//       display: 'grid',
-//       gridTemplateColumns: 'repeat(7, 1fr)',
-//       gap: '20px'
-//     },
-//     weekDay: {
-//       textAlign: 'center',
-//       padding: '12px',
-//       color: '#999',
-//       fontSize: '16px',
-//       fontWeight: '500'
-//     },
-//     dayCell: {
-//       display: 'flex',
-//       flexDirection: 'column',
-//       alignItems: 'center',
-//       justifyContent: 'center',
-//       padding: '30px 0',
-//       cursor: 'pointer',
-//       borderRadius: '16px',
-//       transition: 'background-color 0.2s'
-//     },
-//     dayNumber: {
-//       fontSize: '24px',
-//       fontWeight: '400'
-//     },
-//     statusDot: {
-//       width: '10px',
-//       height: '10px',
-//       borderRadius: '50%'
-//     },
-//     legend: {
-//       backgroundColor: '#fff',
-//       borderRadius: '12px',
-//       padding: '24px',
-//       marginBottom: '32px',
-//       boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-//     },
-//     legendContainer: {
-//       display: 'flex',
-//       justifyContent: 'center',
-//       gap: '24px'
-//     },
-//     legendItem: {
-//       display: 'flex',
-//       alignItems: 'center',
-//       gap: '8px'
-//     },
-//     legendDot: {
-//       width: '12px',
-//       height: '12px',
-//       borderRadius: '50%'
-//     },
-//     legendText: {
-//       fontSize: '15px',
-//       color: '#666'
-//     },
-//     selectedInfo: {
-//       marginBottom: '24px'
-//     },
-//     selectedHeader: {
-//       display: 'flex',
-//       alignItems: 'center',
-//       gap: '24px'
-//     },
-//     selectedNumber: {
-//       fontSize: '64px',
-//       fontWeight: '300',
-//       color: '#333'
-//     },
-//     selectedDetails: {
-//       display: 'flex',
-//       flexDirection: 'column'
-//     },
-//     selectedTitle: {
-//       fontSize: '22px',
-//       fontWeight: '500',
-//       color: '#333'
-//     },
-//     selectedStatus: {
-//       fontSize: '16px',
-//       color: '#666'
-//     },
-//     selectedDay: {
-//       fontSize: '14px',
-//       color: '#999',
-//       marginLeft: '100px',
-//       marginTop: '6px'
-//     },
-//     bookingsTitle: {
-//       fontSize: '22px',
-//       fontWeight: '500',
-//       marginBottom: '20px',
-//       color: '#333'
-//     },
-//     bookingsContainer: {
-//       display: 'flex',
-//       flexDirection: 'column',
-//       gap: '20px'
-//     },
-//     bookingCard: {
-//       borderRadius: '20px',
-//       padding: '28px',
-//       color: '#fff',
-//       boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-//     },
-//     bookingHeader: {
-//       display: 'flex',
-//       justifyContent: 'space-between',
-//       alignItems: 'flex-start',
-//       marginBottom: '8px'
-//     },
-//     bookingTime: {
-//       fontSize: '15px',
-//       fontWeight: '500'
-//     },
-//     bookingStatus: {
-//       fontSize: '11px',
-//       padding: '4px 12px',
-//       borderRadius: '12px',
-//       fontWeight: '500',
-//       backgroundColor: 'rgba(255,255,255,0.3)'
-//     },
-//     bookingName: {
-//       fontSize: '24px',
-//       fontWeight: '500',
-//       marginBottom: '10px'
-//     },
-//     bookingLocation: {
-//       fontSize: '15px',
-//       marginBottom: '14px'
-//     },
-//     noBookings: {
-//       backgroundColor: '#f5f5f5',
-//       borderRadius: '20px',
-//       padding: '48px',
-//       textAlign: 'center'
-//     },
-//     floatingButton: {
-//       position: 'fixed',
-//       bottom: '32px',
-//       right: '32px',
-//       backgroundColor: '#ef5350',
-//       color: '#fff',
-//       border: 'none',
-//       borderRadius: '50%',
-//       width: '64px',
-//       height: '64px',
-//       display: 'flex',
-//       alignItems: 'center',
-//       justifyContent: 'center',
-//       boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-//       cursor: 'pointer'
-//     }
-//   };
-
-//   return (
-//     <div style={styles.container}>
-//       {/* Month Navigation */}
-//       <div style={styles.navigation}>
-//         <button onClick={() => changeMonth(-1)} style={styles.navButton}>◀</button>
-//         <h2 style={styles.monthTitle}>{monthName}</h2>
-//         <button onClick={() => changeMonth(1)} style={styles.navButton}>▶</button>
-//       </div>
-
-//       {/* Calendar */}
-//       <div style={styles.calendarGrid}>
-//         <div style={styles.grid}>{renderCalendarDays()}</div>
-//       </div>
-
-//       {/* Legend */}
-//       <div style={styles.legend}>
-//         <div style={styles.legendContainer}>
-//           <div style={styles.legendItem}>
-//             <div style={{...styles.legendDot, backgroundColor: '#ef5350'}} />
-//             <span style={styles.legendText}>Booked</span>
-//           </div>
-//           <div style={styles.legendItem}>
-//             <div style={{...styles.legendDot, backgroundColor: '#ffd54f'}} />
-//             <span style={styles.legendText}>Pending</span>
-//           </div>
-//           <div style={styles.legendItem}>
-//             <div style={{...styles.legendDot, backgroundColor: '#66bb6a'}} />
-//             <span style={styles.legendText}>Free</span>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Selected Date Info */}
-//       {selectedDate && (
-//         <div style={styles.selectedInfo}>
-//           <div style={styles.selectedHeader}>
-//             <span style={styles.selectedNumber}>{selectedDate}</span>
-//             <div style={styles.selectedDetails}>
-//               <h3 style={styles.selectedTitle}>Selected Date</h3>
-//               <p style={styles.selectedStatus}>{getStatusText()}</p>
-//             </div>
-//           </div>
-//           <p style={styles.selectedDay}>{getDayName()}</p>
-//         </div>
-//       )}
-
-//       {/* Bookings or No Bookings */}
-//       {selectedBookings.length > 0 ? (
-//         <div>
-//           <h3 style={styles.bookingsTitle}>Bookings</h3>
-//           <div style={styles.bookingsContainer}>
-//             {selectedBookings.map(b => (
-//               <div key={b.id} style={{...styles.bookingCard, backgroundColor: b.color}}>
-//                 <div style={styles.bookingHeader}>
-//                   <span style={styles.bookingTime}>{b.time}</span>
-//                   <span style={styles.bookingStatus}>{b.status}</span>
-//                 </div>
-//                 <h4 style={styles.bookingName}>Booked by {b.bookedBy}</h4>
-//                 <p style={styles.bookingLocation}>{b.location}</p>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//       ) : (
-//         <div style={styles.noBookings}>
-//           <h4>No Bookings Today</h4>
-//           <p>All slots are available for booking</p>
-//         </div>
-//       )}
-
-//       {/* Floating Add Button */}
-//       <button style={styles.floatingButton}>＋</button>
-//     </div>
-//   );
-// }
-
-// export default BookingCalendar;
-
-import React, { useState } from 'react';
-import { Button, Dialog, DialogTitle, DialogContent, TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, FormGroup, Checkbox, Select, MenuItem, InputLabel, InputAdornment, Box, Typography, Avatar } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import React, { useState, useEffect } from 'react';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  FormControl,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Select,
+  MenuItem,
+  InputLabel,
+  InputAdornment,
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Chip
+} from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
@@ -435,14 +29,182 @@ import DoorFrontIcon from '@mui/icons-material/DoorFront';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import EditIcon from '@mui/icons-material/Edit';
 
+const API_BASE_URL = 'https://api.bookmyevent.ae';
+
 function BookingCalendar() {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 15));
-  const [selectedDate, setSelectedDate] = useState(15);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
   const [openDialog, setOpenDialog] = useState(false);
+  const [bookings, setBookings] = useState([]);
+  const [venues, setVenues] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    contactNumber: '',
+    emailAddress: '',
+    address: '',
+    numberOfGuests: '',
+    additionalNotes: '',
+    venueId: '',
+    moduleId: '',
+    packageId: '',
+    bookingDate: new Date().toISOString().split('T')[0],
+    timeSlot: [],
+    paymentType: 'Cash', // Default payment type
+    bookingType: 'Direct'
+  });
+
+  // Get providerId from localStorage - extract from user object
+  const getProviderId = () => {
+    // Try to get from direct keys first
+    let id = localStorage.getItem('providerId') || localStorage.getItem('userId');
+    
+    // If not found, try to extract from user object
+    if (!id) {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          id = user._id || user.id || user.userId;
+        } catch (e) {
+          console.error('Error parsing user from localStorage:', e);
+        }
+      }
+    }
+    
+    return id;
+  };
+
+  const providerId = getProviderId();
+
+  // Fetch bookings for the provider
+  useEffect(() => {
+    if (providerId) {
+      fetchBookings();
+      fetchVenues();
+      fetchModules();
+    } else {
+      setError('Provider ID not found. Please log in again.');
+    }
+  }, [currentDate, providerId]);
+
+  const fetchBookings = async () => {
+    if (!providerId) {
+      setError('Provider ID is required');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bookings/provider/${providerId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setBookings(data.data || []);
+      } else {
+        setError(data.message || 'Failed to fetch bookings');
+      }
+    } catch (err) {
+      setError('Error connecting to server');
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVenues = async () => {
+    if (!providerId) {
+      console.log('No providerId available');
+      return;
+    }
+    
+    try {
+      console.log('Fetching venues from:', `${API_BASE_URL}/api/venues/provider/${providerId}`);
+      const response = await fetch(`${API_BASE_URL}/api/venues/provider/${providerId}`);
+      console.log('Venues response status:', response.status);
+      
+      const data = await response.json();
+      console.log('Venues data received:', data);
+      
+      if (response.ok && data.success && data.data) {
+        console.log('Setting venues:', data.data.length, 'venues found');
+        console.log('First venue sample:', data.data[0]);
+        setVenues(data.data);
+      } else {
+        console.error('Failed to fetch venues:', data);
+        setError(data.message || 'Failed to fetch venues');
+        setVenues([]);
+      }
+    } catch (err) {
+      console.error('Fetch venues error:', err);
+      setError('Error connecting to server');
+      setVenues([]);
+    }
+  };
+
+  const fetchModules = async () => {
+    try {
+      console.log('Fetching modules from:', `${API_BASE_URL}/api/modules`);
+      const response = await fetch(`${API_BASE_URL}/api/modules`);
+      console.log('Modules response status:', response.status);
+      
+      const data = await response.json();
+      console.log('Modules full response:', data);
+      
+      // Handle different response formats
+      let modulesList = [];
+      
+      if (data.success && data.data && Array.isArray(data.data)) {
+        modulesList = data.data;
+      } else if (data.success && data.modules && Array.isArray(data.modules)) {
+        modulesList = data.modules;
+      } else if (Array.isArray(data)) {
+        modulesList = data;
+      }
+      
+      console.log('Parsed modules list:', modulesList);
+      setModules(modulesList);
+      
+      if (modulesList.length === 0) {
+        console.warn('No modules found in response');
+      }
+    } catch (err) {
+      console.error('Fetch modules error:', err);
+      setError('Failed to fetch modules: ' + err.message);
+      setModules([]);
+    }
+  };
+
+  const fetchPackages = async (venueId) => {
+    try {
+      console.log('Fetching packages for venue:', venueId);
+      
+      // Get packages from the selected venue
+      const venue = venues.find(v => v._id === venueId);
+      console.log('Found venue:', venue);
+      
+      if (venue && venue.packages && Array.isArray(venue.packages)) {
+        console.log('Packages found in venue:', venue.packages.length);
+        console.log('Sample package:', venue.packages[0]);
+        setPackages(venue.packages);
+      } else {
+        console.log('No packages found for venue');
+        setPackages([]);
+      }
+    } catch (err) {
+      console.error('Fetch packages error:', err);
+      setPackages([]);
+    }
+  };
 
   const today = new Date();
   const todayDate = today.getDate();
@@ -453,61 +215,41 @@ function BookingCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    const isOctober2025 = year === 2025 && month === 9;
-    
+
     const status = {};
+    
     for (let day = 1; day <= daysInMonth; day++) {
-      if (isOctober2025) {
-        if (day === 17 || day === 19 || day === 20) {
-          status[day] = 'booked';
-        } else if (day === 18 || day === 21 || day === 24) {
-          status[day] = 'available';
-        } else {
-          status[day] = 'free';
-        }
-      } else {
-        // All other months are fully free
+      const dayBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.bookingDate);
+        return bookingDate.getDate() === day && 
+               bookingDate.getMonth() === month && 
+               bookingDate.getFullYear() === year;
+      });
+
+      if (dayBookings.length === 0) {
         status[day] = 'free';
+      } else if (dayBookings.length >= 2) {
+        status[day] = 'booked';
+      } else {
+        status[day] = 'available';
       }
     }
+    
     return status;
   };
 
   const bookingStatus = getCurrentMonthBookings();
 
-  const bookings = {
-    15: [],
-    17: [
-      {id: 1, time: '9:00 am - 3:00 pm',bookedBy: 'Adam Smith',location: 'Grand Ballroom',status: 'CONFIRMED',  color: '#ef5350'},
-      {id: 2, time: '4:00 pm - 9:00 pm',bookedBy: 'Rihan Patel', location: 'Conference Hall A',status: 'CONFIRMED',color: '#7e57c2'}
-    ],
-    18: [
-      {id: 1, time: '9:00 am - 3:00 pm',bookedBy: 'John doe',location: 'grand plaza',status: 'PENDING',color: '#ffd54f'} ],
-    20: [
-      { id: 1,time: '9:00 am - 3:00 pm', bookedBy: 'Ann',location: 'Grand mallroom',status: 'CONFIRMED',color: '#ef5350'} ],
-    21: [
-      {
-        id: 3,
-        time: '3:00 pm - 7:00 pm',
-        bookedBy: 'Jaan',
-        location: 'Event Space',
-        status: 'PENDING',
-        color: '#ffd54f'
-      }
-    ],
-    24: [
-      {
-        id: 4,
-        time: '3:00 pm - 7:00 pm',
-        bookedBy: 'Jennifer Lee',
-        location: 'Event Space',
-        status: 'PENDING',
-        color: '#ffd54f'
-      }, {
-        id: 2,time: '4:00 pm - 9:00 pm',bookedBy: 'Rihan Patel',location: 'Conference Hall A',status: 'CONFIRMED',color: '#7e57c2'}
-    ]
+  const getBookingsForSelectedDate = () => {
+    return bookings.filter(booking => {
+      const bookingDate = new Date(booking.bookingDate);
+      return bookingDate.getDate() === selectedDate && 
+             bookingDate.getMonth() === currentDate.getMonth() && 
+             bookingDate.getFullYear() === currentDate.getFullYear();
+    });
   };
+
+  const selectedBookings = getBookingsForSelectedDate();
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -521,11 +263,28 @@ function BookingCalendar() {
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'booked': return '#ef5350';
-      case 'available': return '#ffd54f';
-      case 'free': return '#66bb6a';
-      default: return '#66bb6a';
+    switch (status) {
+      case 'booked':
+        return '#ef5350';
+      case 'available':
+        return '#ffd54f';
+      case 'free':
+        return '#66bb6a';
+      default:
+        return '#66bb6a';
+    }
+  };
+
+  const getBookingCardColor = (status) => {
+    switch (status) {
+      case 'Accepted':
+        return '#7e57c2';
+      case 'Pending':
+        return '#ffd54f';
+      case 'Rejected':
+        return '#e57373';
+      default:
+        return '#ef5350';
     }
   };
 
@@ -537,13 +296,13 @@ function BookingCalendar() {
     const days = [];
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    weekDays.forEach(day => (
+    weekDays.forEach((day) =>
       days.push(
         <div key={day} style={styles.weekDay}>
           {day}
         </div>
       )
-    ));
+    );
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} />);
@@ -551,17 +310,10 @@ function BookingCalendar() {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const status = bookingStatus[day] || 'free';
-      // Check if this day is actually today
-      const isToday = day === todayDate && 
-                      currentDate.getMonth() === todayMonth && 
-                      currentDate.getFullYear() === todayYear;
+      const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
 
       days.push(
-        <div
-          key={day}
-          onClick={() => setSelectedDate(day)}
-          style={styles.dayCell}
-        >
+        <div key={day} onClick={() => setSelectedDate(day)} style={styles.dayCell}>
           <div
             style={{
               ...styles.dayNumber,
@@ -570,10 +322,12 @@ function BookingCalendar() {
           >
             {day}
           </div>
-          <div style={{
-            ...styles.statusDot,
-            backgroundColor: getStatusColor(status)
-          }} />
+          <div
+            style={{
+              ...styles.statusDot,
+              backgroundColor: getStatusColor(status)
+            }}
+          />
         </div>
       );
     }
@@ -581,7 +335,6 @@ function BookingCalendar() {
     return days;
   };
 
-  const selectedBookings = bookings[selectedDate] || [];
   const selectedStatus = bookingStatus[selectedDate] || 'free';
 
   const getStatusText = () => {
@@ -592,8 +345,134 @@ function BookingCalendar() {
   };
 
   const getDayName = () => {
-    return new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate)
-      .toLocaleDateString('en-US', { weekday: 'short' });
+    return new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (name === 'venueId' && value) {
+      fetchPackages(value);
+    }
+  };
+
+  const handleTimeSlotChange = (slot) => {
+    setFormData(prev => {
+      const timeSlots = prev.timeSlot.includes(slot)
+        ? prev.timeSlot.filter(s => s !== slot)
+        : [...prev.timeSlot, slot];
+      return { ...prev, timeSlot: timeSlots };
+    });
+  };
+
+  const handleSubmit = async () => {
+    setSubmitLoading(true);
+    setError(null);
+
+    try {
+      // Validate required fields
+      if (!formData.moduleId) {
+        setError('Please select a module');
+        setSubmitLoading(false);
+        return;
+      }
+      
+      if (!formData.venueId) {
+        setError('Please select a venue');
+        setSubmitLoading(false);
+        return;
+      }
+
+      if (!formData.numberOfGuests) {
+        setError('Please enter number of guests');
+        setSubmitLoading(false);
+        return;
+      }
+
+      if (formData.timeSlot.length === 0) {
+        setError('Please select at least one time slot');
+        setSubmitLoading(false);
+        return;
+      }
+
+      // Build booking data - packageId is optional
+      const bookingData = {
+        moduleId: formData.moduleId,
+        venueId: formData.venueId,
+        fullName: formData.fullName,
+        contactNumber: formData.contactNumber,
+        emailAddress: formData.emailAddress,
+        address: formData.address,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        bookingDate: formData.bookingDate,
+        timeSlot: formData.timeSlot.join(', '),
+        paymentType: formData.paymentType,
+        bookingType: 'Direct'
+      };
+
+      // Only add packageId if one was selected
+      if (formData.packageId) {
+        bookingData.packageId = formData.packageId;
+      }
+
+      console.log('Submitting booking:', bookingData);
+
+      const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bookingData)
+      });
+
+      const data = await response.json();
+      console.log('Booking response:', data);
+
+      if (data.success) {
+        alert('Booking created successfully!');
+        handleCloseDialog();
+        fetchBookings();
+        resetForm();
+      } else {
+        setError(data.message || 'Failed to create booking');
+      }
+    } catch (err) {
+      setError('Error creating booking: ' + err.message);
+      console.error('Submit error:', err);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      fullName: '',
+      contactNumber: '',
+      emailAddress: '',
+      address: '',
+      numberOfGuests: '',
+      additionalNotes: '',
+      venueId: '',
+      moduleId: '',
+      packageId: '',
+      bookingDate: new Date().toISOString().split('T')[0],
+      timeSlot: [],
+      paymentType: 'Cash',
+      bookingType: 'Direct'
+    });
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setError(null);
   };
 
   const styles = {
@@ -604,13 +483,6 @@ function BookingCalendar() {
       backgroundColor: '#fafafa',
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
-    header: {
-      fontSize: '32px',
-      textAlign: 'center',
-      marginBottom: '40px',
-      fontWeight: '500',
-      color: '#333'
     },
     navigation: {
       display: 'flex',
@@ -794,26 +666,11 @@ function BookingCalendar() {
       fontSize: '15px',
       marginBottom: '14px'
     },
-    viewDetails: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-      cursor: 'pointer'
-    },
-    viewDetailsText: {
-      fontSize: '15px',
-      textDecoration: 'underline'
-    },
     noBookings: {
       backgroundColor: '#f5f5f5',
       borderRadius: '20px',
       padding: '48px',
       textAlign: 'center'
-    },
-    noBookingsIcon: {
-      width: '100px',
-      height: '100px',
-      margin: '0 auto 20px'
     },
     noBookingsTitle: {
       fontSize: '24px',
@@ -843,21 +700,6 @@ function BookingCalendar() {
     }
   };
 
-  const StyledDialog = styled(Dialog)(({ theme }) => ({
-    '& .MuiDialog-paper': {
-      borderRadius: '16px',
-      padding: theme.spacing(2),
-    },
-  }));
-
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
   const sectionHeaderStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -872,53 +714,74 @@ function BookingCalendar() {
     fontSize: 24
   };
 
-  const defaultDate = selectedDate ? new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-
   return (
     <div style={styles.container}>
+      {!providerId && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Provider ID not found. Please make sure you're logged in. You may need to log out and log in again.
+        </Alert>
+      )}
+
+      {providerId && (
+        <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+          <Typography variant="caption" color="primary">
+            Logged in as Provider: {providerId}
+          </Typography>
+        </Box>
+      )}
+
+      {loading && (
+        <Box display="flex" justifyContent="center" mb={3}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       <div style={styles.navigation}>
-        <button 
+        <button
           onClick={() => changeMonth(-1)}
           style={styles.navButton}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6"/>
+            <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
         <h2 style={styles.monthTitle}>{monthName}</h2>
-        <button 
+        <button
           onClick={() => changeMonth(1)}
           style={styles.navButton}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6"/>
+            <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
       </div>
 
       <div style={styles.calendarGrid}>
-        <div style={styles.grid}>
-          {renderCalendarDays()}
-        </div>
+        <div style={styles.grid}>{renderCalendarDays()}</div>
       </div>
 
       <div style={styles.legend}>
         <div style={styles.legendContainer}>
           <div style={styles.legendItem}>
-            <div style={{...styles.legendDot, backgroundColor: '#ef5350'}} />
+            <div style={{ ...styles.legendDot, backgroundColor: '#ef5350' }} />
             <span style={styles.legendText}>Fully Booked</span>
           </div>
           <div style={styles.legendItem}>
-            <div style={{...styles.legendDot, backgroundColor: '#ffd54f'}} />
+            <div style={{ ...styles.legendDot, backgroundColor: '#ffd54f' }} />
             <span style={styles.legendText}>Slots Available</span>
           </div>
           <div style={styles.legendItem}>
-            <div style={{...styles.legendDot, backgroundColor: '#66bb6a'}} />
+            <div style={{ ...styles.legendDot, backgroundColor: '#66bb6a' }} />
             <span style={styles.legendText}>Fully Free</span>
           </div>
         </div>
@@ -939,29 +802,33 @@ function BookingCalendar() {
         <div>
           <h3 style={styles.bookingsTitle}>Today's Bookings</h3>
           <div style={styles.bookingsContainer}>
-            {selectedBookings.map(booking => (
+            {selectedBookings.map((booking) => (
               <div 
-                key={booking.id} 
-                style={{...styles.bookingCard, backgroundColor: booking.color}}
+                key={booking._id} 
+                style={{ 
+                  ...styles.bookingCard, 
+                  backgroundColor: getBookingCardColor(booking.status) 
+                }}
               >
                 <div style={styles.bookingHeader}>
-                  <span style={styles.bookingTime}>{booking.time}</span>
-                  <span style={{
-                    ...styles.bookingStatus,
-                    ...(booking.color === '#ffd54f' ? {backgroundColor: 'rgba(255,255,255,0.5)', color: '#000'} : {})
-                  }}>
-                    {booking.status}
-                  </span>
+                  <span style={styles.bookingTime}>{booking.timeSlot || 'All Day'}</span>
+                  <Chip 
+                    label={booking.status}
+                    size="small"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.3)',
+                      color: booking.status === 'Pending' ? '#000' : '#fff'
+                    }}
+                  />
                 </div>
-                <h4 style={styles.bookingName}>
-                  Booked by {booking.bookedBy}
-                </h4>
-                <p style={styles.bookingLocation}>{booking.location}</p>
-                <div style={styles.viewDetails}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                  <span style={styles.viewDetailsText}>View Details</span>
+                <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
+                <p style={styles.bookingLocation}>
+                  {booking.venueId?.venueName || booking.location || 'Venue not specified'}
+                </p>
+                <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                  <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
+                  <div>Contact: {booking.contactNumber}</div>
+                  <div>Email: {booking.emailAddress}</div>
                 </div>
               </div>
             ))}
@@ -971,12 +838,12 @@ function BookingCalendar() {
 
       {selectedBookings.length === 0 && (
         <div style={styles.noBookings}>
-          <div style={styles.noBookingsIcon}>
+          <div style={{ margin: '0 auto 20px', width: '100px', height: '100px' }}>
             <svg width="100" height="100" viewBox="0 0 80 80" fill="none">
-              <rect x="10" y="15" width="60" height="50" rx="4" stroke="#ccc" strokeWidth="2" fill="none"/>
-              <path d="M25 15 L25 10 M55 15 L55 10" stroke="#ccc" strokeWidth="2"/>
-              <path d="M20 25 L60 25" stroke="#ccc" strokeWidth="2"/>
-              <path d="M35 45 L45 45 M35 45 L40 40 M35 45 L40 50" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round"/>
+              <rect x="10" y="15" width="60" height="50" rx="4" stroke="#ccc" strokeWidth="2" fill="none" />
+              <path d="M25 15 L25 10 M55 15 L55 10" stroke="#ccc" strokeWidth="2" />
+              <path d="M20 25 L60 25" stroke="#ccc" strokeWidth="2" />
+              <path d="M35 45 L45 45 M35 45 L40 40 M35 45 L40 50" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
           <h4 style={styles.noBookingsTitle}>No Bookings Today</h4>
@@ -988,228 +855,304 @@ function BookingCalendar() {
         variant="contained"
         style={styles.floatingButton}
         onClick={handleOpenDialog}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e53935'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef5350'}
       >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14M5 12h14"/>
+          <path d="M12 5v14M5 12h14" />
         </svg>
       </Button>
 
       <Dialog fullScreen open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1} >
-            <Button onClick={handleCloseDialog} variant="text" size="small">←</Button>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Button onClick={handleCloseDialog} variant="text" size="small">
+              ←
+            </Button>
             Add Booking
           </Box>
         </DialogTitle>
-        <div style={{alignSelf:"center"}}>
-        <DialogContent sx={{ p: 3, backgroundColor: 'white' ,width:'500px' ,position:''}}>
-          {/* Booking Details Section */}
-          <Box mb={4}>
-            <Typography variant="h6" sx={sectionHeaderStyle}>
-              <EditIcon sx={iconStyle} />
-              Booking Details
-            </Typography>
-            <TextField
-              fullWidth
-              label="Full Name"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Contact Number"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PhoneIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Email Address"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Address"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <HomeIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Number of Guests"
-              type="number"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PeopleIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Additional Notes (Optional)"
-              multiline
-              rows={3}
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <DescriptionIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
+        <div style={{ alignSelf: 'center' }}>
+          <DialogContent sx={{ p: 3, backgroundColor: 'white', width: '500px' }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-          {/* Auditorium and Date/Time Section */}
-          <Box mb={4}>
-            <Typography variant="h6" sx={sectionHeaderStyle}>
-              <DoorFrontIcon sx={iconStyle} />
-              Select Auditorium
-            </Typography>
-            <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-              <InputLabel>Select Auditorium</InputLabel>
-              <Select label="Select Auditorium">
-                <MenuItem value="">Select Auditorium</MenuItem>
-                <MenuItem value="auditorium-a">Royal Events</MenuItem>
-                <MenuItem value="auditorium-b">violet auditorium</MenuItem>
-                                <MenuItem value="auditorium-b">florzia auditorium</MenuItem>
-
-              </Select>
-            </FormControl>
-
-            <Typography variant="h6" sx={sectionHeaderStyle}>
-              <CalendarMonthIcon sx={iconStyle} />
-              Select Booking Date
-            </Typography>
-            <TextField
-              fullWidth
-              type="date"
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              defaultValue={defaultDate}
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CalendarMonthIcon sx={iconStyle} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Typography variant="h6" sx={sectionHeaderStyle}>
-              <AccessTimeIcon sx={iconStyle} />
-              Select Time Slots
-            </Typography>
-            <FormGroup>
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Morning Slot 9:00 AM - 1:00 PM"
+            <Box mb={4}>
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <EditIcon sx={iconStyle} />
+                Booking Details
+              </Typography>
+              <TextField
+                fullWidth
+                name="fullName"
+                label="Full Name"
+                variant="outlined"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
               />
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Evening Slot 6:00 PM - 10:00 PM"
+              <TextField
+                fullWidth
+                name="contactNumber"
+                label="Contact Number"
+                variant="outlined"
+                value={formData.contactNumber}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
               />
-            </FormGroup>
-          </Box>
+              <TextField
+                fullWidth
+                name="emailAddress"
+                label="Email Address"
+                variant="outlined"
+                value={formData.emailAddress}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                name="address"
+                label="Address"
+                variant="outlined"
+                value={formData.address}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <HomeIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                name="numberOfGuests"
+                label="Number of Guests"
+                type="number"
+                variant="outlined"
+                value={formData.numberOfGuests}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PeopleIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                name="additionalNotes"
+                label="Additional Notes (Optional)"
+                multiline
+                rows={3}
+                variant="outlined"
+                value={formData.additionalNotes}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DescriptionIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </Box>
 
-          {/* Payment Method Section */}
-          <Box>
-            {/* <Typography variant="h6" sx={sectionHeaderStyle}>
-              <PaymentIcon sx={iconStyle} />
-              Payment Method
-            </Typography> */}
-            {/* <FormControl component="fieldset" sx={{ mb: 2 }}>
-              <RadioGroup defaultValue="full">
-                <FormControlLabel
-                  value="full"
-                  control={<Radio />}
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <PaymentIcon sx={iconStyle} />
-                      <Box>
-                        <Typography variant="body1" fontWeight={500}>Pay Full Amount</Typography>
-                        <Typography variant="body2" color="textSecondary">Pay the complete amount now</Typography>
-                      </Box>
-                    </Box>
-                  }
+            <Box mb={4}>
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <DoorFrontIcon sx={iconStyle} />
+                Select Module & Venue
+              </Typography>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>Select Module</InputLabel>
+                <Select 
+                  name="moduleId"
+                  value={formData.moduleId}
+                  onChange={handleInputChange}
+                  label="Select Module"
+                >
+                  <MenuItem value="">
+                    <em>Select Module ({modules.length} available)</em>
+                  </MenuItem>
+                  {modules.map(module => (
+                    <MenuItem key={module._id} value={module._id}>
+                      {module.title || module.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>Select Venue</InputLabel>
+                <Select 
+                  name="venueId"
+                  value={formData.venueId}
+                  onChange={handleInputChange}
+                  label="Select Venue"
+                >
+                  <MenuItem value="">
+                    <em>Select Venue ({venues.length} available)</em>
+                  </MenuItem>
+                  {venues.map(venue => (
+                    <MenuItem key={venue._id} value={venue._id}>
+                      {venue.venueName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>Select Package</InputLabel>
+                <Select 
+                  name="packageId"
+                  value={formData.packageId}
+                  onChange={handleInputChange}
+                  label="Select Package"
+                  disabled={!formData.venueId || packages.length === 0}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {!formData.venueId 
+                        ? 'Select a venue first' 
+                        : packages.length === 0 
+                        ? 'No packages available for this venue'
+                        : `Select Package (${packages.length} available)`
+                      }
+                    </em>
+                  </MenuItem>
+                  {packages.map(pkg => (
+                    <MenuItem key={pkg._id} value={pkg._id}>
+                      {pkg.title} - AED {pkg.price}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              {formData.venueId && packages.length === 0 && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  This venue doesn't have any packages configured. You can still create a booking without selecting a package.
+                </Alert>
+              )}
+
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <CalendarMonthIcon sx={iconStyle} />
+                Select Booking Date
+              </Typography>
+              <TextField
+                fullWidth
+                name="bookingDate"
+                type="date"
+                variant="outlined"
+                value={formData.bookingDate}
+                onChange={handleInputChange}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarMonthIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <AccessTimeIcon sx={iconStyle} />
+                Select Time Slots
+              </Typography>
+              <FormGroup sx={{ mb: 3 }}>
+                <FormControlLabel 
+                  control={
+                    <Checkbox 
+                      checked={formData.timeSlot.includes('Morning')}
+                      onChange={() => handleTimeSlotChange('Morning')}
+                    />
+                  } 
+                  label="Morning Slot 9:00 AM - 1:00 PM" 
                 />
-                <FormControlLabel
-                  value="advance"
-                  control={<Radio />}
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <AttachMoneyIcon sx={iconStyle} />
-                      <Box>
-                        <Typography variant="body1" fontWeight={500}>Pay Advance Amount</Typography>
-                        <Typography variant="body2" color="textSecondary">Pay 50% now, rest later</Typography>
-                      </Box>
-                    </Box>
-                  }
+                <FormControlLabel 
+                  control={
+                    <Checkbox 
+                      checked={formData.timeSlot.includes('Evening')}
+                      onChange={() => handleTimeSlotChange('Evening')}
+                    />
+                  } 
+                  label="Evening Slot 6:00 PM - 10:00 PM" 
                 />
-                <FormControlLabel
-                  value="cash"
-                  control={<Radio />}
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <AccountBalanceWalletIcon sx={iconStyle} />
-                      <Box>
-                        <Typography variant="body1" fontWeight={500}>Pay As Cash</Typography>
-                        <Typography variant="body2" color="textSecondary">Pay at the venue</Typography>
-                      </Box>
-                    </Box>
+              </FormGroup>
+
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <PaymentIcon sx={iconStyle} />
+                Payment Method
+              </Typography>
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>Payment Type</InputLabel>
+                <Select
+                  name="paymentType"
+                  value={formData.paymentType}
+                  onChange={handleInputChange}
+                  label="Payment Type"
+                >
+                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Card">Card</MenuItem>
+                  <MenuItem value="UPI">UPI</MenuItem>
+                  <MenuItem value="GPay">GPay</MenuItem>
+                  <MenuItem value="PhonePe">PhonePe</MenuItem>
+                  <MenuItem value="Paytm">Paytm</MenuItem>
+                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="Net Banking">Net Banking</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleSubmit}
+                disabled={submitLoading}
+                sx={{
+                  backgroundColor: '#ef5350',
+                  color: 'white',
+                  fontWeight: 600,
+                  py: 1.5,
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: '#e53935'
                   }
-                />
-              </RadioGroup>
-            </FormControl> */}
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{
-                backgroundColor: '#ef5350',
-                color: 'white',
-                fontWeight: 600,
-                py: 1.5,
-                borderRadius: 2
-              }}
-            >
-              Submit
-            </Button>
-          </Box>
-        </DialogContent>
+                }}
+              >
+                {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit Booking'}
+              </Button>
+            </Box>
+          </DialogContent>
         </div>
       </Dialog>
     </div>
