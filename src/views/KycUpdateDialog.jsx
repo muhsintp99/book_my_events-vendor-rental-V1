@@ -127,7 +127,7 @@ export default function KycUpdateDialog({ open, onClose }) {
       <form onSubmit={handleSubmit} autoComplete="off">
         <DialogContent sx={{ p: 4 }}>
           <Typography variant="body2" sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}>
-            Please provide your accurate bank information to ensure timely and secure settlement of your earnings.
+            Please provide your accurate bank information to ensure timely and secure settlement.
           </Typography>
 
           <Grid container spacing={3}>

@@ -143,7 +143,9 @@ if (logRes === 'transport') {
     specificSections = [ vehiclemanagement];
 
 } else if (logRes === 'venues') {
-  specificSections = [management, venuemanagement, Businessection, Report, Employee];
+  // specificSections = [management, venuemanagement, Businessection, Report, Employee];
+    specificSections = [management, venuemanagement];
+
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
 } else if (logRes === 'mehandi') {
@@ -151,9 +153,13 @@ if (logRes === 'transport') {
 } else if (logRes === 'photography') {
   specificSections = [ photographyManagementMenu ,photomanagement,Photographysection,Reportphotography];
 } else if (logRes === 'catering') {
-  specificSections = [ cateringManagementMenu,cateringmanagement, Reports, Employees];
+  // specificSections = [ cateringManagementMenu,cateringmanagement, Reports, Employees];
+    specificSections = [ cateringManagementMenu,cateringmanagement];
+
 } else if (logRes === 'makeupartist') {
-    specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];      
+    // specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];   
+        specificSections = [makeupManagement, Makeupmanagement];      
+   
 }else if (logRes === 'dj_music') {
   // specificSections = [djmusicmanagement];
   specificSections = [];

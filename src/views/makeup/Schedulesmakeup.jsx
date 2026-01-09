@@ -415,64 +415,83 @@ return moduleTitle === 'makeup artist';
     });
   };
 
-  const handleSubmit = async () => {
-    setSubmitLoading(true);
-    setError(null);
+const handleSubmit = async () => {
+  setSubmitLoading(true);
+  setError(null);
 
-    try {
-    if (!formData.bookingDate) {
-      setError('Please select booking date');
-      setSubmitLoading(false);
+  try {
+    // ✅ REQUIRED FIELD VALIDATIONS
+    if (!formData.fullName.trim()) {
+      setError('Full Name is required');
       return;
     }
 
-     const bookingData = {
-  moduleId: formData.moduleId,
+    if (!formData.contactNumber.trim()) {
+      setError('Contact Number is required');
+      return;
+    }
 
-  // ✅ THIS IS THE FIX
-  makeupId: formData.packageId,
+    if (!formData.moduleId) {
+      setError('Please select a module');
+      return;
+    }
 
-  fullName: formData.fullName,
-  contactNumber: formData.contactNumber,
-  emailAddress: formData.emailAddress,
-  address: formData.address,
-  numberOfGuests: parseInt(formData.numberOfGuests),
-  bookingDate: formData.bookingDate,
-  timeSlot: formData.timeSlot, // keep as array
-  paymentType: formData.paymentType,
-  bookingType: 'Direct'
+    if (!formData.packageId) {
+      setError('Please select a package');
+      return;
+    }
+
+    if (!formData.bookingDate) {
+      setError('Please select booking date');
+      return;
+    }
+
+    if (!formData.timeSlot.length) {
+      setError('Please select at least one time slot');
+      return;
+    }
+
+    // ✅ BUILD PAYLOAD (optional fields only if filled)
+    const bookingData = {
+      moduleId: formData.moduleId,
+      makeupId: formData.packageId,
+      fullName: formData.fullName,
+      contactNumber: formData.contactNumber,
+      bookingDate: formData.bookingDate,
+      timeSlot: formData.timeSlot,
+      paymentType: formData.paymentType,
+      bookingType: 'Direct'
+    };
+
+    // optional fields
+    if (formData.emailAddress) bookingData.emailAddress = formData.emailAddress;
+    if (formData.address) bookingData.address = formData.address;
+    if (formData.numberOfGuests) bookingData.numberOfGuests = Number(formData.numberOfGuests);
+    if (formData.additionalNotes) bookingData.additionalNotes = formData.additionalNotes;
+
+    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bookingData)
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert('Booking created successfully!');
+      handleCloseDialog();
+      fetchBookings();
+      resetForm();
+    } else {
+      setError(data.message || 'Failed to create booking');
+    }
+  } catch (err) {
+    setError('Error creating booking');
+  } finally {
+    setSubmitLoading(false);
+  }
 };
 
-
-      if (formData.packageId) {
-        bookingData.packageId = formData.packageId;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bookingData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert('Booking created successfully!');
-        handleCloseDialog();
-        fetchBookings();
-        resetForm();
-      } else {
-        setError(data.message || 'Failed to create booking');
-      }
-    } catch (err) {
-      setError('Error creating booking: ' + err.message);
-      console.error('Submit error:', err);
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -980,55 +999,58 @@ const selectedPackage = packages.find(
                 }}
                 sx={{ mb: 2 }}
               />
+             <TextField
+  fullWidth
+  name="emailAddress"
+  label="Email Address (Optional)"
+  variant="outlined"
+  value={formData.emailAddress}
+  onChange={handleInputChange}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <EmailIcon sx={iconStyle} />
+      </InputAdornment>
+    )
+  }}
+  sx={{ mb: 2 }}
+/>
+
               <TextField
-                fullWidth
-                name="emailAddress"
-                label="Email Address"
-                variant="outlined"
-                value={formData.emailAddress}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="address"
-                label="Address"
-                variant="outlined"
-                value={formData.address}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <HomeIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="numberOfGuests"
-                label="Number of Guests"
-                type="number"
-                variant="outlined"
-                value={formData.numberOfGuests}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PeopleIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
+  fullWidth
+  name="address"
+  label="Address (Optional)"
+  variant="outlined"
+  value={formData.address}
+  onChange={handleInputChange}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <HomeIcon sx={iconStyle} />
+      </InputAdornment>
+    )
+  }}
+  sx={{ mb: 2 }}
+/>
+
+             <TextField
+  fullWidth
+  name="numberOfGuests"
+  label="Number of Guests (Optional)"
+  type="number"
+  variant="outlined"
+  value={formData.numberOfGuests}
+  onChange={handleInputChange}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <PeopleIcon sx={iconStyle} />
+      </InputAdornment>
+    )
+  }}
+  sx={{ mb: 2 }}
+/>
+
               <TextField
                 fullWidth
                 name="additionalNotes"

@@ -1,1 +1,0 @@
-import{c as t,j as c}from"./index-qfBQ3cXn.js";const o=t(c.jsx("path",{d:"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m0 14H6l-2 2V4h16z"})),a=t(c.jsx("path",{d:"M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"}));export{o as C,a as S};
