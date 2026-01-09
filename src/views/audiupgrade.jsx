@@ -519,7 +519,7 @@ console.log(
                     <Box sx={{ mt: 2 }}>
                       {/* Badge */}
                       <Chip
-                        label="🎉 PRELAUNCHING OFFER"
+                        label="🎉 Pre-Launch Offer"
                         sx={{
                           bgcolor: '#fff3cd',
                           color: '#b45309',

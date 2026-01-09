@@ -81,8 +81,8 @@ export default function WelcomeBanner({ hasSubscription = false }) {
               lineHeight: 1.5
             }}
           >
-            Your profile is under verification and will be approved within
-            <strong> 48 hours</strong>.  
+Thanks for registering with us. Your profile is currently under verification and will be approved within  <strong> 48 hours</strong>.
+Meanwhile, feel free to add your packages and complete your profile to get ready for bookings.             
             Sit back while we prepare everything for you.
           </Typography>
         </Box>

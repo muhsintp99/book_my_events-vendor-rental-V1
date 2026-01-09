@@ -770,7 +770,7 @@ const selectedPackage = packages.find(
         </Alert>
       )}
 
-      {providerId && (
+      {/* {providerId && (
         <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
           <Typography variant="caption" color="primary">
             Logged in as Provider: {providerId}
@@ -779,7 +779,7 @@ const selectedPackage = packages.find(
             📋 Showing only Direct Bookings (Indirect bookings are hidden)
           </Typography>
         </Box>
-      )}
+      )} */}
 
       {loading && (
         <Box display="flex" justifyContent="center" mb={3}>
@@ -1071,30 +1071,28 @@ const selectedPackage = packages.find(
             </Box>
 
             <Box mb={4}>
-              <Typography variant="h6" sx={sectionHeaderStyle}>
+              
+               <Typography variant="h6" sx={sectionHeaderStyle}>
                 <DoorFrontIcon sx={iconStyle} />
                 Select Module & Venue
               </Typography>
-              
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Module</InputLabel>
-                <Select 
-                  name="moduleId"
-                  value={formData.moduleId}
-                  onChange={handleInputChange}
-                  label="Select Module"
-                >
-                  <MenuItem value="">
-                    <em>Select Module ({modules.length} available)</em>
-                  </MenuItem>
-                  {modules.map(module => (
-                    <MenuItem key={module._id} value={module._id}>
-                      {module.title || module.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
 
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+               <InputLabel>Select Module</InputLabel>
+               <Select
+                 name="moduleId"
+                 value={formData.moduleId}
+                 onChange={handleInputChange}
+                 label="Select Module"
+                 disabled   // 🔒 remove this line if you want it editable
+               >
+                 {modules.map(module => (
+                   <MenuItem key={module._id} value={module._id}>
+                     {module.title || module.name}
+                   </MenuItem>
+                 ))}
+               </Select>
+             </FormControl>
               {/* <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Select Venue</InputLabel>
                 <Select 

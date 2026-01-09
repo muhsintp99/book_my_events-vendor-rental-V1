@@ -86,14 +86,13 @@ function BookingCalendar() {
 
   const providerId = getProviderId();
 
-useEffect(() => {
-  if (providerId) {
-    fetchBookings();
-    fetchModules();
-    fetchMakeupPackages(); // ✅ ADD THIS LINE
-  }
-}, [currentDate, providerId]);
-
+  useEffect(() => {
+    if (providerId) {
+      fetchBookings();
+      fetchModules();
+      fetchPhotographyPackages();
+    }
+  }, [currentDate, providerId]);
 
   // Auto-select module if only one is available
   useEffect(() => {
@@ -104,6 +103,14 @@ useEffect(() => {
       }));
     }
   }, [modules]);
+
+  // Reset packageId when module changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      packageId: ''
+    }));
+  }, [formData.moduleId]);
 
   const fetchBookings = async () => {
     if (!providerId) {
@@ -171,12 +178,10 @@ useEffect(() => {
       
       console.log('All modules fetched:', modulesList);
       
-      // Filter modules: Only show "Venues" module by default
-      // Or filter by modules that this provider has venues for
+      // Filter modules: Show only Photography
       const filteredModules = modulesList.filter(module => {
         const moduleTitle = (module.title || module.name || '').toLowerCase();
-        // Only show Venues module (you can adjust this logic)
-return moduleTitle === 'makeup artist';
+        return moduleTitle === 'photography';
       });
       
       console.log('Filtered modules for provider:', filteredModules);
@@ -192,24 +197,41 @@ return moduleTitle === 'makeup artist';
     }
   };
 
- const fetchMakeupPackages = async () => {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/makeup-packages/provider/${providerId}`
-    );
-    const data = await response.json();
+  const fetchMakeupPackages = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/makeup-packages/provider/${providerId}`
+      );
+      const data = await response.json();
 
-    if (data.success) {
-      setPackages(data.data || []);
-    } else {
+      if (data.success) {
+        setPackages(data.data || []);
+      } else {
+        setPackages([]);
+      }
+    } catch (err) {
+      console.error('Fetch makeup packages error:', err);
       setPackages([]);
     }
-  } catch (err) {
-    console.error('Fetch makeup packages error:', err);
-    setPackages([]);
-  }
-};
+  };
 
+  const fetchPhotographyPackages = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/photography-packages/provider/${providerId}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setPackages(data.data || []);
+      } else {
+        setPackages([]);
+      }
+    } catch (err) {
+      console.error('Fetch photography packages error:', err);
+      setPackages([]);
+    }
+  };
 
   const handleDeleteBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to delete this booking?')) {
@@ -249,41 +271,40 @@ return moduleTitle === 'makeup artist';
   const todayMonth = today.getMonth();
   const todayYear = today.getFullYear();
 
- const getCurrentMonthBookings = () => {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const getCurrentMonthBookings = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const status = {};
+    const status = {};
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dayBookings = bookings.filter(booking => {
-      const bookingDate = new Date(booking.bookingDate);
-      return (
-        bookingDate.getDate() === day &&
-        bookingDate.getMonth() === month &&
-        bookingDate.getFullYear() === year &&
-        booking.bookingType === 'Direct'
-      );
-    });
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.bookingDate);
+        return (
+          bookingDate.getDate() === day &&
+          bookingDate.getMonth() === month &&
+          bookingDate.getFullYear() === year &&
+          booking.bookingType === 'Direct'
+        );
+      });
 
-    // 🔴 count slots instead of bookings
-    const totalSlots = dayBookings.reduce((acc, b) => {
-      return acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1);
-    }, 0);
+      // Count slots instead of bookings
+      const totalSlots = dayBookings.reduce((acc, b) => {
+        return acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1);
+      }, 0);
 
-    if (totalSlots === 0) {
-      status[day] = 'free';
-    } else if (totalSlots >= 2) {
-      status[day] = 'booked'; // 🔴 RED
-    } else {
-      status[day] = 'available'; // 🟡 YELLOW
+      if (totalSlots === 0) {
+        status[day] = 'free';
+      } else if (totalSlots >= 2) {
+        status[day] = 'booked'; // RED
+      } else {
+        status[day] = 'available'; // YELLOW
+      }
     }
-  }
 
-  return status;
-};
-
+    return status;
+  };
 
   const bookingStatus = getCurrentMonthBookings();
 
@@ -420,29 +441,30 @@ return moduleTitle === 'makeup artist';
     setError(null);
 
     try {
-    if (!formData.bookingDate) {
-      setError('Please select booking date');
-      setSubmitLoading(false);
-      return;
-    }
+      if (!formData.bookingDate) {
+        setError('Please select booking date');
+        setSubmitLoading(false);
+        return;
+      }
 
-     const bookingData = {
-  moduleId: formData.moduleId,
+      const bookingData = {
+        moduleId: formData.moduleId,
 
-  // ✅ THIS IS THE FIX
-  makeupId: formData.packageId,
+        // Set photographyId for photography bookings
+        ...(formData.packageId && {
+          photographyId: formData.packageId
+        }),
 
-  fullName: formData.fullName,
-  contactNumber: formData.contactNumber,
-  emailAddress: formData.emailAddress,
-  address: formData.address,
-  numberOfGuests: parseInt(formData.numberOfGuests),
-  bookingDate: formData.bookingDate,
-  timeSlot: formData.timeSlot, // keep as array
-  paymentType: formData.paymentType,
-  bookingType: 'Direct'
-};
-
+        fullName: formData.fullName,
+        contactNumber: formData.contactNumber,
+        emailAddress: formData.emailAddress,
+        address: formData.address,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        bookingDate: formData.bookingDate,
+        timeSlot: formData.timeSlot,
+        paymentType: formData.paymentType,
+        bookingType: 'Direct'
+      };
 
       if (formData.packageId) {
         bookingData.packageId = formData.packageId;
@@ -725,9 +747,15 @@ return moduleTitle === 'makeup artist';
       transition: 'background-color 0.2s, transform 0.2s'
     }
   };
-const selectedPackage = packages.find(
-  pkg => pkg._id === formData.packageId
-);
+
+  const selectedPackage = packages.find(
+    pkg => pkg._id === formData.packageId
+  );
+
+  // Filter packages based on selected module
+  const filteredPackages = formData.moduleId 
+    ? packages.filter(pkg => pkg.module?._id === formData.moduleId)
+    : packages;
 
   const sectionHeaderStyle = {
     display: 'flex',
@@ -751,7 +779,7 @@ const selectedPackage = packages.find(
         </Alert>
       )}
 
-      {providerId && (
+      {/* {providerId && (
         <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
           <Typography variant="caption" color="primary">
             Logged in as Provider: {providerId}
@@ -759,8 +787,11 @@ const selectedPackage = packages.find(
           <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
             📋 Showing only Direct Bookings (Indirect bookings are hidden)
           </Typography>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+            📸 Module: Photography | Packages: {packages.length}
+          </Typography>
         </Box>
-      )}
+      )} */}
 
       {loading && (
         <Box display="flex" justifyContent="center" mb={3}>
@@ -843,17 +874,17 @@ const selectedPackage = packages.find(
                 }}
               >
                 <div style={styles.bookingHeader}>
-<span style={styles.bookingTime}>
-  {Array.isArray(booking.timeSlot)
-    ? booking.timeSlot.map((t, i) => (
-        <span key={i}>
-          {t.label} ({t.time})
-        </span>
-      ))
-    : booking.timeSlot?.label
-      ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
-      : 'All Day'}
-</span>
+                  <span style={styles.bookingTime}>
+                    {Array.isArray(booking.timeSlot)
+                      ? booking.timeSlot.map((t, i) => (
+                          <span key={i}>
+                            {t.label} ({t.time})
+                          </span>
+                        ))
+                      : booking.timeSlot?.label
+                        ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+                        : 'All Day'}
+                  </span>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip 
                       label={booking.status}
@@ -885,10 +916,10 @@ const selectedPackage = packages.find(
                 </div>
                 <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
                 <p style={styles.bookingLocation}>
-  {booking.makeupId?.packageTitle ||
-   booking.packageId?.packageTitle ||
-   'Makeup Package'}
-</p>
+                  {booking.photographyId?.packageTitle ||
+                   booking.packageId?.packageTitle ||
+                   'Photography Package'}
+                </p>
 
                 <div style={{ fontSize: '14px', marginTop: '8px' }}>
                   <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
@@ -1049,48 +1080,27 @@ const selectedPackage = packages.find(
             </Box>
 
             <Box mb={4}>
-              <Typography variant="h6" sx={sectionHeaderStyle}>
+               <Typography variant="h6" sx={sectionHeaderStyle}>
                 <DoorFrontIcon sx={iconStyle} />
                 Select Module & Venue
               </Typography>
-              
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Module</InputLabel>
-                <Select 
-                  name="moduleId"
-                  value={formData.moduleId}
-                  onChange={handleInputChange}
-                  label="Select Module"
-                >
-                  <MenuItem value="">
-                    <em>Select Module ({modules.length} available)</em>
-                  </MenuItem>
-                  {modules.map(module => (
-                    <MenuItem key={module._id} value={module._id}>
-                      {module.title || module.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
 
-              {/* <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Venue</InputLabel>
-                <Select 
-                  name="venueId"
-                  value={formData.venueId}
-                  onChange={handleInputChange}
-                  label="Select Venue"
-                >
-                  <MenuItem value="">
-                    <em>Select Venue ({venues.length} available)</em>
-                  </MenuItem>
-                  {venues.map(venue => (
-                    <MenuItem key={venue._id} value={venue._id}>
-                      {venue.venueName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl> */}
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+               <InputLabel>Select Module</InputLabel>
+               <Select
+                 name="moduleId"
+                 value={formData.moduleId}
+                 onChange={handleInputChange}
+                 label="Select Module"
+                 disabled   // 🔒 remove this line if you want it editable
+               >
+                 {modules.map(module => (
+                   <MenuItem key={module._id} value={module._id}>
+                     {module.title || module.name}
+                   </MenuItem>
+                 ))}
+               </Select>
+             </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Select Package</InputLabel>
@@ -1099,66 +1109,67 @@ const selectedPackage = packages.find(
                   value={formData.packageId}
                   onChange={handleInputChange}
                   label="Select Package"
-  disabled={packages.length === 0}
+                  disabled={!formData.moduleId || filteredPackages.length === 0}
                 >
                   <MenuItem value="">
-  <em>
-    {packages.length === 0
-      ? 'No makeup packages available'
-      : `Select Package (${packages.length} available)`
-    }
-  </em>
-</MenuItem>
+                    <em>
+                      {!formData.moduleId
+                        ? 'Please select a module first'
+                        : filteredPackages.length === 0
+                        ? 'No packages available for this module'
+                        : `Select Package (${filteredPackages.length} available)`
+                      }
+                    </em>
+                  </MenuItem>
 
-                  {packages.map(pkg => (
-  <MenuItem key={pkg._id} value={pkg._id}>
-    {pkg.packageTitle} — AED {pkg.finalPrice}
-  </MenuItem>
-))}
+                  {filteredPackages.map(pkg => (
+                    <MenuItem key={pkg._id} value={pkg._id}>
+                      {pkg.packageTitle} — AED {pkg.price || pkg.finalPrice}
+                    </MenuItem>
+                  ))}
 
                 </Select>
               </FormControl>
-           {selectedPackage && (
-  <Box
-    sx={{
-      mt: '-8px',
-      mb: 2,
-      px: 2,
-      py: 1.5,
-      border: '1px solid #e0e0e0',
-      borderTop: 'none',
-      borderRadius: '0 0 8px 8px',
-      backgroundColor: '#fafafa'
-    }}
-  >
-    <Typography variant="caption" sx={{ fontWeight: 600, color: '#ef5350' }}>
-      Included Services
-    </Typography>
 
-    {selectedPackage.includedServices.map(service => (
-      <Box key={service._id} mt={0.5}>
-        <Typography variant="body2" fontWeight={500}>
-          • {service.title}
-        </Typography>
-        {service.items.map((item, i) => (
-          <Typography
-            key={i}
-            variant="caption"
-            sx={{ display: 'block', ml: 2, color: 'text.secondary' }}
-          >
-            – {item}
-          </Typography>
-        ))}
-      </Box>
-    ))}
-  </Box>
-)}
+              {selectedPackage && selectedPackage.includedServices && (
+                <Box
+                  sx={{
+                    mt: '-8px',
+                    mb: 2,
+                    px: 2,
+                    py: 1.5,
+                    border: '1px solid #e0e0e0',
+                    borderTop: 'none',
+                    borderRadius: '0 0 8px 8px',
+                    backgroundColor: '#fafafa'
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#ef5350' }}>
+                    Included Services
+                  </Typography>
 
-   
+                  {selectedPackage.includedServices.map(service => (
+                    <Box key={service._id} mt={0.5}>
+                      <Typography variant="body2" fontWeight={500}>
+                        • {service.title}
+                      </Typography>
+                      {service.items.map((item, i) => (
+                        <Typography
+                          key={i}
+                          variant="caption"
+                          sx={{ display: 'block', ml: 2, color: 'text.secondary' }}
+                        >
+                          – {item}
+                        </Typography>
+                      ))}
+                    </Box>
+                  ))}
+                </Box>
+              )}
 
-              {formData.venueId && packages.length === 0 && (
+              {formData.moduleId && filteredPackages.length === 0 && (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  This venue doesn't have any packages configured. You can still create a booking without selecting a package.
+                  No packages available for this module. You can still create a booking without selecting a package.
                 </Alert>
               )}
 

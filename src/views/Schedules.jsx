@@ -738,7 +738,7 @@ function BookingCalendar() {
         </Alert>
       )}
 
-      {providerId && (
+      {/* {providerId && (
         <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
           <Typography variant="caption" color="primary">
             Logged in as Provider: {providerId}
@@ -747,7 +747,7 @@ function BookingCalendar() {
             📋 Showing only Direct Bookings (Indirect bookings are hidden)
           </Typography>
         </Box>
-      )}
+      )} */}
 
       {loading && (
         <Box display="flex" justifyContent="center" mb={3}>
@@ -830,7 +830,11 @@ function BookingCalendar() {
                 }}
               >
                 <div style={styles.bookingHeader}>
-                  <span style={styles.bookingTime}>{booking.timeSlot || 'All Day'}</span>
+<span style={styles.bookingTime}>
+  {booking.timeSlot?.label
+    ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+    : 'All Day'}
+</span>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip 
                       label={booking.status}

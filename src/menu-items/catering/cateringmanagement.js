@@ -1,8 +1,3 @@
-
-
-
-
-
 // assets
 import {
   IconBuilding,
@@ -14,7 +9,9 @@ import {
   IconUpload,
   IconDownload,
   IconEngine,
-  IconCalendar,IconBowlSpoon
+  IconCalendar,
+  IconBowlSpoon,
+  IconCalendarEvent
 } from '@tabler/icons-react';
 
 // constants
@@ -28,7 +25,9 @@ const icons = {
   IconUpload,
   IconDownload,
   IconEngine,
-  IconCalendar,IconBowlSpoon
+  IconCalendar,
+  IconBowlSpoon,
+  IconCalendarEvent
 };
 
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
@@ -49,7 +48,7 @@ const venuemanagement = {
           title: 'Add Pacakage',
           type: 'item',
           url: 'catering/addpackage',
-          icon: icons.IconPlus  
+          icon: icons.IconPlus
         },
         {
           id: 'list',
@@ -57,11 +56,10 @@ const venuemanagement = {
           type: 'item',
           url: 'catering/packagelist',
           icon: icons.IconList
-        },
-      
+        }
       ]
     },
-    
+
     {
       id: 'categories',
       title: 'Categories',
@@ -70,7 +68,7 @@ const venuemanagement = {
       icon: icons.IconCategory,
       breadcrumbs: false
     },
-    
+
     {
       id: 'upgrade',
       title: 'Upgrade',
@@ -79,6 +77,14 @@ const venuemanagement = {
       icon: icons.IconCategory,
       breadcrumbs: false
     },
+    {
+      id: 'Schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/catering/schedules',
+      icon: icons.IconCalendarEvent,
+      breadcrumbs: false
+    }
   ]
 };
 

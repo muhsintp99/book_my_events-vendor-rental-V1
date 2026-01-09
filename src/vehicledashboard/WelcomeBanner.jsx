@@ -30,8 +30,7 @@ export default function WelcomeBanner({ hasSubscription = false }) {
         sx={{
           position: 'relative',
           overflow: 'hidden',
-          background:
-            'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
+          background: 'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
           borderRadius: 3,
           px: { xs: 3, md: 4 },
           py: { xs: 2.5, md: 3 },
@@ -81,9 +80,9 @@ export default function WelcomeBanner({ hasSubscription = false }) {
               lineHeight: 1.5
             }}
           >
-            Your profile is under verification and will be approved within
-            <strong> 48 hours</strong>.  
-            Sit back while we prepare everything for you.
+            Thanks for registering with us. Your profile is currently under verification and will be approved within{' '}
+            <strong> 48 hours</strong>. Meanwhile, feel free to add your packages and complete your profile to get ready for bookings. Sit
+            back while we prepare everything for you.
           </Typography>
         </Box>
       </Box>
@@ -116,9 +115,7 @@ export default function WelcomeBanner({ hasSubscription = false }) {
           }}
         />
 
-        <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
-          Subscription
-        </Typography>
+        <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Subscription</Typography>
 
         <Chip
           label={hasSubscription ? 'Active Plan' : 'No Active Plan'}

@@ -151,7 +151,9 @@ if (logRes === 'transport') {
 } else if (logRes === 'mehandi') {
   specificSections = [mehandimanagement];
 } else if (logRes === 'photography') {
-  specificSections = [ photographyManagementMenu ,photomanagement,Photographysection,Reportphotography];
+  // specificSections = [ photographyManagementMenu ,photomanagement,Photographysection,Reportphotography];
+    specificSections = [ photographyManagementMenu ,photomanagement];
+
 } else if (logRes === 'catering') {
   // specificSections = [ cateringManagementMenu,cateringmanagement, Reports, Employees];
     specificSections = [ cateringManagementMenu,cateringmanagement];

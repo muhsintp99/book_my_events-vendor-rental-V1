@@ -85,7 +85,7 @@ const vehiclemanagement = {
       id: 'schedules',
       title: 'Schedules',
       type: 'item',
-      url: '/venue/schedules',
+      url: '/vehicles/schedules',
       icon: icons.IconCalendar,
       breadcrumbs: false
     },
