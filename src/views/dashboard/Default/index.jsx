@@ -6,6 +6,8 @@ import VehicleIndex from '../../../vehicledashboard';
 import CateringIndex from '../../../cateringdashboard';
 import MakeupIndex from '../../../makeupdashboard';
 import PhotographyIndex from '../../../photographydashboard';
+import CakeIndex from '../../../cakedashboard';
+
 
 // cards
 import EarningCard from './EarningCard';
@@ -51,6 +53,8 @@ export default function Dashboard() {
     if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
     if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
     if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
+    if (Module === 'Cake') return <CakeIndex isLoading={isLoading} />;
+
 
     return (
       <Grid container spacing={gridSpacing}>

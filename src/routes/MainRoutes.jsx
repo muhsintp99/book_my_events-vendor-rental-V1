@@ -9,9 +9,7 @@ import Schedules from '../views/Schedules';
 import Register from '../views/pages/authentication/Register';
 
 const DeleteProfile = Loadable(lazy(() => import('views/DeleteProfile')));
-const PaymentSuccess = Loadable(
-  lazy(() => import('views/PaymentSuccess'))
-);
+const PaymentSuccess = Loadable(lazy(() => import('views/PaymentSuccess')));
 
 // auth pages
 const Login = Loadable(lazy(() => import('views/pages/authentication/Login')));
@@ -40,10 +38,6 @@ const VenueListView = Loadable(lazy(() => import('views/VenueListView')));
 const Upgradevenue = Loadable(lazy(() => import('../views/audiupgrade')));
 // const Enquiryvenue = Loadable(lazy(() => import('../views/Enquiries')));
 
-
-
-
-
 // reports
 const ExpenseReport = Loadable(lazy(() => import('views/ExpenseReport')));
 const DisbursementReport = Loadable(lazy(() => import('views/DisburseReport')));
@@ -59,8 +53,6 @@ const Category = Loadable(lazy(() => import('views/Category')));
 const Brandlist = Loadable(lazy(() => import('views/BrandList')));
 const Upgrade = Loadable(lazy(() => import('../views/upgrade')));
 const Vehicleschedules = Loadable(lazy(() => import('../views/transportshedules')));
-
-
 
 // driver
 const AddDriver = Loadable(lazy(() => import('views/AddDriver')));
@@ -113,8 +105,6 @@ const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpen
 const Cateringupgrade = Loadable(lazy(() => import('../views/catering/cateringupgrade')));
 const Cateringschedule = Loadable(lazy(() => import('../views/catering/schedulecatering')));
 
-
-
 // Bookings
 const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
 const Scheduledbookings = Loadable(lazy(() => import('../views/Scheduled')));
@@ -142,9 +132,6 @@ const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/Makeupenquirie
 const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatPage')));
 const MakeupSchedules = Loadable(lazy(() => import('../views/makeup/Schedulesmakeup')));
 
-
-
-
 //PHOTOGRAPHY BOOKINGS
 const AllPhotography = Loadable(lazy(() => import('../views/photography/Allphotography')));
 const PhotographyPending = Loadable(lazy(() => import('../views/photography/Photographypending')));
@@ -152,7 +139,6 @@ const PhotographyConfirmed = Loadable(lazy(() => import('../views/photography/Ph
 const PhotographyCompleted = Loadable(lazy(() => import('../views/photography/Photographycompleted')));
 const PhotographyCancelled = Loadable(lazy(() => import('../views/photography/Allphotography')));
 const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
-
 
 // CATERING BOOKINGS
 const AllCatering = Loadable(lazy(() => import('../views/catering/AllCatering')));
@@ -171,10 +157,20 @@ const Photographyenquiry = Loadable(lazy(() => import('../views/photography/Phot
 const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
 const PhotographySchedules = Loadable(lazy(() => import('../views/photography/photoschedule')));
 
+// Cake/////////////////////
+const AddcakePackage = Loadable(lazy(() => import('../views/cake/Addcakepackage')));
+const Cakelist = Loadable(lazy(() => import('../views/cake/Cakelist')));
+const Cakeupgrade = Loadable(lazy(() => import('../views/cake/Cakeupgrade')));
+const Cakeenquiry = Loadable(lazy(() => import('../views/cake/Cakeenquiries')));
+const Cakeenquirychat = Loadable(lazy(() => import('../views/cake/EnquiryChatPage')));
+const CakeSchedules = Loadable(lazy(() => import('../views/cake/Schedulescake')));
 
-
-
-
+const Allcake = Loadable(lazy(() => import('../views/cake/Allcake')));
+const CakePending = Loadable(lazy(() => import('../views/cake/Cakepending')));
+const CakeConfirmed = Loadable(lazy(() => import('../views/cake/Cakeconfirmed')));
+const CakeCompleted = Loadable(lazy(() => import('../views/cake/Cakecompleted')));
+const CakeCancelled = Loadable(lazy(() => import('../views/cake/Cakecancelled')));
+// const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 
 // ===========================|| MAIN ROUTING ||============================ //
 
@@ -187,7 +183,6 @@ const MainRoutes = {
     { path: 'forgot-password', element: <Forgotpass /> },
     { path: 'delete-profile', element: <DeleteProfile /> },
     { path: 'payment-success', element: <PaymentSuccess /> },
-
 
     {
       path: '/',
@@ -232,10 +227,7 @@ const MainRoutes = {
             { path: 'categories', element: <Category /> },
             { path: 'brands', element: <Brandlist /> },
             { path: 'upgrade', element: <Upgrade /> },
-             { path: 'schedules', element: <Vehicleschedules /> },
-
-            
-
+            { path: 'schedules', element: <Vehicleschedules /> }
           ]
         },
         {
@@ -310,7 +302,7 @@ const MainRoutes = {
             { path: 'paymentfailedmakeup', element: <MakeupPaymentFailed /> },
 
             // CATERING BOOKINGS
-             { path: 'allcatering', element: <AllCatering /> },
+            { path: 'allcatering', element: <AllCatering /> },
             { path: 'pendingcatering', element: <CateringPending /> },
             { path: 'cateringconfirmed', element: <CateringConfirmed /> },
             { path: 'completedcatering', element: <CateringCompleted /> },
@@ -318,12 +310,20 @@ const MainRoutes = {
             { path: 'paymentfailedcatering', element: <CateringPaymentFailed /> },
 
             // PHOTOGRAPHY BOOKINGS
-              { path: 'allphotography', element: <AllPhotography /> },
+            { path: 'allphotography', element: <AllPhotography /> },
             { path: 'pendingphotography', element: <PhotographyPending /> },
             { path: 'photographyconfirmed', element: <PhotographyConfirmed /> },
             { path: 'completedphotography', element: <PhotographyCompleted /> },
             { path: 'cancelledphotography', element: <PhotographyCancelled /> },
             { path: 'paymentfailedphotography', element: <PhotographyPaymentFailed /> },
+
+            // Cake BOOKINGS///////////////
+             { path: 'allcake', element: <Allcake /> },
+            { path: 'pendingcake', element: <CakePending /> },
+            { path: 'cakeconfirmed', element: <CakeConfirmed /> },
+            { path: 'completedcake', element: <CakeCompleted /> },
+            { path: 'cancelledcake', element: <CakeCancelled/> },
+            // { path: 'paymentfailedcake', element: <CPaymentFailed /> }
           ]
         },
 
@@ -355,10 +355,7 @@ const MainRoutes = {
           children: [
             { path: 'categories', element: <VenueCategory /> },
             { path: 'schedules', element: <Schedules /> },
-            { path: 'upgrade', element: <Upgradevenue /> },
-
-
-
+            { path: 'upgrade', element: <Upgradevenue /> }
           ]
         },
         {
@@ -377,10 +374,7 @@ const MainRoutes = {
             { path: 'packagelist', element: <PackageList /> },
             { path: 'cateringreport', element: <CateringReport /> },
             { path: 'upgrade', element: <Cateringupgrade /> },
-            { path: 'schedules', element: <Cateringschedule /> },
-
-
-            
+            { path: 'schedules', element: <Cateringschedule /> }
           ]
         },
 
@@ -394,11 +388,7 @@ const MainRoutes = {
             { path: 'upgrade', element: <Makeupupgrade /> },
             { path: 'Enqury', element: <Makeupenquiry /> },
             { path: 'Enqurychat', element: <Enquirychat /> },
-            { path: 'schedules', element: <MakeupSchedules /> },
-
-
-
-
+            { path: 'schedules', element: <MakeupSchedules /> }
           ]
         },
 
@@ -412,11 +402,20 @@ const MainRoutes = {
             { path: 'upgrade', element: <Photographyupgrade /> },
             { path: 'enquiry', element: <Photographyenquiry /> },
             { path: 'Enqurychat', element: <Photographyenquirychat /> },
-            { path: 'schedules', element: <PhotographySchedules /> },
+            { path: 'schedules', element: <PhotographySchedules /> }
+          ]
+        },
 
 
-
-
+         {
+          path: 'cake',
+          children: [
+            { path: 'addpackage', element: <AddcakePackage /> },
+            { path: 'packagelist', element: <Cakelist /> },
+            { path: 'upgrade', element: <Cakeupgrade /> },
+            { path: 'enquiry', element: <Cakeenquiry /> },
+            { path: 'Enqurychat', element: <Cakeenquirychat /> },
+            { path: 'schedules', element: <CakeSchedules /> }
           ]
         }
       ]

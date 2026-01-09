@@ -92,7 +92,6 @@ import Reportsection from './vendors/reportsection';
 
 // import Tripmanagement from './vendors/tripmanagement';
 import Employeesection from './vendors/employeesection';
-// import Businesssection from './vendors/businesssection';
 
 // Venue Modules
 // import bookingmanagement from './venues/bookingmanagement';
@@ -125,6 +124,9 @@ import management from './venues/management';
 import makeupManagement from './makeup/Managementmakeup';
 import cateringManagementMenu from './catering/Managementcatering';
 import photographyManagementMenu from './photography/Managementphotography';
+import cakemanagement from './cakes/cakemanagement';
+import Cakesection from './cakes/cakesections';
+import cakeManagementMenu from './cakes/managementcake';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -162,9 +164,10 @@ if (logRes === 'transport') {
     // specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];   
         specificSections = [makeupManagement, Makeupmanagement];      
    
-}else if (logRes === 'dj_music') {
-  // specificSections = [djmusicmanagement];
-  specificSections = [];
+}else if (logRes === 'cake') {
+  // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
+    specificSections = [cakeManagementMenu,cakemanagement];
+
 }
 
 const menuItems = {
