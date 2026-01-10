@@ -38,14 +38,40 @@ export default function Dashboard() {
   useEffect(() => {
     setLoading(false);
 
-    // 🔑 Check KYC after 4 seconds
-    const timer = setTimeout(() => {
-      if (!user?.kycCompleted) {
-        setShowKycPopup(true);
-      }
-    }, 4000);
+    const checkKycStatus = async () => {
+      if (!user?._id) return;
 
-    return () => clearTimeout(timer);
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+        const res = await axios.get(`${API_BASE_URL}/profile/kyc/${user._id}`);
+
+        if (res.data.success && res.data.data) {
+          // ✅ KYC is completed on backend, update localStorage
+          const updatedUser = { ...user, kycCompleted: true };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        } else {
+          // ❌ KYC NOT completed, show popup after delay
+          triggerKycPopup();
+        }
+      } catch (err) {
+        console.error('KYC Status check failed:', err);
+        // If 404, it means KYC record doesn't exist yet
+        if (err.response?.status === 404) {
+          triggerKycPopup();
+        }
+      }
+    };
+
+    const triggerKycPopup = () => {
+      setTimeout(() => {
+        const latestUser = JSON.parse(localStorage.getItem('user'));
+        if (!latestUser?.kycCompleted) {
+          setShowKycPopup(true);
+        }
+      }, 4000);
+    };
+
+    checkKycStatus();
   }, []);
 
   const renderDashboard = () => {
