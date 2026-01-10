@@ -40,8 +40,12 @@ function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date().getDate());
   const [openDialog, setOpenDialog] = useState(false);
   const [bookings, setBookings] = useState([]);
-  const [venues, setVenues] = useState([]);
-  const [packages, setPackages] = useState([]);
+
+  // 🎂 CAKE STATES
+  const [cakes, setCakes] = useState([]);
+  const [cakeVariations, setCakeVariations] = useState([]);
+  const [selectedVariations, setSelectedVariations] = useState([]);
+
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -49,26 +53,26 @@ function BookingCalendar() {
   const [deleteLoading, setDeleteLoading] = useState(null);
 
   // Form state
-  const [formData, setFormData] = useState({
-    fullName: '',
-    contactNumber: '',
-    emailAddress: '',
-    address: '',
-    numberOfGuests: '',
-    additionalNotes: '',
-    venueId: '',
-    moduleId: '',
-    packageId: '',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: [],
-    paymentType: 'Cash',
-    bookingType: 'Direct'
-  });
+const [formData, setFormData] = useState({
+  fullName: '',
+  contactNumber: '',
+  emailAddress: '',
+  address: '',
+
+  cakeId: '',
+  deliveryType: 'Home Delivery',
+  customerMessage: '',
+
+  bookingDate: new Date().toISOString().split('T')[0],
+  timeSlot: [],
+  paymentType: 'COD',
+  bookingType: 'Direct'
+});
 
   // Get providerId from localStorage
   const getProviderId = () => {
     let id = localStorage.getItem('providerId') || localStorage.getItem('userId');
-    
+
     if (!id) {
       const userStr = localStorage.getItem('user');
       if (userStr) {
@@ -80,25 +84,24 @@ function BookingCalendar() {
         }
       }
     }
-    
+
     return id;
   };
 
   const providerId = getProviderId();
 
-useEffect(() => {
-  if (providerId) {
-    fetchBookings();
-    fetchModules();
-    fetchMakeupPackages(); // ✅ ADD THIS LINE
-  }
-}, [currentDate, providerId]);
-
+  useEffect(() => {
+    if (providerId) {
+      fetchBookings();
+      fetchModules();
+      fetchCakes(); // ✅ ADD
+    }
+  }, [currentDate, providerId]);
 
   // Auto-select module if only one is available
   useEffect(() => {
     if (modules.length === 1 && !formData.moduleId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         moduleId: modules[0]._id
       }));
@@ -110,13 +113,13 @@ useEffect(() => {
       setError('Provider ID is required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/api/bookings/provider/${providerId}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setBookings(data.data || []);
       } else {
@@ -135,11 +138,11 @@ useEffect(() => {
       console.log('No providerId available');
       return;
     }
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/venues/provider/${providerId}`);
       const data = await response.json();
-      
+
       if (response.ok && data.success && data.data) {
         setVenues(data.data);
       } else {
@@ -158,9 +161,9 @@ useEffect(() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/modules`);
       const data = await response.json();
-      
+
       let modulesList = [];
-      
+
       if (data.success && data.data && Array.isArray(data.data)) {
         modulesList = data.data;
       } else if (data.success && data.modules && Array.isArray(data.modules)) {
@@ -168,20 +171,20 @@ useEffect(() => {
       } else if (Array.isArray(data)) {
         modulesList = data;
       }
-      
+
       console.log('All modules fetched:', modulesList);
-      
+
       // Filter modules: Only show "Venues" module by default
       // Or filter by modules that this provider has venues for
-      const filteredModules = modulesList.filter(module => {
+      const filteredModules = modulesList.filter((module) => {
         const moduleTitle = (module.title || module.name || '').toLowerCase();
         // Only show Venues module (you can adjust this logic)
-return moduleTitle === 'makeup artist';
+return moduleTitle === 'cake';
       });
-      
+
       console.log('Filtered modules for provider:', filteredModules);
       setModules(filteredModules);
-      
+
       if (filteredModules.length === 0) {
         console.warn('No modules available for this provider');
       }
@@ -192,24 +195,18 @@ return moduleTitle === 'makeup artist';
     }
   };
 
- const fetchMakeupPackages = async () => {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/makeup-packages/provider/${providerId}`
-    );
-    const data = await response.json();
-
-    if (data.success) {
-      setPackages(data.data || []);
-    } else {
-      setPackages([]);
+  // 🎂 FETCH CAKES (DIRECT BOOKING)
+  const fetchCakes = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cakes/provider/${providerId}?moduleId=68e5fc09651cc12c1fc0f9c9`);
+      const data = await response.json();
+      if (data.success) {
+        setCakes(data.data || []);
+      }
+    } catch (err) {
+      console.error('Fetch cakes error:', err);
     }
-  } catch (err) {
-    console.error('Fetch makeup packages error:', err);
-    setPackages([]);
-  }
-};
-
+  };
 
   const handleDeleteBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to delete this booking?')) {
@@ -231,7 +228,7 @@ return moduleTitle === 'makeup artist';
 
       if (data.success) {
         // Remove from local state immediately
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
+        setBookings((prevBookings) => prevBookings.filter((booking) => booking._id !== bookingId));
         alert('Booking deleted successfully!');
       } else {
         setError(data.message || 'Failed to delete booking');
@@ -249,51 +246,51 @@ return moduleTitle === 'makeup artist';
   const todayMonth = today.getMonth();
   const todayYear = today.getFullYear();
 
- const getCurrentMonthBookings = () => {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const getCurrentMonthBookings = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const status = {};
+    const status = {};
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dayBookings = bookings.filter(booking => {
-      const bookingDate = new Date(booking.bookingDate);
-      return (
-        bookingDate.getDate() === day &&
-        bookingDate.getMonth() === month &&
-        bookingDate.getFullYear() === year &&
-        booking.bookingType === 'Direct'
-      );
-    });
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayBookings = bookings.filter((booking) => {
+        const bookingDate = new Date(booking.bookingDate);
+        return (
+          bookingDate.getDate() === day &&
+          bookingDate.getMonth() === month &&
+          bookingDate.getFullYear() === year &&
+          booking.bookingType === 'Direct'
+        );
+      });
 
-    // 🔴 count slots instead of bookings
-    const totalSlots = dayBookings.reduce((acc, b) => {
-      return acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1);
-    }, 0);
+      // 🔴 count slots instead of bookings
+      const totalSlots = dayBookings.reduce((acc, b) => {
+        return acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1);
+      }, 0);
 
-    if (totalSlots === 0) {
-      status[day] = 'free';
-    } else if (totalSlots >= 2) {
-      status[day] = 'booked'; // 🔴 RED
-    } else {
-      status[day] = 'available'; // 🟡 YELLOW
+      if (totalSlots === 0) {
+        status[day] = 'free';
+      } else if (totalSlots >= 2) {
+        status[day] = 'booked'; // 🔴 RED
+      } else {
+        status[day] = 'available'; // 🟡 YELLOW
+      }
     }
-  }
 
-  return status;
-};
-
+    return status;
+  };
 
   const bookingStatus = getCurrentMonthBookings();
 
   const getBookingsForSelectedDate = () => {
-    return bookings.filter(booking => {
+    return bookings.filter((booking) => {
       const bookingDate = new Date(booking.bookingDate);
-      const isSelectedDate = bookingDate.getDate() === selectedDate && 
-             bookingDate.getMonth() === currentDate.getMonth() && 
-             bookingDate.getFullYear() === currentDate.getFullYear();
-      
+      const isSelectedDate =
+        bookingDate.getDate() === selectedDate &&
+        bookingDate.getMonth() === currentDate.getMonth() &&
+        bookingDate.getFullYear() === currentDate.getFullYear();
+
       // Only show Direct bookings
       return isSelectedDate && booking.bookingType === 'Direct';
     });
@@ -400,19 +397,39 @@ return moduleTitle === 'makeup artist';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
   };
 
   const handleTimeSlotChange = (slot) => {
-    setFormData(prev => {
-      const timeSlots = prev.timeSlot.includes(slot)
-        ? prev.timeSlot.filter(s => s !== slot)
-        : [...prev.timeSlot, slot];
+    setFormData((prev) => {
+      const timeSlots = prev.timeSlot.includes(slot) ? prev.timeSlot.filter((s) => s !== slot) : [...prev.timeSlot, slot];
       return { ...prev, timeSlot: timeSlots };
     });
+  };
+  // 🎂 HANDLE CAKE SELECT
+  const handleCakeChange = (e) => {
+    const cakeId = e.target.value;
+    setFormData((prev) => ({ ...prev, cakeId }));
+
+    const cake = cakes.find((c) => c._id === cakeId);
+    setCakeVariations(cake?.variations || []);
+    setSelectedVariations([]);
+  };
+
+  // 🎂 VARIATION HANDLERS
+  const toggleVariation = (variation) => {
+    setSelectedVariations((prev) => {
+      const exists = prev.find((v) => v._id === variation._id);
+      if (exists) return prev.filter((v) => v._id !== variation._id);
+      return [...prev, { ...variation, quantity: 1 }];
+    });
+  };
+
+  const updateVariationQty = (id, qty) => {
+    setSelectedVariations((prev) => prev.map((v) => (v._id === id ? { ...v, quantity: Math.max(1, qty) } : v)));
   };
 
 const handleSubmit = async () => {
@@ -420,7 +437,6 @@ const handleSubmit = async () => {
   setError(null);
 
   try {
-    // ✅ REQUIRED FIELD VALIDATIONS
     if (!formData.fullName.trim()) {
       setError('Full Name is required');
       return;
@@ -431,13 +447,13 @@ const handleSubmit = async () => {
       return;
     }
 
-    if (!formData.moduleId) {
-      setError('Please select a module');
+    if (!formData.cakeId) {
+      setError('Please select a cake');
       return;
     }
 
-    if (!formData.packageId) {
-      setError('Please select a package');
+    if (!selectedVariations.length) {
+      setError('Please select at least one cake variation');
       return;
     }
 
@@ -447,43 +463,45 @@ const handleSubmit = async () => {
     }
 
     if (!formData.timeSlot.length) {
-      setError('Please select at least one time slot');
+      setError('Please select time slot');
       return;
     }
 
-    // ✅ BUILD PAYLOAD (optional fields only if filled)
     const bookingData = {
-      moduleId: formData.moduleId,
-      makeupId: formData.packageId,
+      moduleId: modules[0]._id,
+      moduleType: 'Cake',
+
+      cakeId: formData.cakeId,
+      cakeVariations: selectedVariations,
+      deliveryType: formData.deliveryType,
+      customerMessage: formData.customerMessage,
+
       fullName: formData.fullName,
       contactNumber: formData.contactNumber,
+      emailAddress: formData.emailAddress,
+      address: formData.address,
+
       bookingDate: formData.bookingDate,
       timeSlot: formData.timeSlot,
+
       paymentType: formData.paymentType,
       bookingType: 'Direct'
     };
 
-    // optional fields
-    if (formData.emailAddress) bookingData.emailAddress = formData.emailAddress;
-    if (formData.address) bookingData.address = formData.address;
-    if (formData.numberOfGuests) bookingData.numberOfGuests = Number(formData.numberOfGuests);
-    if (formData.additionalNotes) bookingData.additionalNotes = formData.additionalNotes;
-
-    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+    const res = await fetch(`${API_BASE_URL}/api/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bookingData)
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
     if (data.success) {
-      alert('Booking created successfully!');
-      handleCloseDialog();
+      alert('Cake booking created successfully!');
+      setOpenDialog(false);
       fetchBookings();
-      resetForm();
     } else {
-      setError(data.message || 'Failed to create booking');
+      setError(data.message || 'Booking failed');
     }
   } catch (err) {
     setError('Error creating booking');
@@ -493,23 +511,21 @@ const handleSubmit = async () => {
 };
 
 
-  const resetForm = () => {
-    setFormData({
-      fullName: '',
-      contactNumber: '',
-      emailAddress: '',
-      address: '',
-      numberOfGuests: '',
-      additionalNotes: '',
-      venueId: '',
-      moduleId: '',
-      packageId: '',
-      bookingDate: new Date().toISOString().split('T')[0],
-      timeSlot: [],
-      paymentType: 'Cash',
-      bookingType: 'Direct'
-    });
-  };
+const resetForm = () => {
+  setFormData({
+    fullName: '',
+    contactNumber: '',
+    emailAddress: '',
+    address: '',
+    cakeId: '',
+    deliveryType: 'Home Delivery',
+    customerMessage: '',
+    bookingDate: new Date().toISOString().split('T')[0],
+    timeSlot: [],
+    paymentType: 'COD',
+    bookingType: 'Direct'
+  });
+};
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -744,9 +760,6 @@ const handleSubmit = async () => {
       transition: 'background-color 0.2s, transform 0.2s'
     }
   };
-const selectedPackage = packages.find(
-  pkg => pkg._id === formData.packageId
-);
 
   const sectionHeaderStyle = {
     display: 'flex',
@@ -854,27 +867,27 @@ const selectedPackage = packages.find(
           <h3 style={styles.bookingsTitle}>Today's Bookings</h3>
           <div style={styles.bookingsContainer}>
             {selectedBookings.map((booking) => (
-              <div 
-                key={booking._id} 
-                style={{ 
-                  ...styles.bookingCard, 
-                  backgroundColor: getBookingCardColor(booking.status) 
+              <div
+                key={booking._id}
+                style={{
+                  ...styles.bookingCard,
+                  backgroundColor: getBookingCardColor(booking.status)
                 }}
               >
                 <div style={styles.bookingHeader}>
-<span style={styles.bookingTime}>
-  {Array.isArray(booking.timeSlot)
-    ? booking.timeSlot.map((t, i) => (
-        <span key={i}>
-          {t.label} ({t.time})
-        </span>
-      ))
-    : booking.timeSlot?.label
-      ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
-      : 'All Day'}
-</span>
+                  <span style={styles.bookingTime}>
+                    {Array.isArray(booking.timeSlot)
+                      ? booking.timeSlot.map((t, i) => (
+                          <span key={i}>
+                            {t.label} ({t.time})
+                          </span>
+                        ))
+                      : booking.timeSlot?.label
+                        ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+                        : 'All Day'}
+                  </span>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Chip 
+                    <Chip
                       label={booking.status}
                       size="small"
                       style={{
@@ -904,10 +917,10 @@ const selectedPackage = packages.find(
                 </div>
                 <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
                 <p style={styles.bookingLocation}>
-  {booking.makeupId?.packageTitle ||
-   booking.packageId?.packageTitle ||
-   'Makeup Package'}
+<p style={styles.bookingLocation}>
+  {booking.cakeId?.name || 'Cake Booking'}
 </p>
+                </p>
 
                 <div style={{ fontSize: '14px', marginTop: '8px' }}>
                   <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
@@ -935,11 +948,7 @@ const selectedPackage = packages.find(
         </div>
       )}
 
-      <Button
-        variant="contained"
-        style={styles.floatingButton}
-        onClick={handleOpenDialog}
-      >
+      <Button variant="contained" style={styles.floatingButton} onClick={handleOpenDialog}>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
@@ -999,57 +1008,57 @@ const selectedPackage = packages.find(
                 }}
                 sx={{ mb: 2 }}
               />
-             <TextField
-  fullWidth
-  name="emailAddress"
-  label="Email Address (Optional)"
-  variant="outlined"
-  value={formData.emailAddress}
-  onChange={handleInputChange}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <EmailIcon sx={iconStyle} />
-      </InputAdornment>
-    )
-  }}
-  sx={{ mb: 2 }}
-/>
+              <TextField
+                fullWidth
+                name="emailAddress"
+                label="Email Address (Optional)"
+                variant="outlined"
+                value={formData.emailAddress}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
 
               <TextField
-  fullWidth
-  name="address"
-  label="Address (Optional)"
-  variant="outlined"
-  value={formData.address}
-  onChange={handleInputChange}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <HomeIcon sx={iconStyle} />
-      </InputAdornment>
-    )
-  }}
-  sx={{ mb: 2 }}
-/>
+                fullWidth
+                name="address"
+                label="Address (Optional)"
+                variant="outlined"
+                value={formData.address}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <HomeIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
 
-             <TextField
-  fullWidth
-  name="numberOfGuests"
-  label="Number of Guests (Optional)"
-  type="number"
-  variant="outlined"
-  value={formData.numberOfGuests}
-  onChange={handleInputChange}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <PeopleIcon sx={iconStyle} />
-      </InputAdornment>
-    )
-  }}
-  sx={{ mb: 2 }}
-/>
+              <TextField
+                fullWidth
+                name="numberOfGuests"
+                label="Number of Guests (Optional)"
+                type="number"
+                variant="outlined"
+                value={formData.numberOfGuests}
+                onChange={handleInputChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PeopleIcon sx={iconStyle} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
 
               <TextField
                 fullWidth
@@ -1070,117 +1079,121 @@ const selectedPackage = packages.find(
               />
             </Box>
 
-            <Box mb={4}>
-              
-               <Typography variant="h6" sx={sectionHeaderStyle}>
-                <DoorFrontIcon sx={iconStyle} />
-                Select Module & Venue
-              </Typography>
+           <Box mb={4}>
+  <Typography variant="h6" sx={sectionHeaderStyle}>
+    <DoorFrontIcon sx={iconStyle} />
+    Select Cake
+  </Typography>
 
-                <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-               <InputLabel>Select Module</InputLabel>
-               <Select
-                 name="moduleId"
-                 value={formData.moduleId}
-                 onChange={handleInputChange}
-                 label="Select Module"
-                 disabled   // 🔒 remove this line if you want it editable
-               >
-                 {modules.map(module => (
-                   <MenuItem key={module._id} value={module._id}>
-                     {module.title || module.name}
-                   </MenuItem>
-                 ))}
-               </Select>
-             </FormControl>
-              {/* <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Venue</InputLabel>
-                <Select 
-                  name="venueId"
-                  value={formData.venueId}
-                  onChange={handleInputChange}
-                  label="Select Venue"
-                >
-                  <MenuItem value="">
-                    <em>Select Venue ({venues.length} available)</em>
-                  </MenuItem>
-                  {venues.map(venue => (
-                    <MenuItem key={venue._id} value={venue._id}>
-                      {venue.venueName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl> */}
+  {/* 🎂 CAKE SELECT */}
+  <FormControl fullWidth sx={{ mb: 2 }}>
+    <InputLabel>Select Cake</InputLabel>
+    <Select
+      value={formData.cakeId}
+      onChange={handleCakeChange}
+      label="Select Cake"
+    >
+      <MenuItem value="">
+        <em>Select Cake</em>
+      </MenuItem>
 
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Package</InputLabel>
-                <Select 
-                  name="packageId"
-                  value={formData.packageId}
-                  onChange={handleInputChange}
-                  label="Select Package"
-  disabled={packages.length === 0}
-                >
-                  <MenuItem value="">
-  <em>
-    {packages.length === 0
-      ? 'No makeup packages available'
-      : `Select Package (${packages.length} available)`
-    }
-  </em>
-</MenuItem>
+      {cakes.map((cake) => (
+        <MenuItem key={cake._id} value={cake._id}>
+          {cake.name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
 
-                  {packages.map(pkg => (
-  <MenuItem key={pkg._id} value={pkg._id}>
-    {pkg.packageTitle} — AED {pkg.finalPrice}
-  </MenuItem>
-))}
+  {/* 🎂 CAKE VARIATIONS */}
+  {cakeVariations.length > 0 && (
+    <Box sx={{ mb: 3 }}>
+      <Typography fontWeight={600} sx={{ mb: 1 }}>
+        Select Cake Variations
+      </Typography>
 
-                </Select>
-              </FormControl>
-           {selectedPackage && (
-  <Box
-    sx={{
-      mt: '-8px',
-      mb: 2,
-      px: 2,
-      py: 1.5,
-      border: '1px solid #e0e0e0',
-      borderTop: 'none',
-      borderRadius: '0 0 8px 8px',
-      backgroundColor: '#fafafa'
-    }}
-  >
-    <Typography variant="caption" sx={{ fontWeight: 600, color: '#ef5350' }}>
-      Included Services
-    </Typography>
+      {cakeVariations.map((variation) => {
+        
+     const selected = selectedVariations.find(
+     (v) => String(v._id) === String(variation._id)
+      );
 
-    {selectedPackage.includedServices.map(service => (
-      <Box key={service._id} mt={0.5}>
-        <Typography variant="body2" fontWeight={500}>
-          • {service.title}
-        </Typography>
-        {service.items.map((item, i) => (
-          <Typography
-            key={i}
-            variant="caption"
-            sx={{ display: 'block', ml: 2, color: 'text.secondary' }}
+        return (
+          <Box
+            key={variation._id}
+            display="flex"
+            alignItems="center"
+            gap={2}
+            mb={1}
           >
-            – {item}
-          </Typography>
-        ))}
-      </Box>
-    ))}
-  </Box>
-)}
+            <Checkbox
+              checked={!!selected}
+              onChange={() => toggleVariation(variation)}
+            />
 
-   
+            <Typography sx={{ minWidth: 120 }}>
+              {variation.name}
+            </Typography>
 
-              {formData.venueId && packages.length === 0 && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  This venue doesn't have any packages configured. You can still create a booking without selecting a package.
-                </Alert>
-              )}
+            <Typography color="text.secondary">
+              ₹ {variation.price}
+            </Typography>
+
+            {selected && (
+              <TextField
+                type="number"
+                size="small"
+                label="Qty"
+                value={selected.quantity}
+                onChange={(e) =>
+                  updateVariationQty(
+                    variation._id,
+                    Number(e.target.value)
+                  )
+                }
+                sx={{ width: 80 }}
+                inputProps={{ min: 1 }}
+              />
+            )}
+          </Box>
+        );
+      })}
+    </Box>
+  )}
+
+  {/* 🚚 DELIVERY TYPE */}
+  <FormControl fullWidth sx={{ mb: 2 }}>
+    <InputLabel>Delivery Type</InputLabel>
+    <Select
+      value={formData.deliveryType}
+      onChange={(e) =>
+        setFormData((prev) => ({
+          ...prev,
+          deliveryType: e.target.value
+        }))
+      }
+      label="Delivery Type"
+    >
+      <MenuItem value="Home Delivery">Home Delivery</MenuItem>
+      <MenuItem value="Takeaway">Takeaway</MenuItem>
+    </Select>
+  </FormControl>
+
+  {/* 📝 CUSTOMER MESSAGE */}
+  <TextField
+    fullWidth
+    multiline
+    rows={2}
+    label="Cake Message (Optional)"
+    placeholder="Eg: Happy Birthday John 🎉"
+    value={formData.customerMessage}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev,
+        customerMessage: e.target.value
+      }))
+    }
+  />
 
               <Typography variant="h6" sx={sectionHeaderStyle}>
                 <CalendarMonthIcon sx={iconStyle} />
@@ -1210,23 +1223,13 @@ const selectedPackage = packages.find(
                 Select Time Slots
               </Typography>
               <FormGroup sx={{ mb: 3 }}>
-                <FormControlLabel 
-                  control={
-                    <Checkbox 
-                      checked={formData.timeSlot.includes('Morning')}
-                      onChange={() => handleTimeSlotChange('Morning')}
-                    />
-                  } 
-                  label="Morning Slot 9:00 AM - 1:00 PM" 
+                <FormControlLabel
+                  control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} />}
+                  label="Morning Slot 9:00 AM - 1:00 PM"
                 />
-                <FormControlLabel 
-                  control={
-                    <Checkbox 
-                      checked={formData.timeSlot.includes('Evening')}
-                      onChange={() => handleTimeSlotChange('Evening')}
-                    />
-                  } 
-                  label="Evening Slot 6:00 PM - 10:00 PM" 
+                <FormControlLabel
+                  control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} />}
+                  label="Evening Slot 6:00 PM - 10:00 PM"
                 />
               </FormGroup>
 
@@ -1236,12 +1239,7 @@ const selectedPackage = packages.find(
               </Typography>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Payment Type</InputLabel>
-                <Select
-                  name="paymentType"
-                  value={formData.paymentType}
-                  onChange={handleInputChange}
-                  label="Payment Type"
-                >
+                <Select name="paymentType" value={formData.paymentType} onChange={handleInputChange} label="Payment Type">
                   <MenuItem value="Cash">Cash</MenuItem>
                   <MenuItem value="Card">Card</MenuItem>
                   <MenuItem value="UPI">UPI</MenuItem>

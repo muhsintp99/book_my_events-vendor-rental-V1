@@ -49,7 +49,7 @@ const TripDetail = Loadable(lazy(() => import('views/TripDetails')));
 const CreateNew = Loadable(lazy(() => import('views/CreateNew')));
 const List = Loadable(lazy(() => import('views/List')));
 const ListView = Loadable(lazy(() => import('views/ListView')));
-const Category = Loadable(lazy(() => import('views/Category')));
+const Category = Loadable(lazy(() => import('views/vehiclecategories')));
 const Brandlist = Loadable(lazy(() => import('views/BrandList')));
 const Upgrade = Loadable(lazy(() => import('../views/upgrade')));
 const Vehicleschedules = Loadable(lazy(() => import('../views/transportshedules')));
@@ -164,6 +164,10 @@ const Cakeupgrade = Loadable(lazy(() => import('../views/cake/Cakeupgrade')));
 const Cakeenquiry = Loadable(lazy(() => import('../views/cake/Cakeenquiries')));
 const Cakeenquirychat = Loadable(lazy(() => import('../views/cake/EnquiryChatPage')));
 const CakeSchedules = Loadable(lazy(() => import('../views/cake/Schedulescake')));
+const Cakecategories = Loadable(lazy(() => import('../views/cake/Categories')));
+
+
+
 
 const Allcake = Loadable(lazy(() => import('../views/cake/Allcake')));
 const CakePending = Loadable(lazy(() => import('../views/cake/Cakepending')));
@@ -415,7 +419,9 @@ const MainRoutes = {
             { path: 'upgrade', element: <Cakeupgrade /> },
             { path: 'enquiry', element: <Cakeenquiry /> },
             { path: 'Enqurychat', element: <Cakeenquirychat /> },
-            { path: 'schedules', element: <CakeSchedules /> }
+            { path: 'schedules', element: <CakeSchedules /> },
+            { path: 'categories', element: <Cakecategories /> }
+
           ]
         }
       ]

@@ -32,8 +32,8 @@ import {
 import axios from 'axios';
 
 const PINK = '#E91E63';
-const API_BASE = 'http://localhost:5000'; // Update this to your actual base URL
-const CAKE_MODULE_ID = '68e5fc09651cc12c1fc0f9c9'; // From your JSON
+const API_BASE = 'https://api.bookmyevent.ae';
+const CAKE_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
 
 // ------------------------------
 // Variation Row Component
@@ -48,7 +48,7 @@ const VariationRow = ({ variation, onChange, onDelete }) => {
         sx={{ flex: 1 }}
       />
       <TextField
-        label="Price (AED)"
+        label="Price (₹)"
         type="number"
         value={variation.price || ''}
         onChange={(e) => onChange('price', e.target.value)}
@@ -65,9 +65,12 @@ const VariationRow = ({ variation, onChange, onDelete }) => {
 // Main Component
 // ------------------------------
 const AddCakePackage = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
   const isEditMode = Boolean(id);
+
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -85,14 +88,15 @@ const AddCakePackage = () => {
   const [shortDescription, setShortDescription] = useState('');
   const [category, setCategory] = useState('');
   const [selectedSubCategories, setSelectedSubCategories] = useState([]);
-  const [itemType, setItemType] = useState('Veg'); // Veg / Non-Veg
+  const [itemType, setItemType] = useState('Veg');
   const [nutrition, setNutrition] = useState('');
   const [allergenIngredients, setAllergenIngredients] = useState('');
   const [isHalal, setIsHalal] = useState(true);
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('22:00');
   const [unitPrice, setUnitPrice] = useState('');
-  const [discountType, setDiscountType] = useState('Amount'); // Amount or Percentage
+  const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
+  const [discountType, setDiscountType] = useState('Amount');
   const [discount, setDiscount] = useState('');
   const [maxPurchaseQty, setMaxPurchaseQty] = useState('');
   const [searchTags, setSearchTags] = useState('');
@@ -102,10 +106,10 @@ const AddCakePackage = () => {
   const [variations, setVariations] = useState([{ id: Date.now(), name: '', price: '' }]);
 
   // Images
-  const [thumbnail, setThumbnail] = useState(null); // New thumbnail file
-  const [existingThumbnail, setExistingThumbnail] = useState(''); // For edit mode
-  const [galleryImages, setGalleryImages] = useState([]); // New gallery files
-  const [existingGallery, setExistingGallery] = useState([]); // For edit mode
+  const [thumbnail, setThumbnail] = useState(null);
+  const [existingThumbnail, setExistingThumbnail] = useState('');
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [existingGallery, setExistingGallery] = useState([]);
 
   // ------------------------------ Load Vendor ------------------------------
   useEffect(() => {
@@ -119,19 +123,54 @@ const AddCakePackage = () => {
     }
   }, []);
 
-  // ------------------------------ Fetch Categories & Subcategories ------------------------------
+  // ------------------------------ Fetch Parent Categories ------------------------------
   useEffect(() => {
-    axios
-      .get(`${API_BASE}/api/categories/modules/${CAKE_MODULE_ID}`)
-      .then((res) => {
-        const cats = res.data.data || [];
-        setCategories(cats);
-        // Optionally fetch subcategories dynamically if needed
-        setSubCategories([]); // Assuming subcats are loaded separately or from parent
-      })
-      .catch(() => setError('Failed to load categories'))
-      .finally(() => setCategoriesLoading(false));
+    const fetchParentCategories = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const parentCats = response.data?.data || [];
+        setCategories(parentCats);
+        
+        console.log('✅ Parent Categories Loaded:', parentCats);
+      } catch (err) {
+        console.error('❌ Failed to load parent categories:', err);
+        setError('Failed to load categories');
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchParentCategories();
   }, []);
+
+  // ------------------------------ Fetch Subcategories when Parent Category Changes ------------------------------
+  const handleCategoryChange = async (e) => {
+    const parentId = e.target.value;
+    setCategory(parentId);
+    setSelectedSubCategories([]);
+    setSubCategories([]);
+
+    if (!parentId) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE}/api/categories/parents/${parentId}/subcategories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const subCats = response.data?.data || [];
+      setSubCategories(subCats);
+      
+      console.log('✅ Subcategories Loaded:', subCats);
+    } catch (err) {
+      console.error('❌ Failed to load subcategories:', err);
+      setSubCategories([]);
+    }
+  };
 
   // ------------------------------ Load Existing Cake (EDIT MODE) ------------------------------
   useEffect(() => {
@@ -147,8 +186,26 @@ const AddCakePackage = () => {
 
         setName(cake.name);
         setShortDescription(cake.shortDescription);
-        setCategory(cake.category?._id || '');
-        setSelectedSubCategories(cake.subCategories?.map((sc) => sc._id) || []);
+        
+        // ✅ Handle parent category
+        if (cake.category?.parentCategory?._id) {
+          const parentId = cake.category.parentCategory._id;
+          setCategory(parentId);
+          
+          // ✅ Fetch subcategories for this parent
+          const token = localStorage.getItem('token');
+          const response = await axios.get(`${API_BASE}/api/categories/parents/${parentId}/subcategories`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSubCategories(response.data?.data || []);
+          
+          // ✅ Set the selected subcategory
+          setSelectedSubCategories([cake.category._id]);
+        } else if (cake.category?._id) {
+          // Fallback if category structure is different
+          setCategory(cake.category._id);
+        }
+        
         setItemType(cake.itemType);
         setNutrition(cake.nutrition?.join(', ') || '');
         setAllergenIngredients(cake.allergenIngredients?.join(', ') || '');
@@ -156,6 +213,7 @@ const AddCakePackage = () => {
         setStartTime(cake.timeSchedule?.startTime || '10:00');
         setEndTime(cake.timeSchedule?.endTime || '22:00');
         setUnitPrice(cake.priceInfo?.unitPrice || '');
+        setAdvanceBookingAmount(cake.priceInfo?.advanceBookingAmount || '');
         setDiscountType(cake.priceInfo?.discountType || 'Amount');
         setDiscount(cake.priceInfo?.discount || '');
         setMaxPurchaseQty(cake.priceInfo?.maxPurchaseQty || '');
@@ -165,13 +223,18 @@ const AddCakePackage = () => {
 
         // Variations
         if (cake.variations?.length > 0) {
-          setVariations(cake.variations.map((v) => ({ id: v._id || Date.now(), name: v.name, price: v.price })));
+          setVariations(cake.variations.map((v) => ({ 
+            id: v._id || Date.now(), 
+            name: v.name, 
+            price: v.price 
+          })));
         }
 
         // Images
         if (cake.thumbnail) setExistingThumbnail(cake.thumbnail);
         if (cake.images?.length > 0) setExistingGallery(cake.images);
       } catch (err) {
+        console.error('Failed to load cake:', err);
         setError('Failed to load cake details');
       } finally {
         setLoading(false);
@@ -217,72 +280,143 @@ const AddCakePackage = () => {
   // ------------------------------ Submit Handler ------------------------------
   const handleSubmit = async () => {
     const vendorId = currentVendor?._id || currentVendor?.id;
-    if (!vendorId) return setError('Vendor not authenticated');
-    if (!name.trim()) return setError('Cake name is required');
-    if (!category) return setError('Select a category');
-    if (!unitPrice) return setError('Unit price is required');
+    if (!vendorId) {
+      setError('Vendor not authenticated');
+      return;
+    }
+    if (!name.trim()) {
+      setError('Cake name is required');
+      return;
+    }
+    if (!category) {
+      setError('Select a category');
+      return;
+    }
+    if (!unitPrice) {
+      setError('Unit price is required');
+      return;
+    }
+    if (!thumbnail && !existingThumbnail) {
+      setError('Thumbnail image is required');
+      return;
+    }
 
     const formData = new FormData();
 
+    // Basic fields
     formData.append('name', name);
     formData.append('shortDescription', shortDescription);
-    formData.append('category', category);
-    selectedSubCategories.forEach((sc) => formData.append('subCategories', sc));
+    formData.append('module', CAKE_MODULE_ID);
+    formData.append('category', category); // ✅ This is now the parent category ID
     formData.append('itemType', itemType);
     formData.append('isHalal', isHalal);
-    formData.append('startTime', startTime);
-    formData.append('endTime', endTime);
-    formData.append('unitPrice', unitPrice);
-    formData.append('discountType', discountType);
-    if (discount) formData.append('discount', discount);
-    if (maxPurchaseQty) formData.append('maxPurchaseQty', maxPurchaseQty);
     formData.append('isActive', isActive);
     formData.append('isTopPick', isTopPick);
     formData.append('provider', vendorId);
 
-    // Arrays as comma-separated or JSON
+    // ✅ Subcategories - send as JSON array
+    if (selectedSubCategories.length > 0) {
+      formData.append('subCategories', JSON.stringify(selectedSubCategories));
+    }
+
+    // Time schedule
+    formData.append('timeSchedule', JSON.stringify({
+      startTime,
+      endTime
+    }));
+
+    // Price info
+    const priceInfoObj = {
+      unitPrice: Number(unitPrice),
+      discountType,
+      discount: discount ? Number(discount) : 0,
+      maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : undefined
+    };
+
+    // ✅ Add advance booking amount if provided
+    if (advanceBookingAmount) {
+      priceInfoObj.advanceBookingAmount = Number(advanceBookingAmount);
+    }
+
+    formData.append('priceInfo', JSON.stringify(priceInfoObj));
+
+    // Arrays
     if (nutrition.trim()) {
       const nutritionArr = nutrition.split(',').map((i) => i.trim()).filter(Boolean);
-      nutritionArr.forEach((item) => formData.append('nutrition', item));
+      formData.append('nutrition', JSON.stringify(nutritionArr));
     }
+    
     if (allergenIngredients.trim()) {
       const allergenArr = allergenIngredients.split(',').map((i) => i.trim()).filter(Boolean);
-      allergenArr.forEach((item) => formData.append('allergenIngredients', item));
+      formData.append('allergenIngredients', JSON.stringify(allergenArr));
     }
+    
     if (searchTags.trim()) {
       const tagsArr = searchTags.split(',').map((t) => t.trim()).filter(Boolean);
-      tagsArr.forEach((tag) => formData.append('searchTags', tag));
+      formData.append('searchTags', JSON.stringify(tagsArr));
     }
 
     // Variations
     const validVariations = variations
       .filter((v) => v.name && v.price)
       .map(({ name, price }) => ({ name, price: Number(price) }));
+    
     if (validVariations.length > 0) {
       formData.append('variations', JSON.stringify(validVariations));
     }
 
     // Images
-    if (thumbnail) formData.append('thumbnail', thumbnail);
-    galleryImages.forEach((file) => formData.append('images', file));
+    if (thumbnail) {
+      formData.append('thumbnail', thumbnail);
+    }
+    
+    galleryImages.forEach((file) => {
+      formData.append('images', file);
+    });
 
     try {
       setSubmitting(true);
       setError('');
       setSuccessMessage('');
 
+      let response;
+      
       if (isEditMode) {
-        await axios.put(`${API_BASE}/api/cakes/${id}`, formData, {
+        response = await axios.put(`${API_BASE}/api/cakes/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         setSuccessMessage('Cake updated successfully!');
       } else {
-        await axios.post(`${API_BASE}/api/cakes`, formData, {
+        response = await axios.post(`${API_BASE}/api/cakes`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         setSuccessMessage('Cake created successfully!');
       }
+
+      // ✅ Fetch and populate the created/updated cake data
+      if (response.data.success && response.data.data) {
+        const cakeData = response.data.data;
+        
+        console.log('✅ Cake Package Created/Updated:', {
+          id: cakeData._id,
+          name: cakeData.name,
+          cakeId: cakeData.cakeId,
+          category: cakeData.category?.title,
+          provider: cakeData.provider?.storeName,
+          thumbnail: cakeData.thumbnail,
+          priceInfo: cakeData.priceInfo,
+          variations: cakeData.variations,
+          module: cakeData.module?.title
+        });
+
+        // Optionally navigate to cake list or detail page after 2 seconds
+        // setTimeout(() => {
+        //   navigate('/cakes'); 
+        // }, 2000);
+      }
+
     } catch (err) {
+      console.error('Submit error:', err);
       setError(err.response?.data?.message || 'Error saving cake');
     } finally {
       setSubmitting(false);
@@ -294,7 +428,7 @@ const AddCakePackage = () => {
   if (loading || categoriesLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress size={60} />
+        <CircularProgress size={60} sx={{ color: PINK }} />
       </Box>
     );
   }
@@ -308,7 +442,7 @@ const AddCakePackage = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h5" fontWeight="bold">
-            {isEditMode ? 'Edit' : 'Add'} Cake
+            {isEditMode ? 'Edit' : 'Add'} Cake Package
           </Typography>
         </Box>
         {currentVendor && (
@@ -325,10 +459,16 @@ const AddCakePackage = () => {
 
         <Paper elevation={3} sx={{ borderRadius: 3, p: { xs: 3, md: 6 } }}>
           {/* Name & Short Description */}
-          <TextField fullWidth label="Cake Name *" value={name} onChange={(e) => setName(e.target.value)} sx={{ mb: 3 }} />
+          <TextField 
+            fullWidth 
+            label="Cake Name *" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            sx={{ mb: 3 }} 
+          />
           <TextField
             fullWidth
-            label="Short Description"
+            label="Short Description *"
             multiline
             rows={2}
             value={shortDescription}
@@ -339,8 +479,9 @@ const AddCakePackage = () => {
           {/* Category & Subcategories */}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
             <FormControl fullWidth>
-              <InputLabel>Category *</InputLabel>
-              <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <InputLabel>Parent Category *</InputLabel>
+              <Select value={category} onChange={handleCategoryChange}>
+                <MenuItem value="">Select Parent Category</MenuItem>
                 {categories.map((cat) => (
                   <MenuItem key={cat._id} value={cat._id}>
                     {cat.title}
@@ -349,7 +490,7 @@ const AddCakePackage = () => {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth>
+            <FormControl fullWidth disabled={!category}>
               <InputLabel>Sub Categories</InputLabel>
               <Select
                 multiple
@@ -376,7 +517,7 @@ const AddCakePackage = () => {
           </Stack>
 
           {/* Type & Dietary */}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3, alignItems: 'center' }}>
             <FormControl fullWidth>
               <InputLabel>Item Type</InputLabel>
               <Select value={itemType} onChange={(e) => setItemType(e.target.value)}>
@@ -385,7 +526,7 @@ const AddCakePackage = () => {
               </Select>
             </FormControl>
             <FormControlLabel
-              control={<Switch checked={isHalal} onChange={() => setIsHalal(!isHalal)} />}
+              control={<Switch checked={isHalal} onChange={() => setIsHalal(!isHalal)} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }} />}
               label="Halal Certified"
             />
           </Stack>
@@ -411,30 +552,78 @@ const AddCakePackage = () => {
           {/* Time Schedule */}
           <Typography variant="h6" sx={{ mb: 2, color: PINK }}>Availability Time</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ mb: 4 }}>
-            <TextField label="Start Time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} InputLabelProps={{ shrink: true }} />
-            <TextField label="End Time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} InputLabelProps={{ shrink: true }} />
+            <TextField 
+              label="Start Time" 
+              type="time" 
+              value={startTime} 
+              onChange={(e) => setStartTime(e.target.value)} 
+              InputLabelProps={{ shrink: true }} 
+              fullWidth
+            />
+            <TextField 
+              label="End Time" 
+              type="time" 
+              value={endTime} 
+              onChange={(e) => setEndTime(e.target.value)} 
+              InputLabelProps={{ shrink: true }} 
+              fullWidth
+            />
           </Stack>
 
           {/* Pricing */}
           <Typography variant="h6" sx={{ mb: 2, color: PINK }}>Pricing</Typography>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 2 }}>
+            <TextField 
+              fullWidth 
+              label="Base Unit Price (₹) *" 
+              type="number" 
+              value={unitPrice} 
+              onChange={(e) => setUnitPrice(e.target.value)} 
+            />
+            <TextField 
+              fullWidth 
+              label="Advance Booking Amount (₹)" 
+              type="number" 
+              value={advanceBookingAmount} 
+              onChange={(e) => setAdvanceBookingAmount(e.target.value)}
+              helperText="Amount to be paid upfront"
+            />
+          </Stack>
+          
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            <TextField fullWidth label="Base Unit Price (AED) *" type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
-            <FormControl sx={{ minWidth: 120 }}>
+            <FormControl sx={{ minWidth: 150 }}>
               <InputLabel>Discount Type</InputLabel>
               <Select value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
                 <MenuItem value="Amount">Amount</MenuItem>
                 <MenuItem value="Percentage">Percentage</MenuItem>
               </Select>
             </FormControl>
-            <TextField label="Discount Value" type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} />
-            <TextField label="Max Purchase Qty" type="number" value={maxPurchaseQty} onChange={(e) => setMaxPurchaseQty(e.target.value)} />
+            <TextField 
+              label="Discount Value" 
+              type="number" 
+              value={discount} 
+              onChange={(e) => setDiscount(e.target.value)} 
+              fullWidth
+            />
+            <TextField 
+              label="Max Purchase Qty" 
+              type="number" 
+              value={maxPurchaseQty} 
+              onChange={(e) => setMaxPurchaseQty(e.target.value)} 
+              fullWidth
+            />
           </Stack>
 
           {/* Variations */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ color: PINK }}>Variations (Size/Weight)</Typography>
-              <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: PINK }} onClick={handleAddVariation}>
+              <Button 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                sx={{ bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }} 
+                onClick={handleAddVariation}
+              >
                 Add Variation
               </Button>
             </Box>
@@ -460,8 +649,14 @@ const AddCakePackage = () => {
 
           {/* Toggles */}
           <Stack direction="row" spacing={4} sx={{ mb: 4 }}>
-            <FormControlLabel control={<Switch checked={isActive} onChange={() => setIsActive(!isActive)} />} label="Active" />
-            <FormControlLabel control={<Switch checked={isTopPick} onChange={() => setIsTopPick(!isTopPick)} />} label="Top Pick" />
+            <FormControlLabel 
+              control={<Switch checked={isActive} onChange={() => setIsActive(!isActive)} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }} />} 
+              label="Active" 
+            />
+            <FormControlLabel 
+              control={<Switch checked={isTopPick} onChange={() => setIsTopPick(!isTopPick)} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }} />} 
+              label="Top Pick" 
+            />
           </Stack>
 
           {/* Thumbnail */}
@@ -479,7 +674,10 @@ const AddCakePackage = () => {
                   style={{ width: 200, height: 200, objectFit: 'cover', borderRadius: 8 }}
                 />
                 {thumbnail && (
-                  <IconButton onClick={(e) => { e.stopPropagation(); setThumbnail(null); }} sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}>
+                  <IconButton 
+                    onClick={(e) => { e.stopPropagation(); setThumbnail(null); }} 
+                    sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
+                  >
                     <CloseIcon />
                   </IconButton>
                 )}
@@ -504,7 +702,10 @@ const AddCakePackage = () => {
                 {existingGallery.map((img, i) => (
                   <Box key={`ex-${i}`} sx={{ position: 'relative' }}>
                     <img src={img} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
-                    <IconButton onClick={(e) => { e.stopPropagation(); removeExistingGalleryImage(i); }} sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}>
+                    <IconButton 
+                      onClick={(e) => { e.stopPropagation(); removeExistingGalleryImage(i); }} 
+                      sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
+                    >
                       <CloseIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -512,7 +713,10 @@ const AddCakePackage = () => {
                 {galleryImages.map((file, i) => (
                   <Box key={`new-${i}`} sx={{ position: 'relative' }}>
                     <img src={URL.createObjectURL(file)} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
-                    <IconButton onClick={(e) => { e.stopPropagation(); removeNewGalleryImage(i); }} sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}>
+                    <IconButton 
+                      onClick={(e) => { e.stopPropagation(); removeNewGalleryImage(i); }} 
+                      sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
+                    >
                       <CloseIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -535,7 +739,7 @@ const AddCakePackage = () => {
             disabled={submitting || !currentVendor}
             sx={{ py: 2, bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
           >
-            {submitting ? <CircularProgress size={28} color="inherit" /> : isEditMode ? 'Update Cake' : 'Create Cake'}
+            {submitting ? <CircularProgress size={28} color="inherit" /> : isEditMode ? 'Update Cake Package' : 'Create Cake Package'}
           </Button>
         </Paper>
       </Box>

@@ -66,7 +66,7 @@ const cakemanagement = {
       id: 'cake-categories',
       title: 'Categories',
       type: 'item',
-      url: '/venue/categories',
+      url: '/cake/categories',
       icon: icons.IconCategory,
       breadcrumbs: false
     },
