@@ -1,10 +1,9 @@
+import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { keyframes } from '@mui/system';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import StarsIcon from '@mui/icons-material/Stars';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import InfoIcon from '@mui/icons-material/Info';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 const fadeSlide = keyframes`
   from {
@@ -38,8 +37,7 @@ export default function WelcomeBanner() {
         sx={{
           position: 'relative',
           overflow: 'hidden',
-          background:
-            'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
+          background: 'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
           borderRadius: 3,
           px: { xs: 3, md: 4 },
           py: { xs: 2.5, md: 3 },
@@ -70,42 +68,31 @@ export default function WelcomeBanner() {
         />
 
         <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-            {kycCompleted && (
-              <PendingActionsIcon sx={{ fontSize: { xs: 28, md: 32 }, color: 'rgba(255,255,255,0.9)' }} />
-            )}
-            <Typography
-              sx={{
-                fontSize: { xs: '1.45rem', md: '1.9rem' },
-                fontWeight: 800,
-                letterSpacing: '-0.4px'
-              }}
-            >
-              {kycCompleted ? 'Verification in Progress ⏳' : 'Welcome aboard! 🎉'}
-            </Typography>
-          </Box>
+          <Typography
+            sx={{
+              fontSize: { xs: '1.45rem', md: '1.9rem' },
+              fontWeight: 800,
+              mb: 0.5,
+              letterSpacing: '-0.4px'
+            }}
+          >
+            {kycCompleted ? '' : 'Welcome aboard! 🎉'}
+          </Typography>
 
           <Typography
             sx={{
-              fontSize: '0.98rem',
+              fontSize: '0.95rem',
               opacity: 0.95,
-              maxWidth: 550,
-              lineHeight: 1.6,
-              fontWeight: 500
+              maxWidth: 520,
+              lineHeight: 1.5
             }}
           >
             {kycCompleted ? (
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <InfoIcon sx={{ mt: 0.3, fontSize: 18, opacity: 0.8 }} />
-                <span>
-                  Thank you for registering. Your profile is under verification and will be <strong>fully approved</strong> after successful <strong>KYC validation</strong>.
-                </span>
-              </Box>
+              'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
               <>
                 Thanks for registering with us. Your profile is currently under verification and will be approved within <strong> 48 hours</strong>.
                 Meanwhile, feel free to add your packages and complete your profile to get ready for bookings.
-                Sit back while we prepare everything for you.
               </>
             )}
           </Typography>

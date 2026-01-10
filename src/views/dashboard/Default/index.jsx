@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
+import axios from 'axios';
 
 // dashboards
 import VehicleIndex from '../../../vehicledashboard';
@@ -7,7 +8,6 @@ import CateringIndex from '../../../cateringdashboard';
 import MakeupIndex from '../../../makeupdashboard';
 import PhotographyIndex from '../../../photographydashboard';
 import CakeIndex from '../../../cakedashboard';
-
 
 // cards
 import EarningCard from './EarningCard';
@@ -37,50 +37,75 @@ export default function Dashboard() {
   // ================= INITIAL LOAD =================
   useEffect(() => {
     setLoading(false);
-
-    const checkKycStatus = async () => {
-      if (!user?._id) return;
-
-      try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
-        const res = await axios.get(`${API_BASE_URL}/profile/kyc/${user._id}`);
-
-        if (res.data.success && res.data.data) {
-          // ✅ KYC is completed on backend, update localStorage
-          const updatedUser = { ...user, kycCompleted: true };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-        } else {
-          // ❌ KYC NOT completed, show popup after delay
-          triggerKycPopup();
-        }
-      } catch (err) {
-        console.error('KYC Status check failed:', err);
-        // If 404, it means KYC record doesn't exist yet
-        if (err.response?.status === 404) {
-          triggerKycPopup();
-        }
-      }
-    };
-
-    const triggerKycPopup = () => {
-      setTimeout(() => {
-        const latestUser = JSON.parse(localStorage.getItem('user'));
-        if (!latestUser?.kycCompleted) {
-          setShowKycPopup(true);
-        }
-      }, 4000);
-    };
-
     checkKycStatus();
+    // eslint-disable-next-line
   }, []);
 
+  // ================= KYC STATUS CHECK =================
+  const checkKycStatus = async () => {
+    if (!user?._id) return;
+
+    try {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+
+      const res = await axios.get(
+        `${API_BASE_URL}/profile/kyc/${user._id}`
+      );
+
+      const status = res?.data?.data?.status;
+
+      console.log('KYC STATUS:', status);
+
+      // ✅ VERIFIED → no popup
+      if (status === 'verified') {
+        localStorage.setItem(
+          'user',
+          JSON.stringify({ ...user, kycStatus: 'verified' })
+        );
+        setShowKycPopup(false);
+        return;
+      }
+
+      // 🟡 PENDING → no popup
+      if (status === 'pending') {
+        localStorage.setItem(
+          'user',
+          JSON.stringify({ ...user, kycStatus: 'pending' })
+        );
+        setShowKycPopup(false);
+        return;
+      }
+
+      // 🔴 NOT SUBMITTED → show popup
+      if (status === 'not_submitted') {
+        triggerKycPopup();
+      }
+
+    } catch (err) {
+      console.error('KYC Status check failed:', err);
+
+      // ❗ No KYC record → show popup
+      if (err.response?.status === 404) {
+        triggerKycPopup();
+      }
+    }
+  };
+
+  // ================= POPUP TRIGGER =================
+  const triggerKycPopup = () => {
+    setTimeout(() => {
+      setShowKycPopup(true);
+    }, 3000);
+  };
+
+  // ================= DASHBOARD RENDER =================
   const renderDashboard = () => {
     if (Module === 'Transport') return <VehicleIndex isLoading={isLoading} />;
     if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
     if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
     if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
     if (Module === 'Cake') return <CakeIndex isLoading={isLoading} />;
-
 
     return (
       <Grid container spacing={gridSpacing}>
