@@ -8,11 +8,14 @@ import MinimalLayout from 'layout/MinimalLayout';
 const LoginPage = Loadable(lazy(() => import('views/pages/authentication/Login')));
 const RegisterPage = Loadable(lazy(() => import('views/pages/authentication/Register')));
 
+import ErrorBoundary from 'ui-component/ErrorBoundary';
+
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const AuthenticationRoutes = {
   path: '/',
   element: <MinimalLayout />,
+  errorElement: <ErrorBoundary />,
   children: [
     {
       path: '/pages/login',
