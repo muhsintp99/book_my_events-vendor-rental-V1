@@ -104,17 +104,25 @@ export default function ProfileSection() {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user'); // Get user string
 
-    if (!token || !storedUser) return;
+    if (!token || !storedUser) {
+      console.log('Missing token or user data');
+      return;
+    }
 
     // Parse user to get the ID
     const currentUser = JSON.parse(storedUser);
     const userId = currentUser._id || currentUser.id; // Support both _id and id
 
+    console.log('Fetching profile for userId:', userId);
+
     try {
       // Use the new provider-specific endpoint for profile data
+      console.log('Fetching from provider API:', `${PROFILE_API}provider/${userId}`);
       const { data } = await axios.get(`${PROFILE_API}provider/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      console.log('Provider API response:', data);
 
       // Backend returns { success: true, data: { ...profile } } -> Single Object
       if (data.success && data.data) {
@@ -151,22 +159,40 @@ export default function ProfileSection() {
 
       // Fetch vendor profile separately to get the logo
       try {
-        const vendorResponse = await axios.get(`https://api.bookmyevent.ae/api/profile/vendor/${userId}`, {
+        const vendorApiUrl = `https://api.bookmyevent.ae/api/profile/vendor/${userId}`;
+        console.log('Fetching vendor logo from:', vendorApiUrl);
+
+        const vendorResponse = await axios.get(vendorApiUrl, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        console.log('Vendor API response:', vendorResponse.data);
 
         if (vendorResponse.data.success && vendorResponse.data.data && vendorResponse.data.data.logo) {
           // Update profile preview with logo from vendor API
           const logoUrl = `https://api.bookmyevent.ae${vendorResponse.data.data.logo}`;
+          console.log('Setting logo URL:', logoUrl);
           setProfilePreview(logoUrl);
+        } else {
+          console.log('No logo found in vendor response');
         }
       } catch (vendorError) {
         console.error('Failed to fetch vendor logo:', vendorError);
+        console.error('Vendor error details:', {
+          message: vendorError.message,
+          response: vendorError.response?.data,
+          status: vendorError.response?.status
+        });
         // Continue with existing profile photo if vendor API fails
       }
 
     } catch (error) {
       console.error('Failed to fetch profile:', error);
+      console.error('Profile error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
     }
   };
 
