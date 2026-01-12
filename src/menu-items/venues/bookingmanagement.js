@@ -1,193 +1,97 @@
-// // assets
-// import {
-//   IconCar,
-//   IconCategory,
-//   IconTrademark,
-//   IconPlus,
-//   IconList,
-//   IconClipboardCheck,
-//   IconUpload,
-//   IconDownload,
-//   IconEngine
-// } from '@tabler/icons-react';
-
-// // constants
-// const icons = {
-//   IconCar,
-//   IconCategory,
-//   IconTrademark,
-//   IconPlus,
-//   IconList,
-//   IconClipboardCheck,
-//   IconUpload,
-//   IconDownload,
-//   IconEngine
-// };
-
-// // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
-
-// const bookingmanagement = {
-//   id: 'venue-management',
-//   title: 'VENUE MANAGEMENT',
-//   type: 'group',
-//   children: [
-//     {
-//       id: 'venue-setup',
-//       title: 'Venue Setup',
-//       type: 'collapse',
-//       icon: icons.IconCar, // updated icon
-//       children: [
-//         {
-//           id: 'create-new',
-//           title: 'Create New',
-//           type: 'item',
-//           url: '/vehicle-setup/leads'  // matches MainRoutes
-//         },
-//         {
-//           id: 'list',
-//           title: 'List',
-//           type: 'item',
-//           url: '/vehicle-setup/lists'
-//         },
-//         {
-//           id: 'bulk-import',
-//           title: 'Bulk Import',
-//           type: 'item',
-//           url: '/vehicle-setup/bulk-import'
-//         },
-//         {
-//           id: 'bulk-export',
-//           title: 'Bulk Export',
-//           type: 'item',
-//           url: '/vehicle-setup/bulk-export'
-//         }
-//       ]
-//     },
-//     // {
-//     //   id: 'venue-brands',
-//     //   title: 'Brands',
-//     //   type: 'item',
-//     //   url: '/vehicles/brands',
-//     //   icon: icons.IconTrademark,
-//     //   breadcrumbs: false
-//     // },
-//     {
-//       id: 'categories',
-//       title: 'Categories',
-//       type: 'item',
-//       url: '/vehicles/categories',
-//       icon: icons.IconCategory,
-//       breadcrumbs: false
-//     }
-//   ]
-// };
-
-// export default bookingmanagement;
-
-
-
-// assets
+// assets (Tabler Icons)
 import {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
   IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
+  IconListDetails,
   IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconAlertCircle,
+  IconCircleCheck,
+  IconProgress,
+  IconChecks,
+  IconBan,
+  IconCreditCardOff
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
   IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
+  IconListDetails,
   IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconAlertCircle,
+  IconCircleCheck,
+  IconProgress,
+  IconChecks,
+  IconBan,
+  IconCreditCardOff
 };
 
-// ==============================|| TRIP MANAGEMENT MENU GROUP ||============================== //
+// ==============================|| BOOKING MANAGEMENT MENU GROUP ||============================== //
 
-const bookingmanagement= {
+const bookingmanagement = {
   title: 'BOOKING MANAGEMENT',
-  id: 'bookingmanagement', // Fixed typo: was 'tripmanagemet'
+  id: 'bookingmanagement',
   type: 'group',
   children: [
     {
       id: 'bookings',
       title: 'Bookings',
       type: 'collapse',
-      icon: icons.IconBuildingSkyscraper,
+      icon: icons.IconCalendarEvent, // 📅 All bookings
       children: [
         {
           id: 'all-bookings',
           title: 'All',
           type: 'item',
-          url: '/bookings'
+          url: '/bookings',
+          icon: icons.IconListDetails // 📋 All list
         },
         {
           id: 'scheduled-booking',
           title: 'Scheduled',
           type: 'item',
-          url: '/bookings/scheduled'
+          url: '/bookings/scheduled',
+          icon: icons.IconClock // ⏰ Scheduled
         },
         {
           id: 'pending-bookings',
           title: 'Pending',
           type: 'item',
-          url: '/bookings/pending'
+          url: '/bookings/pending',
+          icon: icons.IconAlertCircle // ⚠ Pending
         },
         {
           id: 'confirmed-bookings',
           title: 'Confirmed',
           type: 'item',
-          url: '/bookings/confirmed'
+          url: '/bookings/confirmed',
+          icon: icons.IconCircleCheck // ✅ Confirmed
         },
         {
           id: 'ongoing-bookings',
           title: 'Ongoing',
           type: 'item',
-          url: '/bookings/ongoing'
+          url: '/bookings/ongoing',
+          icon: icons.IconProgress // 🔄 Ongoing
         },
         {
           id: 'completed-bookings',
           title: 'Completed',
           type: 'item',
-          url: '/bookings/completed'
+          url: '/bookings/completed',
+          icon: icons.IconChecks // ✔ Completed
         },
         {
           id: 'canceled-bookings',
           title: 'Canceled',
           type: 'item',
-          url: '/bookings/canceled'
+          url: '/bookings/canceled',
+          icon: icons.IconBan // 🚫 Cancelled
         },
         {
           id: 'payment-failed-bookings',
           title: 'Payment Failed',
           type: 'item',
-          url: '/bookings/payment-failed'
+          url: '/bookings/payment-failed',
+          icon: icons.IconCreditCardOff // 💳❌ Payment failed
         }
       ]
     }

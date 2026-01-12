@@ -1,34 +1,23 @@
-
-
-
-
-
-// assets
+// assets (Tabler Icons)
 import {
-  IconBuilding,
-  IconCategory,
-  IconTrademark,
+  IconHome2,
+  IconTags,
   IconPlus,
   IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
-  IconEngine,
-  IconCalendar
+  IconChefHat,
+  IconCalendarTime,
+  IconRocket
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconBuilding,
-  IconCategory,
-  IconTrademark,
+  IconHome2,
+  IconTags,
   IconPlus,
   IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
-  IconEngine,
-  IconCalendar
+  IconChefHat,
+  IconCalendarTime,
+  IconRocket
 };
 
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
@@ -42,88 +31,55 @@ const venuemanagement = {
       id: 'venue-setup',
       title: 'Venue Setup',
       type: 'collapse',
-      icon: icons.IconBuilding, // updated icon
+      icon: icons.IconHome2, // 🏠 Venue / Building
       children: [
         {
           id: 'create-new',
           title: 'Create New',
           type: 'item',
-          url: '/venue-setup/new'  // matches MainRoutes
+          url: '/venue-setup/new',
+          icon: icons.IconPlus // ➕ Add
         },
         {
           id: 'list',
           title: 'List',
           type: 'item',
-          url: '/venue-setup/lists'
+          url: '/venue-setup/lists',
+          icon: icons.IconList // 📋 List
         },
         {
           id: 'food-menu',
           title: 'Food Menu',
           type: 'item',
-          url: '/venue-setup/foodmenu'
-        },
-        {
-          id: 'bulk-import',
-          title: 'Bulk Import',
-          type: 'item',
-          url: '/page-not-found'
-        },
-        {
-          id: 'bulk-export',
-          title: 'Bulk Export',
-          type: 'item',
-          url: '/page-not-found'
+          url: '/venue-setup/foodmenu',
+          icon: icons.IconChefHat // 👨‍🍳 Food
         }
       ]
     },
-    // {
-    //   id: 'venue-brands',
-    //   title: 'Brands',
-    //   type: 'item',
-    //   url: '/vehicles/brands',
-    //   icon: icons.IconTrademark,
-    //   breadcrumbs: false
-    // },
     {
       id: 'categories',
       title: 'Categories',
       type: 'item',
       url: '/venue/categories',
-      icon: icons.IconCategory,
+      icon: icons.IconTags, // 🏷 Categories
       breadcrumbs: false
     },
-     {
+    {
       id: 'schedules',
       title: 'Schedules',
       type: 'item',
       url: '/venue/schedules',
-      icon: icons.IconCalendar,
+      icon: icons.IconCalendarTime, // 📅 Schedule
       breadcrumbs: false
     },
-     {
-      id: 'Vnueupgrade',
+    {
+      id: 'venue-upgrade',
       title: 'Upgrade',
       type: 'item',
       url: '/venue/upgrade',
-      icon: icons.IconCalendar,
+      icon: icons.IconRocket, // 🚀 Upgrade
       breadcrumbs: false
-    },
-    //  {
-    //   id: 'Venueenquiries',
-    //   title: 'Enquiries',
-    //   type: 'item',
-    //   url: '/venue/enquiries',
-    //   icon: icons.IconCalendar,
-    //   breadcrumbs: false
-    // },
-    //  {
-    //   id: 'Venueenquirieschat',
-    //   title: 'Enquiries chat',
-    //   type: 'item',
-    //   url: '/venue/enquirieschat',
-    //   icon: icons.IconCalendar,
-    //   breadcrumbs: false
-    // }
+    }
   ]
 };
 

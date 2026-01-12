@@ -387,6 +387,7 @@ const MainRoutes = {
           path: 'makeupartist',
           children: [
             { path: 'addpackage', element: <AddmakeupPackage /> },
+            { path: 'edit/:id', element: <AddmakeupPackage /> },
             { path: 'packagelist', element: <MakeupList /> },
             { path: 'portfolio', element: <Portfolio /> },
             { path: 'upgrade', element: <Makeupupgrade /> },
@@ -401,6 +402,7 @@ const MainRoutes = {
           path: 'photography',
           children: [
             { path: 'addpackage', element: <AddphotographyPackage /> },
+                { path: 'edit/:id', element: <AddphotographyPackage /> }, // ✅ ADD THIS LINE
             { path: 'packagelist', element: <Photographylist /> },
             { path: 'portfolio', element: <PhotographyPortfolio /> },
             { path: 'upgrade', element: <Photographyupgrade /> },

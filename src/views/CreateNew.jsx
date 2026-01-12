@@ -58,7 +58,7 @@ const Createnew = () => {
   const markerRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae';
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
   const moduleId = localStorage.getItem('moduleId');
 
