@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -68,7 +68,7 @@ function BookingCalendar() {
   // Get providerId from localStorage
   const getProviderId = () => {
     let id = localStorage.getItem('providerId') || localStorage.getItem('userId');
-    
+
     if (!id) {
       const userStr = localStorage.getItem('user');
       if (userStr) {
@@ -80,7 +80,7 @@ function BookingCalendar() {
         }
       }
     }
-    
+
     return id;
   };
 
@@ -111,13 +111,13 @@ function BookingCalendar() {
       setError('Provider ID is required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/api/bookings/provider/${providerId}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setBookings(data.data || []);
       } else {
@@ -136,11 +136,11 @@ function BookingCalendar() {
       console.log('No providerId available');
       return;
     }
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/venues/provider/${providerId}`);
       const data = await response.json();
-      
+
       if (response.ok && data.success && data.data) {
         setVenues(data.data);
       } else {
@@ -159,9 +159,9 @@ function BookingCalendar() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/modules`);
       const data = await response.json();
-      
+
       let modulesList = [];
-      
+
       if (data.success && data.data && Array.isArray(data.data)) {
         modulesList = data.data;
       } else if (data.success && data.modules && Array.isArray(data.modules)) {
@@ -169,9 +169,9 @@ function BookingCalendar() {
       } else if (Array.isArray(data)) {
         modulesList = data;
       }
-      
+
       console.log('All modules fetched:', modulesList);
-      
+
       // Filter modules: Only show "Venues" module by default
       // Or filter by modules that this provider has venues for
       const filteredModules = modulesList.filter(module => {
@@ -179,10 +179,10 @@ function BookingCalendar() {
         // Only show Venues module (you can adjust this logic)
         return moduleTitle === 'venues';
       });
-      
+
       console.log('Filtered modules for provider:', filteredModules);
       setModules(filteredModules);
-      
+
       if (filteredModules.length === 0) {
         console.warn('No modules available for this provider');
       }
@@ -196,7 +196,7 @@ function BookingCalendar() {
   const fetchPackages = async (venueId) => {
     try {
       const venue = venues.find(v => v._id === venueId);
-      
+
       if (venue && venue.packages && Array.isArray(venue.packages)) {
         setPackages(venue.packages);
       } else {
@@ -252,15 +252,15 @@ function BookingCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const status = {};
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       // Only count Direct bookings
       const dayBookings = bookings.filter(booking => {
         const bookingDate = new Date(booking.bookingDate);
-        return bookingDate.getDate() === day && 
-               bookingDate.getMonth() === month && 
-               bookingDate.getFullYear() === year &&
-               booking.bookingType === 'Direct';
+        return bookingDate.getDate() === day &&
+          bookingDate.getMonth() === month &&
+          bookingDate.getFullYear() === year &&
+          booking.bookingType === 'Direct';
       });
 
       if (dayBookings.length === 0) {
@@ -271,7 +271,7 @@ function BookingCalendar() {
         status[day] = 'available';
       }
     }
-    
+
     return status;
   };
 
@@ -280,10 +280,10 @@ function BookingCalendar() {
   const getBookingsForSelectedDate = () => {
     return bookings.filter(booking => {
       const bookingDate = new Date(booking.bookingDate);
-      const isSelectedDate = bookingDate.getDate() === selectedDate && 
-             bookingDate.getMonth() === currentDate.getMonth() && 
-             bookingDate.getFullYear() === currentDate.getFullYear();
-      
+      const isSelectedDate = bookingDate.getDate() === selectedDate &&
+        bookingDate.getMonth() === currentDate.getMonth() &&
+        bookingDate.getFullYear() === currentDate.getFullYear();
+
       // Only show Direct bookings
       return isSelectedDate && booking.bookingType === 'Direct';
     });
@@ -338,9 +338,18 @@ function BookingCalendar() {
 
     weekDays.forEach((day) =>
       days.push(
-        <div key={day} style={styles.weekDay}>
+        <Box
+          key={day}
+          sx={{
+            textAlign: 'center',
+            padding: { xs: '4px 2px', md: '12px' },
+            color: '#999',
+            fontSize: { xs: '11px', md: '16px' },
+            fontWeight: '500'
+          }}
+        >
           {day}
-        </div>
+        </Box>
       )
     );
 
@@ -353,22 +362,54 @@ function BookingCalendar() {
       const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
 
       days.push(
-        <div key={day} onClick={() => setSelectedDate(day)} style={styles.dayCell}>
-          <div
-            style={{
-              ...styles.dayNumber,
-              ...(isToday ? styles.todayNumber : {})
+        <Box
+          key={day}
+          onClick={() => setSelectedDate(day)}
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: { xs: '8px 0', md: '20px 0' },
+            cursor: 'pointer',
+            borderRadius: { xs: '8px', md: '16px' },
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.05)'
+            }
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: { xs: '13px', md: '20px' },
+              fontWeight: '400',
+              color: '#333',
+              marginBottom: { xs: '3px', md: '6px' },
+              ...(isToday ? {
+                backgroundColor: '#ef5350',
+                color: '#fff',
+                borderRadius: '50%',
+                width: { xs: '28px', md: '52px' },
+                height: { xs: '28px', md: '52px' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '600'
+              } : {})
             }}
           >
             {day}
-          </div>
-          <div
-            style={{
-              ...styles.statusDot,
+          </Box>
+          <Box
+            sx={{
+              width: { xs: '6px', md: '10px' },
+              height: { xs: '6px', md: '10px' },
+              borderRadius: '50%',
               backgroundColor: getStatusColor(status)
             }}
           />
-        </div>
+        </Box>
       );
     }
 
@@ -414,11 +455,11 @@ function BookingCalendar() {
     setError(null);
 
     try {
-    if (!formData.bookingDate) {
-      setError('Please select booking date');
-      setSubmitLoading(false);
-      return;
-    }
+      if (!formData.bookingDate) {
+        setError('Please select booking date');
+        setSubmitLoading(false);
+        return;
+      }
 
       const bookingData = {
         moduleId: formData.moduleId,
@@ -498,14 +539,21 @@ function BookingCalendar() {
       padding: '40px',
       backgroundColor: '#fafafa',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      '@media (max-width: 768px)': {
+        padding: '16px'
+      }
     },
     navigation: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: '32px',
-      padding: '0 20px'
+      padding: '0 20px',
+      '@media (max-width: 768px)': {
+        marginBottom: '16px',
+        padding: '0 4px'
+      }
     },
     navButton: {
       padding: '12px',
@@ -517,32 +565,50 @@ function BookingCalendar() {
       alignItems: 'center',
       justifyContent: 'center',
       transition: 'background-color 0.2s',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      '@media (max-width: 768px)': {
+        padding: '8px'
+      }
     },
     monthTitle: {
       fontSize: '28px',
       fontStyle: 'italic',
       fontWeight: '400',
-      color: '#333'
+      color: '#333',
+      '@media (max-width: 768px)': {
+        fontSize: '20px'
+      }
     },
     calendarGrid: {
       backgroundColor: '#fff',
       borderRadius: '16px',
       marginBottom: '32px',
       padding: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      '@media (max-width: 768px)': {
+        borderRadius: '12px',
+        marginBottom: '16px',
+        padding: '12px'
+      }
     },
     grid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(7, 1fr)',
-      gap: '16px'
+      gap: '16px',
+      '@media (max-width: 768px)': {
+        gap: '4px'
+      }
     },
     weekDay: {
       textAlign: 'center',
       padding: '12px',
       color: '#999',
       fontSize: '16px',
-      fontWeight: '500'
+      fontWeight: '500',
+      '@media (max-width: 768px)': {
+        padding: '4px 2px',
+        fontSize: '11px'
+      }
     },
     dayCell: {
       position: 'relative',
@@ -553,13 +619,21 @@ function BookingCalendar() {
       padding: '20px 0',
       cursor: 'pointer',
       borderRadius: '16px',
-      transition: 'background-color 0.2s'
+      transition: 'background-color 0.2s',
+      '@media (max-width: 768px)': {
+        padding: '8px 0',
+        borderRadius: '8px'
+      }
     },
     dayNumber: {
       fontSize: '20px',
       fontWeight: '400',
       color: '#333',
-      marginBottom: '6px'
+      marginBottom: '6px',
+      '@media (max-width: 768px)': {
+        fontSize: '13px',
+        marginBottom: '3px'
+      }
     },
     todayNumber: {
       backgroundColor: '#ef5350',
@@ -570,26 +644,45 @@ function BookingCalendar() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontWeight: '600'
+      fontWeight: '600',
+      '@media (max-width: 768px)': {
+        width: '28px',
+        height: '28px',
+        fontSize: '13px'
+      }
     },
     statusDot: {
       width: '10px',
       height: '10px',
-      borderRadius: '50%'
+      borderRadius: '50%',
+      '@media (max-width: 768px)': {
+        width: '6px',
+        height: '6px'
+      }
     },
     legend: {
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      '@media (max-width: 768px)': {
+        borderRadius: '8px',
+        padding: '12px',
+        marginBottom: '16px'
+      }
     },
     legendContainer: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: '24px',
-      flexWrap: 'wrap'
+      flexWrap: 'wrap',
+      '@media (max-width: 768px)': {
+        gap: '12px',
+        flexDirection: 'column',
+        alignItems: 'flex-start'
+      }
     },
     legendItem: {
       display: 'flex',
@@ -599,24 +692,40 @@ function BookingCalendar() {
     legendDot: {
       width: '12px',
       height: '12px',
-      borderRadius: '50%'
+      borderRadius: '50%',
+      '@media (max-width: 768px)': {
+        width: '10px',
+        height: '10px'
+      }
     },
     legendText: {
       fontSize: '15px',
-      color: '#666'
+      color: '#666',
+      '@media (max-width: 768px)': {
+        fontSize: '13px'
+      }
     },
     selectedInfo: {
-      marginBottom: '24px'
+      marginBottom: '24px',
+      '@media (max-width: 768px)': {
+        marginBottom: '16px'
+      }
     },
     selectedHeader: {
       display: 'flex',
       alignItems: 'center',
-      gap: '24px'
+      gap: '24px',
+      '@media (max-width: 768px)': {
+        gap: '12px'
+      }
     },
     selectedNumber: {
       fontSize: '64px',
       fontWeight: '300',
-      color: '#333'
+      color: '#333',
+      '@media (max-width: 768px)': {
+        fontSize: '40px'
+      }
     },
     selectedDetails: {
       display: 'flex',
@@ -626,77 +735,131 @@ function BookingCalendar() {
       fontSize: '22px',
       fontWeight: '500',
       color: '#333',
-      marginBottom: '6px'
+      marginBottom: '6px',
+      '@media (max-width: 768px)': {
+        fontSize: '16px',
+        marginBottom: '4px'
+      }
     },
     selectedStatus: {
       fontSize: '16px',
-      color: '#666'
+      color: '#666',
+      '@media (max-width: 768px)': {
+        fontSize: '13px'
+      }
     },
     selectedDay: {
       fontSize: '14px',
       color: '#999',
       marginLeft: '100px',
-      marginTop: '6px'
+      marginTop: '6px',
+      '@media (max-width: 768px)': {
+        fontSize: '12px',
+        marginLeft: '52px',
+        marginTop: '4px'
+      }
     },
     bookingsTitle: {
       fontSize: '22px',
       fontWeight: '500',
       marginBottom: '20px',
-      color: '#333'
+      color: '#333',
+      '@media (max-width: 768px)': {
+        fontSize: '18px',
+        marginBottom: '12px'
+      }
     },
     bookingsContainer: {
       display: 'flex',
       flexDirection: 'column',
-      gap: '20px'
+      gap: '20px',
+      '@media (max-width: 768px)': {
+        gap: '12px'
+      }
     },
     bookingCard: {
       borderRadius: '20px',
       padding: '28px',
       color: '#fff',
       position: 'relative',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      '@media (max-width: 768px)': {
+        borderRadius: '12px',
+        padding: '16px'
+      }
     },
     bookingHeader: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: '8px'
+      marginBottom: '8px',
+      '@media (max-width: 768px)': {
+        flexDirection: 'column',
+        gap: '8px',
+        marginBottom: '12px'
+      }
     },
     bookingTime: {
       fontSize: '15px',
-      fontWeight: '500'
+      fontWeight: '500',
+      '@media (max-width: 768px)': {
+        fontSize: '13px'
+      }
     },
     bookingStatus: {
       fontSize: '11px',
       padding: '4px 12px',
       borderRadius: '12px',
       fontWeight: '500',
-      backgroundColor: 'rgba(255,255,255,0.3)'
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      '@media (max-width: 768px)': {
+        fontSize: '10px',
+        padding: '3px 8px'
+      }
     },
     bookingName: {
       fontSize: '24px',
       fontWeight: '500',
-      marginBottom: '10px'
+      marginBottom: '10px',
+      '@media (max-width: 768px)': {
+        fontSize: '18px',
+        marginBottom: '8px'
+      }
     },
     bookingLocation: {
       fontSize: '15px',
-      marginBottom: '14px'
+      marginBottom: '14px',
+      '@media (max-width: 768px)': {
+        fontSize: '13px',
+        marginBottom: '10px'
+      }
     },
     noBookings: {
       backgroundColor: '#f5f5f5',
       borderRadius: '20px',
       padding: '48px',
-      textAlign: 'center'
+      textAlign: 'center',
+      '@media (max-width: 768px)': {
+        borderRadius: '12px',
+        padding: '24px'
+      }
     },
     noBookingsTitle: {
       fontSize: '24px',
       fontWeight: '500',
       marginBottom: '10px',
-      color: '#333'
+      color: '#333',
+      '@media (max-width: 768px)': {
+        fontSize: '18px',
+        marginBottom: '8px'
+      }
     },
     noBookingsText: {
       fontSize: '16px',
-      color: '#666'
+      color: '#666',
+      '@media (max-width: 768px)': {
+        fontSize: '14px'
+      }
     },
     floatingButton: {
       position: 'fixed',
@@ -712,7 +875,13 @@ function BookingCalendar() {
       justifyContent: 'center',
       boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
       cursor: 'pointer',
-      transition: 'background-color 0.2s, transform 0.2s'
+      transition: 'background-color 0.2s, transform 0.2s',
+      '@media (max-width: 768px)': {
+        bottom: '16px',
+        right: '16px',
+        width: '56px',
+        height: '56px'
+      }
     }
   };
 
@@ -731,7 +900,14 @@ function BookingCalendar() {
   };
 
   return (
-    <div style={styles.container}>
+    <Box sx={{
+      width: '100%',
+      margin: '0 auto',
+      padding: { xs: '16px', md: '40px' },
+      backgroundColor: '#fafafa',
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {!providerId && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Provider ID not found. Please make sure you're logged in. You may need to log out and log in again.
@@ -761,10 +937,19 @@ function BookingCalendar() {
         </Alert>
       )}
 
-      <div style={styles.navigation}>
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: { xs: '16px', md: '32px' },
+        padding: { xs: '0 4px', md: '0 20px' }
+      }}>
         <button
           onClick={() => changeMonth(-1)}
-          style={styles.navButton}
+          style={{
+            ...styles.navButton,
+            padding: window.innerWidth <= 768 ? '8px' : '12px'
+          }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
@@ -772,10 +957,20 @@ function BookingCalendar() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h2 style={styles.monthTitle}>{monthName}</h2>
+        <Typography sx={{
+          fontSize: { xs: '20px', md: '28px' },
+          fontStyle: 'italic',
+          fontWeight: '400',
+          color: '#333'
+        }}>
+          {monthName}
+        </Typography>
         <button
           onClick={() => changeMonth(1)}
-          style={styles.navButton}
+          style={{
+            ...styles.navButton,
+            padding: window.innerWidth <= 768 ? '8px' : '12px'
+          }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
@@ -783,14 +978,40 @@ function BookingCalendar() {
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
-      </div>
+      </Box>
 
-      <div style={styles.calendarGrid}>
-        <div style={styles.grid}>{renderCalendarDays()}</div>
-      </div>
+      <Box sx={{
+        backgroundColor: '#fff',
+        borderRadius: { xs: '12px', md: '16px' },
+        marginBottom: { xs: '16px', md: '32px' },
+        padding: { xs: '12px', md: '32px' },
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: { xs: '4px', md: '16px' }
+        }}>
+          {renderCalendarDays()}
+        </Box>
+      </Box>
 
-      <div style={styles.legend}>
-        <div style={styles.legendContainer}>
+      <Box sx={{
+        backgroundColor: '#fff',
+        borderRadius: { xs: '8px', md: '12px' },
+        padding: { xs: '12px', md: '24px' },
+        marginBottom: { xs: '16px', md: '32px' },
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: { xs: '12px', md: '24px' },
+          flexWrap: 'wrap',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' }
+        }}>
           <div style={styles.legendItem}>
             <div style={{ ...styles.legendDot, backgroundColor: '#ef5350' }} />
             <span style={styles.legendText}>Fully Booked</span>
@@ -803,40 +1024,94 @@ function BookingCalendar() {
             <div style={{ ...styles.legendDot, backgroundColor: '#66bb6a' }} />
             <span style={styles.legendText}>Fully Free</span>
           </div>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div style={styles.selectedInfo}>
-        <div style={styles.selectedHeader}>
-          <span style={styles.selectedNumber}>{selectedDate}</span>
-          <div style={styles.selectedDetails}>
-            <h3 style={styles.selectedTitle}>Selected Date</h3>
-            <p style={styles.selectedStatus}>{getStatusText()}</p>
-          </div>
-        </div>
-        <p style={styles.selectedDay}>{getDayName()}</p>
-      </div>
+      <Box sx={{ marginBottom: { xs: '16px', md: '24px' } }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: '12px', md: '24px' }
+        }}>
+          <Typography sx={{
+            fontSize: { xs: '40px', md: '64px' },
+            fontWeight: '300',
+            color: '#333'
+          }}>
+            {selectedDate}
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Typography sx={{
+              fontSize: { xs: '16px', md: '22px' },
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: { xs: '4px', md: '6px' }
+            }}>
+              Selected Date
+            </Typography>
+            <Typography sx={{
+              fontSize: { xs: '13px', md: '16px' },
+              color: '#666'
+            }}>
+              {getStatusText()}
+            </Typography>
+          </Box>
+        </Box>
+        <Typography sx={{
+          fontSize: { xs: '12px', md: '14px' },
+          color: '#999',
+          marginLeft: { xs: '52px', md: '100px' },
+          marginTop: { xs: '4px', md: '6px' }
+        }}>
+          {getDayName()}
+        </Typography>
+      </Box>
 
       {selectedBookings.length > 0 && (
         <div>
-          <h3 style={styles.bookingsTitle}>Today's Bookings</h3>
-          <div style={styles.bookingsContainer}>
+          <Typography sx={{
+            fontSize: { xs: '18px', md: '22px' },
+            fontWeight: '500',
+            marginBottom: { xs: '12px', md: '20px' },
+            color: '#333'
+          }}>
+            Today's Bookings
+          </Typography>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: '12px', md: '20px' }
+          }}>
             {selectedBookings.map((booking) => (
-              <div 
-                key={booking._id} 
-                style={{ 
-                  ...styles.bookingCard, 
-                  backgroundColor: getBookingCardColor(booking.status) 
+              <Box
+                key={booking._id}
+                sx={{
+                  borderRadius: { xs: '12px', md: '20px' },
+                  padding: { xs: '16px', md: '28px' },
+                  color: '#fff',
+                  position: 'relative',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  backgroundColor: getBookingCardColor(booking.status)
                 }}
               >
-                <div style={styles.bookingHeader}>
-<span style={styles.bookingTime}>
-  {booking.timeSlot?.label
-    ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
-    : 'All Day'}
-</span>
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', md: 'flex-start' },
+                  flexDirection: { xs: 'column', md: 'row' },
+                  gap: { xs: '8px', md: 0 },
+                  marginBottom: { xs: '12px', md: '8px' }
+                }}>
+                  <Typography sx={{
+                    fontSize: { xs: '13px', md: '15px' },
+                    fontWeight: '500'
+                  }}>
+                    {booking.timeSlot?.label
+                      ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+                      : 'All Day'}
+                  </Typography>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Chip 
+                    <Chip
                       label={booking.status}
                       size="small"
                       style={{
@@ -863,24 +1138,38 @@ function BookingCalendar() {
                       )}
                     </IconButton>
                   </Box>
-                </div>
-                <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
-                <p style={styles.bookingLocation}>
+                </Box>
+                <Typography sx={{
+                  fontSize: { xs: '18px', md: '24px' },
+                  fontWeight: '500',
+                  marginBottom: { xs: '8px', md: '10px' }
+                }}>
+                  Booked by {booking.fullName}
+                </Typography>
+                <Typography sx={{
+                  fontSize: { xs: '13px', md: '15px' },
+                  marginBottom: { xs: '10px', md: '14px' }
+                }}>
                   {booking.venueId?.venueName || booking.location || 'Venue not specified'}
-                </p>
-                <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                </Typography>
+                <Box sx={{ fontSize: { xs: '12px', md: '14px' }, marginTop: '8px' }}>
                   <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
                   <div>Contact: {booking.contactNumber}</div>
                   <div>Email: {booking.emailAddress}</div>
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
         </div>
       )}
 
       {selectedBookings.length === 0 && (
-        <div style={styles.noBookings}>
+        <Box sx={{
+          backgroundColor: '#f5f5f5',
+          borderRadius: { xs: '12px', md: '20px' },
+          padding: { xs: '24px', md: '48px' },
+          textAlign: 'center'
+        }}>
           <div style={{ margin: '0 auto 20px', width: '100px', height: '100px' }}>
             <svg width="100" height="100" viewBox="0 0 80 80" fill="none">
               <rect x="10" y="15" width="60" height="50" rx="4" stroke="#ccc" strokeWidth="2" fill="none" />
@@ -889,14 +1178,43 @@ function BookingCalendar() {
               <path d="M35 45 L45 45 M35 45 L40 40 M35 45 L40 50" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
-          <h4 style={styles.noBookingsTitle}>No Bookings Today</h4>
-          <p style={styles.noBookingsText}>All slots are available for booking</p>
-        </div>
+          <Typography sx={{
+            fontSize: { xs: '18px', md: '24px' },
+            fontWeight: '500',
+            marginBottom: { xs: '8px', md: '10px' },
+            color: '#333'
+          }}>
+            No Bookings Today
+          </Typography>
+          <Typography sx={{
+            fontSize: { xs: '14px', md: '16px' },
+            color: '#666'
+          }}>
+            All slots are available for booking
+          </Typography>
+        </Box>
       )}
 
       <Button
         variant="contained"
-        style={styles.floatingButton}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: '16px', md: '32px' },
+          right: { xs: '16px', md: '32px' },
+          backgroundColor: '#ef5350',
+          color: '#fff',
+          borderRadius: '50%',
+          width: { xs: '56px', md: '64px' },
+          height: { xs: '56px', md: '64px' },
+          minWidth: 'unset',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+          '&:hover': {
+            backgroundColor: '#e53935'
+          }
+        }}
         onClick={handleOpenDialog}
       >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1031,10 +1349,10 @@ function BookingCalendar() {
                 <DoorFrontIcon sx={iconStyle} />
                 Select Module & Venue
               </Typography>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Select Module</InputLabel>
-                <Select 
+                <Select
                   name="moduleId"
                   value={formData.moduleId}
                   onChange={handleInputChange}
@@ -1053,7 +1371,7 @@ function BookingCalendar() {
 
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Select Venue</InputLabel>
-                <Select 
+                <Select
                   name="venueId"
                   value={formData.venueId}
                   onChange={handleInputChange}
@@ -1072,7 +1390,7 @@ function BookingCalendar() {
 
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Select Package</InputLabel>
-                <Select 
+                <Select
                   name="packageId"
                   value={formData.packageId}
                   onChange={handleInputChange}
@@ -1081,11 +1399,11 @@ function BookingCalendar() {
                 >
                   <MenuItem value="">
                     <em>
-                      {!formData.venueId 
-                        ? 'Select a venue first' 
-                        : packages.length === 0 
-                        ? 'No packages available for this venue'
-                        : `Select Package (${packages.length} available)`
+                      {!formData.venueId
+                        ? 'Select a venue first'
+                        : packages.length === 0
+                          ? 'No packages available for this venue'
+                          : `Select Package (${packages.length} available)`
                       }
                     </em>
                   </MenuItem>
@@ -1096,7 +1414,7 @@ function BookingCalendar() {
                   ))}
                 </Select>
               </FormControl>
-              
+
               {formData.venueId && packages.length === 0 && (
                 <Alert severity="info" sx={{ mb: 2 }}>
                   This venue doesn't have any packages configured. You can still create a booking without selecting a package.
@@ -1131,23 +1449,23 @@ function BookingCalendar() {
                 Select Time Slots
               </Typography>
               <FormGroup sx={{ mb: 3 }}>
-                <FormControlLabel 
+                <FormControlLabel
                   control={
-                    <Checkbox 
+                    <Checkbox
                       checked={formData.timeSlot.includes('Morning')}
                       onChange={() => handleTimeSlotChange('Morning')}
                     />
-                  } 
-                  label="Morning Slot 9:00 AM - 1:00 PM" 
+                  }
+                  label="Morning Slot 9:00 AM - 1:00 PM"
                 />
-                <FormControlLabel 
+                <FormControlLabel
                   control={
-                    <Checkbox 
+                    <Checkbox
                       checked={formData.timeSlot.includes('Evening')}
                       onChange={() => handleTimeSlotChange('Evening')}
                     />
-                  } 
-                  label="Evening Slot 6:00 PM - 10:00 PM" 
+                  }
+                  label="Evening Slot 6:00 PM - 10:00 PM"
                 />
               </FormGroup>
 
@@ -1199,7 +1517,7 @@ function BookingCalendar() {
           </DialogContent>
         </div>
       </Dialog>
-    </div>
+    </Box>
   );
 }
 

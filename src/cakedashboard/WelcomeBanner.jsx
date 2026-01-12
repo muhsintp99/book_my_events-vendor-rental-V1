@@ -19,7 +19,7 @@ const fadeSlide = keyframes`
 export default function WelcomeBanner() {
   const user = JSON.parse(localStorage.getItem('user'));
   const upgrade = JSON.parse(localStorage.getItem('upgrade'));
-  const kycCompleted = user?.kycCompleted;
+  const kycStatus = user?.kycStatus; // Can be: "not_submitted", "pending", "verified"
   const isSubscribed = upgrade?.isSubscribed === true && upgrade?.status === 'active';
 
   return (
@@ -76,7 +76,7 @@ export default function WelcomeBanner() {
               letterSpacing: '-0.4px'
             }}
           >
-            {kycCompleted ? 'KYC Status ⏳' : 'Welcome aboard! 🎉'}
+            {kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
           </Typography>
 
           <Typography
@@ -87,7 +87,7 @@ export default function WelcomeBanner() {
               lineHeight: 1.5
             }}
           >
-            {kycCompleted ? (
+            {kycStatus === 'pending' ? (
               'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
               <>

@@ -111,7 +111,7 @@ export default function ProfileSection() {
     const userId = currentUser._id || currentUser.id; // Support both _id and id
 
     try {
-      // Use the new provider-specific endpoint
+      // Use the new provider-specific endpoint for profile data
       const { data } = await axios.get(`${PROFILE_API}provider/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -148,6 +148,23 @@ export default function ProfileSection() {
           other: socialLinks.other || (currentUser.socialMedia && currentUser.socialMedia.other) || ''
         });
       }
+
+      // Fetch vendor profile separately to get the logo
+      try {
+        const vendorResponse = await axios.get(`https://api.bookmyevent.ae/api/profile/vendor/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (vendorResponse.data.success && vendorResponse.data.data && vendorResponse.data.data.logo) {
+          // Update profile preview with logo from vendor API
+          const logoUrl = `https://api.bookmyevent.ae${vendorResponse.data.data.logo}`;
+          setProfilePreview(logoUrl);
+        }
+      } catch (vendorError) {
+        console.error('Failed to fetch vendor logo:', vendorError);
+        // Continue with existing profile photo if vendor API fails
+      }
+
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     }
