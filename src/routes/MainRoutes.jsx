@@ -176,10 +176,13 @@ const CakeCompleted = Loadable(lazy(() => import('../views/cake/Cakecompleted'))
 const CakeCancelled = Loadable(lazy(() => import('../views/cake/Cakecancelled')));
 // const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 
+import ErrorBoundary from 'ui-component/ErrorBoundary';
+
 // ===========================|| MAIN ROUTING ||============================ //
 
 const MainRoutes = {
   path: '/',
+  errorElement: <ErrorBoundary />,
   children: [
     // ✅ Public login route
     { path: 'login', element: <Login /> },
@@ -322,11 +325,11 @@ const MainRoutes = {
             { path: 'paymentfailedphotography', element: <PhotographyPaymentFailed /> },
 
             // Cake BOOKINGS///////////////
-             { path: 'allcake', element: <Allcake /> },
+            { path: 'allcake', element: <Allcake /> },
             { path: 'pendingcake', element: <CakePending /> },
             { path: 'cakeconfirmed', element: <CakeConfirmed /> },
             { path: 'completedcake', element: <CakeCompleted /> },
-            { path: 'cancelledcake', element: <CakeCancelled/> },
+            { path: 'cancelledcake', element: <CakeCancelled /> },
             // { path: 'paymentfailedcake', element: <CPaymentFailed /> }
           ]
         },
@@ -402,7 +405,7 @@ const MainRoutes = {
           path: 'photography',
           children: [
             { path: 'addpackage', element: <AddphotographyPackage /> },
-                { path: 'edit/:id', element: <AddphotographyPackage /> }, // ✅ ADD THIS LINE
+            { path: 'edit/:id', element: <AddphotographyPackage /> }, // ✅ ADD THIS LINE
             { path: 'packagelist', element: <Photographylist /> },
             { path: 'portfolio', element: <PhotographyPortfolio /> },
             { path: 'upgrade', element: <Photographyupgrade /> },
@@ -413,7 +416,7 @@ const MainRoutes = {
         },
 
 
-         {
+        {
           path: 'cake',
           children: [
             { path: 'addpackage', element: <AddcakePackage /> },
