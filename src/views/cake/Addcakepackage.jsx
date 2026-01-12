@@ -61,7 +61,6 @@ const VariationRow = ({ variation, onChange, onDelete }) => {
   );
 };
 
-// ------------------------------
 // Main Component
 // ------------------------------
 const AddCakePackage = () => {
