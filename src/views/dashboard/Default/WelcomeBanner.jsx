@@ -112,13 +112,8 @@ export default function WelcomeBanner() {
               <>
                 It&apos;s great to have you with us. Your account is fully verified and ready to handle your business operations seamlessly.
               </>
-            ) : kycStatus === 'pending' ? (
-              'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
-              <>
-                Thanks for registering with us. Your profile is currently under verification and will be approved within <strong> 48 hours</strong>.
-                Meanwhile, feel free to add your packages and complete your profile to get ready for bookings.
-              </>
+              'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             )}
           </Typography>
         </Box>
