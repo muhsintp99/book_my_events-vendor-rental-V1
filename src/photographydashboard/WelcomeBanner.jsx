@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { keyframes } from '@mui/system';
 import StarsIcon from '@mui/icons-material/Stars';
@@ -16,10 +16,30 @@ const fadeSlide = keyframes`
 `;
 
 export default function WelcomeBanner() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const upgrade = JSON.parse(localStorage.getItem('upgrade'));
-  const kycStatus = user?.kycStatus; // Can be: "not_submitted", "pending", "verified"
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+  const [upgrade, setUpgrade] = useState(() => JSON.parse(localStorage.getItem('upgrade')));
+  const [kycStatus, setKycStatus] = useState(user?.kycStatus);
   const isSubscribed = upgrade?.isSubscribed === true && upgrade?.status === 'active';
+
+  // Poll localStorage for KYC status changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const updatedUser = JSON.parse(localStorage.getItem('user'));
+      const updatedUpgrade = JSON.parse(localStorage.getItem('upgrade'));
+
+      if (updatedUser?.kycStatus !== kycStatus) {
+        setUser(updatedUser);
+        setKycStatus(updatedUser?.kycStatus);
+      }
+
+      if (JSON.stringify(updatedUpgrade) !== JSON.stringify(upgrade)) {
+        setUpgrade(updatedUpgrade);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [kycStatus, upgrade]);
+
 
   return (
     <Box
