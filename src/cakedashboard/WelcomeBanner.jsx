@@ -20,6 +20,7 @@ export default function WelcomeBanner() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
   const [upgrade, setUpgrade] = useState(() => JSON.parse(localStorage.getItem('upgrade')));
   const [kycStatus, setKycStatus] = useState(user?.kycStatus);
+  // console.log('KYC Status' , kycStatus);
   const isSubscribed = upgrade?.isSubscribed === true && upgrade?.status === 'active';
 
   // Poll localStorage for KYC status changes
@@ -95,7 +96,7 @@ export default function WelcomeBanner() {
               letterSpacing: '-0.4px'
             }}
           >
-            {kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
+            {kycStatus === 'pending' ? 'Welcome aboard! 🎉' : 'Welcome aboard! 🎉'}
           </Typography>
 
           <Typography
@@ -110,10 +111,10 @@ export default function WelcomeBanner() {
               'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
               <>
-                Thanks for registering with us. Your profile is currently under verification and will be approved within <strong> 48 hours</strong>.
-                Meanwhile, feel free to add your packages and complete your profile to get ready for bookings.
+                Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.
               </>
             )}
+           
           </Typography>
         </Box>
       </Box>
