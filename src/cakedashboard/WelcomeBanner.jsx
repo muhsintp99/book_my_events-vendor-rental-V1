@@ -96,7 +96,7 @@ export default function WelcomeBanner() {
               letterSpacing: '-0.4px'
             }}
           >
-            {kycStatus === 'pending' ? 'Welcome aboard! 🎉' : 'Welcome aboard! 🎉'}
+            {kycStatus === 'verified' ? 'Welcome aboard! 🎉' : kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
           </Typography>
 
           <Typography
@@ -107,14 +107,18 @@ export default function WelcomeBanner() {
               lineHeight: 1.5
             }}
           >
-            {kycStatus === 'pending' ? (
+            {kycStatus === 'verified' ? (
+              <>
+                Welcome back! Ready to manage your bookings and grow your business today.
+              </>
+            ) : kycStatus === 'pending' ? (
               'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
               <>
-                Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.
+                Thanks for registering with us. Your profile is currently under verification and will be approved within <strong> 48 hours</strong>.
+                Meanwhile, feel free to add your packages and complete your profile to get ready for bookings.
               </>
             )}
-           
           </Typography>
         </Box>
       </Box>

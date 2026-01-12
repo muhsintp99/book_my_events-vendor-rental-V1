@@ -21,6 +21,7 @@ export default function WelcomeBanner() {
   const [kycStatus, setKycStatus] = useState(user?.kycStatus);
   const isSubscribed = upgrade?.isSubscribed === true && upgrade?.status === 'active';
 
+
   // Poll localStorage for KYC status changes
   useEffect(() => {
     const interval = setInterval(() => {
@@ -95,7 +96,7 @@ export default function WelcomeBanner() {
               letterSpacing: '-0.4px'
             }}
           >
-            {kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
+            {kycStatus === 'verified' ? 'Welcome aboard! 🎉' : kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
           </Typography>
 
           <Typography
@@ -106,7 +107,11 @@ export default function WelcomeBanner() {
               lineHeight: 1.5
             }}
           >
-            {kycStatus === 'pending' ? (
+            {kycStatus === 'verified' ? (
+              <>
+                Welcome back! Ready to manage your bookings and grow your business today.
+              </>
+            ) : kycStatus === 'pending' ? (
               'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
             ) : (
               <>
