@@ -127,6 +127,7 @@ import photographyManagementMenu from './photography/Managementphotography';
 import cakemanagement from './cakes/cakemanagement';
 import Cakesection from './cakes/cakesections';
 import cakeManagementMenu from './cakes/managementcake';
+import tripmanagement from './vendors/tripmanagement';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -142,7 +143,7 @@ let specificSections = [];
 // handle conditions
 if (logRes === 'transport') {
   // specificSections = [ vehiclemanagement,Reportsection,Employeesection];
-    specificSections = [ vehiclemanagement];
+    specificSections = [tripmanagement, vehiclemanagement];
 
 } else if (logRes === 'venues') {
   // specificSections = [management, venuemanagement, Businessection, Report, Employee];

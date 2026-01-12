@@ -16,19 +16,50 @@ const CanceledTrips = () => {
   const [canceledBookings, setCanceledBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 FETCH CANCELED (REJECTED) BOOKINGS FROM BACKEND
+  // ================= SAFE FORMATTERS =================
+
+  const renderTimeSlot = (timeSlot) => {
+    if (!timeSlot) return "N/A";
+
+    if (typeof timeSlot === "string") return timeSlot;
+
+    if (Array.isArray(timeSlot)) return timeSlot.join(", ");
+
+    if (typeof timeSlot === "object") {
+      if (timeSlot.label) return timeSlot.label;
+      if (timeSlot.name) return timeSlot.name;
+
+      return Object.values(timeSlot)
+        .filter((v) => typeof v === "string")
+        .join(", ");
+    }
+
+    return "N/A";
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? "N/A" : d.toDateString();
+  };
+
+  const formatPrice = (price) => Number(price) || 0;
+
+  // ================= FETCH DATA =================
+
   useEffect(() => {
     const fetchCanceled = async () => {
       try {
-        const res = await axios.get("https://api.bookmyevent.ae/api/bookings");
+        const res = await axios.get(
+          "https://api.bookmyevent.ae/api/bookings"
+        );
 
-        const allBookings = res.data.bookings || [];
+        const allBookings = res.data?.bookings || [];
 
-        // Show Rejected bookings
         const canceled = allBookings.filter(
           (b) =>
             b.status?.toLowerCase() === "rejected" ||
-            b.status?.toLowerCase() === "cancelled" // if you add this in future
+            b.status?.toLowerCase() === "cancelled"
         );
 
         setCanceledBookings(canceled);
@@ -43,8 +74,10 @@ const CanceledTrips = () => {
   }, []);
 
   const toggleExpand = (id) => {
-    setExpandedId(expandedId === id ? null : id);
+    setExpandedId((prev) => (prev === id ? null : id));
   };
+
+  // ================= UI =================
 
   return (
     <Box p={2}>
@@ -69,7 +102,7 @@ const CanceledTrips = () => {
             }}
             onClick={() => toggleExpand(b._id)}
           >
-            {/* ------- Top Section ------- */}
+            {/* ---------- TOP SECTION ---------- */}
             <Stack direction="row" justifyContent="space-between">
               <Box>
                 <Typography fontWeight={600}>
@@ -77,16 +110,16 @@ const CanceledTrips = () => {
                 </Typography>
 
                 <Typography color="gray" fontSize={14}>
-                  {new Date(b.bookingDate).toDateString()}
+                  {formatDate(b.bookingDate)}
                 </Typography>
 
                 <Typography color="gray" fontSize={13}>
-                  {b.timeSlot || "N/A"}
+                  {renderTimeSlot(b.timeSlot)}
                 </Typography>
               </Box>
 
               <Typography fontWeight={700} color="red">
-                ₹{b.finalPrice}
+                ₹{formatPrice(b.finalPrice)}
               </Typography>
             </Stack>
 
@@ -101,28 +134,31 @@ const CanceledTrips = () => {
                 }}
               >
                 <Typography fontSize={14}>
-                  <strong>Customer:</strong> {b.fullName}
+                  <strong>Customer:</strong> {b.fullName || "N/A"}
                 </Typography>
 
                 <Typography fontSize={14}>
-                  <strong>Email:</strong> {b.emailAddress}
+                  <strong>Email:</strong> {b.emailAddress || "N/A"}
                 </Typography>
 
                 <Typography fontSize={14}>
-                  <strong>Contact:</strong> {b.contactNumber}
+                  <strong>Contact:</strong> {b.contactNumber || "N/A"}
                 </Typography>
 
                 <Typography fontSize={14}>
-                  <strong>Guests:</strong> {b.numberOfGuests}
+                  <strong>Guests:</strong> {b.numberOfGuests || "N/A"}
                 </Typography>
 
                 <Typography fontSize={14} mt={1}>
                   <strong>Status:</strong>{" "}
-                  <span style={{ color: "red" }}>{b.status}</span>
+                  <span style={{ color: "red" }}>
+                    {b.status || "N/A"}
+                  </span>
                 </Typography>
 
                 <Typography fontSize={14}>
-                  <strong>Payment:</strong> {b.paymentStatus}
+                  <strong>Payment:</strong>{" "}
+                  {b.paymentStatus || "N/A"}
                 </Typography>
               </Box>
 
