@@ -96,7 +96,7 @@ export default function WelcomeBanner() {
               letterSpacing: '-0.4px'
             }}
           >
-            {kycStatus === 'verified' ? 'Welcome aboard! 🎉' : kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
+            {kycStatus === 'verified' ? 'Welcome to BookMyEvent! ✨' : kycStatus === 'pending' ? '' : 'Welcome aboard! 🎉'}
           </Typography>
 
           <Typography
@@ -109,7 +109,7 @@ export default function WelcomeBanner() {
           >
             {kycStatus === 'verified' ? (
               <>
-                Welcome back! Ready to manage your bookings and grow your business today.
+                It&apos;s great to have you with us. Your account is fully verified and ready to handle your business operations seamlessly.
               </>
             ) : kycStatus === 'pending' ? (
               'Thank you for registering. Your profile is under verification and will be approved after successful KYC updation.'
