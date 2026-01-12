@@ -4,7 +4,7 @@ import { keyframes } from '@mui/system';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import StarsIcon from '@mui/icons-material/Stars';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import axios from 'axios'
+
 
 const fadeSlide = keyframes`
   from {
