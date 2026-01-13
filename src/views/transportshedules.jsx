@@ -55,7 +55,7 @@ function BookingCalendar() {
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
-
+const [activeStep, setActiveStep] = useState(0);
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -1341,53 +1341,41 @@ function BookingCalendar() {
                       placeholder="E.g. Full day duty, specific routes..."
                     />
                   </Box>
-                </Grid>
+                  </Grid>
               </Grid>
             </Box>
+          </DialogContent>
 
+          {/* Sticky Professional Footer */}
+          <Box sx={{
+            p: 2.5,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderTop: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitLoading}
+              variant="contained"
+              sx={{
+                backgroundColor: '#ef5350',
+                px: 8,
+                py: 1.8,
+                borderRadius: '16px',
+                fontWeight: 700
+              }}
+            >
+              {submitLoading
+                ? <CircularProgress size={24} color="inherit" />
+                : 'Confirm & Save Booking'}
+            </Button>
+          </Box>
         </Box>
-      </DialogContent>
-
-      {/* Sticky Professional Footer */}
-      <Box sx={{
-        p: 2.5,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #f0f0f0',
-        display: 'flex',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <Button
-          onClick={handleSubmit}
-          disabled={submitLoading}
-          variant="contained"
-          sx={{
-            backgroundColor: '#ef5350',
-            px: 8,
-            py: 1.8,
-            borderRadius: '16px',
-            fontWeight: 700,
-            fontSize: '16px',
-            textTransform: 'none',
-            boxShadow: '0 8px 24px rgba(239, 83, 80, 0.3)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              backgroundColor: '#e53935',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 30px rgba(239, 83, 80, 0.4)'
-            },
-            '&:active': {
-              transform: 'translateY(0)'
-            }
-          }}
-        >
-          {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Save Booking'}
-        </Button>
-      </Box>
+      </Dialog>
     </Box>
-      </Dialog >
-    </Box >
   );
 }
 

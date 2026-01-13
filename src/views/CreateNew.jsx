@@ -26,6 +26,7 @@ import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsC
 import { styled } from '@mui/system';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Switch } from '@mui/material';
 
 // Styled component for the upload area
 const UploadDropArea = styled(Box)(({ theme }) => ({
@@ -84,12 +85,8 @@ const Createnew = () => {
   const [category, setCategory] = useState('');
   const [zone, setZone] = useState('');
   const [selectedZoneName, setSelectedZoneName] = useState('');
-  const [engineCapacity, setEngineCapacity] = useState('');
-  const [enginePower, setEnginePower] = useState('');
   const [seatingCapacity, setSeatingCapacity] = useState('');
   const [airCondition, setAirCondition] = useState('yes');
-  const [fuelType, setFuelType] = useState('');
-  const [transmissionType, setTransmissionType] = useState('');
   const [licensePlateNumber, setLicensePlateNumber] = useState('');
   const [licensePlateError, setLicensePlateError] = useState('');
   const [tripType, setTripType] = useState('hourly');
@@ -97,6 +94,12 @@ const Createnew = () => {
   const [perDayPrice, setPerDayPrice] = useState('');
   const [distanceWisePrice, setDistanceWisePrice] = useState('');
   const [discount, setDiscount] = useState('');
+  const [features, setFeatures] = useState({
+    driverIncluded: false,
+    sunroof: false,
+    decorationAvailable: false
+  });
+
   const [searchTags, setSearchTags] = useState([]);
   const [currentTag, setCurrentTag] = useState('');
   const [openToast, setOpenToast] = useState(false);
@@ -112,18 +115,11 @@ const Createnew = () => {
   const [seatType, setSeatType] = useState('');
   const [audioSystem, setAudioSystem] = useState('');
   const [airbags, setAirbags] = useState('');
-  const [camera, setCamera] = useState('');
   const [bootSpace, setBootSpace] = useState('');
   const [fuelTank, setFuelTank] = useState('');
   // Advance Booking
   // Advance Booking (Flat Amount)
   const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
-
-  const [connectivity, setConnectivity] = useState([]);
-  const [sensors, setSensors] = useState([]);
-  const [safety, setSafety] = useState([]);
-  const [insuranceIncluded, setInsuranceIncluded] = useState([]);
-  const [insuranceExcluded, setInsuranceExcluded] = useState([]);
   const [attributeMap, setAttributeMap] = useState({});
 
   const [parentCategories, setParentCategories] = useState([]);
@@ -420,12 +416,8 @@ const Createnew = () => {
       const zoneObj = zones.find((z) => z._id === zoneId) || (vehicle.zone && { name: vehicle.zone.name });
       setSelectedZoneName(zoneObj ? zoneObj.name : '');
       setModel(vehicle.model || '');
-      setEngineCapacity(vehicle.engineCapacity?.toString() || '');
-      setEnginePower(vehicle.enginePower?.toString() || '');
       setSeatingCapacity(vehicle.seatingCapacity?.toString() || '');
       setAirCondition(vehicle.airCondition ? 'yes' : 'no');
-      setFuelType(vehicle.fuelType || '');
-      setTransmissionType(vehicle.transmissionType || '');
       setLicensePlateNumber(vehicle.licensePlateNumber || '');
       setSearchTags(vehicle.searchTags || []);
       setVenueAddress(vehicle.venueAddress || '');
@@ -443,18 +435,11 @@ const Createnew = () => {
       }
       setDiscount(vehicle.discount?.toString() || '');
       // ---------------- Additional Vehicle Details ----------------
-      setSeatType(vehicle.seatType || '');
-      setAudioSystem(vehicle.audioSystem || '');
-      setCamera(vehicle.camera || '');
-      setAirbags(vehicle.airbags?.toString() || '');
-      setBootSpace(vehicle.bootSpace?.toString() || '');
-      setFuelTank(vehicle.fuelTank?.toString() || '');
-
-      setConnectivity(vehicle.connectivity || []);
-      setSensors(vehicle.sensors || []);
-      setSafety(vehicle.safety || []);
-      setInsuranceIncluded(vehicle.insuranceIncluded || []);
-      setInsuranceExcluded(vehicle.insuranceExcluded || []);
+      setFeatures({
+        driverIncluded: vehicle.features?.driverIncluded ?? false,
+        sunroof: vehicle.features?.sunroof ?? false,
+        decorationAvailable: vehicle.features?.decorationAvailable ?? false
+      });
     },
     [brands, categories, zones]
   );
@@ -693,41 +678,60 @@ const Createnew = () => {
 
   // Reset form
   const handleReset = useCallback(() => {
+    // -------- BASIC INFO --------
     setName('');
     setDescription('');
     setVenueAddress('');
-    setThumbnailFile(null);
-    setNewVehicleImages([]);
     setBrand('');
     setModel('');
     setCategory('');
     setZone('');
     setSelectedZoneName('');
-    setEngineCapacity('');
-    setEnginePower('');
+
+    // -------- MEDIA --------
+    setThumbnailFile(null);
+    setNewVehicleImages([]);
+    setExistingThumbnail('');
+    setExistingImages([]);
+
+    // -------- VEHICLE INFO --------
     setSeatingCapacity('');
     setAirCondition('yes');
-    setFuelType('');
-    setTransmissionType('');
     setLicensePlateNumber('');
     setLicensePlateError('');
+
+    // -------- FEATURES (NEW) --------
+    setFeatures({
+      driverIncluded: false,
+      sunroof: false,
+      decorationAvailable: false
+    });
+
+    // -------- PRICING --------
     setTripType('hourly');
     setHourlyWisePrice('');
     setPerDayPrice('');
     setDistanceWisePrice('');
     setDiscount('');
+
+    // -------- TAGS --------
     setSearchTags([]);
     setCurrentTag('');
-    setExistingThumbnail('');
-    setExistingImages([]);
+
+    // -------- LOCATION --------
     setLatitude('');
     setLongitude('');
     setOperatingHours('');
+
+    // -------- VIEW MODE --------
     setViewMode('create');
+
+    // -------- MAP CLEANUP --------
     if (markerRef.current) {
       markerRef.current.setMap(null);
       markerRef.current = null;
     }
+
     if (map) {
       setMap(null);
     }
@@ -735,240 +739,214 @@ const Createnew = () => {
 
   // Form submission
   const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
-      const isEdit = viewMode === 'edit';
-      setLoading(true);
+  async (event) => {
+    event.preventDefault();
+    const isEdit = viewMode === 'edit';
+    setLoading(true);
 
-      // Validate required fields
-      if (
-        !name ||
-        !brand ||
-        !model ||
-        !parentCategory ||
-        !subCategory ||
-        !zone ||
-        !engineCapacity ||
-        !enginePower ||
-        !seatingCapacity ||
-        !fuelType ||
-        !transmissionType ||
-        !licensePlateNumber ||
-        !tripType ||
-        !venueAddress ||
-        !latitude ||
-        !longitude
-      ) {
-        setToastMessage('Please fill all required fields.');
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    // Validate required fields
+    if (
+      !name ||
+      !brand ||
+      !model ||
+      !parentCategory ||
+      !subCategory ||
+      !zone ||
+      !seatingCapacity ||
+      !licensePlateNumber ||
+      !tripType ||
+      !venueAddress ||
+      !latitude ||
+      !longitude
+    ) {
+      setToastMessage('Please fill all required fields.');
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      if (
-        (tripType === 'hourly' && !hourlyWisePrice) ||
-        (tripType === 'perDay' && !perDayPrice) ||
-        (tripType === 'distanceWise' && !distanceWisePrice)
-      ) {
-        setToastMessage(`Please provide a price for ${tripType} trip type.`);
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    if (
+      (tripType === 'hourly' && !hourlyWisePrice) ||
+      (tripType === 'perDay' && !perDayPrice) ||
+      (tripType === 'distanceWise' && !distanceWisePrice)
+    ) {
+      setToastMessage(`Please provide a price for ${tripType} trip type.`);
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      if (!thumbnailFile && !existingThumbnail && !isEdit) {
-        setToastMessage('Please upload a thumbnail image.');
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    if (!thumbnailFile && !existingThumbnail && !isEdit) {
+      setToastMessage('Please upload a thumbnail image.');
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      if (newVehicleImages.length === 0 && existingImages.length === 0 && !isEdit) {
-        setToastMessage('Please upload at least one vehicle image.');
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    if (newVehicleImages.length === 0 && existingImages.length === 0 && !isEdit) {
+      setToastMessage('Please upload at least one vehicle image.');
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      if (!validateLicensePlate(licensePlateNumber)) {
-        setToastMessage('Invalid license plate number.');
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    if (!validateLicensePlate(licensePlateNumber)) {
+      setToastMessage('Invalid license plate number.');
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      // Validate token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setToastMessage('No authentication token found. Please log in.');
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
+    // Validate token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setToastMessage('No authentication token found. Please log in.');
+      setToastSeverity('error');
+      setOpenToast(true);
+      setLoading(false);
+      return;
+    }
 
-      // Prepare FormData
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('brand', brand);
-      formData.append('category', parentCategory);
-      formData.append('subCategories[]', subCategory);
-      formData.append('zone', zone);
-      formData.append('model', model);
-      formData.append('engineCapacity', parseInt(engineCapacity));
-      formData.append('enginePower', parseInt(enginePower));
-      formData.append('seatingCapacity', parseInt(seatingCapacity));
-      formData.append('airCondition', airCondition === 'yes');
-      formData.append('fuelType', fuelType.toLowerCase());
-      // Attach dynamic vehicle attributes
-      formData.append('attributes', JSON.stringify(selectedAttributes));
-      formData.append('seatType', seatType);
-      formData.append('audioSystem', audioSystem);
-      formData.append('camera', camera);
-      formData.append('advanceBookingAmount', advanceBookingAmount || 0);
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('brand', brand);
+    formData.append('category', parentCategory);
+    formData.append('subCategories[]', subCategory);
+    formData.append('zone', zone);
+    formData.append('model', model);
+    formData.append('seatingCapacity', parseInt(seatingCapacity));
+    formData.append('airCondition', airCondition === 'yes');
+    
+    // ✅ FIXED: Send features as individual fields, not nested JSON
+    formData.append('features[driverIncluded]', features.driverIncluded);
+    formData.append('features[sunroof]', features.sunroof);
+    formData.append('features[decorationAvailable]', features.decorationAvailable);
 
-      if (airbags) formData.append('airbags', airbags);
-      if (bootSpace) formData.append('bootSpace', bootSpace);
-      if (fuelTank) formData.append('fuelTank', fuelTank);
+    // Attach dynamic vehicle attributes
+    formData.append('attributes', JSON.stringify(selectedAttributes));
 
-      // Arrays
-      formData.append('connectivity', JSON.stringify(connectivity));
-      formData.append('sensors', JSON.stringify(sensors));
-      formData.append('safety', JSON.stringify(safety));
-      formData.append('insuranceIncluded', JSON.stringify(insuranceIncluded));
-      formData.append('insuranceExcluded', JSON.stringify(insuranceExcluded));
+    formData.append('licensePlateNumber', licensePlateNumber);
+    formData.append('venueAddress', venueAddress);
+    formData.append('latitude', parseFloat(latitude));
+    formData.append('longitude', parseFloat(longitude));
+    if (operatingHours) formData.append('operatingHours', operatingHours);
+    
+    formData.append('pricing[type]', tripType);
+    formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
+    formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
+    formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
+    
+    if (discount) formData.append('discount', parseFloat(discount));
+    if (advanceBookingAmount) formData.append('advanceBookingAmount', parseFloat(advanceBookingAmount));
+    
+    searchTags.forEach((tag) => formData.append('searchTags[]', tag));
+    if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+    newVehicleImages.forEach((file) => formData.append('images', file));
+    
+    // Log FormData for debugging
+    const formDataEntries = {};
+    for (let [key, value] of formData.entries()) {
+      formDataEntries[key] = value instanceof File ? value.name : value;
+    }
+    console.log('FormData:', formDataEntries);
 
-      formData.append('transmissionType', transmissionType.toLowerCase());
-      formData.append('licensePlateNumber', licensePlateNumber);
-      formData.append('venueAddress', venueAddress);
-      formData.append('latitude', parseFloat(latitude));
-      formData.append('longitude', parseFloat(longitude));
-      if (operatingHours) formData.append('operatingHours', operatingHours);
-      formData.append('pricing[type]', tripType);
-      formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
-      formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
-      formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
-      if (discount) formData.append('discount', parseFloat(discount));
-      searchTags.forEach((tag) => formData.append('searchTags[]', tag));
-      if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
-      newVehicleImages.forEach((file) => formData.append('images', file));
-      // Log FormData for debugging
-      const formDataEntries = {};
-      for (let [key, value] of formData.entries()) {
-        formDataEntries[key] = value instanceof File ? value.name : value;
-      }
-      console.log('FormData:', formDataEntries);
-
-      try {
-        let response;
-        let newOrUpdatedVehicle;
-        if (isEdit) {
-          if (!effectiveVehicleId) {
-            throw new Error('Invalid vehicle ID for update');
+    try {
+      let response;
+      let newOrUpdatedVehicle;
+      if (isEdit) {
+        if (!effectiveVehicleId) {
+          throw new Error('Invalid vehicle ID for update');
+        }
+        response = await axios.put(`${API_BASE_URL}/vehicles/${effectiveVehicleId}`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
           }
-          response = await axios.put(`${API_BASE_URL}/vehicles/${effectiveVehicleId}`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          newOrUpdatedVehicle = response.data.data || response.data;
-        } else {
-          response = await axios.post(`${API_BASE_URL}/vehicles`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          newOrUpdatedVehicle = response.data.data || response.data;
-        }
-        console.log('API Response:', response.data);
-        setToastMessage(isEdit ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
-        setToastSeverity('success');
-        setOpenToast(true);
-        handleReset();
-        if (isEdit) {
-          navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
-        }
-      } catch (error) {
-        console.error('API Error:', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          headers: error.response?.headers,
-          message: error.message
         });
-        let errorMsg = error.response?.data?.message || 'Failed to save vehicle';
-        if (error.response?.data?.errors) {
-          errorMsg = error.response.data.errors.map((err) => err.msg).join(', ');
-        }
-        setToastMessage(errorMsg);
-        setToastSeverity('error');
-        setOpenToast(true);
-      } finally {
-        setLoading(false);
+        newOrUpdatedVehicle = response.data.data || response.data;
+      } else {
+        response = await axios.post(`${API_BASE_URL}/vehicles`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        newOrUpdatedVehicle = response.data.data || response.data;
       }
-    },
-    [
-      viewMode,
-      effectiveVehicleId,
-      name,
-      brand,
-      model,
-      category,
-      zone,
-      engineCapacity,
-      enginePower,
-      seatingCapacity,
-      airCondition,
-      fuelType,
-      transmissionType,
-      licensePlateNumber,
-      tripType,
-      hourlyWisePrice,
-      perDayPrice,
-      distanceWisePrice,
-      discount,
-      searchTags,
-      thumbnailFile,
-      newVehicleImages,
-      existingThumbnail,
-      existingImages,
-      validateLicensePlate,
-      handleReset,
-      navigate,
-      API_BASE_URL,
-      moduleId,
-      isDataLoaded,
-      vehicleKeyFromState,
-      setVehicleData,
-      venueAddress,
-      latitude,
-      longitude,
-      operatingHours,
-      parentCategory,
-      subCategory,
-      selectedAttributes,
-      seatType,
-      audioSystem,
-      camera,
-      advanceBookingAmount,
-      airbags,
-      bootSpace,
-      fuelTank,
-      connectivity,
-      sensors,
-      safety,
-      insuranceIncluded,
-      insuranceExcluded
-    ]
-  );
+      console.log('API Response:', response.data);
+      setToastMessage(isEdit ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+      setToastSeverity('success');
+      setOpenToast(true);
+      handleReset();
+      if (isEdit) {
+        navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
+      }
+    } catch (error) {
+      console.error('API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        message: error.message
+      });
+      let errorMsg = error.response?.data?.message || 'Failed to save vehicle';
+      if (error.response?.data?.errors) {
+        errorMsg = error.response.data.errors.map((err) => err.msg).join(', ');
+      }
+      setToastMessage(errorMsg);
+      setToastSeverity('error');
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
+    }
+  },
+  [
+    viewMode,
+    effectiveVehicleId,
+    name,
+    brand,
+    model,
+    category,
+    zone,
+    seatingCapacity,
+    airCondition,
+    features, // ✅ Added features to dependencies
+    licensePlateNumber,
+    tripType,
+    hourlyWisePrice,
+    perDayPrice,
+    distanceWisePrice,
+    discount,
+    searchTags,
+    thumbnailFile,
+    newVehicleImages,
+    existingThumbnail,
+    existingImages,
+    validateLicensePlate,
+    handleReset,
+    navigate,
+    API_BASE_URL,
+    moduleId,
+    isDataLoaded,
+    vehicleKeyFromState,
+    setVehicleData,
+    venueAddress,
+    latitude,
+    longitude,
+    operatingHours,
+    parentCategory,
+    subCategory,
+    selectedAttributes,
+    advanceBookingAmount
+  ]
+);
 
   const handleCloseToast = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
@@ -1252,20 +1230,6 @@ const Createnew = () => {
                         inputProps={{ min: 1 }}
                       />
                     </FormControl>
-                    <FormControl fullWidth variant="outlined" required>
-                      <InputLabel id="transmission-type-label">Transmission Type*</InputLabel>
-                      <Select
-                        labelId="transmission-type-label"
-                        id="transmission-type-select"
-                        value={transmissionType}
-                        label="Transmission Type"
-                        onChange={(e) => setTransmissionType(e.target.value)}
-                      >
-                        <MenuItem value="">Select transmission type</MenuItem>
-                        <MenuItem value="automatic">Automatic</MenuItem>
-                        <MenuItem value="manual">Manual</MenuItem>
-                      </Select>
-                    </FormControl>
                   </Stack>
                   <Stack spacing={2}>
                     <TextField
@@ -1277,17 +1241,7 @@ const Createnew = () => {
                       placeholder="Model Name"
                       required
                     />
-                    <TextField
-                      fullWidth
-                      label="Engine Capacity (cc)*"
-                      variant="outlined"
-                      value={engineCapacity}
-                      onChange={(e) => setEngineCapacity(e.target.value)}
-                      placeholder="Ex: 2000"
-                      type="number"
-                      inputProps={{ min: 0 }}
-                      required
-                    />
+
                     <FormControl component="fieldset" fullWidth>
                       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                         Air Condition
@@ -1296,8 +1250,12 @@ const Createnew = () => {
                         <FormControlLabel value="yes" control={<Radio />} label="Yes" />
                         <FormControlLabel value="no" control={<Radio />} label="No" />
                       </RadioGroup>
+                      
                     </FormControl>
+                    
                   </Stack>
+
+                  
                   <Stack spacing={2}>
                     <FormControl fullWidth required>
                       <InputLabel>Parent Category</InputLabel>
@@ -1309,6 +1267,7 @@ const Createnew = () => {
                           </MenuItem>
                         ))}
                       </Select>
+                      
                     </FormControl>
 
                     <FormControl fullWidth required disabled={!parentCategory}>
@@ -1321,34 +1280,7 @@ const Createnew = () => {
                           </MenuItem>
                         ))}
                       </Select>
-                    </FormControl>
-
-                    <TextField
-                      fullWidth
-                      label="Engine Power (hp)*"
-                      variant="outlined"
-                      value={enginePower}
-                      onChange={(e) => setEnginePower(e.target.value)}
-                      placeholder="Ex: 150"
-                      type="number"
-                      inputProps={{ min: 0 }}
-                      required
-                    />
-                    <FormControl fullWidth variant="outlined" required>
-                      <InputLabel id="fuel-type-label">Fuel Type*</InputLabel>
-                      <Select
-                        labelId="fuel-type-label"
-                        id="fuel-type-select"
-                        value={fuelType}
-                        label="Fuel Type"
-                        onChange={(e) => setFuelType(e.target.value)}
-                      >
-                        <MenuItem value="">Select fuel type</MenuItem>
-                        <MenuItem value="petrol">Petrol</MenuItem>
-                        <MenuItem value="diesel">Diesel</MenuItem>
-                        <MenuItem value="electric">Electric</MenuItem>
-                        <MenuItem value="hybrid">Hybrid</MenuItem>
-                      </Select>
+                      
                     </FormControl>
                   </Stack>
                 </Box>
@@ -1500,106 +1432,76 @@ const Createnew = () => {
               </Box>
             </Card>
           </Box>
+<Box
+                        sx={{
+                          mt: 3,
+                          p: 2,
+                          border: '1px solid',
+                          borderColor: 'grey.300',
+                          borderRadius: 2,
+                          backgroundColor: '#fafafa'
+                        }}
+                      >
+                        <Typography variant="subtitle1" gutterBottom>
+                          Vehicle Features
+                        </Typography>
 
-          <Box sx={{ mb: 4 }}>
-            <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Additional Vehicle Details
-                </Typography>
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                              xs: '1fr', // mobile
+                              sm: 'repeat(2, 1fr)',
+                              md: 'repeat(3, 1fr)' // desktop → horizontal
+                            },
+                            gap: 4
+                          }}
+                        >
+                          {[
+                            { key: 'driverIncluded', label: 'Driver Included' },
+                            { key: 'sunroof', label: 'Sunroof' },
+                            { key: 'decorationAvailable', label: 'Decoration Available' }
+                          ].map((item) => (
+                            <Box
+                              key={item.key}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                px: 3,
+                                py: 2,
+                                border: '1px solid',
+                                borderColor: 'grey.300',
+                                borderRadius: 2,
+                                backgroundColor: 'white',
+                                minHeight: 56
+                              }}
+                            >
+                              <Typography fontSize={14} fontWeight={500}>
+                                {item.label}
+                              </Typography>
 
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
-                    gap: 3
-                  }}
-                >
-                  <FormControl fullWidth>
-                    <InputLabel>Seat Type</InputLabel>
-                    <Select value={seatType} label="Seat Type" onChange={(e) => setSeatType(e.target.value)}>
-                      <MenuItem value="">Select Seat Type</MenuItem>
-                      <MenuItem value="cloth">Cloth</MenuItem>
-                      <MenuItem value="leather">Leather</MenuItem>
-                      <MenuItem value="vinyl">Vinyl</MenuItem>
-                      <MenuItem value="alcantara">Alcantara</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <TextField label="Audio System" value={audioSystem} onChange={(e) => setAudioSystem(e.target.value)} />
-                  <FormControl fullWidth>
-                    <InputLabel>Camera</InputLabel>
-                    <Select value={camera} label="Camera" onChange={(e) => setCamera(e.target.value)}>
-                      <MenuItem value="">Select Camera</MenuItem>
-                      <MenuItem value="none">None</MenuItem>
-                      <MenuItem value="rear">Rear</MenuItem>
-                      <MenuItem value="front">Front</MenuItem>
-                      <MenuItem value="360-degree">360 Degree</MenuItem>
-                      <MenuItem value="multiple">Multiple</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <TextField label="Airbags" type="number" value={airbags} onChange={(e) => setAirbags(e.target.value)} />
-
-                  <TextField label="Boot Space (Litres)" type="number" value={bootSpace} onChange={(e) => setBootSpace(e.target.value)} />
-
-                  <TextField
-                    label="Fuel Tank Capacity (Litres)"
-                    type="number"
-                    value={fuelTank}
-                    onChange={(e) => setFuelTank(e.target.value)}
-                  />
-                </Box>
-
-                <Box sx={{ mt: 3 }}>
-                  <TextField
-                    fullWidth
-                    label="Connectivity (comma separated)"
-                    placeholder="Bluetooth, USB"
-                    value={connectivity.join(', ')}
-                    onChange={(e) => setConnectivity(e.target.value.split(',').map((v) => v.trim()))}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Sensors (comma separated)"
-                    placeholder="Parking, Lane"
-                    sx={{ mt: 2 }}
-                    value={sensors.join(', ')}
-                    onChange={(e) => setSensors(e.target.value.split(',').map((v) => v.trim()))}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Safety Features (comma separated)"
-                    placeholder="ABS, Traction Control"
-                    sx={{ mt: 2 }}
-                    value={safety.join(', ')}
-                    onChange={(e) => setSafety(e.target.value.split(',').map((v) => v.trim()))}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Insurance Included"
-                    placeholder="Collision, Theft"
-                    sx={{ mt: 2 }}
-                    value={insuranceIncluded.join(', ')}
-                    onChange={(e) => setInsuranceIncluded(e.target.value.split(',').map((v) => v.trim()))}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Insurance Excluded"
-                    placeholder="Personal Injury"
-                    sx={{ mt: 2 }}
-                    value={insuranceExcluded.join(', ')}
-                    onChange={(e) => setInsuranceExcluded(e.target.value.split(',').map((v) => v.trim()))}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-
+                              <Switch
+                                checked={features[item.key]}
+                                onChange={(e) =>
+                                  setFeatures((prev) => ({
+                                    ...prev,
+                                    [item.key]: e.target.checked
+                                  }))
+                                }
+                                sx={{
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#E15B65'
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#E15B65'
+                                  }
+                                }}
+                              />
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>

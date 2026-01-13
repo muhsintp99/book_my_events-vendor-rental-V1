@@ -67,6 +67,7 @@ function BookingCalendar() {
     contactNumber: '',
     emailAddress: '',
     address: '',
+    numberOfGuests: '',
 
     cakeId: '',
     deliveryType: 'Home Delivery',
@@ -153,16 +154,16 @@ function BookingCalendar() {
       const data = await response.json();
 
       if (response.ok && data.success && data.data) {
-        setVenues(data.data);
+        // setVenues(data.data);
       } else {
         console.error('Failed to fetch venues:', data);
         setError(data.message || 'Failed to fetch venues');
-        setVenues([]);
+        // setVenues([]);
       }
     } catch (err) {
       console.error('Fetch venues error:', err);
       setError('Error connecting to server');
-      setVenues([]);
+      // setVenues([]);
     }
   };
 
@@ -548,7 +549,7 @@ function BookingCalendar() {
         contactNumber: formData.contactNumber,
         emailAddress: formData.emailAddress,
         address: formData.address,
-        numberOfGuests: formData.numberOfGuests ? Number(formData.numberOfGuests) : 1, // Defaulting to 1 if not provided, but field added below
+        numberOfGuests: formData.numberOfGuests ? Number(formData.numberOfGuests) : 1,
 
         bookingDate: formData.bookingDate,
         timeSlot: formData.timeSlot,
@@ -579,13 +580,13 @@ function BookingCalendar() {
     }
   };
 
-
   const resetForm = () => {
     setFormData({
       fullName: '',
       contactNumber: '',
       emailAddress: '',
       address: '',
+      numberOfGuests: '',
       cakeId: '',
       deliveryType: 'Home Delivery',
       customerMessage: '',
@@ -603,231 +604,6 @@ function BookingCalendar() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setError(null);
-  };
-
-  const styles = {
-    container: {
-      width: '100%',
-      margin: '0 auto',
-      padding: '40px',
-      backgroundColor: '#fafafa',
-      minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
-    navigation: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: '32px',
-      padding: '0 20px'
-    },
-    navButton: {
-      padding: '12px',
-      border: 'none',
-      background: '#fff',
-      cursor: 'pointer',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'background-color 0.2s',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    },
-    monthTitle: {
-      fontSize: '28px',
-      fontStyle: 'italic',
-      fontWeight: '400',
-      color: '#333'
-    },
-    calendarGrid: {
-      backgroundColor: '#fff',
-      borderRadius: '16px',
-      marginBottom: '32px',
-      padding: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7, 1fr)',
-      gap: '16px'
-    },
-    weekDay: {
-      textAlign: 'center',
-      padding: '12px',
-      color: '#999',
-      fontSize: '16px',
-      fontWeight: '500'
-    },
-    dayCell: {
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px 0',
-      cursor: 'pointer',
-      borderRadius: '16px',
-      transition: 'background-color 0.2s'
-    },
-    dayNumber: {
-      fontSize: '20px',
-      fontWeight: '400',
-      color: '#333',
-      marginBottom: '6px'
-    },
-    todayNumber: {
-      backgroundColor: '#ef5350',
-      color: '#fff',
-      borderRadius: '50%',
-      width: '52px',
-      height: '52px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontWeight: '600'
-    },
-    statusDot: {
-      width: '10px',
-      height: '10px',
-      borderRadius: '50%'
-    },
-    legend: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-    },
-    legendContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '24px',
-      flexWrap: 'wrap'
-    },
-    legendItem: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    legendDot: {
-      width: '12px',
-      height: '12px',
-      borderRadius: '50%'
-    },
-    legendText: {
-      fontSize: '15px',
-      color: '#666'
-    },
-    selectedInfo: {
-      marginBottom: '24px'
-    },
-    selectedHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '24px'
-    },
-    selectedNumber: {
-      fontSize: '64px',
-      fontWeight: '300',
-      color: '#333'
-    },
-    selectedDetails: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    selectedTitle: {
-      fontSize: '22px',
-      fontWeight: '500',
-      color: '#333',
-      marginBottom: '6px'
-    },
-    selectedStatus: {
-      fontSize: '16px',
-      color: '#666'
-    },
-    selectedDay: {
-      fontSize: '14px',
-      color: '#999',
-      marginLeft: '100px',
-      marginTop: '6px'
-    },
-    bookingsTitle: {
-      fontSize: '22px',
-      fontWeight: '500',
-      marginBottom: '20px',
-      color: '#333'
-    },
-    bookingsContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px'
-    },
-    bookingCard: {
-      borderRadius: '20px',
-      padding: '28px',
-      color: '#fff',
-      position: 'relative',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-    },
-    bookingHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: '8px'
-    },
-    bookingTime: {
-      fontSize: '15px',
-      fontWeight: '500'
-    },
-    bookingStatus: {
-      fontSize: '11px',
-      padding: '4px 12px',
-      borderRadius: '12px',
-      fontWeight: '500',
-      backgroundColor: 'rgba(255,255,255,0.3)'
-    },
-    bookingName: {
-      fontSize: '24px',
-      fontWeight: '500',
-      marginBottom: '10px'
-    },
-    bookingLocation: {
-      fontSize: '15px',
-      marginBottom: '14px'
-    },
-    noBookings: {
-      backgroundColor: '#f5f5f5',
-      borderRadius: '20px',
-      padding: '48px',
-      textAlign: 'center'
-    },
-    noBookingsTitle: {
-      fontSize: '24px',
-      fontWeight: '500',
-      marginBottom: '10px',
-      color: '#333'
-    },
-    noBookingsText: {
-      fontSize: '16px',
-      color: '#666'
-    },
-    floatingButton: {
-      position: 'fixed',
-      bottom: '32px',
-      right: '32px',
-      backgroundColor: '#ef5350',
-      color: '#fff',
-      borderRadius: '50%',
-      width: '64px',
-      height: '64px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s, transform 0.2s'
-    }
   };
 
   const sectionHeaderStyle = {
@@ -900,8 +676,7 @@ function BookingCalendar() {
             border: '1px solid #f0f0f0',
             '&:hover': { backgroundColor: '#f5f5f5', transform: 'scale(1.1)' },
             transition: 'all 0.2s'
-          }}
-        >
+          }}>
           <ChevronRightIcon />
         </IconButton>
       </Box>
@@ -1261,412 +1036,514 @@ function BookingCalendar() {
                 </Alert>
               )}
 
-              {/* Top Row: Client Info & Selection */}
-              <Grid item xs={12}>
-                <Box sx={{
-                  backgroundColor: '#fff',
-                  borderRadius: '24px',
-                  p: 4,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                  border: '1px solid #f0f0f0',
-                  height: '100%'
-                }}>
-                  <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
-                    <PersonIcon sx={iconStyle} />
-                    Client Information
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        name="fullName"
-                        label="Full Name"
-                        variant="outlined"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PersonIcon sx={{ color: '#999', fontSize: 20 }} />
-                            </InputAdornment>
-                          )
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        name="contactNumber"
-                        label="Contact Number"
-                        variant="outlined"
-                        value={formData.contactNumber}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PhoneIcon sx={{ color: '#999', fontSize: 20 }} />
-                            </InputAdornment>
-                          )
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="emailAddress"
-                        label="Email Address (Optional)"
-                        variant="outlined"
-                        value={formData.emailAddress}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <EmailIcon sx={{ color: '#999', fontSize: 20 }} />
-                            </InputAdornment>
-                          )
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="address"
-                        label="Delivery Address (Optional)"
-                        variant="outlined"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <HomeIcon sx={{ color: '#999', fontSize: 20 }} />
-                            </InputAdornment>
-                          )
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box sx={{
-                  backgroundColor: '#fff',
-                  borderRadius: '24px',
-                  p: 4,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                  border: '1px solid #f0f0f0',
-                  height: '100%'
-                }}>
-                  <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
-                    <DescriptionIcon sx={iconStyle} />
-                    Cake Selection
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel shrink>Select Cake</InputLabel>
-                        <Select
-                          name="cakeId"
-                          value={formData.cakeId}
-                          onChange={handleCakeChange}
-                          label="Select Cake"
-                          displayEmpty
-                        >
-                          <MenuItem value="" disabled>
-                            <span style={{ color: '#999' }}>Select Cake</span>
-                          </MenuItem>
-                          {cakes.map(cake => (
-                            <MenuItem key={cake._id} value={cake._id}>
-                              {cake.cakeTitle || cake.packageName}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-
-                    {cakeVariations.length > 0 && (
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Select Variations</Typography>
-                        <Box sx={{ maxHeight: '300px', overflowY: 'auto', pr: 1 }}>
-                          <Grid container spacing={2}>
-                            {cakeVariations.map(variation => {
-                              const selected = selectedVariations.find(v => v._id === variation._id);
-                              return (
-                                <Grid item xs={12} key={variation._id}>
-                                  <Box sx={{
-                                    p: 2,
-                                    borderRadius: '16px',
-                                    border: '1px solid',
-                                    borderColor: selected ? '#ef5350' : '#f0f0f0',
-                                    backgroundColor: selected ? '#fff5f5' : '#fff',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    transition: 'all 0.2s'
-                                  }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                      <Checkbox
-                                        checked={!!selected}
-                                        onChange={() => toggleVariation(variation)}
-                                        sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }}
-                                      />
-                                      <Box>
-                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{variation.name}</Typography>
-                                        <Typography variant="caption" sx={{ color: '#ef5350', fontWeight: 700 }}>AED {variation.price}</Typography>
-                                      </Box>
-                                    </Box>
-                                    {selected && (
-                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <IconButton
-                                          size="small"
-                                          onClick={() => updateVariationQty(variation._id, selected.quantity - 1)}
-                                          sx={{ border: '1px solid #ef5350', color: '#ef5350' }}
-                                        >
-                                          <Typography variant="body2" sx={{ fontWeight: 900 }}>-</Typography>
-                                        </IconButton>
-                                        <Typography sx={{ minWidth: '24px', textAlign: 'center', fontWeight: 600 }}>{selected.quantity}</Typography>
-                                        <IconButton
-                                          size="small"
-                                          onClick={() => updateVariationQty(variation._id, selected.quantity + 1)}
-                                          sx={{ backgroundColor: '#ef5350', color: '#fff', '&:hover': { backgroundColor: '#e53935' } }}
-                                        >
-                                          <Typography variant="body2" sx={{ fontWeight: 900 }}>+</Typography>
-                                        </IconButton>
-                                      </Box>
-                                    )}
-                                  </Box>
-                                </Grid>
-                              );
-                            })}
-                          </Grid>
-                        </Box>
+              <Grid container spacing={3}>
+                {/* Top Row: Client Info */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
+                      <PersonIcon sx={iconStyle} />
+                      Client Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="fullName"
+                          label="Full Name"
+                          variant="outlined"
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PersonIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
                       </Grid>
-                    )}
-                  </Grid>
-                </Box>
-              </Grid>
-
-              {/* Bottom Row: Scheduling & Notes side-by-side */}
-              <Grid item xs={12}>
-                <Box sx={{
-                  backgroundColor: '#fff',
-                  borderRadius: '24px',
-                  p: 4,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                  border: '1px solid #f0f0f0',
-                  height: '100%'
-                }}>
-                  <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
-                    <CalendarMonthIcon sx={iconStyle} />
-                    Scheduling
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        name="bookingDate"
-                        label="Booking Date"
-                        type="date"
-                        variant="outlined"
-                        value={formData.bookingDate}
-                        onChange={handleInputChange}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ mb: 4 }}
-                      />
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Select Delivery Type</Typography>
-                      <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-                        {['Home Delivery', 'Store Pickup'].map((type) => (
-                          <Box
-                            key={type}
-                            onClick={() => setFormData(prev => ({ ...prev, deliveryType: type }))}
-                            sx={{
-                              flex: 1,
-                              p: 1.5,
-                              textAlign: 'center',
-                              borderRadius: '12px',
-                              border: '2px solid',
-                              borderColor: formData.deliveryType === type ? '#ef5350' : '#f0f0f0',
-                              backgroundColor: formData.deliveryType === type ? '#fff5f5' : '#fff',
-                              cursor: 'pointer',
-                              fontWeight: 700,
-                              fontSize: '13px',
-                              transition: 'all 0.2s',
-                              color: formData.deliveryType === type ? '#ef5350' : '#666'
-                            }}
-                          >
-                            {type}
-                          </Box>
-                        ))}
-                      </Box>
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Select Time Slots</Typography>
-                      <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1.5,
-                        p: 2,
-                        backgroundColor: '#fcfcfc',
-                        borderRadius: '16px',
-                        border: '1px solid #f5f5f5'
-                      }}>
-                        <FormControlLabel
-                          control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }} />}
-                          label={<Box sx={{ ml: 1 }}><Typography variant="body2" sx={{ fontWeight: 600 }}>Morning Delivery</Typography><Typography variant="caption" sx={{ color: '#999' }}>9:00 AM - 1:00 PM</Typography></Box>}
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="contactNumber"
+                          label="Contact Number"
+                          variant="outlined"
+                          value={formData.contactNumber}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PhoneIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
                         />
-                        <Divider sx={{ my: 1, opacity: 0.5 }} />
-                        <FormControlLabel
-                          control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }} />}
-                          label={<Box sx={{ ml: 1 }}><Typography variant="body2" sx={{ fontWeight: 600 }}>Evening Delivery</Typography><Typography variant="caption" sx={{ color: '#999' }}>6:00 PM - 10:00 PM</Typography></Box>}
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          name="emailAddress"
+                          label="Email Address (Optional)"
+                          variant="outlined"
+                          value={formData.emailAddress}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <EmailIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
                         />
-                      </Box>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          name="address"
+                          label="Delivery Address (Optional)"
+                          variant="outlined"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <HomeIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Payment Method</Typography>
-                      <Grid container spacing={2}>
-                        {[
-                          { id: 'COD', label: 'COD', icon: <MoneyIcon /> },
-                          { id: 'Card', label: 'Card', icon: <CreditCardIcon /> },
-                          { id: 'UPI', label: 'UPI', icon: <AccountBalanceWalletIcon /> },
-                          { id: 'Bank Transfer', label: 'Bank', icon: <AccountBalanceIcon /> },
-                          { id: 'Other', label: 'Other', icon: <MoreHorizIcon /> }
-                        ].map((type) => (
-                          <Grid item xs={6} key={type.id}>
+                  </Box>
+                </Grid>
+
+                {/* Cake Selection */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
+                      <DescriptionIcon sx={iconStyle} />
+                      Cake Selection
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12}>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel shrink>Select Cake</InputLabel>
+                          <Select
+                            name="cakeId"
+                            value={formData.cakeId}
+                            onChange={handleCakeChange}
+                            label="Select Cake"
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              <span style={{ color: '#999' }}>Select Cake</span>
+                            </MenuItem>
+                            {cakes.map(cake => (
+                              <MenuItem key={cake._id} value={cake._id}>
+                                {cake.cakeTitle || cake.packageName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+
+                      {cakeVariations.length > 0 && (
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Select Variations</Typography>
+                          <Box sx={{ maxHeight: '300px', overflowY: 'auto', pr: 1 }}>
+                            <Grid container spacing={2}>
+                              {cakeVariations.map(variation => {
+                                const selected = selectedVariations.find(v => v._id === variation._id);
+                                return (
+                                  <Grid item xs={12} key={variation._id}>
+                                    <Box sx={{
+                                      p: 2,
+                                      borderRadius: '16px',
+                                      border: '1px solid',
+                                      borderColor: selected ? '#ef5350' : '#f0f0f0',
+                                      backgroundColor: selected ? '#fff5f5' : '#fff',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      transition: 'all 0.2s'
+                                    }}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Checkbox
+                                          checked={!!selected}
+                                          onChange={() => toggleVariation(variation)}
+                                          sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }}
+                                        />
+                                        <Box>
+                                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{variation.name}</Typography>
+                                          <Typography variant="caption" sx={{ color: '#ef5350', fontWeight: 700 }}>AED {variation.price}</Typography>
+                                        </Box>
+                                      </Box>
+                                      {selected && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => updateVariationQty(variation._id, selected.quantity - 1)}
+                                            sx={{ border: '1px solid #ef5350', color: '#ef5350' }}
+                                          >
+                                            <Typography variant="body2" sx={{ fontWeight: 900 }}>-</Typography>
+                                          </IconButton>
+                                          <Typography sx={{ minWidth: '24px', textAlign: 'center', fontWeight: 600 }}>{selected.quantity}</Typography>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => updateVariationQty(variation._id, selected.quantity + 1)}
+                                            sx={{ backgroundColor: '#ef5350', color: '#fff', '&:hover': { backgroundColor: '#e53935' } }}
+                                          >
+                                            <Typography variant="body2" sx={{ fontWeight: 900 }}>+</Typography>
+                                          </IconButton>
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  </Grid>
+                                );
+                              })}
+                            </Grid>
+                          </Box>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </Box>
+                </Grid>
+
+                {/* Scheduling Section */}
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      backgroundColor: '#fff',
+                      borderRadius: '24px',
+                      p: 4,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                      border: '1px solid #f0f0f0',
+                      height: '100%'
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
+                      <CalendarMonthIcon sx={iconStyle} />
+                      Scheduling
+                    </Typography>
+
+                    <Grid container spacing={3}>
+                      {/* LEFT COLUMN */}
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="bookingDate"
+                          label="Booking Date"
+                          type="date"
+                          variant="outlined"
+                          value={formData.bookingDate}
+                          onChange={handleInputChange}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ mb: 4 }}
+                        />
+
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>
+                          Select Delivery Type
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+                          {['Home Delivery', 'Store Pickup'].map((type) => (
                             <Box
-                              onClick={() => setFormData(prev => ({ ...prev, paymentType: type.id }))}
+                              key={type}
+                              onClick={() =>
+                                setFormData((prev) => ({ ...prev, deliveryType: type }))
+                              }
                               sx={{
+                                flex: 1,
                                 p: 1.5,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: 0.5,
+                                textAlign: 'center',
                                 borderRadius: '12px',
                                 border: '2px solid',
-                                borderColor: formData.paymentType === type.id ? '#ef5350' : '#f0f0f0',
-                                backgroundColor: formData.paymentType === type.id ? '#fff5f5' : '#fff',
+                                borderColor:
+                                  formData.deliveryType === type ? '#ef5350' : '#f0f0f0',
+                                backgroundColor:
+                                  formData.deliveryType === type ? '#fff5f5' : '#fff',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '&:hover': { borderColor: '#ef5350', transform: 'translateY(-2px)' }
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                transition: 'all 0.2s',
+                                color:
+                                  formData.deliveryType === type ? '#ef5350' : '#666'
                               }}
                             >
-                              <Box sx={{ color: formData.paymentType === type.id ? '#ef5350' : '#666', transform: 'scale(0.8)' }}>
-                                {type.icon}
-                              </Box>
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: formData.paymentType === type.id ? '#ef5350' : '#666', fontSize: '10px' }}>
-                                {type.label}
-                              </Typography>
+                              {type}
                             </Box>
+                          ))}
+                        </Box>
+
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>
+                          Select Time Slots
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1.5,
+                            p: 2,
+                            backgroundColor: '#fcfcfc',
+                            borderRadius: '16px',
+                            border: '1px solid #f5f5f5'
+                          }}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.timeSlot.includes('Morning')}
+                                onChange={() => handleTimeSlotChange('Morning')}
+                                sx={{
+                                  color: '#ef5350',
+                                  '&.Mui-checked': { color: '#ef5350' }
+                                }}
+                              />
+                            }
+                            label={
+                              <Box sx={{ ml: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  Morning Delivery
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#999' }}>
+                                  9:00 AM - 1:00 PM
+                                </Typography>
+                              </Box>
+                            }
+                          />
+
+                          <Divider sx={{ my: 1, opacity: 0.5 }} />
+
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.timeSlot.includes('Evening')}
+                                onChange={() => handleTimeSlotChange('Evening')}
+                                sx={{
+                                  color: '#ef5350',
+                                  '&.Mui-checked': { color: '#ef5350' }
+                                }}
+                              />
+                            }
+                            label={
+                              <Box sx={{ ml: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  Evening Delivery
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#999' }}>
+                                  6:00 PM - 10:00 PM
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </Box>
+                      </Grid>
+
+                      {/* RIGHT COLUMN */}
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>
+                          Payment Method
+                        </Typography>
+
+                        <Grid container spacing={2}>
+                          {[
+                            { id: 'COD', label: 'COD', icon: <MoneyIcon /> },
+                            { id: 'Card', label: 'Card', icon: <CreditCardIcon /> },
+                            { id: 'UPI', label: 'UPI', icon: <AccountBalanceWalletIcon /> },
+                            { id: 'Bank Transfer', label: 'Bank', icon: <AccountBalanceIcon /> },
+                            { id: 'Other', label: 'Other', icon: <MoreHorizIcon /> }
+                          ].map((type) => (
+                            <Grid item xs={6} key={type.id}>
+                              <Box
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    paymentType: type.id
+                                  }))
+                                }
+                                sx={{
+                                  p: 1.5,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  borderRadius: '12px',
+                                  border: '2px solid',
+                                  borderColor:
+                                    formData.paymentType === type.id
+                                      ? '#ef5350'
+                                      : '#f0f0f0',
+                                  backgroundColor:
+                                    formData.paymentType === type.id
+                                      ? '#fff5f5'
+                                      : '#fff',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  '&:hover': {
+                                    borderColor: '#ef5350',
+                                    transform: 'translateY(-2px)'
+                                  }
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    color:
+                                      formData.paymentType === type.id
+                                        ? '#ef5350'
+                                        : '#666',
+                                    transform: 'scale(0.8)'
+                                  }}
+                                >
+                                  {type.icon}
+                                </Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '10px',
+                                    color:
+                                      formData.paymentType === type.id
+                                        ? '#ef5350'
+                                        : '#666'
+                                  }}
+                                >
+                                  {type.label}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              name="address"
+                              label="Delivery Address (Optional)"
+                              variant="outlined"
+                              value={formData.address}
+                              onChange={handleInputChange}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <HomeIcon sx={{ color: '#999', fontSize: 20 }} />
+                                  </InputAdornment>
+                                )
+                              }}
+                            />
                           </Grid>
-                        ))}
-                        <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            name="address"
-                            label="Delivery Address (Optional)"
-                            variant="outlined"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <HomeIcon sx={{ color: '#999', fontSize: 20 }} />
-                                </InputAdornment>
-                              )
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            name="numberOfGuests"
-                            label="Number of Guests (Optional)"
-                            type="number"
-                            variant="outlined"
-                            value={formData.numberOfGuests || ''}
-                            onChange={handleInputChange}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PeopleIcon sx={{ color: '#999', fontSize: 20 }} />
-                                </InputAdornment>
-                              )
-                            }}
-                          />
+
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              name="numberOfGuests"
+                              label="Number of Guests (Optional)"
+                              type="number"
+                              variant="outlined"
+                              value={formData.numberOfGuests || ''}
+                              onChange={handleInputChange}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PeopleIcon sx={{ color: '#999', fontSize: 20 }} />
+                                  </InputAdornment>
+                                )
+                              }}
+                            />
+                          </Grid>
                         </Grid>
                       </Grid>
                     </Grid>
-                </Box>
-              </Grid>
+                  </Box>
+                </Grid>
 
-              <Grid item xs={12}>
-                <Box sx={{
-                  backgroundColor: '#fff',
-                  borderRadius: '24px',
-                  p: 4,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                  border: '1px solid #f0f0f0',
-                  height: '100%'
-                }}>
-                  <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
-                    <DescriptionIcon sx={iconStyle} />
-                    Additional Customization
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    name="customerMessage"
-                    label="Message on Cake"
-                    multiline
-                    rows={10}
-                    variant="outlined"
-                    value={formData.customerMessage}
-                    onChange={handleInputChange}
-                    placeholder="E.g. Happy Birthday John! Any special instructions..."
-                  />
-                </Box>
+                {/* Additional Customization */}
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      backgroundColor: '#fff',
+                      borderRadius: '24px',
+                      p: 4,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                      border: '1px solid #f0f0f0',
+                      height: '100%'
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
+                      <DescriptionIcon sx={iconStyle} />
+                      Additional Customization
+                    </Typography>
+
+                    <TextField
+                      fullWidth
+                      name="customerMessage"
+                      label="Message on Cake"
+                      multiline
+                      rows={4}
+                      variant="outlined"
+                      value={formData.customerMessage}
+                      onChange={handleInputChange}
+                      placeholder="E.g. Happy Birthday John! Any special instructions..."
+                    />
+                  </Box>
+                </Grid>
               </Grid>
             </Box>
+          </DialogContent>
 
+          {/* Sticky Professional Footer */}
+          <Box sx={{
+            p: 2.5,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderTop: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitLoading}
+              variant="contained"
+              sx={{
+                backgroundColor: '#ef5350',
+                px: 8,
+                py: 1.8,
+                borderRadius: '16px',
+                fontWeight: 700,
+                fontSize: '16px',
+                textTransform: 'none',
+                boxShadow: '0 8px 24px rgba(239, 83, 80, 0.3)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor: '#e53935',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 30px rgba(239, 83, 80, 0.4)'
+                },
+                '&:active': {
+                  transform: 'translateY(0)'
+                }
+              }}
+            >
+              {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Save Booking'}
+            </Button>
+          </Box>
         </Box>
-      </DialogContent>
-
-      {/* Sticky Professional Footer */}
-      <Box sx={{
-        p: 2.5,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #f0f0f0',
-        display: 'flex',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <Button
-          onClick={handleSubmit}
-          disabled={submitLoading}
-          variant="contained"
-          sx={{
-            backgroundColor: '#ef5350',
-            px: 8,
-            py: 1.8,
-            borderRadius: '16px',
-            fontWeight: 700,
-            fontSize: '16px',
-            textTransform: 'none',
-            boxShadow: '0 8px 24px rgba(239, 83, 80, 0.3)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              backgroundColor: '#e53935',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 12px 30px rgba(239, 83, 80, 0.4)'
-            },
-            '&:active': {
-              transform: 'translateY(0)'
-            }
-          }}
-        >
-          {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Save Booking'}
-        </Button>
-      </Box>
+      </Dialog>
     </Box>
-      </Dialog >
-    </Box >
   );
 }
 
