@@ -18,8 +18,15 @@ import {
   CircularProgress,
   Alert,
   Chip,
-  IconButton
+  IconButton,
+  Grid,
+  Divider
 } from '@mui/material';
+import MoneyIcon from '@mui/icons-material/Money';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
@@ -458,6 +465,12 @@ function BookingCalendar() {
         return;
       }
 
+      if (!formData.numberOfGuests || Number(formData.numberOfGuests) <= 0) {
+        setError('Please enter a valid number of guests');
+        setSubmitLoading(false);
+        return;
+      }
+
       const bookingData = {
         moduleId: formData.moduleId,
         bookingType: formData.bookingType, // ✅ REQUIRED
@@ -480,6 +493,7 @@ function BookingCalendar() {
         address: formData.address,
 
         paymentType: formData.paymentType,
+        numberOfGuests: Number(formData.numberOfGuests)
       };
 
 
@@ -532,12 +546,14 @@ function BookingCalendar() {
   };
 
   const handleOpenDialog = () => {
+    setActiveStep(0);
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setError(null);
+    setActiveStep(0);
   };
 
 
@@ -933,231 +949,445 @@ function BookingCalendar() {
         </svg>
       </Button>
 
-      <Dialog fullScreen open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Button onClick={handleCloseDialog} variant="text" size="small">
-              ←
-            </Button>
-            Add Booking
+      <Dialog
+        fullScreen
+        open={openDialog}
+        onClose={handleCloseDialog}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#fafafa'
+          }
+        }}
+      >
+        <Box sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {/* Header */}
+          <Box sx={{
+            px: { xs: 2, md: 4 },
+            py: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#fff',
+            borderBottom: '1px solid #f0f0f0',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={handleCloseDialog} sx={{ color: '#333' }}>
+                <ChevronLeftIcon />
+              </IconButton>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.5px' }}>
+                Create New Booking
+              </Typography>
+            </Box>
           </Box>
-        </DialogTitle>
-        <Box sx={{ alignSelf: 'center', width: '100%' }}>
-          <DialogContent sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'white', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
 
-            <Box mb={4}>
-              <Typography variant="h6" sx={sectionHeaderStyle}>
-                <EditIcon sx={iconStyle} />
-                Booking Details
-              </Typography>
-              <TextField
-                fullWidth
-                name="fullName"
-                label="Full Name"
-                variant="outlined"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
+          <DialogContent sx={{ flex: 1, p: 0, backgroundColor: '#f8f9fa' }}>
+            <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: { xs: 2, md: 4 } }}>
+              {error && (
+                <Alert severity="error" sx={{ mb: 4, borderRadius: '16px', border: '1px solid #ffcdd2', boxShadow: '0 4px 12px rgba(239, 83, 80, 0.1)' }}>
+                  {error}
+                </Alert>
+              )}
+
+              <Grid container spacing={4}>
+                {/* Top Row: Client Info & Vehicle Selection */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
                       <PersonIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="contactNumber"
-                label="Contact Number"
-                variant="outlined"
-                value={formData.contactNumber}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="emailAddress"
-                label="Email Address"
-                variant="outlined"
-                value={formData.emailAddress}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="address"
-                label="Address"
-                variant="outlined"
-                value={formData.address}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <HomeIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="numberOfGuests"
-                label="Number of Guests"
-                type="number"
-                variant="outlined"
-                value={formData.numberOfGuests}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PeopleIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                name="additionalNotes"
-                label="Additional Notes (Optional)"
-                multiline
-                rows={3}
-                variant="outlined"
-                value={formData.additionalNotes}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
+                      Client Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="fullName"
+                          label="Full Name"
+                          variant="outlined"
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PersonIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="contactNumber"
+                          label="Contact Number"
+                          variant="outlined"
+                          value={formData.contactNumber}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PhoneIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          name="emailAddress"
+                          label="Email Address (Optional)"
+                          variant="outlined"
+                          value={formData.emailAddress}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <EmailIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          name="address"
+                          label="Pickup/Drop-off Address (Optional)"
+                          variant="outlined"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <HomeIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
                       <DescriptionIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Box>
+                      Vehicle & Trip Selection
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12}>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel shrink>Select Vehicle</InputLabel>
+                          <Select
+                            name="vehicleId"
+                            value={formData.vehicleId}
+                            onChange={handleInputChange}
+                            label="Select Vehicle"
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              <span style={{ color: '#999' }}>Select Vehicle</span>
+                            </MenuItem>
+                            {vehicles.map(vehicle => (
+                              <MenuItem key={vehicle._id} value={vehicle._id}>
+                                {vehicle.vehicleName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel shrink>Trip Type</InputLabel>
+                          <Select
+                            name="tripType"
+                            value={formData.tripType}
+                            onChange={handleInputChange}
+                            label="Trip Type"
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              <span style={{ color: '#999' }}>Select Trip Type</span>
+                            </MenuItem>
+                            <MenuItem value="perDay">Per Day</MenuItem>
+                            <MenuItem value="hourly">Hourly</MenuItem>
+                            <MenuItem value="distanceWise">Distance Wise</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
 
-            <Box mb={4}>
-              <Typography variant="h6" sx={sectionHeaderStyle}>
-                <DoorFrontIcon sx={iconStyle} />
-                Select Vehicle
-              </Typography>
+                      {formData.tripType === 'perDay' && (
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            name="days"
+                            label="Number of Days"
+                            type="number"
+                            variant="outlined"
+                            value={formData.days}
+                            onChange={handleInputChange}
+                          />
+                        </Grid>
+                      )}
 
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Select Vehicle</InputLabel>
-                <Select name="vehicleId" value={formData.vehicleId} onChange={handleInputChange} label="Select Vehicle">
-                  <MenuItem value="">
-                    <em>{vehicles.length === 0 ? 'No vehicles available' : `Select Vehicle (${vehicles.length} available)`}</em>
-                  </MenuItem>
+                      {formData.tripType === 'hourly' && (
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            name="hours"
+                            label="Number of Hours"
+                            type="number"
+                            variant="outlined"
+                            value={formData.hours}
+                            onChange={handleInputChange}
+                          />
+                        </Grid>
+                      )}
 
-                  {vehicles.map((vehicle) => (
-                    <MenuItem key={vehicle._id} value={vehicle._id}>
-                      {vehicle.name || vehicle.packageTitle || vehicle.packageName || vehicle.title} • {vehicle.seatingCapacity} Seater • AED {vehicle.pricing?.perDay}/day
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                      {formData.tripType === 'distanceWise' && (
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            name="distanceKm"
+                            label="Distance in KM"
+                            type="number"
+                            variant="outlined"
+                            value={formData.distanceKm}
+                            onChange={handleInputChange}
+                          />
+                        </Grid>
+                      )}
 
-              <Typography variant="h6" sx={sectionHeaderStyle}>
-                <CalendarMonthIcon sx={iconStyle} />
-                Select Booking Date
-              </Typography>
-              <TextField
-                fullWidth
-                name="bookingDate"
-                type="date"
-                variant="outlined"
-                value={formData.bookingDate}
-                onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 2 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          name="numberOfGuests"
+                          label="Number of Passengers"
+                          type="number"
+                          variant="outlined"
+                          value={formData.numberOfGuests}
+                          onChange={handleInputChange}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PeopleIcon sx={{ color: '#999', fontSize: 20 }} />
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Grid>
+
+                {/* Bottom Row: Scheduling & Notes */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
                       <CalendarMonthIcon sx={iconStyle} />
-                    </InputAdornment>
-                  )
-                }}
-                helperText="Select any date - past, present, or future"
-              />
+                      Scheduling
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          name="bookingDate"
+                          label="Booking Date"
+                          type="date"
+                          variant="outlined"
+                          value={formData.bookingDate}
+                          onChange={handleInputChange}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ mb: 2 }}
+                        />
+                        <Typography variant="subtitle2" sx={{ mb: 2, mt: 1, fontWeight: 700, color: '#555' }}>Select Time Slots</Typography>
+                        <Box sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1.5,
+                          p: 2,
+                          backgroundColor: '#fcfcfc',
+                          borderRadius: '16px',
+                          border: '1px solid #f5f5f5'
+                        }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.timeSlot.includes('Morning')}
+                                onChange={() => handleTimeSlotChange('Morning')}
+                                sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }}
+                              />
+                            }
+                            label={
+                              <Box sx={{ ml: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>Morning Duty</Typography>
+                                <Typography variant="caption" sx={{ color: '#999' }}>9:00 AM - 1:00 PM</Typography>
+                              </Box>
+                            }
+                          />
+                          <Divider sx={{ my: 1, opacity: 0.5 }} />
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={formData.timeSlot.includes('Evening')}
+                                onChange={() => handleTimeSlotChange('Evening')}
+                                sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }}
+                              />
+                            }
+                            label={
+                              <Box sx={{ ml: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>Evening Duty</Typography>
+                                <Typography variant="caption" sx={{ color: '#999' }}>6:00 PM - 10:00 PM</Typography>
+                              </Box>
+                            }
+                          />
+                        </Box>
+                      </Grid>
 
-              <Typography variant="h6" sx={sectionHeaderStyle}>
-                <AccessTimeIcon sx={iconStyle} />
-                Select Time Slots
-              </Typography>
-              <FormGroup sx={{ mb: 3 }}>
-                <FormControlLabel
-                  control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} />}
-                  label="Morning Slot 9:00 AM - 1:00 PM"
-                />
-                <FormControlLabel
-                  control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} />}
-                  label="Evening Slot 6:00 PM - 10:00 PM"
-                />
-              </FormGroup>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Payment Method</Typography>
+                        <Grid container spacing={2}>
+                          {[
+                            { id: 'Cash', label: 'Cash', icon: <MoneyIcon /> },
+                            { id: 'Card', label: 'Card', icon: <CreditCardIcon /> },
+                            { id: 'UPI', label: 'UPI', icon: <AccountBalanceWalletIcon /> },
+                            { id: 'Bank Transfer', label: 'Bank', icon: <AccountBalanceIcon /> },
+                            { id: 'Other', label: 'Other', icon: <MoreHorizIcon /> }
+                          ].map((type) => (
+                            <Grid item xs={6} key={type.id}>
+                              <Box
+                                onClick={() => setFormData(prev => ({ ...prev, paymentType: type.id }))}
+                                sx={{
+                                  p: 1.5,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  borderRadius: '12px',
+                                  border: '2px solid',
+                                  borderColor: formData.paymentType === type.id ? '#ef5350' : '#f0f0f0',
+                                  backgroundColor: formData.paymentType === type.id ? '#fff5f5' : '#fff',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                  '&:hover': { borderColor: '#ef5350', transform: 'translateY(-2px)' }
+                                }}
+                              >
+                                <Box sx={{ color: formData.paymentType === type.id ? '#ef5350' : '#666', transform: 'scale(0.8)' }}>
+                                  {type.icon}
+                                </Box>
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: formData.paymentType === type.id ? '#ef5350' : '#666', fontSize: '10px' }}>
+                                  {type.label}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Grid>
 
-              <Typography variant="h6" sx={sectionHeaderStyle}>
-                <PaymentIcon sx={iconStyle} />
-                Payment Method
-              </Typography>
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Payment Type</InputLabel>
-                <Select name="paymentType" value={formData.paymentType} onChange={handleInputChange} label="Payment Type">
-                  <MenuItem value="Cash">Cash</MenuItem>
-                  <MenuItem value="Card">Card</MenuItem>
-                  <MenuItem value="UPI">UPI</MenuItem>
-                  <MenuItem value="GPay">GPay</MenuItem>
-                  <MenuItem value="PhonePe">PhonePe</MenuItem>
-                  <MenuItem value="Paytm">Paytm</MenuItem>
-                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                  <MenuItem value="Net Banking">Net Banking</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-              </FormControl>
+                <Grid item xs={12}>
+                  <Box sx={{
+                    backgroundColor: '#fff',
+                    borderRadius: '24px',
+                    p: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1px solid #f0f0f0',
+                    height: '100%'
+                  }}>
+                    <Typography variant="h6" sx={{ ...sectionHeaderStyle, mb: 3 }}>
+                      <DescriptionIcon sx={iconStyle} />
+                      Additional Notes
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      name="additionalNotes"
+                      label="Special Notes"
+                      multiline
+                      rows={10}
+                      variant="outlined"
+                      value={formData.additionalNotes}
+                      onChange={handleInputChange}
+                      placeholder="E.g. Full day duty, specific routes..."
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
             </Box>
 
-            <Box>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleSubmit}
-                disabled={submitLoading}
-                sx={{
-                  backgroundColor: '#ef5350',
-                  color: 'white',
-                  fontWeight: 600,
-                  py: 1.5,
-                  borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: '#e53935'
-                  }
-                }}
-              >
-                {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit Booking'}
-              </Button>
-            </Box>
-          </DialogContent>
         </Box>
-      </Dialog>
+      </DialogContent>
+
+      {/* Sticky Professional Footer */}
+      <Box sx={{
+        p: 2.5,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid #f0f0f0',
+        display: 'flex',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <Button
+          onClick={handleSubmit}
+          disabled={submitLoading}
+          variant="contained"
+          sx={{
+            backgroundColor: '#ef5350',
+            px: 8,
+            py: 1.8,
+            borderRadius: '16px',
+            fontWeight: 700,
+            fontSize: '16px',
+            textTransform: 'none',
+            boxShadow: '0 8px 24px rgba(239, 83, 80, 0.3)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              backgroundColor: '#e53935',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 12px 30px rgba(239, 83, 80, 0.4)'
+            },
+            '&:active': {
+              transform: 'translateY(0)'
+            }
+          }}
+        >
+          {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Save Booking'}
+        </Button>
+      </Box>
     </Box>
+      </Dialog >
+    </Box >
   );
 }
 
