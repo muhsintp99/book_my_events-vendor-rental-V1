@@ -32,6 +32,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -53,21 +55,21 @@ function BookingCalendar() {
   const [deleteLoading, setDeleteLoading] = useState(null);
 
   // Form state
-const [formData, setFormData] = useState({
-  fullName: '',
-  contactNumber: '',
-  emailAddress: '',
-  address: '',
+  const [formData, setFormData] = useState({
+    fullName: '',
+    contactNumber: '',
+    emailAddress: '',
+    address: '',
 
-  cakeId: '',
-  deliveryType: 'Home Delivery',
-  customerMessage: '',
+    cakeId: '',
+    deliveryType: 'Home Delivery',
+    customerMessage: '',
 
-  bookingDate: new Date().toISOString().split('T')[0],
-  timeSlot: [],
-  paymentType: 'COD',
-  bookingType: 'Direct'
-});
+    bookingDate: new Date().toISOString().split('T')[0],
+    timeSlot: [],
+    paymentType: 'COD',
+    bookingType: 'Direct'
+  });
 
   // Get providerId from localStorage
   const getProviderId = () => {
@@ -179,7 +181,7 @@ const [formData, setFormData] = useState({
       const filteredModules = modulesList.filter((module) => {
         const moduleTitle = (module.title || module.name || '').toLowerCase();
         // Only show Venues module (you can adjust this logic)
-return moduleTitle === 'cake';
+        return moduleTitle === 'cake';
       });
 
       console.log('Filtered modules for provider:', filteredModules);
@@ -345,37 +347,96 @@ return moduleTitle === 'cake';
 
     weekDays.forEach((day) =>
       days.push(
-        <div key={day} style={styles.weekDay}>
+        <Box
+          key={day}
+          sx={{
+            textAlign: 'center',
+            padding: { xs: '8px 4px', md: '16px' },
+            color: '#777',
+            fontSize: { xs: '11px', md: '14px' },
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '1px'
+          }}
+        >
           {day}
-        </div>
+        </Box>
       )
     );
 
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} />);
+      days.push(<Box key={`empty-${i}`} sx={{ display: { xs: 'none', md: 'block' }, backgroundColor: '#f9f9f9', borderRadius: '12px' }} />);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
       const status = bookingStatus[day] || 'free';
       const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
+      const isSelected = day === selectedDate;
 
       days.push(
-        <div key={day} onClick={() => setSelectedDate(day)} style={styles.dayCell}>
-          <div
-            style={{
-              ...styles.dayNumber,
-              ...(isToday ? styles.todayNumber : {})
+        <Box
+          key={day}
+          onClick={() => setSelectedDate(day)}
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: { xs: '50px', md: '100px' },
+            cursor: 'pointer',
+            borderRadius: { xs: '8px', md: '16px' },
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backgroundColor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff',
+            border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0',
+            boxShadow: isSelected ? '0 4px 12px rgba(239, 83, 80, 0.15)' : 'none',
+            '&:hover': {
+              transform: { md: 'translateY(-4px)' },
+              boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
+              borderColor: '#ef5350',
+              zIndex: 1
+            }
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: { xs: '14px', md: '22px' },
+              fontWeight: isToday || isSelected ? '600' : '400',
+              color: isToday ? '#fff' : (isSelected ? '#ef5350' : '#333'),
+              width: { xs: '28px', md: '48px' },
+              height: { xs: '28px', md: '48px' },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              backgroundColor: isToday ? '#ef5350' : 'transparent',
+              marginBottom: { xs: '2px', md: '8px' },
+              transition: 'all 0.2s'
             }}
           >
             {day}
-          </div>
-          <div
-            style={{
-              ...styles.statusDot,
-              backgroundColor: getStatusColor(status)
+          </Box>
+          <Box
+            sx={{
+              width: { xs: '6px', md: '10px' },
+              height: { xs: '6px', md: '10px' },
+              borderRadius: '50%',
+              backgroundColor: getStatusColor(status),
+              boxShadow: `0 0 8px ${getStatusColor(status)}80`
             }}
           />
-        </div>
+          {status !== 'free' && (
+            <Typography sx={{
+              display: { xs: 'none', md: 'block' },
+              fontSize: '10px',
+              mt: 1,
+              color: '#999',
+              fontWeight: 500
+            }}>
+              {status === 'booked' ? 'FULL' : 'SLOTS'}
+            </Typography>
+          )}
+        </Box>
       );
     }
 
@@ -432,100 +493,100 @@ return moduleTitle === 'cake';
     setSelectedVariations((prev) => prev.map((v) => (v._id === id ? { ...v, quantity: Math.max(1, qty) } : v)));
   };
 
-const handleSubmit = async () => {
-  setSubmitLoading(true);
-  setError(null);
+  const handleSubmit = async () => {
+    setSubmitLoading(true);
+    setError(null);
 
-  try {
-    if (!formData.fullName.trim()) {
-      setError('Full Name is required');
-      return;
+    try {
+      if (!formData.fullName.trim()) {
+        setError('Full Name is required');
+        return;
+      }
+
+      if (!formData.contactNumber.trim()) {
+        setError('Contact Number is required');
+        return;
+      }
+
+      if (!formData.cakeId) {
+        setError('Please select a cake');
+        return;
+      }
+
+      if (!selectedVariations.length) {
+        setError('Please select at least one cake variation');
+        return;
+      }
+
+      if (!formData.bookingDate) {
+        setError('Please select booking date');
+        return;
+      }
+
+      if (!formData.timeSlot.length) {
+        setError('Please select time slot');
+        return;
+      }
+
+      const bookingData = {
+        moduleId: modules[0]._id,
+        moduleType: 'Cake',
+
+        cakeId: formData.cakeId,
+        cakeVariations: selectedVariations,
+        deliveryType: formData.deliveryType,
+        customerMessage: formData.customerMessage,
+
+        fullName: formData.fullName,
+        contactNumber: formData.contactNumber,
+        emailAddress: formData.emailAddress,
+        address: formData.address,
+
+        bookingDate: formData.bookingDate,
+        timeSlot: formData.timeSlot,
+
+        paymentType: formData.paymentType,
+        bookingType: 'Direct'
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert('Cake booking created successfully!');
+        setOpenDialog(false);
+        fetchBookings();
+      } else {
+        setError(data.message || 'Booking failed');
+      }
+    } catch (err) {
+      setError('Error creating booking');
+    } finally {
+      setSubmitLoading(false);
     }
+  };
 
-    if (!formData.contactNumber.trim()) {
-      setError('Contact Number is required');
-      return;
-    }
 
-    if (!formData.cakeId) {
-      setError('Please select a cake');
-      return;
-    }
-
-    if (!selectedVariations.length) {
-      setError('Please select at least one cake variation');
-      return;
-    }
-
-    if (!formData.bookingDate) {
-      setError('Please select booking date');
-      return;
-    }
-
-    if (!formData.timeSlot.length) {
-      setError('Please select time slot');
-      return;
-    }
-
-    const bookingData = {
-      moduleId: modules[0]._id,
-      moduleType: 'Cake',
-
-      cakeId: formData.cakeId,
-      cakeVariations: selectedVariations,
-      deliveryType: formData.deliveryType,
-      customerMessage: formData.customerMessage,
-
-      fullName: formData.fullName,
-      contactNumber: formData.contactNumber,
-      emailAddress: formData.emailAddress,
-      address: formData.address,
-
-      bookingDate: formData.bookingDate,
-      timeSlot: formData.timeSlot,
-
-      paymentType: formData.paymentType,
+  const resetForm = () => {
+    setFormData({
+      fullName: '',
+      contactNumber: '',
+      emailAddress: '',
+      address: '',
+      cakeId: '',
+      deliveryType: 'Home Delivery',
+      customerMessage: '',
+      bookingDate: new Date().toISOString().split('T')[0],
+      timeSlot: [],
+      paymentType: 'COD',
       bookingType: 'Direct'
-    };
-
-    const res = await fetch(`${API_BASE_URL}/api/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bookingData)
     });
-
-    const data = await res.json();
-
-    if (data.success) {
-      alert('Cake booking created successfully!');
-      setOpenDialog(false);
-      fetchBookings();
-    } else {
-      setError(data.message || 'Booking failed');
-    }
-  } catch (err) {
-    setError('Error creating booking');
-  } finally {
-    setSubmitLoading(false);
-  }
-};
-
-
-const resetForm = () => {
-  setFormData({
-    fullName: '',
-    contactNumber: '',
-    emailAddress: '',
-    address: '',
-    cakeId: '',
-    deliveryType: 'Home Delivery',
-    customerMessage: '',
-    bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: [],
-    paymentType: 'COD',
-    bookingType: 'Direct'
-  });
-};
+  };
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -776,28 +837,18 @@ const resetForm = () => {
   };
 
   return (
-    <div style={styles.container}>
+    <Box sx={{
+      width: '100%',
+      margin: '0 auto',
+      padding: { xs: '8px', md: '40px' },
+      backgroundColor: '#fafafa',
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {!providerId && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Provider ID not found. Please make sure you're logged in. You may need to log out and log in again.
         </Alert>
-      )}
-
-      {/* {providerId && (
-        <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
-          <Typography variant="caption" color="primary">
-            Logged in as Provider: {providerId}
-          </Typography>
-          <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-            📋 Showing only Direct Bookings (Indirect bookings are hidden)
-          </Typography>
-        </Box>
-      )} */}
-
-      {loading && (
-        <Box display="flex" justifyContent="center" mb={3}>
-          <CircularProgress />
-        </Box>
       )}
 
       {error && (
@@ -806,135 +857,304 @@ const resetForm = () => {
         </Alert>
       )}
 
-      <div style={styles.navigation}>
-        <button
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: { xs: '16px', md: '32px' },
+        padding: { xs: '0 4px', md: '0 20px' }
+      }}>
+        <IconButton
           onClick={() => changeMonth(-1)}
-          style={styles.navButton}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
+          sx={{
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            border: '1px solid #f0f0f0',
+            '&:hover': { backgroundColor: '#f5f5f5', transform: 'scale(1.1)' },
+            transition: 'all 0.2s'
+          }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h2 style={styles.monthTitle}>{monthName}</h2>
-        <button
+          <ChevronLeftIcon />
+        </IconButton>
+        <Typography sx={{
+          fontSize: { xs: '20px', md: '32px' },
+          fontWeight: '600',
+          color: '#333',
+          letterSpacing: '-0.5px'
+        }}>
+          {monthName}
+        </Typography>
+        <IconButton
           onClick={() => changeMonth(1)}
-          style={styles.navButton}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
+          sx={{
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            border: '1px solid #f0f0f0',
+            '&:hover': { backgroundColor: '#f5f5f5', transform: 'scale(1.1)' },
+            transition: 'all 0.2s'
+          }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
-      </div>
+          <ChevronRightIcon />
+        </IconButton>
+      </Box>
 
-      <div style={styles.calendarGrid}>
-        <div style={styles.grid}>{renderCalendarDays()}</div>
-      </div>
+      <Box sx={{
+        backgroundColor: '#fff',
+        borderRadius: { xs: '16px', md: '24px' },
+        marginBottom: { xs: '24px', md: '40px' },
+        padding: { xs: '12px 8px', md: '40px' },
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+        border: '1px solid #f0f0f0'
+      }}>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: { xs: '4px', md: '16px' }
+        }}>
+          {renderCalendarDays()}
+        </Box>
+      </Box>
 
-      <div style={styles.legend}>
-        <div style={styles.legendContainer}>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#ef5350' }} />
-            <span style={styles.legendText}>Fully Booked</span>
-          </div>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#ffd54f' }} />
-            <span style={styles.legendText}>Slots Available</span>
-          </div>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#66bb6a' }} />
-            <span style={styles.legendText}>Fully Free</span>
-          </div>
-        </div>
-      </div>
+      <Box sx={{
+        backgroundColor: '#fff',
+        borderRadius: { xs: '8px', md: '12px' },
+        padding: { xs: '12px 8px', md: '24px' },
+        marginBottom: { xs: '16px', md: '32px' },
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: { xs: '12px', md: '24px' },
+          flexWrap: 'wrap',
+          flexDirection: { xs: 'row', md: 'row' }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef5350' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Booked</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ffd54f' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Slots Available</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#66bb6a' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Free</Typography>
+          </Box>
+        </Box>
+      </Box>
 
-      <div style={styles.selectedInfo}>
-        <div style={styles.selectedHeader}>
-          <span style={styles.selectedNumber}>{selectedDate}</span>
-          <div style={styles.selectedDetails}>
-            <h3 style={styles.selectedTitle}>Selected Date</h3>
-            <p style={styles.selectedStatus}>{getStatusText()}</p>
-          </div>
-        </div>
-        <p style={styles.selectedDay}>{getDayName()}</p>
-      </div>
+      {/* 🗓️ Selected Date Header - Premium Look */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: { xs: 2, md: 4 },
+        backgroundColor: '#fff',
+        borderRadius: '24px',
+        padding: { xs: '20px', md: '32px' },
+        marginBottom: '32px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        border: '1px solid #f0f0f0'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: { xs: '70px', md: '100px' },
+          height: { xs: '70px', md: '100px' },
+          backgroundColor: '#ef5350',
+          borderRadius: '20px',
+          color: '#fff',
+          boxShadow: '0 8px 16px rgba(239, 83, 80, 0.2)'
+        }}>
+          <Typography sx={{ fontSize: { xs: '12px', md: '14px' }, fontWeight: '600', textTransform: 'uppercase', opacity: 0.9 }}>
+            {getDayName()}
+          </Typography>
+          <Typography sx={{ fontSize: { xs: '28px', md: '40px' }, fontWeight: '700', lineHeight: 1 }}>
+            {selectedDate}
+          </Typography>
+        </Box>
 
-      {selectedBookings.length > 0 && (
-        <div>
-          <h3 style={styles.bookingsTitle}>Today's Bookings</h3>
-          <div style={styles.bookingsContainer}>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{
+            fontSize: { xs: '18px', md: '28px' },
+            fontWeight: '600',
+            color: '#1a1a1a',
+            marginBottom: '4px'
+          }}>
+            Schedule Details
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: getStatusColor(selectedStatus)
+            }} />
+            <Typography sx={{
+              fontSize: { xs: '14px', md: '16px' },
+              color: '#666',
+              fontWeight: '500'
+            }}>
+              {getStatusText()}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* 📑 Today's Bookings Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography sx={{
+          fontSize: { xs: '20px', md: '24px' },
+          fontWeight: '700',
+          color: '#1a1a1a',
+          mb: 3,
+          pl: 1
+        }}>
+          Today's Appointments
+        </Typography>
+
+        {selectedBookings.length > 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             {selectedBookings.map((booking) => (
-              <div
+              <Box
                 key={booking._id}
-                style={{
-                  ...styles.bookingCard,
-                  backgroundColor: getBookingCardColor(booking.status)
+                sx={{
+                  backgroundColor: '#fff',
+                  borderRadius: '24px',
+                  border: '1px solid #f0f0f0',
+                  padding: { xs: '20px', md: '32px' },
+                  position: 'relative',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 30px rgba(0,0,0,0.06)',
+                    borderColor: '#ef5350'
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '6px',
+                    backgroundColor: getBookingCardColor(booking.status)
+                  }
                 }}
               >
-                <div style={styles.bookingHeader}>
-                  <span style={styles.bookingTime}>
-                    {Array.isArray(booking.timeSlot)
-                      ? booking.timeSlot.map((t, i) => (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                  <Box>
+                    <Typography sx={{
+                      fontSize: { xs: '12px', md: '13px' },
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color: getBookingCardColor(booking.status),
+                      letterSpacing: '1px',
+                      mb: 0.5
+                    }}>
+                      {Array.isArray(booking.timeSlot)
+                        ? booking.timeSlot.map((t, i) => (
                           <span key={i}>
-                            {t.label} ({t.time})
+                            {t.label} ({t.time}){i < booking.timeSlot.length - 1 ? ', ' : ''}
                           </span>
                         ))
-                      : booking.timeSlot?.label
-                        ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
-                        : 'All Day'}
-                  </span>
-                  <Box display="flex" alignItems="center" gap={1}>
+                        : booking.timeSlot?.label
+                          ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+                          : 'All Day'}
+                    </Typography>
+                    <Typography sx={{ fontSize: { xs: '18px', md: '22px' }, fontWeight: '700', color: '#1a1a1a' }}>
+                      {booking.fullName}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Chip
                       label={booking.status}
-                      size="small"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.3)',
-                        color: booking.status === 'Pending' ? '#000' : '#fff'
+                      sx={{
+                        fontWeight: '600',
+                        fontSize: '12px',
+                        backgroundColor: `${getBookingCardColor(booking.status)}15`,
+                        color: getBookingCardColor(booking.status),
+                        border: `1px solid ${getBookingCardColor(booking.status)}30`
                       }}
                     />
                     <IconButton
-                      size="small"
                       onClick={() => handleDeleteBooking(booking._id)}
                       disabled={deleteLoading === booking._id}
                       sx={{
-                        color: 'white',
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(0,0,0,0.3)'
-                        }
+                        backgroundColor: '#fff1f1',
+                        color: '#ef5350',
+                        '&:hover': { backgroundColor: '#ef5350', color: '#fff' }
                       }}
                     >
-                      {deleteLoading === booking._id ? (
-                        <CircularProgress size={20} sx={{ color: 'white' }} />
-                      ) : (
-                        <DeleteIcon fontSize="small" />
-                      )}
+                      {deleteLoading === booking._id ? <CircularProgress size={20} color="inherit" /> : <DeleteIcon fontSize="small" />}
                     </IconButton>
                   </Box>
-                </div>
-                <h4 style={styles.bookingName}>Booked by {booking.fullName}</h4>
-                <p style={styles.bookingLocation}>
-<p style={styles.bookingLocation}>
-  {booking.cakeId?.name || 'Cake Booking'}
-</p>
-                </p>
+                </Box>
 
-                <div style={{ fontSize: '14px', marginTop: '8px' }}>
-                  <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
-                  <div>Contact: {booking.contactNumber}</div>
-                  <div>Email: {booking.emailAddress}</div>
-                </div>
-              </div>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+                  gap: 3,
+                  pt: 3,
+                  borderTop: '1px solid #f8f8f8'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <PhoneIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Contact</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.contactNumber}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <EmailIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Email</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.emailAddress || 'N/A'}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <HomeIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Cake</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.cakeId?.name || 'Cake Booking'}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             ))}
-          </div>
-        </div>
-      )}
+          </Box>
+        ) : (
+          <Box sx={{
+            textAlign: 'center',
+            py: 8,
+            backgroundColor: '#fff',
+            borderRadius: '24px',
+            border: '2px dashed #eee'
+          }}>
+            <Typography sx={{ color: '#999', fontSize: '16px' }}>
+              No appointments scheduled for this date.
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
       {selectedBookings.length === 0 && (
-        <div style={styles.noBookings}>
+        <Box sx={{
+          backgroundColor: '#f5f5f5',
+          borderRadius: { xs: '12px', md: '20px' },
+          padding: { xs: '24px', md: '48px' },
+          textAlign: 'center'
+        }}>
           <div style={{ margin: '0 auto 20px', width: '100px', height: '100px' }}>
             <svg width="100" height="100" viewBox="0 0 80 80" fill="none">
               <rect x="10" y="15" width="60" height="50" rx="4" stroke="#ccc" strokeWidth="2" fill="none" />
@@ -943,12 +1163,45 @@ const resetForm = () => {
               <path d="M35 45 L45 45 M35 45 L40 40 M35 45 L40 50" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
-          <h4 style={styles.noBookingsTitle}>No Bookings Today</h4>
-          <p style={styles.noBookingsText}>All slots are available for booking</p>
-        </div>
+          <Typography sx={{
+            fontSize: { xs: '18px', md: '24px' },
+            fontWeight: '500',
+            marginBottom: { xs: '8px', md: '10px' },
+            color: '#333'
+          }}>
+            No Bookings Today
+          </Typography>
+          <Typography sx={{
+            fontSize: { xs: '14px', md: '16px' },
+            color: '#666'
+          }}>
+            All slots are available for booking
+          </Typography>
+        </Box>
       )}
 
-      <Button variant="contained" style={styles.floatingButton} onClick={handleOpenDialog}>
+      <Button
+        variant="contained"
+        sx={{
+          position: 'fixed',
+          bottom: { xs: '16px', md: '32px' },
+          right: { xs: '16px', md: '32px' },
+          backgroundColor: '#ef5350',
+          color: '#fff',
+          borderRadius: '50%',
+          width: { xs: '56px', md: '64px' },
+          height: { xs: '56px', md: '64px' },
+          minWidth: 'unset',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+          '&:hover': {
+            backgroundColor: '#e53935'
+          }
+        }}
+        onClick={handleOpenDialog}
+      >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
@@ -964,7 +1217,7 @@ const resetForm = () => {
           </Box>
         </DialogTitle>
         <div style={{ alignSelf: 'center' }}>
-          <DialogContent sx={{ p: 3, backgroundColor: 'white', width: '500px' }}>
+          <DialogContent sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'white', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
@@ -1079,121 +1332,121 @@ const resetForm = () => {
               />
             </Box>
 
-           <Box mb={4}>
-  <Typography variant="h6" sx={sectionHeaderStyle}>
-    <DoorFrontIcon sx={iconStyle} />
-    Select Cake
-  </Typography>
+            <Box mb={4}>
+              <Typography variant="h6" sx={sectionHeaderStyle}>
+                <DoorFrontIcon sx={iconStyle} />
+                Select Cake
+              </Typography>
 
-  {/* 🎂 CAKE SELECT */}
-  <FormControl fullWidth sx={{ mb: 2 }}>
-    <InputLabel>Select Cake</InputLabel>
-    <Select
-      value={formData.cakeId}
-      onChange={handleCakeChange}
-      label="Select Cake"
-    >
-      <MenuItem value="">
-        <em>Select Cake</em>
-      </MenuItem>
+              {/* 🎂 CAKE SELECT */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Select Cake</InputLabel>
+                <Select
+                  value={formData.cakeId}
+                  onChange={handleCakeChange}
+                  label="Select Cake"
+                >
+                  <MenuItem value="">
+                    <em>Select Cake</em>
+                  </MenuItem>
 
-      {cakes.map((cake) => (
-        <MenuItem key={cake._id} value={cake._id}>
-          {cake.name}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
+                  {cakes.map((cake) => (
+                    <MenuItem key={cake._id} value={cake._id}>
+                      {cake.name || cake.packageTitle || cake.packageName || cake.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-  {/* 🎂 CAKE VARIATIONS */}
-  {cakeVariations.length > 0 && (
-    <Box sx={{ mb: 3 }}>
-      <Typography fontWeight={600} sx={{ mb: 1 }}>
-        Select Cake Variations
-      </Typography>
+              {/* 🎂 CAKE VARIATIONS */}
+              {cakeVariations.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography fontWeight={600} sx={{ mb: 1 }}>
+                    Select Cake Variations
+                  </Typography>
 
-      {cakeVariations.map((variation) => {
-        
-     const selected = selectedVariations.find(
-     (v) => String(v._id) === String(variation._id)
-      );
+                  {cakeVariations.map((variation) => {
 
-        return (
-          <Box
-            key={variation._id}
-            display="flex"
-            alignItems="center"
-            gap={2}
-            mb={1}
-          >
-            <Checkbox
-              checked={!!selected}
-              onChange={() => toggleVariation(variation)}
-            />
+                    const selected = selectedVariations.find(
+                      (v) => String(v._id) === String(variation._id)
+                    );
 
-            <Typography sx={{ minWidth: 120 }}>
-              {variation.name}
-            </Typography>
+                    return (
+                      <Box
+                        key={variation._id}
+                        display="flex"
+                        alignItems="center"
+                        gap={2}
+                        mb={1}
+                      >
+                        <Checkbox
+                          checked={!!selected}
+                          onChange={() => toggleVariation(variation)}
+                        />
 
-            <Typography color="text.secondary">
-              ₹ {variation.price}
-            </Typography>
+                        <Typography sx={{ minWidth: 120 }}>
+                          {variation.name}
+                        </Typography>
 
-            {selected && (
+                        <Typography color="text.secondary">
+                          ₹ {variation.price}
+                        </Typography>
+
+                        {selected && (
+                          <TextField
+                            type="number"
+                            size="small"
+                            label="Qty"
+                            value={selected.quantity}
+                            onChange={(e) =>
+                              updateVariationQty(
+                                variation._id,
+                                Number(e.target.value)
+                              )
+                            }
+                            sx={{ width: 80 }}
+                            inputProps={{ min: 1 }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+
+              {/* 🚚 DELIVERY TYPE */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Delivery Type</InputLabel>
+                <Select
+                  value={formData.deliveryType}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      deliveryType: e.target.value
+                    }))
+                  }
+                  label="Delivery Type"
+                >
+                  <MenuItem value="Home Delivery">Home Delivery</MenuItem>
+                  <MenuItem value="Takeaway">Takeaway</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* 📝 CUSTOMER MESSAGE */}
               <TextField
-                type="number"
-                size="small"
-                label="Qty"
-                value={selected.quantity}
+                fullWidth
+                multiline
+                rows={2}
+                label="Cake Message (Optional)"
+                placeholder="Eg: Happy Birthday John 🎉"
+                value={formData.customerMessage}
                 onChange={(e) =>
-                  updateVariationQty(
-                    variation._id,
-                    Number(e.target.value)
-                  )
+                  setFormData((prev) => ({
+                    ...prev,
+                    customerMessage: e.target.value
+                  }))
                 }
-                sx={{ width: 80 }}
-                inputProps={{ min: 1 }}
               />
-            )}
-          </Box>
-        );
-      })}
-    </Box>
-  )}
-
-  {/* 🚚 DELIVERY TYPE */}
-  <FormControl fullWidth sx={{ mb: 2 }}>
-    <InputLabel>Delivery Type</InputLabel>
-    <Select
-      value={formData.deliveryType}
-      onChange={(e) =>
-        setFormData((prev) => ({
-          ...prev,
-          deliveryType: e.target.value
-        }))
-      }
-      label="Delivery Type"
-    >
-      <MenuItem value="Home Delivery">Home Delivery</MenuItem>
-      <MenuItem value="Takeaway">Takeaway</MenuItem>
-    </Select>
-  </FormControl>
-
-  {/* 📝 CUSTOMER MESSAGE */}
-  <TextField
-    fullWidth
-    multiline
-    rows={2}
-    label="Cake Message (Optional)"
-    placeholder="Eg: Happy Birthday John 🎉"
-    value={formData.customerMessage}
-    onChange={(e) =>
-      setFormData((prev) => ({
-        ...prev,
-        customerMessage: e.target.value
-      }))
-    }
-  />
 
               <Typography variant="h6" sx={sectionHeaderStyle}>
                 <CalendarMonthIcon sx={iconStyle} />
@@ -1276,7 +1529,7 @@ const resetForm = () => {
           </DialogContent>
         </div>
       </Dialog>
-    </div>
+    </Box>
   );
 }
 

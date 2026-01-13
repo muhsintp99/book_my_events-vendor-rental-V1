@@ -32,6 +32,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -342,10 +344,12 @@ function BookingCalendar() {
           key={day}
           sx={{
             textAlign: 'center',
-            padding: { xs: '4px 2px', md: '12px' },
-            color: '#999',
-            fontSize: { xs: '11px', md: '16px' },
-            fontWeight: '500'
+            padding: { xs: '8px 4px', md: '16px' },
+            color: '#777',
+            fontSize: { xs: '11px', md: '14px' },
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '1px'
           }}
         >
           {day}
@@ -354,12 +358,13 @@ function BookingCalendar() {
     );
 
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} />);
+      days.push(<Box key={`empty-${i}`} sx={{ display: { xs: 'none', md: 'block' }, backgroundColor: '#f9f9f9', borderRadius: '12px' }} />);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
       const status = bookingStatus[day] || 'free';
       const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
+      const isSelected = day === selectedDate;
 
       days.push(
         <Box
@@ -371,32 +376,35 @@ function BookingCalendar() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: { xs: '8px 0', md: '20px 0' },
+            minHeight: { xs: '50px', md: '100px' },
             cursor: 'pointer',
             borderRadius: { xs: '8px', md: '16px' },
-            transition: 'background-color 0.2s',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backgroundColor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff',
+            border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0',
+            boxShadow: isSelected ? '0 4px 12px rgba(239, 83, 80, 0.15)' : 'none',
             '&:hover': {
-              backgroundColor: 'rgba(0,0,0,0.05)'
+              transform: { md: 'translateY(-4px)' },
+              boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
+              borderColor: '#ef5350',
+              zIndex: 1
             }
           }}
         >
           <Box
             sx={{
-              fontSize: { xs: '13px', md: '20px' },
-              fontWeight: '400',
-              color: '#333',
-              marginBottom: { xs: '3px', md: '6px' },
-              ...(isToday ? {
-                backgroundColor: '#ef5350',
-                color: '#fff',
-                borderRadius: '50%',
-                width: { xs: '28px', md: '52px' },
-                height: { xs: '28px', md: '52px' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '600'
-              } : {})
+              fontSize: { xs: '14px', md: '22px' },
+              fontWeight: isToday || isSelected ? '600' : '400',
+              color: isToday ? '#fff' : (isSelected ? '#ef5350' : '#333'),
+              width: { xs: '28px', md: '48px' },
+              height: { xs: '28px', md: '48px' },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              backgroundColor: isToday ? '#ef5350' : 'transparent',
+              marginBottom: { xs: '2px', md: '8px' },
+              transition: 'all 0.2s'
             }}
           >
             {day}
@@ -406,9 +414,21 @@ function BookingCalendar() {
               width: { xs: '6px', md: '10px' },
               height: { xs: '6px', md: '10px' },
               borderRadius: '50%',
-              backgroundColor: getStatusColor(status)
+              backgroundColor: getStatusColor(status),
+              boxShadow: `0 0 8px ${getStatusColor(status)}80`
             }}
           />
+          {status !== 'free' && (
+            <Typography sx={{
+              display: { xs: 'none', md: 'block' },
+              fontSize: '10px',
+              mt: 1,
+              color: '#999',
+              fontWeight: 500
+            }}>
+              {status === 'booked' ? 'FULL' : 'SLOTS'}
+            </Typography>
+          )}
         </Box>
       );
     }
@@ -532,359 +552,6 @@ function BookingCalendar() {
     setError(null);
   };
 
-  const styles = {
-    container: {
-      width: '100%',
-      margin: '0 auto',
-      padding: '40px',
-      backgroundColor: '#fafafa',
-      minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      '@media (max-width: 768px)': {
-        padding: '16px'
-      }
-    },
-    navigation: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: '32px',
-      padding: '0 20px',
-      '@media (max-width: 768px)': {
-        marginBottom: '16px',
-        padding: '0 4px'
-      }
-    },
-    navButton: {
-      padding: '12px',
-      border: 'none',
-      background: '#fff',
-      cursor: 'pointer',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'background-color 0.2s',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      '@media (max-width: 768px)': {
-        padding: '8px'
-      }
-    },
-    monthTitle: {
-      fontSize: '28px',
-      fontStyle: 'italic',
-      fontWeight: '400',
-      color: '#333',
-      '@media (max-width: 768px)': {
-        fontSize: '20px'
-      }
-    },
-    calendarGrid: {
-      backgroundColor: '#fff',
-      borderRadius: '16px',
-      marginBottom: '32px',
-      padding: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      '@media (max-width: 768px)': {
-        borderRadius: '12px',
-        marginBottom: '16px',
-        padding: '12px'
-      }
-    },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7, 1fr)',
-      gap: '16px',
-      '@media (max-width: 768px)': {
-        gap: '4px'
-      }
-    },
-    weekDay: {
-      textAlign: 'center',
-      padding: '12px',
-      color: '#999',
-      fontSize: '16px',
-      fontWeight: '500',
-      '@media (max-width: 768px)': {
-        padding: '4px 2px',
-        fontSize: '11px'
-      }
-    },
-    dayCell: {
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px 0',
-      cursor: 'pointer',
-      borderRadius: '16px',
-      transition: 'background-color 0.2s',
-      '@media (max-width: 768px)': {
-        padding: '8px 0',
-        borderRadius: '8px'
-      }
-    },
-    dayNumber: {
-      fontSize: '20px',
-      fontWeight: '400',
-      color: '#333',
-      marginBottom: '6px',
-      '@media (max-width: 768px)': {
-        fontSize: '13px',
-        marginBottom: '3px'
-      }
-    },
-    todayNumber: {
-      backgroundColor: '#ef5350',
-      color: '#fff',
-      borderRadius: '50%',
-      width: '52px',
-      height: '52px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontWeight: '600',
-      '@media (max-width: 768px)': {
-        width: '28px',
-        height: '28px',
-        fontSize: '13px'
-      }
-    },
-    statusDot: {
-      width: '10px',
-      height: '10px',
-      borderRadius: '50%',
-      '@media (max-width: 768px)': {
-        width: '6px',
-        height: '6px'
-      }
-    },
-    legend: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '32px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      '@media (max-width: 768px)': {
-        borderRadius: '8px',
-        padding: '12px',
-        marginBottom: '16px'
-      }
-    },
-    legendContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '24px',
-      flexWrap: 'wrap',
-      '@media (max-width: 768px)': {
-        gap: '12px',
-        flexDirection: 'column',
-        alignItems: 'flex-start'
-      }
-    },
-    legendItem: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    legendDot: {
-      width: '12px',
-      height: '12px',
-      borderRadius: '50%',
-      '@media (max-width: 768px)': {
-        width: '10px',
-        height: '10px'
-      }
-    },
-    legendText: {
-      fontSize: '15px',
-      color: '#666',
-      '@media (max-width: 768px)': {
-        fontSize: '13px'
-      }
-    },
-    selectedInfo: {
-      marginBottom: '24px',
-      '@media (max-width: 768px)': {
-        marginBottom: '16px'
-      }
-    },
-    selectedHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '24px',
-      '@media (max-width: 768px)': {
-        gap: '12px'
-      }
-    },
-    selectedNumber: {
-      fontSize: '64px',
-      fontWeight: '300',
-      color: '#333',
-      '@media (max-width: 768px)': {
-        fontSize: '40px'
-      }
-    },
-    selectedDetails: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    selectedTitle: {
-      fontSize: '22px',
-      fontWeight: '500',
-      color: '#333',
-      marginBottom: '6px',
-      '@media (max-width: 768px)': {
-        fontSize: '16px',
-        marginBottom: '4px'
-      }
-    },
-    selectedStatus: {
-      fontSize: '16px',
-      color: '#666',
-      '@media (max-width: 768px)': {
-        fontSize: '13px'
-      }
-    },
-    selectedDay: {
-      fontSize: '14px',
-      color: '#999',
-      marginLeft: '100px',
-      marginTop: '6px',
-      '@media (max-width: 768px)': {
-        fontSize: '12px',
-        marginLeft: '52px',
-        marginTop: '4px'
-      }
-    },
-    bookingsTitle: {
-      fontSize: '22px',
-      fontWeight: '500',
-      marginBottom: '20px',
-      color: '#333',
-      '@media (max-width: 768px)': {
-        fontSize: '18px',
-        marginBottom: '12px'
-      }
-    },
-    bookingsContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px',
-      '@media (max-width: 768px)': {
-        gap: '12px'
-      }
-    },
-    bookingCard: {
-      borderRadius: '20px',
-      padding: '28px',
-      color: '#fff',
-      position: 'relative',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      '@media (max-width: 768px)': {
-        borderRadius: '12px',
-        padding: '16px'
-      }
-    },
-    bookingHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: '8px',
-      '@media (max-width: 768px)': {
-        flexDirection: 'column',
-        gap: '8px',
-        marginBottom: '12px'
-      }
-    },
-    bookingTime: {
-      fontSize: '15px',
-      fontWeight: '500',
-      '@media (max-width: 768px)': {
-        fontSize: '13px'
-      }
-    },
-    bookingStatus: {
-      fontSize: '11px',
-      padding: '4px 12px',
-      borderRadius: '12px',
-      fontWeight: '500',
-      backgroundColor: 'rgba(255,255,255,0.3)',
-      '@media (max-width: 768px)': {
-        fontSize: '10px',
-        padding: '3px 8px'
-      }
-    },
-    bookingName: {
-      fontSize: '24px',
-      fontWeight: '500',
-      marginBottom: '10px',
-      '@media (max-width: 768px)': {
-        fontSize: '18px',
-        marginBottom: '8px'
-      }
-    },
-    bookingLocation: {
-      fontSize: '15px',
-      marginBottom: '14px',
-      '@media (max-width: 768px)': {
-        fontSize: '13px',
-        marginBottom: '10px'
-      }
-    },
-    noBookings: {
-      backgroundColor: '#f5f5f5',
-      borderRadius: '20px',
-      padding: '48px',
-      textAlign: 'center',
-      '@media (max-width: 768px)': {
-        borderRadius: '12px',
-        padding: '24px'
-      }
-    },
-    noBookingsTitle: {
-      fontSize: '24px',
-      fontWeight: '500',
-      marginBottom: '10px',
-      color: '#333',
-      '@media (max-width: 768px)': {
-        fontSize: '18px',
-        marginBottom: '8px'
-      }
-    },
-    noBookingsText: {
-      fontSize: '16px',
-      color: '#666',
-      '@media (max-width: 768px)': {
-        fontSize: '14px'
-      }
-    },
-    floatingButton: {
-      position: 'fixed',
-      bottom: '32px',
-      right: '32px',
-      backgroundColor: '#ef5350',
-      color: '#fff',
-      borderRadius: '50%',
-      width: '64px',
-      height: '64px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s, transform 0.2s',
-      '@media (max-width: 768px)': {
-        bottom: '16px',
-        right: '16px',
-        width: '56px',
-        height: '56px'
-      }
-    }
-  };
-
   const sectionHeaderStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -903,7 +570,7 @@ function BookingCalendar() {
     <Box sx={{
       width: '100%',
       margin: '0 auto',
-      padding: { xs: '16px', md: '40px' },
+      padding: { xs: '8px', md: '40px' },
       backgroundColor: '#fafafa',
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
@@ -913,17 +580,6 @@ function BookingCalendar() {
           Provider ID not found. Please make sure you're logged in. You may need to log out and log in again.
         </Alert>
       )}
-
-      {/* {providerId && (
-        <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
-          <Typography variant="caption" color="primary">
-            Logged in as Provider: {providerId}
-          </Typography>
-          <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-            📋 Showing only Direct Bookings (Indirect bookings are hidden)
-          </Typography>
-        </Box>
-      )} */}
 
       {loading && (
         <Box display="flex" justifyContent="center" mb={3}>
@@ -944,48 +600,47 @@ function BookingCalendar() {
         marginBottom: { xs: '16px', md: '32px' },
         padding: { xs: '0 4px', md: '0 20px' }
       }}>
-        <button
+        <IconButton
           onClick={() => changeMonth(-1)}
-          style={{
-            ...styles.navButton,
-            padding: window.innerWidth <= 768 ? '8px' : '12px'
+          sx={{
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            border: '1px solid #f0f0f0',
+            '&:hover': { backgroundColor: '#f5f5f5', transform: 'scale(1.1)' },
+            transition: 'all 0.2s'
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
+          <ChevronLeftIcon />
+        </IconButton>
         <Typography sx={{
-          fontSize: { xs: '20px', md: '28px' },
-          fontStyle: 'italic',
-          fontWeight: '400',
-          color: '#333'
+          fontSize: { xs: '20px', md: '32px' },
+          fontWeight: '600',
+          color: '#333',
+          letterSpacing: '-0.5px'
         }}>
           {monthName}
         </Typography>
-        <button
+        <IconButton
           onClick={() => changeMonth(1)}
-          style={{
-            ...styles.navButton,
-            padding: window.innerWidth <= 768 ? '8px' : '12px'
+          sx={{
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            border: '1px solid #f0f0f0',
+            '&:hover': { backgroundColor: '#f5f5f5', transform: 'scale(1.1)' },
+            transition: 'all 0.2s'
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
+          <ChevronRightIcon />
+        </IconButton>
       </Box>
 
       <Box sx={{
         backgroundColor: '#fff',
-        borderRadius: { xs: '12px', md: '16px' },
-        marginBottom: { xs: '16px', md: '32px' },
-        padding: { xs: '12px', md: '32px' },
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        borderRadius: { xs: '16px', md: '24px' },
+        marginBottom: { xs: '24px', md: '40px' },
+        padding: { xs: '12px 8px', md: '40px' },
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+        border: '1px solid #f0f0f0'
       }}>
         <Box sx={{
           display: 'grid',
@@ -999,7 +654,7 @@ function BookingCalendar() {
       <Box sx={{
         backgroundColor: '#fff',
         borderRadius: { xs: '8px', md: '12px' },
-        padding: { xs: '12px', md: '24px' },
+        padding: { xs: '12px 8px', md: '24px' },
         marginBottom: { xs: '16px', md: '32px' },
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
@@ -1009,191 +664,219 @@ function BookingCalendar() {
           justifyContent: 'center',
           gap: { xs: '12px', md: '24px' },
           flexWrap: 'wrap',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'flex-start', md: 'center' }
+          flexDirection: 'row'
         }}>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#ef5350' }} />
-            <span style={styles.legendText}>Fully Booked</span>
-          </div>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#ffd54f' }} />
-            <span style={styles.legendText}>Slots Available</span>
-          </div>
-          <div style={styles.legendItem}>
-            <div style={{ ...styles.legendDot, backgroundColor: '#66bb6a' }} />
-            <span style={styles.legendText}>Fully Free</span>
-          </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef5350' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Booked</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ffd54f' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Slots Available</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#66bb6a' }} />
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Free</Typography>
+          </Box>
         </Box>
       </Box>
 
-      <Box sx={{ marginBottom: { xs: '16px', md: '24px' } }}>
+      {/* 🗓️ Selected Date Header - Premium Look */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: { xs: 2, md: 4 },
+        backgroundColor: '#fff',
+        borderRadius: '24px',
+        padding: { xs: '20px', md: '32px' },
+        marginBottom: '32px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        border: '1px solid #f0f0f0'
+      }}>
         <Box sx={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: { xs: '12px', md: '24px' }
+          justifyContent: 'center',
+          minWidth: { xs: '70px', md: '100px' },
+          height: { xs: '70px', md: '100px' },
+          backgroundColor: '#ef5350',
+          borderRadius: '20px',
+          color: '#fff',
+          boxShadow: '0 8px 16px rgba(239, 83, 80, 0.2)'
         }}>
-          <Typography sx={{
-            fontSize: { xs: '40px', md: '64px' },
-            fontWeight: '300',
-            color: '#333'
-          }}>
+          <Typography sx={{ fontSize: { xs: '12px', md: '14px' }, fontWeight: '600', textTransform: 'uppercase', opacity: 0.9 }}>
+            {getDayName()}
+          </Typography>
+          <Typography sx={{ fontSize: { xs: '28px', md: '40px' }, fontWeight: '700', lineHeight: 1 }}>
             {selectedDate}
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        </Box>
+
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{
+            fontSize: { xs: '18px', md: '28px' },
+            fontWeight: '600',
+            color: '#1a1a1a',
+            marginBottom: '4px'
+          }}>
+            Schedule Details
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: getStatusColor(selectedStatus)
+            }} />
             <Typography sx={{
-              fontSize: { xs: '16px', md: '22px' },
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: { xs: '4px', md: '6px' }
-            }}>
-              Selected Date
-            </Typography>
-            <Typography sx={{
-              fontSize: { xs: '13px', md: '16px' },
-              color: '#666'
+              fontSize: { xs: '14px', md: '16px' },
+              color: '#666',
+              fontWeight: '500'
             }}>
               {getStatusText()}
             </Typography>
           </Box>
         </Box>
-        <Typography sx={{
-          fontSize: { xs: '12px', md: '14px' },
-          color: '#999',
-          marginLeft: { xs: '52px', md: '100px' },
-          marginTop: { xs: '4px', md: '6px' }
-        }}>
-          {getDayName()}
-        </Typography>
       </Box>
 
-      {selectedBookings.length > 0 && (
-        <div>
-          <Typography sx={{
-            fontSize: { xs: '18px', md: '22px' },
-            fontWeight: '500',
-            marginBottom: { xs: '12px', md: '20px' },
-            color: '#333'
-          }}>
-            Today's Bookings
-          </Typography>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: { xs: '12px', md: '20px' }
-          }}>
+      {/* 📑 Today's Bookings Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography sx={{
+          fontSize: { xs: '20px', md: '24px' },
+          fontWeight: '700',
+          color: '#1a1a1a',
+          mb: 3,
+          pl: 1
+        }}>
+          Today's Appointments
+        </Typography>
+
+        {selectedBookings.length > 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             {selectedBookings.map((booking) => (
               <Box
                 key={booking._id}
                 sx={{
-                  borderRadius: { xs: '12px', md: '20px' },
-                  padding: { xs: '16px', md: '28px' },
-                  color: '#fff',
+                  backgroundColor: '#fff',
+                  borderRadius: '24px',
+                  border: '1px solid #f0f0f0',
+                  padding: { xs: '20px', md: '32px' },
                   position: 'relative',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  backgroundColor: getBookingCardColor(booking.status)
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 30px rgba(0,0,0,0.06)',
+                    borderColor: '#ef5350'
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '6px',
+                    backgroundColor: getBookingCardColor(booking.status)
+                  }
                 }}
               >
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: { xs: 'flex-start', md: 'flex-start' },
-                  flexDirection: { xs: 'column', md: 'row' },
-                  gap: { xs: '8px', md: 0 },
-                  marginBottom: { xs: '12px', md: '8px' }
-                }}>
-                  <Typography sx={{
-                    fontSize: { xs: '13px', md: '15px' },
-                    fontWeight: '500'
-                  }}>
-                    {booking.timeSlot?.label
-                      ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
-                      : 'All Day'}
-                  </Typography>
-                  <Box display="flex" alignItems="center" gap={1}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                  <Box>
+                    <Typography sx={{
+                      fontSize: { xs: '12px', md: '13px' },
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color: getBookingCardColor(booking.status),
+                      letterSpacing: '1px',
+                      mb: 0.5
+                    }}>
+                      {booking.timeSlot?.label
+                        ? `${booking.timeSlot.label} (${booking.timeSlot.time})`
+                        : 'All Day'}
+                    </Typography>
+                    <Typography sx={{ fontSize: { xs: '18px', md: '22px' }, fontWeight: '700', color: '#1a1a1a' }}>
+                      {booking.fullName}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Chip
                       label={booking.status}
-                      size="small"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.3)',
-                        color: booking.status === 'Pending' ? '#000' : '#fff'
+                      sx={{
+                        fontWeight: '600',
+                        fontSize: '12px',
+                        backgroundColor: `${getBookingCardColor(booking.status)}15`,
+                        color: getBookingCardColor(booking.status),
+                        border: `1px solid ${getBookingCardColor(booking.status)}30`
                       }}
                     />
                     <IconButton
-                      size="small"
                       onClick={() => handleDeleteBooking(booking._id)}
                       disabled={deleteLoading === booking._id}
                       sx={{
-                        color: 'white',
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(0,0,0,0.3)'
-                        }
+                        backgroundColor: '#fff1f1',
+                        color: '#ef5350',
+                        '&:hover': { backgroundColor: '#ef5350', color: '#fff' }
                       }}
                     >
-                      {deleteLoading === booking._id ? (
-                        <CircularProgress size={20} sx={{ color: 'white' }} />
-                      ) : (
-                        <DeleteIcon fontSize="small" />
-                      )}
+                      {deleteLoading === booking._id ? <CircularProgress size={20} color="inherit" /> : <DeleteIcon fontSize="small" />}
                     </IconButton>
                   </Box>
                 </Box>
-                <Typography sx={{
-                  fontSize: { xs: '18px', md: '24px' },
-                  fontWeight: '500',
-                  marginBottom: { xs: '8px', md: '10px' }
+
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+                  gap: 3,
+                  pt: 3,
+                  borderTop: '1px solid #f8f8f8'
                 }}>
-                  Booked by {booking.fullName}
-                </Typography>
-                <Typography sx={{
-                  fontSize: { xs: '13px', md: '15px' },
-                  marginBottom: { xs: '10px', md: '14px' }
-                }}>
-                  {booking.venueId?.venueName || booking.location || 'Venue not specified'}
-                </Typography>
-                <Box sx={{ fontSize: { xs: '12px', md: '14px' }, marginTop: '8px' }}>
-                  <div>Guests: {booking.numberOfGuests || 'N/A'}</div>
-                  <div>Contact: {booking.contactNumber}</div>
-                  <div>Email: {booking.emailAddress}</div>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <PhoneIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Contact</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.contactNumber}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <EmailIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Email</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.emailAddress || 'N/A'}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: '10px', backgroundColor: '#f5f5f5', color: '#666' }}>
+                      <HomeIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', fontWeight: '600' }}>Venue</Typography>
+                      <Typography sx={{ fontSize: '14px', fontWeight: '500' }}>{booking.venueId?.venueName || booking.location || 'N/A'}</Typography>
+                    </Box>
+                  </Box>
                 </Box>
               </Box>
             ))}
           </Box>
-        </div>
-      )}
-
-      {selectedBookings.length === 0 && (
-        <Box sx={{
-          backgroundColor: '#f5f5f5',
-          borderRadius: { xs: '12px', md: '20px' },
-          padding: { xs: '24px', md: '48px' },
-          textAlign: 'center'
-        }}>
-          <div style={{ margin: '0 auto 20px', width: '100px', height: '100px' }}>
-            <svg width="100" height="100" viewBox="0 0 80 80" fill="none">
-              <rect x="10" y="15" width="60" height="50" rx="4" stroke="#ccc" strokeWidth="2" fill="none" />
-              <path d="M25 15 L25 10 M55 15 L55 10" stroke="#ccc" strokeWidth="2" />
-              <path d="M20 25 L60 25" stroke="#ccc" strokeWidth="2" />
-              <path d="M35 45 L45 45 M35 45 L40 40 M35 45 L40 50" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
-          <Typography sx={{
-            fontSize: { xs: '18px', md: '24px' },
-            fontWeight: '500',
-            marginBottom: { xs: '8px', md: '10px' },
-            color: '#333'
+        ) : (
+          <Box sx={{
+            textAlign: 'center',
+            py: 8,
+            backgroundColor: '#fff',
+            borderRadius: '24px',
+            border: '2px dashed #eee'
           }}>
-            No Bookings Today
-          </Typography>
-          <Typography sx={{
-            fontSize: { xs: '14px', md: '16px' },
-            color: '#666'
-          }}>
-            All slots are available for booking
-          </Typography>
-        </Box>
-      )}
+            <Typography sx={{ color: '#999', fontSize: '16px' }}>
+              No appointments scheduled for this date.
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
       <Button
         variant="contained"
@@ -1231,8 +914,8 @@ function BookingCalendar() {
             Add Booking
           </Box>
         </DialogTitle>
-        <div style={{ alignSelf: 'center' }}>
-          <DialogContent sx={{ p: 3, backgroundColor: 'white', width: '500px' }}>
+        <Box sx={{ alignSelf: 'center', width: '100%' }}>
+          <DialogContent sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'white', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
@@ -1409,7 +1092,7 @@ function BookingCalendar() {
                   </MenuItem>
                   {packages.map(pkg => (
                     <MenuItem key={pkg._id} value={pkg._id}>
-                      {pkg.title} - AED {pkg.price}
+                      {pkg.title || pkg.packageTitle || pkg.packageName || pkg.name} - AED {pkg.price}
                     </MenuItem>
                   ))}
                 </Select>
@@ -1515,9 +1198,9 @@ function BookingCalendar() {
               </Button>
             </Box>
           </DialogContent>
-        </div>
+        </Box>
       </Dialog>
-    </Box>
+    </Box >
   );
 }
 
