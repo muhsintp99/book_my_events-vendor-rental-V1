@@ -353,7 +353,6 @@ const Createnew = () => {
 
       // Advance booking prefill
 
-
       if (vehicle.category?.parentCategory?._id) {
         const parentId = vehicle.category.parentCategory._id;
 
@@ -494,11 +493,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-            .filter((zone) => zone.isActive)
-            .map((zone) => ({
-              _id: zone._id,
-              name: zone.name
-            }))
+              .filter((zone) => zone.isActive)
+              .map((zone) => ({
+                _id: zone._id,
+                name: zone.name
+              }))
           : [];
 
         setZones(zonesData);
@@ -816,7 +815,6 @@ const Createnew = () => {
 
       // Prepare FormData
 
-
       const formData = new FormData();
       formData.append('transmissionType', transmissionType);
       formData.append('enginePower', enginePower ? parseInt(enginePower) : '');
@@ -850,7 +848,6 @@ const Createnew = () => {
       formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
 
       if (discount) formData.append('discount', parseFloat(discount));
-
 
       searchTags.forEach((tag) => formData.append('searchTags[]', tag));
       if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
@@ -949,8 +946,7 @@ const Createnew = () => {
       operatingHours,
       parentCategory,
       subCategory,
-      selectedAttributes,
-
+      selectedAttributes
     ]
   );
 
@@ -1266,8 +1262,6 @@ const Createnew = () => {
                       placeholder="e.g. 180"
                       inputProps={{ min: 0 }}
                     />
-
-
                   </Stack>
 
                   <Stack spacing={2}>
@@ -1711,8 +1705,6 @@ const Createnew = () => {
                 </Box>
               </CardContent>
             </Card>
-
-
           </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
