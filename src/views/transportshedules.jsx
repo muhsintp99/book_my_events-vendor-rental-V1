@@ -55,7 +55,7 @@ function BookingCalendar() {
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
-const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -1097,7 +1097,7 @@ const [activeStep, setActiveStep] = useState(0);
                       Vehicle & Trip Selection
                     </Typography>
                     <Grid container spacing={3}>
-                      <Grid item xs={12}>
+                      <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel shrink>Select Vehicle</InputLabel>
                           <Select
@@ -1106,19 +1106,40 @@ const [activeStep, setActiveStep] = useState(0);
                             onChange={handleInputChange}
                             label="Select Vehicle"
                             displayEmpty
+                            MenuProps={{
+                              PaperProps: {
+                                sx: {
+                                  maxHeight: 300,
+                                  borderRadius: 2,
+                                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                  backgroundColor: '#fff',
+                                  zIndex: 9999
+                                }
+                              },
+                              sx: { zIndex: 9999 },
+                              disablePortal: true
+                            }}
                           >
                             <MenuItem value="" disabled>
-                              <span style={{ color: '#999' }}>Select Vehicle</span>
+                              <span style={{ color: '#999' }}>
+                                {vehicles.length === 0
+                                  ? 'No vehicles available'
+                                  : `Select Vehicle (${vehicles.length})`}
+                              </span>
                             </MenuItem>
-                            {vehicles.map(vehicle => (
-                              <MenuItem key={vehicle._id} value={vehicle._id}>
-                                {vehicle.vehicleName}
-                              </MenuItem>
-                            ))}
+                            {vehicles.map(vehicle => {
+                              // Fallback support since API might behave differently than expected
+                              const vName = vehicle.vehicleName || vehicle.name || vehicle.title || vehicle.brand || 'Vehicle';
+                              return (
+                                <MenuItem key={vehicle._id} value={vehicle._id} sx={{ color: '#333' }}>
+                                  {vName}
+                                </MenuItem>
+                              );
+                            })}
                           </Select>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
                           <InputLabel shrink>Trip Type</InputLabel>
                           <Select
@@ -1127,6 +1148,9 @@ const [activeStep, setActiveStep] = useState(0);
                             onChange={handleInputChange}
                             label="Trip Type"
                             displayEmpty
+                            MenuProps={{
+                              PaperProps: { sx: { maxHeight: 300, borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' } }
+                            }}
                           >
                             <MenuItem value="" disabled>
                               <span style={{ color: '#999' }}>Select Trip Type</span>
@@ -1139,7 +1163,7 @@ const [activeStep, setActiveStep] = useState(0);
                       </Grid>
 
                       {formData.tripType === 'perDay' && (
-                        <Grid item xs={12}>
+                        <Grid item xs={12} md={6}>
                           <TextField
                             fullWidth
                             name="days"
@@ -1153,7 +1177,7 @@ const [activeStep, setActiveStep] = useState(0);
                       )}
 
                       {formData.tripType === 'hourly' && (
-                        <Grid item xs={12}>
+                        <Grid item xs={12} md={6}>
                           <TextField
                             fullWidth
                             name="hours"
@@ -1167,7 +1191,7 @@ const [activeStep, setActiveStep] = useState(0);
                       )}
 
                       {formData.tripType === 'distanceWise' && (
-                        <Grid item xs={12}>
+                        <Grid item xs={12} md={6}>
                           <TextField
                             fullWidth
                             name="distanceKm"
@@ -1180,7 +1204,7 @@ const [activeStep, setActiveStep] = useState(0);
                         </Grid>
                       )}
 
-                      <Grid item xs={12}>
+                      <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
                           name="numberOfGuests"
@@ -1189,13 +1213,7 @@ const [activeStep, setActiveStep] = useState(0);
                           variant="outlined"
                           value={formData.numberOfGuests}
                           onChange={handleInputChange}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <PeopleIcon sx={{ color: '#999', fontSize: 20 }} />
-                              </InputAdornment>
-                            )
-                          }}
+                          InputProps={{ startAdornment: (<InputAdornment position="start"><PeopleIcon sx={{ color: '#999', fontSize: 20 }} /></InputAdornment>) }}
                         />
                       </Grid>
                     </Grid>
@@ -1341,7 +1359,7 @@ const [activeStep, setActiveStep] = useState(0);
                       placeholder="E.g. Full day duty, specific routes..."
                     />
                   </Box>
-                  </Grid>
+                </Grid>
               </Grid>
             </Box>
           </DialogContent>

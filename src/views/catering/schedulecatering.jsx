@@ -1170,6 +1170,9 @@ function BookingCalendar() {
                             onChange={handleInputChange}
                             label="Module"
                             displayEmpty
+                            MenuProps={{
+                              PaperProps: { sx: { maxHeight: 300, borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' } }
+                            }}
                           >
                             <MenuItem value="" disabled>
                               <span style={{ color: '#999' }}>Select Module</span>
@@ -1192,6 +1195,9 @@ function BookingCalendar() {
                             label="Package"
                             disabled={packages.length === 0}
                             displayEmpty
+                            MenuProps={{
+                              PaperProps: { sx: { maxHeight: 300, borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' } }
+                            }}
                           >
                             <MenuItem value="" disabled>
                               <span style={{ color: '#999' }}>
