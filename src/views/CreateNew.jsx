@@ -122,7 +122,7 @@ const Createnew = () => {
   const [fuelTank, setFuelTank] = useState('');
   // Advance Booking
   // Advance Booking (Flat Amount)
-
+  const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
   const [attributeMap, setAttributeMap] = useState({});
 
   const [parentCategories, setParentCategories] = useState([]);
@@ -352,7 +352,8 @@ const Createnew = () => {
       }
 
       // Advance booking prefill
-
+      // ✅ Advance booking prefill (flat amount)
+      setAdvanceBookingAmount(vehicle.advanceBookingAmount?.toString() || '');
 
       if (vehicle.category?.parentCategory?._id) {
         const parentId = vehicle.category.parentCategory._id;
@@ -494,11 +495,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-            .filter((zone) => zone.isActive)
-            .map((zone) => ({
-              _id: zone._id,
-              name: zone.name
-            }))
+              .filter((zone) => zone.isActive)
+              .map((zone) => ({
+                _id: zone._id,
+                name: zone.name
+              }))
           : [];
 
         setZones(zonesData);
@@ -815,7 +816,7 @@ const Createnew = () => {
       }
 
       // Prepare FormData
-
+      
 
       const formData = new FormData();
       formData.append('transmissionType', transmissionType);
@@ -850,7 +851,7 @@ const Createnew = () => {
       formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
 
       if (discount) formData.append('discount', parseFloat(discount));
-
+      if (advanceBookingAmount) formData.append('advanceBookingAmount', parseFloat(advanceBookingAmount));
 
       searchTags.forEach((tag) => formData.append('searchTags[]', tag));
       if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
@@ -950,7 +951,7 @@ const Createnew = () => {
       parentCategory,
       subCategory,
       selectedAttributes,
-
+      advanceBookingAmount
     ]
   );
 
@@ -1267,7 +1268,7 @@ const Createnew = () => {
                       inputProps={{ min: 0 }}
                     />
 
-
+                   
                   </Stack>
 
                   <Stack spacing={2}>
@@ -1296,15 +1297,15 @@ const Createnew = () => {
                     </FormControl>
                   </Stack>
                 </Box>
-                <FormControl component="fieldset" fullWidth>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                    Air Condition
-                  </Typography>
-                  <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
-                  </RadioGroup>
-                </FormControl>
+                 <FormControl component="fieldset" fullWidth>
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                        Air Condition
+                      </Typography>
+                      <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
+                        <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio />} label="No" />
+                      </RadioGroup>
+                    </FormControl>
                 <Box sx={{ mt: 3 }}>
                   <FormControl fullWidth variant="outlined" required>
                     <InputLabel id="zone-label">Zone*</InputLabel>
@@ -1712,7 +1713,24 @@ const Createnew = () => {
               </CardContent>
             </Card>
 
+            {/* ===== Advance Booking Amount ===== */}
+            <Card sx={{ mt: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Advance Booking Amount
+                </Typography>
 
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Advance Amount"
+                  value={advanceBookingAmount}
+                  onChange={(e) => setAdvanceBookingAmount(e.target.value)}
+                  inputProps={{ min: 0 }}
+                  helperText="Flat advance amount payable during booking"
+                />
+              </CardContent>
+            </Card>
           </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
