@@ -91,7 +91,7 @@ const AddCakePackage = () => {
   const [allergenIngredients, setAllergenIngredients] = useState('');
 
   const [unitPrice, setUnitPrice] = useState('');
-  const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
+
   const [discountType, setDiscountType] = useState('Amount');
   const [discount, setDiscount] = useState('');
   const [maxPurchaseQty, setMaxPurchaseQty] = useState('');
@@ -206,7 +206,7 @@ const AddCakePackage = () => {
         setAllergenIngredients(cake.allergenIngredients?.join(', ') || '');
 
         setUnitPrice(cake.priceInfo?.unitPrice || '');
-        setAdvanceBookingAmount(cake.priceInfo?.advanceBookingAmount || '');
+
         setDiscountType(cake.priceInfo?.discountType || 'Amount');
         setDiscount(cake.priceInfo?.discount || '');
         setMaxPurchaseQty(cake.priceInfo?.maxPurchaseQty || '');
@@ -328,10 +328,7 @@ const AddCakePackage = () => {
       maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : undefined
     };
 
-    // ✅ Add advance booking amount if provided
-    if (advanceBookingAmount) {
-      priceInfoObj.advanceBookingAmount = Number(advanceBookingAmount);
-    }
+
 
     formData.append('priceInfo', JSON.stringify(priceInfoObj));
 
@@ -571,14 +568,7 @@ const AddCakePackage = () => {
               value={unitPrice}
               onChange={(e) => setUnitPrice(e.target.value)}
             />
-            <TextField
-              fullWidth
-              label="Advance Booking Amount (₹)"
-              type="number"
-              value={advanceBookingAmount}
-              onChange={(e) => setAdvanceBookingAmount(e.target.value)}
-              helperText="Amount to be paid upfront"
-            />
+
           </Stack>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
