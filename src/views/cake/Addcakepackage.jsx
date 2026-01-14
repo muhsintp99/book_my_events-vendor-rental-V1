@@ -90,11 +90,7 @@ const AddCakePackage = () => {
   const [nutrition, setNutrition] = useState('');
   const [allergenIngredients, setAllergenIngredients] = useState('');
 
-  const [unitPrice, setUnitPrice] = useState('');
 
-  const [discountType, setDiscountType] = useState('Amount');
-  const [discount, setDiscount] = useState('');
-  const [maxPurchaseQty, setMaxPurchaseQty] = useState('');
   const [searchTags, setSearchTags] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -205,11 +201,7 @@ const AddCakePackage = () => {
         setNutrition(cake.nutrition?.join(', ') || '');
         setAllergenIngredients(cake.allergenIngredients?.join(', ') || '');
 
-        setUnitPrice(cake.priceInfo?.unitPrice || '');
-
-        setDiscountType(cake.priceInfo?.discountType || 'Amount');
-        setDiscount(cake.priceInfo?.discount || '');
-        setMaxPurchaseQty(cake.priceInfo?.maxPurchaseQty || '');
+        
         setSearchTags(cake.searchTags?.join(', ') || '');
         setIsActive(cake.isActive);
 
@@ -284,10 +276,7 @@ const AddCakePackage = () => {
       setError('Select a category');
       return;
     }
-    if (!unitPrice) {
-      setError('Unit price is required');
-      return;
-    }
+  
     if (!thumbnail && !existingThumbnail) {
       setError('Thumbnail image is required');
       return;
@@ -320,18 +309,7 @@ const AddCakePackage = () => {
     //   })
     // );
 
-    // Price info
-    const priceInfoObj = {
-      unitPrice: Number(unitPrice),
-      discountType,
-      discount: discount ? Number(discount) : 0,
-      maxPurchaseQty: maxPurchaseQty ? Number(maxPurchaseQty) : undefined
-    };
-
-
-
-    formData.append('priceInfo', JSON.stringify(priceInfoObj));
-
+   
     // Arrays
     if (nutrition.trim()) {
       const nutritionArr = nutrition
@@ -556,39 +534,7 @@ const AddCakePackage = () => {
           </Stack>
 
 
-          {/* Pricing */}
-          <Typography variant="h6" sx={{ mb: 2, color: PINK }}>
-            Pricing
-          </Typography>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="Base Unit Price (₹) *"
-              type="number"
-              value={unitPrice}
-              onChange={(e) => setUnitPrice(e.target.value)}
-            />
-
-          </Stack>
-
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Discount Type</InputLabel>
-              <Select value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
-                <MenuItem value="Amount">Amount</MenuItem>
-                <MenuItem value="Percentage">Percentage</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField label="Discount Value" type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} fullWidth />
-            <TextField
-              label="Max Purchase Qty"
-              type="number"
-              value={maxPurchaseQty}
-              onChange={(e) => setMaxPurchaseQty(e.target.value)}
-              fullWidth
-            />
-          </Stack>
-
+         
           {/* Variations */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
