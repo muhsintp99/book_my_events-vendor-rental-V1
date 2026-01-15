@@ -102,8 +102,14 @@ const Createnew = () => {
     sunroof: false,
     decorationAvailable: false
   });
-const [decorationPrice, setDecorationPrice] = useState('');
-
+  const [decorationPrice, setDecorationPrice] = useState('');
+  // ===== Terms & Conditions =====
+  const [termsSections, setTermsSections] = useState([
+    {
+      heading: '',
+      points: ['']
+    }
+  ]);
   const [searchTags, setSearchTags] = useState([]);
   const [currentTag, setCurrentTag] = useState('');
   const [openToast, setOpenToast] = useState(false);
@@ -371,6 +377,26 @@ const [decorationPrice, setDecorationPrice] = useState('');
           .then((res) => setSubCategories(res.data.data || []))
           .catch(() => setSubCategories([]));
       }
+
+      // ================= TERMS & CONDITIONS =================
+if (
+  vehicle.termsAndConditions &&
+  Array.isArray(vehicle.termsAndConditions) &&
+  vehicle.termsAndConditions.length > 0
+) {
+  setTermsSections(
+    vehicle.termsAndConditions.map((section) => ({
+      heading: section.heading || '',
+      points:
+        Array.isArray(section.points) && section.points.length > 0
+          ? section.points
+          : ['']
+    }))
+  );
+} else {
+  // fallback (create mode or old vehicles)
+  setTermsSections([{ heading: '', points: [''] }]);
+}
 
       // Handle category - it comes as an array from API
       let categoryId = '';
@@ -717,7 +743,7 @@ const [decorationPrice, setDecorationPrice] = useState('');
     setPerDayPrice('');
     setDistanceWisePrice('');
     setDiscount('');
-setDecorationPrice(''); // ✅ ADD THIS LINE
+    setDecorationPrice(''); // ✅ ADD THIS LINE
 
     // -------- TAGS --------
     setSearchTags([]);
@@ -806,6 +832,13 @@ setDecorationPrice(''); // ✅ ADD THIS LINE
         setLoading(false);
         return;
       }
+      if (!termsSections.length || !termsSections[0].heading) {
+        setToastMessage('Please add at least one Terms & Conditions section.');
+        setToastSeverity('error');
+        setOpenToast(true);
+        setLoading(false);
+        return;
+      }
 
       // Validate token
       const token = localStorage.getItem('token');
@@ -818,7 +851,6 @@ setDecorationPrice(''); // ✅ ADD THIS LINE
       }
 
       // Prepare FormData
-      
 
       const formData = new FormData();
       formData.append('transmissionType', transmissionType);
@@ -837,14 +869,16 @@ setDecorationPrice(''); // ✅ ADD THIS LINE
       formData.append('features[driverIncluded]', features.driverIncluded);
       formData.append('features[sunroof]', features.sunroof);
       formData.append('features[decorationAvailable]', features.decorationAvailable);
-if (features.decorationAvailable && decorationPrice) {
-  formData.append('decorationPrice', parseFloat(decorationPrice));
-}
+      if (features.decorationAvailable && decorationPrice) {
+        formData.append('decorationPrice', parseFloat(decorationPrice));
+      }
 
       // Attach dynamic vehicle attributes
       formData.append('attributes', JSON.stringify(selectedAttributes));
 
       formData.append('licensePlateNumber', licensePlateNumber);
+      formData.append('termsAndConditions', JSON.stringify(termsSections));
+
       formData.append('venueAddress', venueAddress);
       formData.append('latitude', parseFloat(latitude));
       formData.append('longitude', parseFloat(longitude));
@@ -1272,8 +1306,6 @@ if (features.decorationAvailable && decorationPrice) {
                       placeholder="e.g. 180"
                       inputProps={{ min: 0 }}
                     />
-
-                   
                   </Stack>
 
                   <Stack spacing={2}>
@@ -1302,15 +1334,15 @@ if (features.decorationAvailable && decorationPrice) {
                     </FormControl>
                   </Stack>
                 </Box>
-                 <FormControl component="fieldset" fullWidth>
-                      <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                        Air Condition
-                      </Typography>
-                      <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
-                        <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                        <FormControlLabel value="no" control={<Radio />} label="No" />
-                      </RadioGroup>
-                    </FormControl>
+                <FormControl component="fieldset" fullWidth>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                    Air Condition
+                  </Typography>
+                  <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
+                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                    <FormControlLabel value="no" control={<Radio />} label="No" />
+                  </RadioGroup>
+                </FormControl>
                 <Box sx={{ mt: 3 }}>
                   <FormControl fullWidth variant="outlined" required>
                     <InputLabel id="zone-label">Zone*</InputLabel>
@@ -1460,159 +1492,159 @@ if (features.decorationAvailable && decorationPrice) {
             </Card>
           </Box>
           <Box
-  sx={{
-    mt: 3,
-    p: 2,
-    border: '1px solid',
-    borderColor: 'grey.300',
-    borderRadius: 2,
-    backgroundColor: '#fafafa'
-  }}
->
-  <Typography variant="subtitle1" gutterBottom>
-    Vehicle Features
-  </Typography>
+            sx={{
+              mt: 3,
+              p: 2,
+              border: '1px solid',
+              borderColor: 'grey.300',
+              borderRadius: 2,
+              backgroundColor: '#fafafa'
+            }}
+          >
+            <Typography variant="subtitle1" gutterBottom>
+              Vehicle Features
+            </Typography>
 
-  <Box
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: {
-        xs: '1fr',
-        sm: 'repeat(2, 1fr)',
-        md: 'repeat(3, 1fr)'
-      },
-      gap: 4
-    }}
-  >
-    {/* Driver Included */}
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        px: 3,
-        py: 2,
-        border: '1px solid',
-        borderColor: 'grey.300',
-        borderRadius: 2,
-        backgroundColor: 'white',
-        minHeight: 56
-      }}
-    >
-      <Typography fontSize={14} fontWeight={500}>
-        Driver Included
-      </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)'
+                },
+                gap: 4
+              }}
+            >
+              {/* Driver Included */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  px: 3,
+                  py: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,
+                  backgroundColor: 'white',
+                  minHeight: 56
+                }}
+              >
+                <Typography fontSize={14} fontWeight={500}>
+                  Driver Included
+                </Typography>
 
-      <Switch
-        checked={features.driverIncluded}
-        onChange={(e) =>
-          setFeatures((prev) => ({
-            ...prev,
-            driverIncluded: e.target.checked
-          }))
-        }
-        sx={{
-          '& .MuiSwitch-switchBase.Mui-checked': {
-            color: '#E15B65'
-          },
-          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-            backgroundColor: '#E15B65'
-          }
-        }}
-      />
-    </Box>
+                <Switch
+                  checked={features.driverIncluded}
+                  onChange={(e) =>
+                    setFeatures((prev) => ({
+                      ...prev,
+                      driverIncluded: e.target.checked
+                    }))
+                  }
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#E15B65'
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#E15B65'
+                    }
+                  }}
+                />
+              </Box>
 
-    {/* Sunroof */}
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        px: 3,
-        py: 2,
-        border: '1px solid',
-        borderColor: 'grey.300',
-        borderRadius: 2,
-        backgroundColor: 'white',
-        minHeight: 56
-      }}
-    >
-      <Typography fontSize={14} fontWeight={500}>
-        Sunroof
-      </Typography>
+              {/* Sunroof */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  px: 3,
+                  py: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,
+                  backgroundColor: 'white',
+                  minHeight: 56
+                }}
+              >
+                <Typography fontSize={14} fontWeight={500}>
+                  Sunroof
+                </Typography>
 
-      <Switch
-        checked={features.sunroof}
-        onChange={(e) =>
-          setFeatures((prev) => ({
-            ...prev,
-            sunroof: e.target.checked
-          }))
-        }
-        sx={{
-          '& .MuiSwitch-switchBase.Mui-checked': {
-            color: '#E15B65'
-          },
-          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-            backgroundColor: '#E15B65'
-          }
-        }}
-      />
-    </Box>
+                <Switch
+                  checked={features.sunroof}
+                  onChange={(e) =>
+                    setFeatures((prev) => ({
+                      ...prev,
+                      sunroof: e.target.checked
+                    }))
+                  }
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#E15B65'
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#E15B65'
+                    }
+                  }}
+                />
+              </Box>
 
-    {/* Decoration Available + Price */}
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.5,
-        px: 3,
-        py: 2,
-        border: '1px solid',
-        borderColor: 'grey.300',
-        borderRadius: 2,
-        backgroundColor: 'white'
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography fontSize={14} fontWeight={500}>
-          Decoration Available
-        </Typography>
+              {/* Decoration Available + Price */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                  px: 3,
+                  py: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,
+                  backgroundColor: 'white'
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography fontSize={14} fontWeight={500}>
+                    Decoration Available
+                  </Typography>
 
-        <Switch
-          checked={features.decorationAvailable}
-          onChange={(e) =>
-            setFeatures((prev) => ({
-              ...prev,
-              decorationAvailable: e.target.checked
-            }))
-          }
-          sx={{
-            '& .MuiSwitch-switchBase.Mui-checked': {
-              color: '#E15B65'
-            },
-            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: '#E15B65'
-            }
-          }}
-        />
-      </Box>
+                  <Switch
+                    checked={features.decorationAvailable}
+                    onChange={(e) =>
+                      setFeatures((prev) => ({
+                        ...prev,
+                        decorationAvailable: e.target.checked
+                      }))
+                    }
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#E15B65'
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#E15B65'
+                      }
+                    }}
+                  />
+                </Box>
 
-      {/* ✅ SHOW PRICE FIELD ONLY WHEN ENABLED */}
-      {features.decorationAvailable && (
-        <TextField
-          fullWidth
-          label="Decoration Price (₹)"
-          type="number"
-          value={decorationPrice}
-          onChange={(e) => setDecorationPrice(e.target.value)}
-          inputProps={{ min: 0 }}
-          placeholder="e.g. 5000"
-        />
-      )}
-    </Box>
-  </Box>
-</Box>
+                {/* ✅ SHOW PRICE FIELD ONLY WHEN ENABLED */}
+                {features.decorationAvailable && (
+                  <TextField
+                    fullWidth
+                    label="Decoration Price (₹)"
+                    type="number"
+                    value={decorationPrice}
+                    onChange={(e) => setDecorationPrice(e.target.value)}
+                    inputProps={{ min: 0 }}
+                    placeholder="e.g. 5000"
+                  />
+                )}
+              </Box>
+            </Box>
+          </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -1820,6 +1852,121 @@ if (features.decorationAvailable && decorationPrice) {
                 />
               </CardContent>
             </Card>
+            {/* ================= TERMS & CONDITIONS ================= */}
+            <Box sx={{ mb: 4 }}>
+              <Card
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  background: 'linear-gradient(135deg, #ffffff, #fafafa)',
+                  border: '1px solid #eee'
+                }}
+              >
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
+                  Terms & Conditions
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Define rules & policies shown to customers during booking
+                </Typography>
+
+                {termsSections.map((section, sIndex) => (
+                  <Box
+                    key={sIndex}
+                    sx={{
+                      mb: 3,
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#fff'
+                    }}
+                  >
+                    {/* Section Header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Section Heading"
+                        placeholder="e.g. Booking & Confirmation"
+                        value={section.heading}
+                        onChange={(e) => {
+                          const copy = [...termsSections];
+                          copy[sIndex].heading = e.target.value;
+                          setTermsSections(copy);
+                        }}
+                      />
+
+                      {/* Remove Section */}
+                      {termsSections.length > 1 && (
+                        <Button
+                          onClick={() => setTermsSections((prev) => prev.filter((_, i) => i !== sIndex))}
+                          sx={{ ml: 1, color: 'error.main' }}
+                        >
+                          ✕
+                        </Button>
+                      )}
+                    </Box>
+
+                    {/* Points */}
+                    {section.points.map((point, pIndex) => (
+                      <Box key={pIndex} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <TextField
+                          fullWidth
+                          label={`Point ${pIndex + 1}`}
+                          placeholder="Enter policy detail"
+                          value={point}
+                          onChange={(e) => {
+                            const copy = [...termsSections];
+                            copy[sIndex].points[pIndex] = e.target.value;
+                            setTermsSections(copy);
+                          }}
+                        />
+
+                        {/* Remove Point */}
+                        {section.points.length > 1 && (
+                          <Button
+                            onClick={() => {
+                              const copy = [...termsSections];
+                              copy[sIndex].points.splice(pIndex, 1);
+                              setTermsSections(copy);
+                            }}
+                            sx={{ ml: 1, color: 'error.main' }}
+                          >
+                            ✕
+                          </Button>
+                        )}
+                      </Box>
+                    ))}
+
+                    {/* Add Point */}
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        const copy = [...termsSections];
+                        copy[sIndex].points.push('');
+                        setTermsSections(copy);
+                      }}
+                      sx={{ mt: 1, color: '#E15B65' }}
+                    >
+                      + Add Point
+                    </Button>
+                  </Box>
+                ))}
+
+                {/* Add Section */}
+                <Button
+                  variant="outlined"
+                  onClick={() => setTermsSections([...termsSections, { heading: '', points: [''] }])}
+                  sx={{
+                    mt: 2,
+                    borderRadius: 2,
+                    borderColor: '#E15B65',
+                    color: '#E15B65'
+                  }}
+                >
+                  + Add Section
+                </Button>
+              </Card>
+            </Box>
           </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
