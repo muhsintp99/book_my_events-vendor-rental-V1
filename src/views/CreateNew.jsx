@@ -379,24 +379,24 @@ const Createnew = () => {
       }
 
       // ================= TERMS & CONDITIONS =================
-if (
-  vehicle.termsAndConditions &&
-  Array.isArray(vehicle.termsAndConditions) &&
-  vehicle.termsAndConditions.length > 0
-) {
-  setTermsSections(
-    vehicle.termsAndConditions.map((section) => ({
-      heading: section.heading || '',
-      points:
-        Array.isArray(section.points) && section.points.length > 0
-          ? section.points
-          : ['']
-    }))
-  );
-} else {
-  // fallback (create mode or old vehicles)
-  setTermsSections([{ heading: '', points: [''] }]);
-}
+      if (
+        vehicle.termsAndConditions &&
+        Array.isArray(vehicle.termsAndConditions) &&
+        vehicle.termsAndConditions.length > 0
+      ) {
+        setTermsSections(
+          vehicle.termsAndConditions.map((section) => ({
+            heading: section.heading || '',
+            points:
+              Array.isArray(section.points) && section.points.length > 0
+                ? section.points
+                : ['']
+          }))
+        );
+      } else {
+        // fallback (create mode or old vehicles)
+        setTermsSections([{ heading: '', points: [''] }]);
+      }
 
       // Handle category - it comes as an array from API
       let categoryId = '';
@@ -470,6 +470,8 @@ if (
         sunroof: vehicle.features?.sunroof ?? false,
         decorationAvailable: vehicle.features?.decorationAvailable ?? false
       });
+      // ✅ Populate decoration price when editing
+      setDecorationPrice(vehicle.features?.decorationPrice?.toString() || '');
     },
     [brands, categories, zones]
   );
@@ -522,11 +524,11 @@ if (
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-              .filter((zone) => zone.isActive)
-              .map((zone) => ({
-                _id: zone._id,
-                name: zone.name
-              }))
+            .filter((zone) => zone.isActive)
+            .map((zone) => ({
+              _id: zone._id,
+              name: zone.name
+            }))
           : [];
 
         setZones(zonesData);
@@ -797,6 +799,15 @@ if (
         return;
       }
 
+      // ✅ Validate decoration price when decoration is available
+      if (features.decorationAvailable && (!decorationPrice || parseFloat(decorationPrice) <= 0)) {
+        setToastMessage('Please provide a valid decoration price when decoration is available.');
+        setToastSeverity('error');
+        setOpenToast(true);
+        setLoading(false);
+        return;
+      }
+
       if (
         (tripType === 'hourly' && !hourlyWisePrice) ||
         (tripType === 'perDay' && !perDayPrice) ||
@@ -964,6 +975,7 @@ if (
       seatingCapacity,
       airCondition,
       features, // ✅ Added features to dependencies
+      decorationPrice, // ✅ Added decorationPrice to dependencies
       licensePlateNumber,
       tripType,
       hourlyWisePrice,
@@ -990,7 +1002,8 @@ if (
       parentCategory,
       subCategory,
       selectedAttributes,
-      advanceBookingAmount
+      advanceBookingAmount,
+      termsSections
     ]
   );
 
