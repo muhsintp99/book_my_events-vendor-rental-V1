@@ -69,6 +69,10 @@ const AddCakePackage = () => {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
   const isEditMode = Boolean(id);
+// ---------------- Add-ons ----------------
+const [addons, setAddons] = useState([
+  { id: Date.now(), name: '', price: '', isActive: true }
+]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -215,6 +219,20 @@ const AddCakePackage = () => {
             }))
           );
         }
+// ---------------- Load Add-ons ----------------
+if (cake.addons && cake.addons.length > 0) {
+  setAddons(
+    cake.addons.map((a) => ({
+      id: a._id || Date.now(),
+      name: a.name,
+      price: a.price,
+      isActive: a.isActive !== false
+    }))
+  );
+} else {
+  setAddons([{ id: Date.now(), name: '', price: '', isActive: true }]);
+
+}
 
         // Images
         if (cake.thumbnail) setExistingThumbnail(cake.thumbnail);
@@ -247,6 +265,23 @@ const AddCakePackage = () => {
     const file = e.target.files[0];
     if (file) setThumbnail(file);
   };
+// ---------------- Add-ons handlers ----------------
+const handleAddAddon = () => {
+  setAddons((prev) => [
+    ...prev,
+    { id: Date.now(), name: '', price: '', isActive: true }
+  ]);
+};
+
+const handleAddonChange = (id, field, value) => {
+  setAddons((prev) =>
+    prev.map((a) => (a.id === id ? { ...a, [field]: value } : a))
+  );
+};
+
+const handleDeleteAddon = (id) => {
+  setAddons((prev) => prev.filter((a) => a.id !== id));
+};
 
   const handleGalleryUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -334,6 +369,19 @@ const AddCakePackage = () => {
         .filter(Boolean);
       formData.append('searchTags', JSON.stringify(tagsArr));
     }
+// ---------------- Add-ons ----------------
+const validAddons = addons
+  .filter((a) => a.name && a.price)
+  .map(({ name, price, isActive }) => ({
+    name,
+    price: Number(price),
+    isActive
+  }));
+
+if (Array.isArray(validAddons) && validAddons.length > 0) {
+  formData.append('addons', JSON.stringify(validAddons));
+}
+
 
     // Variations
     const validVariations = variations.filter((v) => v.name && v.price).map(({ name, price }) => ({ name, price: Number(price) }));
@@ -559,6 +607,90 @@ const AddCakePackage = () => {
               />
             ))}
           </Box>
+{/* ================= Cake Add-ons ================= */}
+<Box sx={{ mb: 4 }}>
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      mb: 2
+    }}
+  >
+    <Typography variant="h6" sx={{ color: PINK }}>
+      Cake Add-ons
+    </Typography>
+
+    <Button
+      variant="outlined"
+      startIcon={<AddIcon />}
+      onClick={handleAddAddon}
+      sx={{ borderColor: PINK, color: PINK }}
+    >
+      Add Add-on
+    </Button>
+  </Box>
+
+  {addons.map((addon) => (
+    <Paper
+      key={addon.id}
+      sx={{
+        p: 2,
+        mb: 2,
+        border: '1px solid #eee',
+        borderRadius: 2
+      }}
+    >
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        alignItems="center"
+      >
+        <TextField
+          label="Add-on Name"
+          placeholder="e.g. Birthday Candles"
+          value={addon.name}
+          onChange={(e) =>
+            handleAddonChange(addon.id, 'name', e.target.value)
+          }
+          fullWidth
+        />
+
+        <TextField
+          label="Price (₹)"
+          type="number"
+          value={addon.price}
+          onChange={(e) =>
+            handleAddonChange(addon.id, 'price', e.target.value)
+          }
+          sx={{ width: 160 }}
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={addon.isActive}
+              onChange={(e) =>
+                handleAddonChange(addon.id, 'isActive', e.target.checked)
+              }
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': { color: PINK }
+              }}
+            />
+          }
+          label="Active"
+        />
+
+        <IconButton
+          color="error"
+          onClick={() => handleDeleteAddon(addon.id)}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Stack>
+    </Paper>
+  ))}
+</Box>
 
           {/* Search Tags */}
           <TextField
