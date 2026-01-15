@@ -102,6 +102,7 @@ const Createnew = () => {
     sunroof: false,
     decorationAvailable: false
   });
+const [decorationPrice, setDecorationPrice] = useState('');
 
   const [searchTags, setSearchTags] = useState([]);
   const [currentTag, setCurrentTag] = useState('');
@@ -716,6 +717,7 @@ const Createnew = () => {
     setPerDayPrice('');
     setDistanceWisePrice('');
     setDiscount('');
+setDecorationPrice(''); // ✅ ADD THIS LINE
 
     // -------- TAGS --------
     setSearchTags([]);
@@ -835,6 +837,9 @@ const Createnew = () => {
       formData.append('features[driverIncluded]', features.driverIncluded);
       formData.append('features[sunroof]', features.sunroof);
       formData.append('features[decorationAvailable]', features.decorationAvailable);
+if (features.decorationAvailable && decorationPrice) {
+  formData.append('decorationPrice', parseFloat(decorationPrice));
+}
 
       // Attach dynamic vehicle attributes
       formData.append('attributes', JSON.stringify(selectedAttributes));
@@ -1455,75 +1460,159 @@ const Createnew = () => {
             </Card>
           </Box>
           <Box
-            sx={{
-              mt: 3,
-              p: 2,
-              border: '1px solid',
-              borderColor: 'grey.300',
-              borderRadius: 2,
-              backgroundColor: '#fafafa'
-            }}
-          >
-            <Typography variant="subtitle1" gutterBottom>
-              Vehicle Features
-            </Typography>
+  sx={{
+    mt: 3,
+    p: 2,
+    border: '1px solid',
+    borderColor: 'grey.300',
+    borderRadius: 2,
+    backgroundColor: '#fafafa'
+  }}
+>
+  <Typography variant="subtitle1" gutterBottom>
+    Vehicle Features
+  </Typography>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr', // mobile
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)' // desktop → horizontal
-                },
-                gap: 4
-              }}
-            >
-              {[
-                { key: 'driverIncluded', label: 'Driver Included' },
-                { key: 'sunroof', label: 'Sunroof' },
-                { key: 'decorationAvailable', label: 'Decoration Available' }
-              ].map((item) => (
-                <Box
-                  key={item.key}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    px: 3,
-                    py: 2,
-                    border: '1px solid',
-                    borderColor: 'grey.300',
-                    borderRadius: 2,
-                    backgroundColor: 'white',
-                    minHeight: 56
-                  }}
-                >
-                  <Typography fontSize={14} fontWeight={500}>
-                    {item.label}
-                  </Typography>
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: {
+        xs: '1fr',
+        sm: 'repeat(2, 1fr)',
+        md: 'repeat(3, 1fr)'
+      },
+      gap: 4
+    }}
+  >
+    {/* Driver Included */}
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        px: 3,
+        py: 2,
+        border: '1px solid',
+        borderColor: 'grey.300',
+        borderRadius: 2,
+        backgroundColor: 'white',
+        minHeight: 56
+      }}
+    >
+      <Typography fontSize={14} fontWeight={500}>
+        Driver Included
+      </Typography>
 
-                  <Switch
-                    checked={features[item.key]}
-                    onChange={(e) =>
-                      setFeatures((prev) => ({
-                        ...prev,
-                        [item.key]: e.target.checked
-                      }))
-                    }
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#E15B65'
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#E15B65'
-                      }
-                    }}
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Box>
+      <Switch
+        checked={features.driverIncluded}
+        onChange={(e) =>
+          setFeatures((prev) => ({
+            ...prev,
+            driverIncluded: e.target.checked
+          }))
+        }
+        sx={{
+          '& .MuiSwitch-switchBase.Mui-checked': {
+            color: '#E15B65'
+          },
+          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+            backgroundColor: '#E15B65'
+          }
+        }}
+      />
+    </Box>
+
+    {/* Sunroof */}
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        px: 3,
+        py: 2,
+        border: '1px solid',
+        borderColor: 'grey.300',
+        borderRadius: 2,
+        backgroundColor: 'white',
+        minHeight: 56
+      }}
+    >
+      <Typography fontSize={14} fontWeight={500}>
+        Sunroof
+      </Typography>
+
+      <Switch
+        checked={features.sunroof}
+        onChange={(e) =>
+          setFeatures((prev) => ({
+            ...prev,
+            sunroof: e.target.checked
+          }))
+        }
+        sx={{
+          '& .MuiSwitch-switchBase.Mui-checked': {
+            color: '#E15B65'
+          },
+          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+            backgroundColor: '#E15B65'
+          }
+        }}
+      />
+    </Box>
+
+    {/* Decoration Available + Price */}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        px: 3,
+        py: 2,
+        border: '1px solid',
+        borderColor: 'grey.300',
+        borderRadius: 2,
+        backgroundColor: 'white'
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography fontSize={14} fontWeight={500}>
+          Decoration Available
+        </Typography>
+
+        <Switch
+          checked={features.decorationAvailable}
+          onChange={(e) =>
+            setFeatures((prev) => ({
+              ...prev,
+              decorationAvailable: e.target.checked
+            }))
+          }
+          sx={{
+            '& .MuiSwitch-switchBase.Mui-checked': {
+              color: '#E15B65'
+            },
+            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: '#E15B65'
+            }
+          }}
+        />
+      </Box>
+
+      {/* ✅ SHOW PRICE FIELD ONLY WHEN ENABLED */}
+      {features.decorationAvailable && (
+        <TextField
+          fullWidth
+          label="Decoration Price (₹)"
+          type="number"
+          value={decorationPrice}
+          onChange={(e) => setDecorationPrice(e.target.value)}
+          inputProps={{ min: 0 }}
+          placeholder="e.g. 5000"
+        />
+      )}
+    </Box>
+  </Box>
+</Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
