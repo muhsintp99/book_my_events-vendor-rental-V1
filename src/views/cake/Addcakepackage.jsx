@@ -71,8 +71,9 @@ const AddCakePackage = () => {
   const isEditMode = Boolean(id);
 // ---------------- Add-ons ----------------
 const [addons, setAddons] = useState([
-  { id: Date.now(), name: '', price: '', isActive: true }
+  { id: Date.now(), name: '', price: '' }
 ]);
+
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -221,14 +222,14 @@ const [addons, setAddons] = useState([
         }
 // ---------------- Load Add-ons ----------------
 if (cake.addons && cake.addons.length > 0) {
-  setAddons(
-    cake.addons.map((a) => ({
-      id: a._id || Date.now(),
-      name: a.name,
-      price: a.price,
-      isActive: a.isActive !== false
-    }))
-  );
+ setAddons(
+  cake.addons.map((a) => ({
+    id: a._id || Date.now(),
+    name: a.name,
+    price: a.price
+  }))
+);
+
 } else {
   setAddons([{ id: Date.now(), name: '', price: '', isActive: true }]);
 
@@ -269,7 +270,7 @@ if (cake.addons && cake.addons.length > 0) {
 const handleAddAddon = () => {
   setAddons((prev) => [
     ...prev,
-    { id: Date.now(), name: '', price: '', isActive: true }
+    { id: Date.now(), name: '', price: '' }
   ]);
 };
 
@@ -372,11 +373,11 @@ const handleDeleteAddon = (id) => {
 // ---------------- Add-ons ----------------
 const validAddons = addons
   .filter((a) => a.name && a.price)
-  .map(({ name, price, isActive }) => ({
+  .map(({ name, price }) => ({
     name,
-    price: Number(price),
-    isActive
+    price: Number(price)
   }));
+
 
 if (Array.isArray(validAddons) && validAddons.length > 0) {
   formData.append('addons', JSON.stringify(validAddons));
@@ -666,20 +667,6 @@ if (Array.isArray(validAddons) && validAddons.length > 0) {
           sx={{ width: 160 }}
         />
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={addon.isActive}
-              onChange={(e) =>
-                handleAddonChange(addon.id, 'isActive', e.target.checked)
-              }
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: PINK }
-              }}
-            />
-          }
-          label="Active"
-        />
 
         <IconButton
           color="error"
