@@ -21,7 +21,8 @@ import {
   useMediaQuery,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Checkbox
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon } from '@mui/icons-material';
 import { styled } from '@mui/system';
@@ -59,8 +60,60 @@ const Createnew = () => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const searchInputRef = useRef(null);
+
   const [transmissionType, setTransmissionType] = useState('');
   const [enginePower, setEnginePower] = useState('');
+  const [engineCapacity, setEngineCapacity] = useState('');
+  const [torque, setTorque] = useState('');
+  const [mileage, setMileage] = useState('');
+  const [vehicleType, setVehicleType] = useState('');
+  const [interiorLighting, setInteriorLighting] = useState('normal');
+  const [fuelType, setFuelType] = useState('');
+  const [pushbackSeats, setPushbackSeats] = useState('no');
+  const [reclinerSeats, setReclinerSeats] = useState('no');
+
+  const [airConditionZone, setAirConditionZone] = useState('');
+
+  // Package Pricing Fields
+  const [basicPackagePrice, setBasicPackagePrice] = useState('');
+  const [hoursIncluded, setHoursIncluded] = useState('');
+  const [kmIncluded, setKmIncluded] = useState('');
+  const [additionalPricePerKm, setAdditionalPricePerKm] = useState('');
+  const [afterKilometer, setAfterKilometer] = useState('');
+  const [discountType, setDiscountType] = useState('');
+  const [advanceType, setAdvanceType] = useState('');
+  const [advanceAmount, setAdvanceAmount] = useState('');
+
+  // Feature states
+  const [carFeatures, setCarFeatures] = useState({
+    leatherSeats: false,
+    adjustableSeats: false,
+    armrest: false,
+    musicSystem: false,
+    bluetooth: false,
+    usbAux: false,
+    airbags: false,
+    abs: false,
+    rearCamera: false,
+    parkingSensors: false,
+    powerWindows: false,
+    centralLock: false,
+    keylessEntry: false,
+    wifi: false,
+    chargingPoints: false
+  });
+
+  const [busFeatures, setBusFeatures] = useState({
+    curtains: false,
+    readingLights: false,
+    musicSystem: false,
+    microphone: false,
+    fireExtinguisher: false,
+    firstAidKit: false,
+    luggageCarrier: false,
+    wifi: false,
+    chargingPoints: false
+  });
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
@@ -68,7 +121,6 @@ const Createnew = () => {
 
   // Memoized values
   const locationState = useMemo(() => location.state?.vehicle, [location.state]);
-
   const vehicleKeyFromState = useMemo(() => location.state?.vehicle?._id, [location.state]);
   const effectiveVehicleId = useMemo(() => {
     return id || location.state?.vehicle?._id || '';
@@ -103,7 +155,7 @@ const Createnew = () => {
     decorationAvailable: false
   });
   const [decorationPrice, setDecorationPrice] = useState('');
-  // ===== Terms & Conditions =====
+
   const [termsSections, setTermsSections] = useState([
     {
       heading: '',
@@ -117,26 +169,23 @@ const Createnew = () => {
   const [toastSeverity, setToastSeverity] = useState('success');
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
-  // Parent & Sub Categories
-  // Vehicle Attributes
   const [vehicleAttributes, setVehicleAttributes] = useState([]);
   const [selectedAttributes, setSelectedAttributes] = useState({});
-  // Additional Vehicle Details
   const [seatType, setSeatType] = useState('');
   const [audioSystem, setAudioSystem] = useState('');
   const [airbags, setAirbags] = useState('');
   const [bootSpace, setBootSpace] = useState('');
   const [fuelTank, setFuelTank] = useState('');
-  // Advance Booking
-  // Advance Booking (Flat Amount)
   const [advanceBookingAmount, setAdvanceBookingAmount] = useState('');
   const [attributeMap, setAttributeMap] = useState({});
+  const [vehicleDocuments, setVehicleDocuments] = useState([]);
 
   const [parentCategories, setParentCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-
   const [parentCategory, setParentCategory] = useState('');
+
   const [subCategory, setSubCategory] = useState('');
+  const isCategorySelected = Boolean(parentCategory);
 
   const [zones, setZones] = useState([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -149,6 +198,31 @@ const Createnew = () => {
   const [operatingHours, setOperatingHours] = useState('');
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [map, setMap] = useState(null);
+
+  // Check if selected category is Bus or Car
+  const isBusCategory = useMemo(() => {
+    if (!parentCategory || !parentCategories.length) return false;
+    const selectedParentCat = parentCategories.find((cat) => cat._id === parentCategory);
+    console.log('Category check (Bus):', selectedParentCat?.title);
+    return selectedParentCat?.title?.toLowerCase().includes('bus');
+  }, [parentCategory, parentCategories]);
+
+  const isCarCategory = useMemo(() => {
+    if (!parentCategory || !parentCategories.length) return false;
+    const selectedParentCat = parentCategories.find((cat) => cat._id === parentCategory);
+    console.log('Category check (Car):', selectedParentCat?.title);
+    return selectedParentCat?.title?.toLowerCase().includes('car') || selectedParentCat?.title?.toLowerCase().includes('vehicle');
+  }, [parentCategory, parentCategories]);
+  const handleVehicleDocumentsChange = (event) => {
+    const files = Array.from(event.target.files);
+    setVehicleDocuments((prev) => [...prev, ...files]);
+  };
+
+  const handleDropVehicleDocuments = (event) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    setVehicleDocuments((prev) => [...prev, ...files]);
+  };
 
   // Load Google Maps script
   useEffect(() => {
@@ -359,7 +433,6 @@ const Createnew = () => {
       }
 
       // Advance booking prefill
-      // ✅ Advance booking prefill (flat amount)
       setAdvanceBookingAmount(vehicle.advanceBookingAmount?.toString() || '');
 
       if (vehicle.category?.parentCategory?._id) {
@@ -379,18 +452,11 @@ const Createnew = () => {
       }
 
       // ================= TERMS & CONDITIONS =================
-      if (
-        vehicle.termsAndConditions &&
-        Array.isArray(vehicle.termsAndConditions) &&
-        vehicle.termsAndConditions.length > 0
-      ) {
+      if (vehicle.termsAndConditions && Array.isArray(vehicle.termsAndConditions) && vehicle.termsAndConditions.length > 0) {
         setTermsSections(
           vehicle.termsAndConditions.map((section) => ({
             heading: section.heading || '',
-            points:
-              Array.isArray(section.points) && section.points.length > 0
-                ? section.points
-                : ['']
+            points: Array.isArray(section.points) && section.points.length > 0 ? section.points : ['']
           }))
         );
       } else {
@@ -481,6 +547,7 @@ const Createnew = () => {
       newVehicleImages.forEach((file) => URL.revokeObjectURL(file));
     };
   }, [newVehicleImages]);
+
   // Fetch brands, categories, and zones
   useEffect(() => {
     const fetchBrandsCategoriesAndZones = async () => {
@@ -524,11 +591,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-            .filter((zone) => zone.isActive)
-            .map((zone) => ({
-              _id: zone._id,
-              name: zone.name
-            }))
+              .filter((zone) => zone.isActive)
+              .map((zone) => ({
+                _id: zone._id,
+                name: zone.name
+              }))
           : [];
 
         setZones(zonesData);
@@ -556,6 +623,35 @@ const Createnew = () => {
 
     fetchBrandsCategoriesAndZones();
   }, [moduleId, API_BASE_URL]);
+
+  // Auto-select first parent category when categories are loaded (CREATE MODE ONLY)
+  useEffect(() => {
+    if (parentCategories.length > 0 && !parentCategory && viewMode === 'create') {
+      const firstCategory = parentCategories[0];
+      setParentCategory(firstCategory._id);
+
+      // Auto-load subcategories for first category
+      axios
+        .get(`${API_BASE_URL}/categories/parents/${firstCategory._id}/subcategories`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        .then((res) => {
+          const subs = res.data.data || [];
+          setSubCategories(subs);
+
+          // Auto-select first subcategory if available
+          if (subs.length > 0) {
+            setSubCategory(subs[0]._id);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to fetch subcategories:', error);
+          setSubCategories([]);
+        });
+    }
+  }, [parentCategories, parentCategory, viewMode, API_BASE_URL]);
 
   // Fetch Vehicle Attributes
   useEffect(() => {
@@ -674,6 +770,7 @@ const Createnew = () => {
   const handleTagInputChange = useCallback((event) => {
     setCurrentTag(event.target.value);
   }, []);
+
   // ---------------- Handle Attribute Selection ----------------
   const handleAttributeChange = (attributeId, value) => {
     setSelectedAttributes((prev) => ({
@@ -719,6 +816,8 @@ const Createnew = () => {
     setCategory('');
     setZone('');
     setSelectedZoneName('');
+    setParentCategory('');
+    setSubCategory('');
 
     // -------- MEDIA --------
     setThumbnailFile(null);
@@ -731,6 +830,15 @@ const Createnew = () => {
     setAirCondition('yes');
     setLicensePlateNumber('');
     setLicensePlateError('');
+    setTransmissionType('');
+    setEnginePower('');
+    setEngineCapacity('');
+    setTorque('');
+    setMileage('');
+    setVehicleType('');
+    setFuelType('');
+    setPushbackSeats('no');
+    setAirConditionZone('');
 
     // -------- FEATURES (NEW) --------
     setFeatures({
@@ -739,13 +847,56 @@ const Createnew = () => {
       decorationAvailable: false
     });
 
+    // Reset car features
+    setCarFeatures({
+      leatherSeats: false,
+      adjustableSeats: false,
+      armrest: false,
+      musicSystem: false,
+      bluetooth: false,
+      usbAux: false,
+      airbags: false,
+      abs: false,
+      rearCamera: false,
+      parkingSensors: false,
+      powerWindows: false,
+      centralLock: false,
+      keylessEntry: false,
+      wifi: false,
+      chargingPoints: false
+    });
+
+    // Reset bus features
+    setBusFeatures({
+      curtains: false,
+      readingLights: false,
+      musicSystem: false,
+      microphone: false,
+      fireExtinguisher: false,
+      firstAidKit: false,
+      luggageCarrier: false,
+      wifi: false,
+      chargingPoints: false
+    });
+
+    // -------- PACKAGE PRICING --------
+    setBasicPackagePrice('');
+    setHoursIncluded('');
+    setKmIncluded('');
+    setAdditionalPricePerKm('');
+    setAfterKilometer('');
+    setDiscountType('');
+    setAdvanceType('');
+    setAdvanceAmount('');
+    setInteriorLighting('normal');
+
     // -------- PRICING --------
     setTripType('hourly');
     setHourlyWisePrice('');
     setPerDayPrice('');
     setDistanceWisePrice('');
     setDiscount('');
-    setDecorationPrice(''); // ✅ ADD THIS LINE
+    setDecorationPrice('');
 
     // -------- TAGS --------
     setSearchTags([]);
@@ -768,7 +919,7 @@ const Createnew = () => {
     if (map) {
       setMap(null);
     }
-  }, []);
+  }, [map]);
 
   // Form submission
   const handleSubmit = useCallback(
@@ -862,7 +1013,6 @@ const Createnew = () => {
       }
 
       // Prepare FormData
-
       const formData = new FormData();
       formData.append('transmissionType', transmissionType);
       formData.append('enginePower', enginePower ? parseInt(enginePower) : '');
@@ -882,6 +1032,60 @@ const Createnew = () => {
       formData.append('features[decorationAvailable]', features.decorationAvailable);
       if (features.decorationAvailable && decorationPrice) {
         formData.append('decorationPrice', parseFloat(decorationPrice));
+      }
+
+      // Add category-specific fields
+      if (isCarCategory) {
+        formData.append('vehicleType', vehicleType);
+        formData.append('engineCapacity', engineCapacity);
+        formData.append('torque', torque);
+        formData.append('mileage', mileage);
+        formData.append('fuelType', fuelType);
+        formData.append('interiorLighting', interiorLighting);
+
+        // Add car features
+        formData.append('carFeatures[leatherSeats]', carFeatures.leatherSeats);
+        formData.append('carFeatures[adjustableSeats]', carFeatures.adjustableSeats);
+        formData.append('carFeatures[armrest]', carFeatures.armrest);
+        formData.append('carFeatures[musicSystem]', carFeatures.musicSystem);
+        formData.append('carFeatures[bluetooth]', carFeatures.bluetooth);
+        formData.append('carFeatures[usbAux]', carFeatures.usbAux);
+        formData.append('carFeatures[airbags]', carFeatures.airbags);
+        formData.append('carFeatures[abs]', carFeatures.abs);
+        formData.append('carFeatures[rearCamera]', carFeatures.rearCamera);
+        formData.append('carFeatures[parkingSensors]', carFeatures.parkingSensors);
+        formData.append('carFeatures[powerWindows]', carFeatures.powerWindows);
+        formData.append('carFeatures[centralLock]', carFeatures.centralLock);
+        formData.append('carFeatures[keylessEntry]', carFeatures.keylessEntry);
+        formData.append('carFeatures[wifi]', carFeatures.wifi);
+        formData.append('carFeatures[chargingPoints]', carFeatures.chargingPoints);
+
+        // Package pricing for car
+        formData.append('basicPackagePrice', basicPackagePrice);
+        formData.append('hoursIncluded', hoursIncluded);
+        formData.append('kmIncluded', kmIncluded);
+        formData.append('additionalPricePerKm', additionalPricePerKm);
+        formData.append('afterKilometer', afterKilometer);
+        formData.append('discountType', discountType);
+        formData.append('advanceType', advanceType);
+        formData.append('advanceAmount', advanceAmount);
+      }
+
+      if (isBusCategory) {
+        formData.append('pushbackSeats', pushbackSeats);
+        formData.append('airConditionZone', airConditionZone);
+        formData.append('fuelType', fuelType);
+
+        // Add bus features
+        formData.append('busFeatures[curtains]', busFeatures.curtains);
+        formData.append('busFeatures[readingLights]', busFeatures.readingLights);
+        formData.append('busFeatures[musicSystem]', busFeatures.musicSystem);
+        formData.append('busFeatures[microphone]', busFeatures.microphone);
+        formData.append('busFeatures[fireExtinguisher]', busFeatures.fireExtinguisher);
+        formData.append('busFeatures[firstAidKit]', busFeatures.firstAidKit);
+        formData.append('busFeatures[luggageCarrier]', busFeatures.luggageCarrier);
+        formData.append('busFeatures[wifi]', busFeatures.wifi);
+        formData.append('busFeatures[chargingPoints]', busFeatures.chargingPoints);
       }
 
       // Attach dynamic vehicle attributes
@@ -974,8 +1178,8 @@ const Createnew = () => {
       zone,
       seatingCapacity,
       airCondition,
-      features, // ✅ Added features to dependencies
-      decorationPrice, // ✅ Added decorationPrice to dependencies
+      features,
+      decorationPrice,
       licensePlateNumber,
       tripType,
       hourlyWisePrice,
@@ -1003,7 +1207,29 @@ const Createnew = () => {
       subCategory,
       selectedAttributes,
       advanceBookingAmount,
-      termsSections
+      termsSections,
+      isCarCategory,
+      isBusCategory,
+      transmissionType,
+      enginePower,
+      engineCapacity,
+      torque,
+      mileage,
+      vehicleType,
+      interiorLighting,
+      fuelType,
+      pushbackSeats,
+      airConditionZone,
+      carFeatures,
+      busFeatures,
+      basicPackagePrice,
+      hoursIncluded,
+      kmIncluded,
+      additionalPricePerKm,
+      afterKilometer,
+      discountType,
+      advanceType,
+      advanceAmount
     ]
   );
 
@@ -1023,6 +1249,22 @@ const Createnew = () => {
     },
     [zones]
   );
+
+  // Handle car feature changes
+  const handleCarFeatureChange = (feature) => (event) => {
+    setCarFeatures((prev) => ({
+      ...prev,
+      [feature]: event.target.checked
+    }));
+  };
+
+  // Handle bus feature changes
+  const handleBusFeatureChange = (feature) => (event) => {
+    setBusFeatures((prev) => ({
+      ...prev,
+      [feature]: event.target.checked
+    }));
+  };
 
   return (
     <Box sx={{ p: isSmallScreen ? 2 : 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
@@ -1157,86 +1399,125 @@ const Createnew = () => {
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                {/* Header */}
                 <Typography variant="h6" gutterBottom>
-                  Images*
+                  Images<span style={{ color: '#E15B65' }}>*</span>
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  JPG, JPEG, PNG Less Than 1MB (Ratio 2:1)
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Upload high quality images (JPG, JPEG, PNG • Max 1MB • Ratio 2:1)
                 </Typography>
+
+                {/* Upload Area */}
                 <UploadDropArea
                   onDragOver={handleDragOver}
                   onDrop={handleDropImages}
                   onClick={() => document.getElementById('images-upload').click()}
+                  sx={{
+                    backgroundColor: '#fafafa',
+                    border: '2px dashed #E15B65',
+                    borderRadius: 2,
+                    p: 3,
+                    transition: '0.3s',
+                    '&:hover': {
+                      backgroundColor: '#fff1f2'
+                    }
+                  }}
                 >
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center', width: '100%' }}>
-                    {existingImages.length > 0 && (
-                      <>
-                        {existingImages.map((url, index) => (
-                          <Box key={`existing-${index}`} sx={{ position: 'relative' }}>
-                            <img
-                              src={url}
-                              alt={`Existing vehicle image ${index + 1}`}
-                              style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
-                            />
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                position: 'absolute',
-                                top: 0,
-                                right: 0,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                color: 'white',
-                                borderRadius: '50%',
-                                width: 20,
-                                height: 20,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '12px'
-                              }}
-                            >
-                              Existing
-                            </Typography>
+                  {/* IMAGES GRID */}
+                  {existingImages.length > 0 || newVehicleImages.length > 0 ? (
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                        gap: 2,
+                        width: '100%'
+                      }}
+                    >
+                      {/* Existing Images */}
+                      {existingImages.map((url, index) => (
+                        <Box
+                          key={`existing-${index}`}
+                          sx={{
+                            position: 'relative',
+                            borderRadius: 1.5,
+                            overflow: 'hidden',
+                            border: '1px solid #e5e7eb'
+                          }}
+                        >
+                          <img src={url} alt={`Existing ${index}`} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 6,
+                              left: 6,
+                              backgroundColor: '#000',
+                              color: '#fff',
+                              fontSize: 10,
+                              px: 0.8,
+                              py: 0.2,
+                              borderRadius: 1,
+                              opacity: 0.75
+                            }}
+                          >
+                            Existing
                           </Box>
-                        ))}
-                      </>
-                    )}
-                    {newVehicleImages.length > 0 && (
-                      <>
-                        {newVehicleImages.map((file, index) => (
-                          <Box key={`new-${index}`} sx={{ position: 'relative' }}>
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`New vehicle image ${index + 1}`}
-                              style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: theme.shape.borderRadius }}
-                            />
-                            <IconButton
-                              size="small"
-                              onClick={() => setNewVehicleImages((prev) => prev.filter((_, i) => i !== index))}
-                              sx={{ position: 'absolute', top: -4, right: -4, backgroundColor: 'white', width: 24, height: 24 }}
-                            >
-                              <Typography sx={{ fontSize: 14, color: 'red' }}>×</Typography>
-                            </IconButton>
-                          </Box>
-                        ))}
-                      </>
-                    )}
-                    {existingImages.length === 0 && newVehicleImages.length === 0 && (
-                      <>
-                        <CloudUploadIcon sx={{ fontSize: 40, color: '#E15B65', mb: 1 }} />
-                        <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium', borderColor: '#E15B65' }}>
-                          Click to upload
-                        </Typography>
-                        <Typography variant="body2" color="#E15B65">
-                          Or drag and drop
-                        </Typography>
-                      </>
-                    )}
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1, width: '100%', textAlign: 'center' }}>
-                    {existingImages.length + newVehicleImages.length} image(s) {existingImages.length > 0 ? '(including existing)' : ''}.
-                    Upload to add more.
+                        </Box>
+                      ))}
+
+                      {/* New Images */}
+                      {newVehicleImages.map((file, index) => (
+                        <Box
+                          key={`new-${index}`}
+                          sx={{
+                            position: 'relative',
+                            borderRadius: 1.5,
+                            overflow: 'hidden',
+                            border: '1px solid #e5e7eb'
+                          }}
+                        >
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`New ${index}`}
+                            style={{ width: '100%', height: 90, objectFit: 'cover' }}
+                          />
+
+                          <IconButton
+                            size="small"
+                            onClick={() => setNewVehicleImages((prev) => prev.filter((_, i) => i !== index))}
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              backgroundColor: '#fff',
+                              boxShadow: 1,
+                              '&:hover': { backgroundColor: '#fee2e2' }
+                            }}
+                          >
+                            ✕
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    /* EMPTY STATE */
+                    <Box sx={{ textAlign: 'center' }}>
+                      <CloudUploadIcon sx={{ fontSize: 46, color: '#E15B65', mb: 1 }} />
+                      <Typography fontWeight={600} color="#E15B65">
+                        Click to upload images
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        or drag & drop files here
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Footer Info */}
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
+                    {existingImages.length + newVehicleImages.length} image(s) selected
                   </Typography>
+
                   <input
                     type="file"
                     id="images-upload"
@@ -1255,18 +1536,25 @@ const Createnew = () => {
                 <Typography variant="h6" gutterBottom>
                   Vehicle Information
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Insert the vehicle's general information
                 </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
+
+                {/* Row 1: Top Stacks (3 Columns) */}
+                {/* Row 1: Top Stacks (3 Columns) */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(3), mb: 4 }}>
+                  {/* Stack 1: Basic Info */}
                   <Stack spacing={2}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                      Basic Info
+                    </Typography>
                     <FormControl fullWidth variant="outlined" required>
-                      <InputLabel id="brand-label">Brand*</InputLabel>
+                      <InputLabel id="brand-label">Select Brand / Manufacturer</InputLabel>
                       <Select
                         labelId="brand-label"
                         id="brand-select"
                         value={brand}
-                        label="Brand"
+                        label="Select Brand / Manufacturer"
                         onChange={(e) => setBrand(e.target.value)}
                       >
                         <MenuItem value="">Select vehicle brand</MenuItem>
@@ -1277,51 +1565,140 @@ const Createnew = () => {
                         ))}
                       </Select>
                     </FormControl>
-                    <FormControl fullWidth variant="outlined" required>
-                      <TextField
-                        id="seating-capacity-input"
-                        label="Seating Capacity*"
-                        variant="outlined"
-                        value={seatingCapacity}
-                        onChange={(e) => setSeatingCapacity(e.target.value)}
-                        placeholder="Input how many persons can seat"
-                        type="number"
-                        inputProps={{ min: 1 }}
-                      />
-                    </FormControl>
-                  </Stack>
-                  <Stack spacing={2}>
                     <TextField
                       fullWidth
-                      label="Model*"
+                      label="Enter Model Name"
                       variant="outlined"
                       value={model}
                       onChange={(e) => setModel(e.target.value)}
-                      placeholder="Model Name"
+                      placeholder="e.g. Camry, Bus X"
                       required
                     />
-                    <FormControl fullWidth required>
-                      <InputLabel>Transmission Type</InputLabel>
-                      <Select value={transmissionType} label="Transmission Type" onChange={(e) => setTransmissionType(e.target.value)}>
-                        <MenuItem value="">Select Transmission</MenuItem>
-                        <MenuItem value="manual">Manual</MenuItem>
-                        <MenuItem value="automatic">Automatic</MenuItem>
-                        <MenuItem value="semi-automatic">Semi-Automatic</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <TextField
-                      fullWidth
-                      label="Engine Power (HP)"
-                      variant="outlined"
-                      type="number"
-                      value={enginePower}
-                      onChange={(e) => setEnginePower(e.target.value)}
-                      placeholder="e.g. 180"
-                      inputProps={{ min: 0 }}
-                    />
+
+                    {/* Only show Year of Manufacture for Car category */}
+                    {!isBusCategory && <TextField fullWidth label="Year of Manufacture" variant="outlined" placeholder="e.g. 2023" />}
                   </Stack>
 
+                  {/* Stack 2: Capacity & Comfort */}
                   <Stack spacing={2}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                      Capacity & Comfort
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      label="Seating Capacity"
+                      variant="outlined"
+                      value={seatingCapacity}
+                      onChange={(e) => setSeatingCapacity(e.target.value)}
+                      placeholder="Number of seats"
+                      type="number"
+                      inputProps={{ min: 1 }}
+                      required
+                    />
+
+                    {/* Show Legroom Type only for Bus */}
+                    {isBusCategory && (
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel>Select Legroom Type</InputLabel>
+                        <Select
+                          value=""
+                          label="Select Legroom Type"
+                          onChange={(e) => {
+                            /* Handle legroom type */
+                          }}
+                        >
+                          <MenuItem value="">Select Legroom</MenuItem>
+                          <MenuItem value="standard">Standard</MenuItem>
+                          <MenuItem value="extra">Extra</MenuItem>
+                          <MenuItem value="premium">Premium</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+
+                    {/* Pushback Seats & Recliner Seats - Side by Side for Bus */}
+                    {isBusCategory && (
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                        {/* Pushback Seats */}
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Pushback seats
+                          </Typography>
+                          <RadioGroup row value={pushbackSeats} onChange={(e) => setPushbackSeats(e.target.value)}>
+                            <FormControlLabel
+                              value="yes"
+                              control={<Radio size="small" />}
+                              label={<Typography variant="body2">Yes</Typography>}
+                            />
+                            <FormControlLabel
+                              value="no"
+                              control={<Radio size="small" />}
+                              label={<Typography variant="body2">No</Typography>}
+                            />
+                          </RadioGroup>
+                        </Box>
+
+                        {/* Recliner Seats */}
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Recliner Seats
+                          </Typography>
+                          <RadioGroup row value={reclinerSeats} onChange={(e) => setReclinerSeats(e.target.value)}>
+                            <FormControlLabel
+                              value="yes"
+                              control={<Radio size="small" />}
+                              label={<Typography variant="body2">Yes</Typography>}
+                            />
+                            <FormControlLabel
+                              value="no"
+                              control={<Radio size="small" />}
+                              label={<Typography variant="body2">No</Typography>}
+                            />
+                          </RadioGroup>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* Air Conditioning - Only show radio for Car */}
+                    {!isBusCategory && (
+                      <FormControl component="fieldset" fullWidth sx={{ mt: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Air Conditioning
+                        </Typography>
+                        <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
+                          <FormControlLabel
+                            value="yes"
+                            control={<Radio size="small" />}
+                            label={<Typography variant="body2">Yes</Typography>}
+                          />
+                          <FormControlLabel
+                            value="no"
+                            control={<Radio size="small" />}
+                            label={<Typography variant="body2">No</Typography>}
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    )}
+                  </Stack>
+                  {/* Stack 3: Zone & Location */}
+                  <Stack spacing={2}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                      Zone & Location
+                    </Typography>
+
+                    {/* Zone */}
+                    <FormControl fullWidth variant="outlined" required>
+                      <InputLabel id="zone-label">Zone*</InputLabel>
+                      <Select labelId="zone-label" value={zone} label="Zone" onChange={handleZoneChange}>
+                        <MenuItem value="">Select zone</MenuItem>
+                        {zones.map((z) => (
+                          <MenuItem key={z._id} value={z._id}>
+                            {z.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {/* Parent Category */}
                     <FormControl fullWidth required>
                       <InputLabel>Parent Category</InputLabel>
                       <Select value={parentCategory} label="Parent Category" onChange={handleParentCategoryChange}>
@@ -1334,6 +1711,7 @@ const Createnew = () => {
                       </Select>
                     </FormControl>
 
+                    {/* Sub Category */}
                     <FormControl fullWidth required disabled={!parentCategory}>
                       <InputLabel>Sub Category</InputLabel>
                       <Select value={subCategory} label="Sub Category" onChange={(e) => setSubCategory(e.target.value)}>
@@ -1347,31 +1725,134 @@ const Createnew = () => {
                     </FormControl>
                   </Stack>
                 </Box>
-                <FormControl component="fieldset" fullWidth>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                    Air Condition
+
+                {/* Section: Engine & Drive */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
+                    Engine & Performance
                   </Typography>
-                  <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
-                  </RadioGroup>
-                </FormControl>
-                <Box sx={{ mt: 3 }}>
-                  <FormControl fullWidth variant="outlined" required>
-                    <InputLabel id="zone-label">Zone*</InputLabel>
-                    <Select labelId="zone-label" id="zone-select" value={zone} label="Zone" onChange={handleZoneChange}>
-                      <MenuItem value="">Select zone</MenuItem>
-                      {zones.length > 0 ? (
-                        zones.map((z) => (
-                          <MenuItem key={z._id} value={z._id}>
-                            {z.name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No zones available</MenuItem>
-                      )}
-                    </Select>
-                  </FormControl>
+
+                  {isBusCategory ? (
+                    /* BUS LAYOUT */
+                    <Stack spacing={3}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Select Fuel Type</InputLabel>
+                          <Select value={fuelType} label="Select Fuel Type" onChange={(e) => setFuelType(e.target.value)}>
+                            <MenuItem value="">Select Fuel</MenuItem>
+                            <MenuItem value="petrol">Petrol</MenuItem>
+                            <MenuItem value="diesel">Diesel</MenuItem>
+                            <MenuItem value="electric">Electric</MenuItem>
+                            <MenuItem value="hybrid">Hybrid</MenuItem>
+                            <MenuItem value="cng">CNG</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Transmission</InputLabel>
+                          <Select value={transmissionType} label="Transmission" onChange={(e) => setTransmissionType(e.target.value)}>
+                            <MenuItem value="">Select Transmission</MenuItem>
+                            <MenuItem value="manual">Manual</MenuItem>
+                            <MenuItem value="automatic">Automatic</MenuItem>
+                            <MenuItem value="semi-automatic">Semi-Automatic</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Climate Control</InputLabel>
+                          <Select value={airCondition} label="Climate Control" onChange={(e) => setAirCondition(e.target.value)}>
+                            <MenuItem value="yes">AC</MenuItem>
+                            <MenuItem value="no">Non-AC</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+
+                      {/* Air Conditioning Radio - Only for Bus */}
+                      <FormControl component="fieldset" fullWidth>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Air Conditioning
+                        </Typography>
+                        <RadioGroup row value={airCondition} onChange={(e) => setAirCondition(e.target.value)}>
+                          <FormControlLabel
+                            value="yes"
+                            control={<Radio size="small" />}
+                            label={<Typography variant="body2">Yes</Typography>}
+                          />
+                          <FormControlLabel
+                            value="no"
+                            control={<Radio size="small" />}
+                            label={<Typography variant="body2">No</Typography>}
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    </Stack>
+                  ) : (
+                    /* CAR LAYOUT */
+                    <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Select Fuel Type</InputLabel>
+                        <Select value={fuelType} label="Select Fuel Type" onChange={(e) => setFuelType(e.target.value)}>
+                          <MenuItem value="">Select Fuel</MenuItem>
+                          <MenuItem value="petrol">Petrol</MenuItem>
+                          <MenuItem value="diesel">Diesel</MenuItem>
+                          <MenuItem value="electric">Electric</MenuItem>
+                          <MenuItem value="hybrid">Hybrid</MenuItem>
+                          <MenuItem value="cng">CNG</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <FormControl fullWidth required>
+                        <InputLabel>Transmission</InputLabel>
+                        <Select value={transmissionType} label="Transmission" onChange={(e) => setTransmissionType(e.target.value)}>
+                          <MenuItem value="">Select Transmission</MenuItem>
+                          <MenuItem value="manual">Manual</MenuItem>
+                          <MenuItem value="automatic">Automatic</MenuItem>
+                          <MenuItem value="semi-automatic">Semi-Automatic</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <FormControl fullWidth>
+                        <InputLabel>Vehicle Class</InputLabel>
+                        <Select value={vehicleType} label="Vehicle Class" onChange={(e) => setVehicleType(e.target.value)}>
+                          <MenuItem value="standard">Standard</MenuItem>
+                          <MenuItem value="luxury">Luxury</MenuItem>
+                          <MenuItem value="vintage">Vintage</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <TextField
+                        fullWidth
+                        label="Engine Capacity (CC)"
+                        variant="outlined"
+                        type="number"
+                        value={engineCapacity}
+                        onChange={(e) => setEngineCapacity(e.target.value)}
+                        placeholder="e.g. 2000"
+                        inputProps={{ min: 0 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Engine Power (HP)"
+                        variant="outlined"
+                        type="number"
+                        value={enginePower}
+                        onChange={(e) => setEnginePower(e.target.value)}
+                        placeholder="e.g. 180"
+                        inputProps={{ min: 0 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Torque"
+                        variant="outlined"
+                        value={torque}
+                        onChange={(e) => setTorque(e.target.value)}
+                        placeholder="e.g. 250 Nm"
+                      />
+                      <TextField
+                        fullWidth
+                        label="Mileage"
+                        variant="outlined"
+                        value={mileage}
+                        onChange={(e) => setMileage(e.target.value)}
+                        placeholder="e.g. 15 km/l"
+                      />
+                    </Box>
+                  )}
                 </Box>
                 <Box sx={{ mt: 3 }}>
                   <TextField
@@ -1461,49 +1942,852 @@ const Createnew = () => {
                   />
                 </Box>
               </CardContent>
-              {/* ---------------- Vehicle Attributes ---------------- */}
-              <Box sx={{ mb: 4 }}>
-                <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Vehicle Attributes
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Select additional attributes for the vehicle
-                    </Typography>
-
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
-                        gap: 3
-                      }}
-                    >
-                      {vehicleAttributes.map((attr) => (
-                        <FormControl key={attr._id} fullWidth>
-                          <InputLabel>{attr.title}</InputLabel>
-                          <Select
-                            value={selectedAttributes[attr._id] || ''}
-                            label={attr.title}
-                            onChange={(e) => handleAttributeChange(attr._id, e.target.value)}
-                          >
-                            <MenuItem value="">Select {attr.title}</MenuItem>
-
-                            {attr.values.map((val) => (
-                              <MenuItem key={val} value={val}>
-                                {val}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      ))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Box>
             </Card>
           </Box>
+
+          {/* ---------------- Vehicle Attributes ---------------- */}
+          <Box sx={{ mb: 4 }}>
+            <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Vehicle Attributes
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Select additional attributes for the vehicle
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
+                    gap: 3
+                  }}
+                >
+                  {vehicleAttributes.map((attr) => (
+                    <FormControl key={attr._id} fullWidth>
+                      <InputLabel>{attr.title}</InputLabel>
+                      <Select
+                        value={selectedAttributes[attr._id] || ''}
+                        label={attr.title}
+                        onChange={(e) => handleAttributeChange(attr._id, e.target.value)}
+                      >
+                        <MenuItem value="">Select {attr.title}</MenuItem>
+
+                        {attr.values.map((val) => (
+                          <MenuItem key={val} value={val}>
+                            {val}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+          <Box sx={{ mb: 4 }}>
+            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+              <Typography variant="h6" gutterBottom>
+                Vehicle Identity
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Insert the vehicle number and driver availability
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: isSmallScreen ? '1fr' : '2fr 1fr',
+                  gap: 3,
+                  alignItems: 'center'
+                }}
+              >
+                {/* Vehicle Number */}
+                <TextField
+                  fullWidth
+                  label="Vehicle Number*"
+                  variant="outlined"
+                  value={licensePlateNumber}
+                  onChange={(e) => {
+                    setLicensePlateNumber(e.target.value);
+                    validateLicensePlate(e.target.value);
+                  }}
+                  placeholder="Enter vehicle number"
+                  required
+                  error={!!licensePlateError}
+                  helperText={licensePlateError}
+                />
+
+                {/* Driver Included */}
+                <Box>
+                  <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                    Driver Included
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', gap: 3 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={features.driverIncluded === true}
+                          onChange={() =>
+                            setFeatures((prev) => ({
+                              ...prev,
+                              driverIncluded: true
+                            }))
+                          }
+                        />
+                      }
+                      label="Yes"
+                    />
+
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={features.driverIncluded === false}
+                          onChange={() =>
+                            setFeatures((prev) => ({
+                              ...prev,
+                              driverIncluded: false
+                            }))
+                          }
+                        />
+                      }
+                      label="No"
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </CardContent>
+          </Box>
+
+          {/* ================= VEHICLE FEATURES ================= */}
+          {/* ================= VEHICLE FEATURES ================= */}
+          {isCategorySelected && isCarCategory && (
+            <Card
+              sx={{
+                mt: 6,
+                mb: 6,
+                borderRadius: 3,
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#fafafa'
+              }}
+            >
+              {/* Header */}
+              <Box
+                sx={{
+                  px: 4,
+                  py: 3,
+                  borderBottom: '1px solid #e5e7eb',
+                  background: 'linear-gradient(135deg, #f9fafb, #ffffff)'
+                }}
+              >
+                <Typography variant="h6" fontWeight={700}>
+                  🚗 Vehicle Features
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Select features available in this vehicle
+                </Typography>
+              </Box>
+
+              {/* Content */}
+              <Box sx={{ px: 4, py: 4 }}>
+                <Stack spacing={4}>
+                  {/* Feature Section Component */}
+                  {[
+                    {
+                      title: 'Interior Comfort',
+                      items: [
+                        ['Leather Seats', 'leatherSeats'],
+                        ['Adjustable Seats', 'adjustableSeats'],
+                        ['Armrest', 'armrest']
+                      ]
+                    },
+                    {
+                      title: 'Entertainment',
+                      items: [
+                        ['Music System', 'musicSystem'],
+                        ['Bluetooth', 'bluetooth'],
+                        ['USB / AUX', 'usbAux']
+                      ]
+                    },
+                    {
+                      title: 'Safety & Compliance',
+                      items: [
+                        ['Airbags', 'airbags'],
+                        ['ABS', 'abs'],
+                        ['Rear Camera', 'rearCamera'],
+                        ['Parking Sensors', 'parkingSensors']
+                      ]
+                    },
+                    {
+                      title: 'Convenience',
+                      items: [
+                        ['Power Windows', 'powerWindows'],
+                        ['Central Lock', 'centralLock'],
+                        ['Keyless Entry', 'keylessEntry']
+                      ]
+                    },
+                    {
+                      title: 'Extra Addons',
+                      items: [
+                        ['Wifi', 'wifi'],
+                        ['Charging Points', 'chargingPoints']
+                      ]
+                    }
+                  ].map((section) => (
+                    <Box
+                      key={section.title}
+                      sx={{
+                        p: 3,
+                        backgroundColor: section.title === 'Extra Addons' ? '#e7f0f5' : '#ffffff', // 👈 added
+                        borderRadius: 2,
+                        border: '1px solid #e5e7eb'
+                      }}
+                    >
+                      <Typography fontWeight={600} mb={2}>
+                        {section.title}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
+                          gap: 1.5
+                        }}
+                      >
+                        {section.items.map(([label, key]) => (
+                          <FormControlLabel
+                            key={key}
+                            control={<Checkbox checked={carFeatures[key]} onChange={handleCarFeatureChange(key)} />}
+                            label={label}
+                          />
+                        ))}
+                      </Box>
+
+                      {/* Interior Lighting only for Extra Addons */}
+                      {section.title === 'Extra Addons' && (
+                        <Box sx={{ mt: 3 }}>
+                          <Typography fontWeight={600} mb={1}>
+                            Interior Lighting
+                          </Typography>
+                          <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
+                            <FormControlLabel value="normal" control={<Radio />} label="Normal" />
+                            <FormControlLabel value="premium" control={<Radio />} label="Premium" />
+                          </RadioGroup>
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </Card>
+          )}
+
+          {isCategorySelected && isBusCategory && (
+            <Card
+              sx={{
+                mt: 6,
+                mb: 6,
+                borderRadius: 3,
+                border: '1px solid #e5e7eb',
+                backgroundColor: '#fafafa'
+              }}
+            >
+              {/* Header */}
+              <Box
+                sx={{
+                  px: 4,
+                  py: 3,
+                  borderBottom: '1px solid #e5e7eb',
+                  background: 'linear-gradient(135deg, #f9fafb, #ffffff)'
+                }}
+              >
+                <Typography variant="h6" fontWeight={700}>
+                  🚌 Bus Features
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Select features available in this bus
+                </Typography>
+              </Box>
+
+              {/* Content */}
+              <Box sx={{ px: 4, py: 4 }}>
+                <Stack spacing={4}>
+                  {[
+                    {
+                      title: 'Interior Features',
+                      items: [
+                        ['Curtains', 'curtains'],
+                        ['Reading Lights', 'readingLights']
+                      ]
+                    },
+                    {
+                      title: 'Entertainment & Communication',
+                      items: [
+                        ['Music System', 'musicSystem'],
+                        ['Microphone', 'microphone']
+                      ]
+                    },
+                    {
+                      title: 'Safety & Compliance',
+                      items: [
+                        ['Fire Extinguisher', 'fireExtinguisher'],
+                        ['First Aid Kit', 'firstAidKit']
+                      ]
+                    },
+                    {
+                      title: 'Storage',
+                      items: [['Luggage Carrier', 'luggageCarrier']]
+                    },
+                    {
+                      title: 'Extra Addons',
+                      items: [
+                        ['Wifi', 'wifi'],
+                        ['Charging Points', 'chargingPoints']
+                      ]
+                    }
+                  ].map((section) => (
+                    <Box
+                      key={section.title}
+                      sx={{
+                        p: 3,
+                        backgroundColor: section.title === 'Extra Addons' ? '#e5edf6' : '#ffffff', // 👈 added
+                        borderRadius: 2,
+                        border: '1px solid #e5e7eb'
+                      }}
+                    >
+                      <Typography fontWeight={600} mb={2}>
+                        {section.title}
+                      </Typography>
+
+                      {/* ===== EXTRA ADDONS (CORRECT LAYOUT) ===== */}
+                      {section.title === 'Extra Addons' ? (
+                        <>
+                          {/* CHECKBOXES ROW */}
+                          <Box
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: isSmallScreen ? '1fr' : '1fr 1fr',
+                              gap: 2,
+                              mb: 3
+                            }}
+                          >
+                            <FormControlLabel
+                              control={<Checkbox checked={busFeatures.wifi} onChange={handleBusFeatureChange('wifi')} />}
+                              label="Wifi"
+                            />
+
+                            <FormControlLabel
+                              control={
+                                <Checkbox checked={busFeatures.chargingPoints} onChange={handleBusFeatureChange('chargingPoints')} />
+                              }
+                              label="Charging Points"
+                            />
+                          </Box>
+
+                          {/* INTERIOR LIGHTING BELOW */}
+                          <Box>
+                            <Typography
+                              sx={{
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                mb: 1
+                              }}
+                            >
+                              Interior Lighting
+                            </Typography>
+
+                            <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
+                              <FormControlLabel value="normal" control={<Radio />} label="Normal" />
+                              <FormControlLabel value="premium" control={<Radio />} label="Premium" />
+                            </RadioGroup>
+                          </Box>
+                        </>
+                      ) : (
+                        /* ===== ALL OTHER SECTIONS ===== */
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
+                            gap: 1.5
+                          }}
+                        >
+                          {section.items.map(([label, key]) => (
+                            <FormControlLabel
+                              key={key}
+                              control={<Checkbox checked={busFeatures[key]} onChange={handleBusFeatureChange(key)} />}
+                              label={label}
+                            />
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </Card>
+          )}
+
+          {/* Show Package Pricing only for Car category */}
+          {isCategorySelected && (isCarCategory || isBusCategory) && (
+            <Box sx={{ mb: 4 }}>
+              {/* ================= PACKAGE PRICING ================= */}
+              <Card
+                sx={{
+                  mt: 6,
+                  mb: 6,
+                  borderRadius: 3,
+                  border: 'none',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Header with Gradient */}
+                <Box
+                  sx={{
+                    px: 4,
+                    py: 3,
+                    background: 'linear-gradient(135deg, #f5efef 0%, #efdfe1 100%)',
+                    color: 'white'
+                  }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    Package Pricing
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.95 }}>
+                    Set base price, discount & advance booking options
+                  </Typography>
+                </Box>
+
+                {/* Content */}
+                <Box sx={{ p: 4, backgroundColor: '#fafbfc' }}>
+                  <Grid container spacing={3}>
+                    {/* Column 1 - Package Details */}
+                    <Grid item xs={12} md={8}>
+                      <Box
+                        sx={{
+                          p: 3,
+                          borderRadius: 2,
+                          backgroundColor: '#ffffff',
+                          border: '2px solid #e5e7eb',
+                          height: '100%',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
+                            borderColor: '#E15B65'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              backgroundColor: '#E15B65',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              mr: 2
+                            }}
+                          >
+                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>₹</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
+                            Package Details
+                          </Typography>
+                        </Box>
+
+                        <Stack spacing={2.5}>
+                          <Box>
+                            <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
+                              Base Package Price
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              value={basicPackagePrice}
+                              onChange={(e) => setBasicPackagePrice(e.target.value)}
+                              placeholder="0"
+                              InputProps={{
+                                startAdornment: <Typography sx={{ mr: 1, color: '#E15B65', fontWeight: 600, fontSize: 18 }}>₹</Typography>
+                              }}
+                              size="small"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '&:hover fieldset': {
+                                    borderColor: '#E15B65'
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: '#E15B65'
+                                  }
+                                }
+                              }}
+                            />
+                          </Box>
+
+                          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                            <Box>
+                              <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
+                                Hours Included
+                              </Typography>
+                              <FormControl fullWidth size="small">
+                                <Select
+                                  value={hoursIncluded}
+                                  onChange={(e) => setHoursIncluded(e.target.value)}
+                                  displayEmpty
+                                  sx={{
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: '#E15B65'
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: '#E15B65'
+                                    }
+                                  }}
+                                >
+                                  <MenuItem value="">Select</MenuItem>
+                                  <MenuItem value="4">4 Hrs</MenuItem>
+                                  <MenuItem value="6">6 Hrs</MenuItem>
+                                  <MenuItem value="8">8 Hrs</MenuItem>
+                                  <MenuItem value="10">10 Hrs</MenuItem>
+                                  <MenuItem value="12">12 Hrs</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Box>
+
+                            <Box>
+                              <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
+                                KM Included
+                              </Typography>
+                              <FormControl fullWidth size="small">
+                                <Select
+                                  value={kmIncluded}
+                                  onChange={(e) => setKmIncluded(e.target.value)}
+                                  displayEmpty
+                                  sx={{
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: '#E15B65'
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: '#E15B65'
+                                    }
+                                  }}
+                                >
+                                  <MenuItem value="">Select</MenuItem>
+                                  <MenuItem value="50">50 KM</MenuItem>
+                                  <MenuItem value="100">100 KM</MenuItem>
+                                  <MenuItem value="150">150 KM</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Box>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 1.5,
+                              backgroundColor: '#fef3f2',
+                              border: '1px dashed #E15B65'
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
+                              Extra Charges
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                              <TextField
+                                fullWidth
+                                label="Price/KM"
+                                type="number"
+                                value={additionalPricePerKm}
+                                onChange={(e) => setAdditionalPricePerKm(e.target.value)}
+                                InputProps={{
+                                  startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
+                                }}
+                                size="small"
+                              />
+
+                              <FormControl fullWidth size="small">
+                                <InputLabel>After KM</InputLabel>
+                                <Select value={afterKilometer} label="After KM" onChange={(e) => setAfterKilometer(e.target.value)}>
+                                  <MenuItem value="">Select</MenuItem>
+                                  <MenuItem value="1">Per KM</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Box>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    </Grid>
+
+                    {/* Column 2 - Discounts & Advance */}
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          p: 3,
+                          borderRadius: 2,
+                          backgroundColor: '#ffffff',
+                          border: '2px solid #e5e7eb',
+                          height: '100%',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
+                            borderColor: '#E15B65'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              backgroundColor: '#10b981',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              mr: 2
+                            }}
+                          >
+                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>%</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
+                            Offers & Advance
+                          </Typography>
+                        </Box>
+
+                        <Stack spacing={3}>
+                          <Box
+                            sx={{
+                              p: 2.5,
+                              borderRadius: 2,
+                              backgroundColor: '#f0fdf4',
+                              border: '1px solid #bbf7d0'
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight={600} sx={{ color: '#15803d', mb: 2 }}>
+                              Apply Discount
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Type</InputLabel>
+                                <Select value={discountType} label="Type" onChange={(e) => setDiscountType(e.target.value)}>
+                                  <MenuItem value="percentage">Percentage (%)</MenuItem>
+                                  <MenuItem value="flat">Flat Rate (₹)</MenuItem>
+                                </Select>
+                              </FormControl>
+
+                              <TextField
+                                fullWidth
+                                label="Value"
+                                type="number"
+                                value={discount}
+                                onChange={(e) => setDiscount(e.target.value)}
+                                size="small"
+                              />
+                            </Box>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              p: 2.5,
+                              borderRadius: 2,
+                              backgroundColor: '#eff6ff',
+                              border: '1px solid #bfdbfe'
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight={600} sx={{ color: '#1e40af', mb: 2 }}>
+                              Advance Booking
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Type</InputLabel>
+                                <Select value={advanceType} label="Type" onChange={(e) => setAdvanceType(e.target.value)}>
+                                  <MenuItem value="percentage">Percentage (%)</MenuItem>
+                                  <MenuItem value="flat">Flat (₹)</MenuItem>
+                                </Select>
+                              </FormControl>
+
+                              <TextField
+                                fullWidth
+                                label="Amount"
+                                type="number"
+                                value={advanceAmount}
+                                onChange={(e) => setAdvanceAmount(e.target.value)}
+                                InputProps={{
+                                  startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
+                                }}
+                                size="small"
+                              />
+                            </Box>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    </Grid>
+
+                    {/* Column 3 - Grand Total */}
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          p: 3,
+                          ml: { xs: 0, md: 30 }, // 👈 moves RIGHT on desktop
+                          display: 'flex',
+
+                          borderRadius: 2,
+                          backgroundColor: '#ffffff',
+                          border: '2px solid #e5e7eb',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
+                            borderColor: '#E15B65'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              backgroundColor: '#f59e0b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              mr: 2
+                            }}
+                          >
+                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>Σ</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
+                            Summary
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                          <Box
+                            sx={{
+                              p: 5,
+                              borderRadius: 3,
+                              background: 'linear-gradient(135deg, #E15B65 0%, #c94450 100%)',
+                              color: 'white',
+                              textAlign: 'center',
+                              boxShadow: '0 10px 30px rgba(225, 91, 101, 0.35)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: -30,
+                                right: -30,
+                                width: 120,
+                                height: 120,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                              },
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -40,
+                                left: -40,
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255, 255, 255, 0.06)'
+                              }
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              sx={{
+                                opacity: 1,
+                                mb: 2,
+                                position: 'relative',
+                                zIndex: 1,
+                                letterSpacing: 1,
+                                textTransform: 'uppercase',
+                                fontSize: '0.75rem',
+                                color: 'rgba(255, 255, 255, 0.95)'
+                              }}
+                            >
+                              Grand Total
+                            </Typography>
+
+                            <Box sx={{ position: 'relative', zIndex: 1 }}>
+                              <Typography
+                                variant="h2"
+                                fontWeight={700}
+                                sx={{
+                                  mb: 1.5,
+                                  textShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                                  fontSize: { xs: '2.5rem', md: '3rem' }
+                                }}
+                              >
+                                ₹ {basicPackagePrice || '0'}
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                mt: 2.5,
+                                pt: 2.5,
+                                borderTop: '2px solid rgba(255, 255, 255, 0.2)',
+                                position: 'relative',
+                                zIndex: 1
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  opacity: 0.95,
+                                  fontWeight: 500,
+                                  fontSize: '0.85rem',
+                                  lineHeight: 1.5
+                                }}
+                              >
+                                Base Price + Taxes & Fees
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              mt: 3,
+                              p: 2.5,
+                              borderRadius: 2,
+                              backgroundColor: '#fffbeb',
+                              border: '1px solid #fde68a',
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 1.5
+                            }}
+                          >
+                            <Typography sx={{ fontSize: '1.2rem' }}>💡</Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: '#92400e',
+                                lineHeight: 1.7,
+                                fontSize: '0.813rem',
+                                fontWeight: 500
+                              }}
+                            >
+                              Final amount calculated based on base price and applied discounts
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Card>
+            </Box>
+          )}
+
           <Box
             sx={{
               mt: 3,
@@ -1521,39 +2805,39 @@ const Createnew = () => {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)'
-                },
-                gap: 4
+                gridTemplateColumns: features.decorationAvailable
+                  ? { xs: '1fr', md: '1fr 1fr' } // ON → two boxes
+                  : 'max-content', // OFF → compact width
+                gap: 3,
+                alignItems: 'center'
               }}
             >
-              {/* Driver Included */}
+              {/* LEFT BOX — Decoration Toggle */}
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
+                  gap: 3,
                   px: 3,
                   py: 2,
                   border: '1px solid',
                   borderColor: 'grey.300',
                   borderRadius: 2,
                   backgroundColor: 'white',
-                  minHeight: 56
+                  width: 'fit-content', // 🔥 keeps switch near heading
+                  minWidth: 260
                 }}
               >
                 <Typography fontSize={14} fontWeight={500}>
-                  Driver Included
+                  Decoration Available
                 </Typography>
 
                 <Switch
-                  checked={features.driverIncluded}
+                  checked={features.decorationAvailable}
                   onChange={(e) =>
                     setFeatures((prev) => ({
                       ...prev,
-                      driverIncluded: e.target.checked
+                      decorationAvailable: e.target.checked
                     }))
                   }
                   sx={{
@@ -1567,84 +2851,19 @@ const Createnew = () => {
                 />
               </Box>
 
-              {/* Sunroof */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  px: 3,
-                  py: 2,
-                  border: '1px solid',
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  backgroundColor: 'white',
-                  minHeight: 56
-                }}
-              >
-                <Typography fontSize={14} fontWeight={500}>
-                  Sunroof
-                </Typography>
-
-                <Switch
-                  checked={features.sunroof}
-                  onChange={(e) =>
-                    setFeatures((prev) => ({
-                      ...prev,
-                      sunroof: e.target.checked
-                    }))
-                  }
+              {/* RIGHT BOX — Decoration Price (only when ON) */}
+              {features.decorationAvailable && (
+                <Box
                   sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#E15B65'
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: '#E15B65'
-                    }
+                    px: 3,
+                    py: 2,
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                    borderRadius: 2,
+                    backgroundColor: 'white',
+                    minWidth: 260
                   }}
-                />
-              </Box>
-
-              {/* Decoration Available + Price */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1.5,
-                  px: 3,
-                  py: 2,
-                  border: '1px solid',
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  backgroundColor: 'white'
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography fontSize={14} fontWeight={500}>
-                    Decoration Available
-                  </Typography>
-
-                  <Switch
-                    checked={features.decorationAvailable}
-                    onChange={(e) =>
-                      setFeatures((prev) => ({
-                        ...prev,
-                        decorationAvailable: e.target.checked
-                      }))
-                    }
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#E15B65'
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#E15B65'
-                      }
-                    }}
-                  />
-                </Box>
-
-                {/* ✅ SHOW PRICE FIELD ONLY WHEN ENABLED */}
-                {features.decorationAvailable && (
+                >
                   <TextField
                     fullWidth
                     label="Decoration Price (₹)"
@@ -1654,332 +2873,198 @@ const Createnew = () => {
                     inputProps={{ min: 0 }}
                     placeholder="e.g. 5000"
                   />
-                )}
-              </Box>
+                </Box>
+              )}
             </Box>
           </Box>
-          <Box sx={{ mb: 4 }}>
-            <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                <Typography variant="h6" gutterBottom>
-                  Vehicle Identity
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Insert the vehicle's license plate number
-                </Typography>
-                <TextField
-                  fullWidth
-                  label="License Plate Number*"
-                  variant="outlined"
-                  value={licensePlateNumber}
-                  onChange={(e) => {
-                    setLicensePlateNumber(e.target.value);
-                    validateLicensePlate(e.target.value);
-                  }}
-                  placeholder="Type license plate number (6-8 alphanumeric)"
-                  required
-                  error={!!licensePlateError}
-                  helperText={licensePlateError}
-                />
-              </CardContent>
-            </Card>
+          {/* ================= VEHICLE DOCUMENTS UPLOAD ================= */}
+          <Box
+            sx={{
+              mt: 4,
+              p: 3,
+              border: '1px solid',
+              borderColor: 'grey.300',
+              borderRadius: 2,
+              backgroundColor: '#fafafa'
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+              Upload Vehicle Documents
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Upload RC, Insurance, Permit or any supporting vehicle documents
+            </Typography>
+
+            <UploadDropArea
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDropVehicleDocuments}
+              onClick={() => document.getElementById('vehicle-documents-upload').click()}
+              sx={{ minHeight: 160 }}
+            >
+              {vehicleDocuments.length > 0 ? (
+                <Stack spacing={1} sx={{ width: '100%' }}>
+                  {vehicleDocuments.map((file, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        px: 2,
+                        py: 1,
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 1,
+                        backgroundColor: '#ffffff'
+                      }}
+                    >
+                      <Typography variant="body2" noWrap>
+                        📄 {file.name}
+                      </Typography>
+
+                      <IconButton size="small" onClick={() => setVehicleDocuments((prev) => prev.filter((_, i) => i !== index))}>
+                        ✕
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <>
+                  <CloudUploadIcon sx={{ fontSize: 42, color: '#E15B65', mb: 1 }} />
+                  <Typography fontWeight={600} color="#E15B65">
+                    Click to upload documents
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Or drag & drop files here (PDF, JPG, PNG)
+                  </Typography>
+                </>
+              )}
+
+              <input
+                id="vehicle-documents-upload"
+                type="file"
+                hidden
+                multiple
+                accept=".pdf,image/png,image/jpeg,image/jpg"
+                onChange={handleVehicleDocumentsChange}
+              />
+            </UploadDropArea>
           </Box>
+
+          {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>
-            <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
-              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                <Typography variant="h6" gutterBottom>
-                  Pricing & Discounts
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Insert pricing and discount information
-                </Typography>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Trip Type
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Choose the trip type you prefer
-                  </Typography>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(2) }}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        cursor: 'pointer',
-                        borderColor: tripType === 'hourly' ? '#E15B65' : undefined,
-                        borderWidth: tripType === 'hourly' ? 2 : 1
-                      }}
-                      onClick={() => setTripType('hourly')}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Radio
-                            checked={tripType === 'hourly'}
-                            onChange={() => setTripType('hourly')}
-                            sx={{ color: '#E15B65', '&.Mui-checked': { color: '#E15B65' } }}
-                          />
-                        }
-                        label="Hourly"
-                        labelPlacement="start"
-                        sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        Set your hourly rental price
-                      </Typography>
-                    </Card>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        cursor: 'pointer',
-                        borderColor: tripType === 'perDay' ? '#E15B65' : undefined,
-                        borderWidth: tripType === 'perDay' ? 2 : 1
-                      }}
-                      onClick={() => setTripType('perDay')}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Radio
-                            checked={tripType === 'perDay'}
-                            onChange={() => setTripType('perDay')}
-                            sx={{ color: '#E15B65', '&.Mui-checked': { color: '#E15B65' } }}
-                          />
-                        }
-                        label="Per Day"
-                        labelPlacement="start"
-                        sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        Set your per day rental price
-                      </Typography>
-                    </Card>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        cursor: 'pointer',
-                        borderColor: tripType === 'distanceWise' ? '#E15B65' : undefined,
-                        borderWidth: tripType === 'distanceWise' ? 2 : 1
-                      }}
-                      onClick={() => setTripType('distanceWise')}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Radio
-                            checked={tripType === 'distanceWise'}
-                            onChange={() => setTripType('distanceWise')}
-                            sx={{ color: '#E15B65', '&.Mui-checked': { color: '#E15B65' } }}
-                          />
-                        }
-                        label="DistanceWise"
-                        labelPlacement="start"
-                        sx={{ m: 0, '.MuiFormControlLabel-label': { ml: 'auto' } }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        Set your distance wise rental price
-                      </Typography>
-                    </Card>
-                  </Box>
-                </Box>
-                {tripType === 'hourly' && (
-                  <Box sx={{ mb: 3 }}>
+            <Card
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #ffffff, #fafafa)',
+                border: '1px solid #eee'
+              }}
+            >
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
+                Terms & Conditions
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Define rules & policies shown to customers during booking
+              </Typography>
+
+              {termsSections.map((section, sIndex) => (
+                <Box
+                  key={sIndex}
+                  sx={{
+                    mb: 3,
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  {/* Section Header */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <TextField
                       fullWidth
-                      label="Hourly Price (₹/per hour)*"
-                      variant="outlined"
-                      value={hourlyWisePrice}
-                      onChange={(e) => setHourlyWisePrice(e.target.value)}
-                      placeholder="Ex: 2500.00"
-                      type="number"
-                      inputProps={{ step: '0.01', min: 0 }}
-                      required
+                      label="Section Heading"
+                      placeholder="e.g. Booking & Confirmation"
+                      value={section.heading}
+                      onChange={(e) => {
+                        const copy = [...termsSections];
+                        copy[sIndex].heading = e.target.value;
+                        setTermsSections(copy);
+                      }}
                     />
+
+                    {/* Remove Section */}
+                    {termsSections.length > 1 && (
+                      <Button
+                        onClick={() => setTermsSections((prev) => prev.filter((_, i) => i !== sIndex))}
+                        sx={{ ml: 1, color: 'error.main' }}
+                      >
+                        ✕
+                      </Button>
+                    )}
                   </Box>
-                )}
-                {tripType === 'perDay' && (
-                  <Box sx={{ mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      label="Per Day Price (₹/per day)*"
-                      variant="outlined"
-                      value={perDayPrice}
-                      onChange={(e) => setPerDayPrice(e.target.value)}
-                      placeholder="Ex: 15000.00"
-                      type="number"
-                      inputProps={{ step: '0.01', min: 0 }}
-                      required
-                    />
-                  </Box>
-                )}
-                {tripType === 'distanceWise' && (
-                  <Box sx={{ mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      label="Distance Price (₹/per km)*"
-                      variant="outlined"
-                      value={distanceWisePrice}
-                      onChange={(e) => setDistanceWisePrice(e.target.value)}
-                      placeholder="Ex: 100.00"
-                      type="number"
-                      inputProps={{ step: '0.01', min: 0 }}
-                      required
-                    />
-                  </Box>
-                )}
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Discount
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Set a discount amount (e.g., 10 for 10%)
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    label="Discount (%)"
-                    variant="outlined"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                    placeholder="Ex: 10"
-                    type="number"
-                    inputProps={{ step: 'any', min: 0, max: 100 }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
 
-            {/* ===== Advance Booking Amount ===== */}
-            <Card sx={{ mt: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Advance Booking Amount
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Advance Amount"
-                  value={advanceBookingAmount}
-                  onChange={(e) => setAdvanceBookingAmount(e.target.value)}
-                  inputProps={{ min: 0 }}
-                  helperText="Flat advance amount payable during booking"
-                />
-              </CardContent>
-            </Card>
-            {/* ================= TERMS & CONDITIONS ================= */}
-            <Box sx={{ mb: 4 }}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  background: 'linear-gradient(135deg, #ffffff, #fafafa)',
-                  border: '1px solid #eee'
-                }}
-              >
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
-                  Terms & Conditions
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Define rules & policies shown to customers during booking
-                </Typography>
-
-                {termsSections.map((section, sIndex) => (
-                  <Box
-                    key={sIndex}
-                    sx={{
-                      mb: 3,
-                      p: 2,
-                      borderRadius: 2,
-                      border: '1px solid #e5e7eb',
-                      backgroundColor: '#fff'
-                    }}
-                  >
-                    {/* Section Header */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  {/* Points */}
+                  {section.points.map((point, pIndex) => (
+                    <Box key={pIndex} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <TextField
                         fullWidth
-                        label="Section Heading"
-                        placeholder="e.g. Booking & Confirmation"
-                        value={section.heading}
+                        label={`Point ${pIndex + 1}`}
+                        placeholder="Enter policy detail"
+                        value={point}
                         onChange={(e) => {
                           const copy = [...termsSections];
-                          copy[sIndex].heading = e.target.value;
+                          copy[sIndex].points[pIndex] = e.target.value;
                           setTermsSections(copy);
                         }}
                       />
 
-                      {/* Remove Section */}
-                      {termsSections.length > 1 && (
+                      {/* Remove Point */}
+                      {section.points.length > 1 && (
                         <Button
-                          onClick={() => setTermsSections((prev) => prev.filter((_, i) => i !== sIndex))}
+                          onClick={() => {
+                            const copy = [...termsSections];
+                            copy[sIndex].points.splice(pIndex, 1);
+                            setTermsSections(copy);
+                          }}
                           sx={{ ml: 1, color: 'error.main' }}
                         >
                           ✕
                         </Button>
                       )}
                     </Box>
+                  ))}
 
-                    {/* Points */}
-                    {section.points.map((point, pIndex) => (
-                      <Box key={pIndex} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <TextField
-                          fullWidth
-                          label={`Point ${pIndex + 1}`}
-                          placeholder="Enter policy detail"
-                          value={point}
-                          onChange={(e) => {
-                            const copy = [...termsSections];
-                            copy[sIndex].points[pIndex] = e.target.value;
-                            setTermsSections(copy);
-                          }}
-                        />
+                  {/* Add Point */}
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      const copy = [...termsSections];
+                      copy[sIndex].points.push('');
+                      setTermsSections(copy);
+                    }}
+                    sx={{ mt: 1, color: '#E15B65' }}
+                  >
+                    + Add Point
+                  </Button>
+                </Box>
+              ))}
 
-                        {/* Remove Point */}
-                        {section.points.length > 1 && (
-                          <Button
-                            onClick={() => {
-                              const copy = [...termsSections];
-                              copy[sIndex].points.splice(pIndex, 1);
-                              setTermsSections(copy);
-                            }}
-                            sx={{ ml: 1, color: 'error.main' }}
-                          >
-                            ✕
-                          </Button>
-                        )}
-                      </Box>
-                    ))}
-
-                    {/* Add Point */}
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        const copy = [...termsSections];
-                        copy[sIndex].points.push('');
-                        setTermsSections(copy);
-                      }}
-                      sx={{ mt: 1, color: '#E15B65' }}
-                    >
-                      + Add Point
-                    </Button>
-                  </Box>
-                ))}
-
-                {/* Add Section */}
-                <Button
-                  variant="outlined"
-                  onClick={() => setTermsSections([...termsSections, { heading: '', points: [''] }])}
-                  sx={{
-                    mt: 2,
-                    borderRadius: 2,
-                    borderColor: '#E15B65',
-                    color: '#E15B65'
-                  }}
-                >
-                  + Add Section
-                </Button>
-              </Card>
-            </Box>
+              {/* Add Section */}
+              <Button
+                variant="outlined"
+                onClick={() => setTermsSections([...termsSections, { heading: '', points: [''] }])}
+                sx={{
+                  mt: 2,
+                  borderRadius: 2,
+                  borderColor: '#E15B65',
+                  color: '#E15B65'
+                }}
+              >
+                + Add Section
+              </Button>
+            </Card>
           </Box>
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
