@@ -81,6 +81,7 @@ const Createnew = () => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const searchInputRef = useRef(null);
+  const [legroomType, setLegroomType] = useState('');
 
   const [transmissionType, setTransmissionType] = useState('');
   const [enginePower, setEnginePower] = useState('');
@@ -127,26 +128,25 @@ const Createnew = () => {
   const [busFeatures, setBusFeatures] = useState({
     curtains: false,
     readingLights: false,
-    footRest: false,              // NEW
-    bottleHolder: false,          // NEW
+    footRest: false, // NEW
+    bottleHolder: false, // NEW
 
     musicSystem: false,
     microphone: false,
-    ledDisplay: false,             // NEW
-    tvScreen: false,               // NEW
+    ledDisplay: false, // NEW
+    tvScreen: false, // NEW
 
     fireExtinguisher: false,
     firstAidKit: false,
-    ledEmergencyExit: false,       // NEW
-    cctv: false,                   // NEW
+    ledEmergencyExit: false, // NEW
+    cctv: false, // NEW
 
     luggageCarrier: false,
-    overheadStorage: false,        // NEW
+    overheadStorage: false, // NEW
 
     wifi: false,
     chargingPoints: false
   });
-
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
@@ -455,6 +455,7 @@ const Createnew = () => {
     (vehicle) => {
       console.log('Setting vehicle data:', vehicle);
 
+      // ============= BRAND HANDLING =============
       if (vehicle.brand && vehicle.brand._id && !brands.some((b) => b._id === vehicle.brand._id)) {
         setBrands((prev) => [
           ...prev,
@@ -465,17 +466,23 @@ const Createnew = () => {
         ]);
       }
 
-      // Advance booking prefill
-      setAdvanceBookingAmount(vehicle.advanceBookingAmount?.toString() || '');
+      // ============= FEATURED IMAGE & GALLERY IMAGES (NEW) =============
+      if (vehicle.featuredImage) {
+        setExistingThumbnail(vehicle.featuredImage);
+      }
 
-      if (vehicle.category?.parentCategory?._id) {
-        const parentId = vehicle.category.parentCategory._id;
+      if (vehicle.galleryImages && Array.isArray(vehicle.galleryImages)) {
+        setExistingImages(vehicle.galleryImages);
+      }
 
-        setParentCategory(parentId);
-        setSubCategory(vehicle.category._id);
+      // ============= CATEGORY & SUBCATEGORY HANDLING =============
+      // Handle parent category
+      if (vehicle.category?._id) {
+        setParentCategory(vehicle.category._id);
 
+        // Fetch subcategories for this parent category
         axios
-          .get(`${API_BASE_URL}/categories/parents/${parentId}/subcategories`, {
+          .get(`${API_BASE_URL}/categories/parents/${vehicle.category._id}/subcategories`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
@@ -484,47 +491,16 @@ const Createnew = () => {
           .catch(() => setSubCategories([]));
       }
 
-      // ================= TERMS & CONDITIONS =================
-      if (vehicle.termsAndConditions && Array.isArray(vehicle.termsAndConditions) && vehicle.termsAndConditions.length > 0) {
-        setTermsSections(
-          vehicle.termsAndConditions.map((section) => ({
-            heading: section.heading || '',
-            points: Array.isArray(section.points) && section.points.length > 0 ? section.points : ['']
-          }))
-        );
-      } else {
-        // fallback (create mode or old vehicles)
-        setTermsSections([{ heading: '', points: [''] }]);
+      // Handle subcategory (single ObjectId reference)
+      if (vehicle.subCategory) {
+        if (typeof vehicle.subCategory === 'object' && vehicle.subCategory._id) {
+          setSubCategory(vehicle.subCategory._id);
+        } else if (typeof vehicle.subCategory === 'string') {
+          setSubCategory(vehicle.subCategory);
+        }
       }
 
-      // Handle category - it comes as an array from API
-      let categoryId = '';
-      if (Array.isArray(vehicle.category) && vehicle.category.length > 0) {
-        categoryId = vehicle.category[0]._id;
-        if (!categories.some((c) => c._id === categoryId)) {
-          setCategories((prev) => [
-            ...prev,
-            {
-              _id: categoryId,
-              title: vehicle.category[0].title || 'Unknown Category'
-            }
-          ]);
-        }
-      } else if (vehicle.category && typeof vehicle.category === 'object' && vehicle.category._id) {
-        categoryId = vehicle.category._id;
-        if (!categories.some((c) => c._id === categoryId)) {
-          setCategories((prev) => [
-            ...prev,
-            {
-              _id: categoryId,
-              title: vehicle.category.title || 'Unknown Category'
-            }
-          ]);
-        }
-      } else if (typeof vehicle.category === 'string') {
-        categoryId = vehicle.category;
-      }
-
+      // ============= ZONE HANDLING =============
       if (vehicle.zone && vehicle.zone._id && !zones.some((z) => z._id === vehicle.zone._id)) {
         setZones((prev) => [
           ...prev,
@@ -534,45 +510,229 @@ const Createnew = () => {
           }
         ]);
       }
-      setName(vehicle.name || '');
-      setDescription(vehicle.description || '');
-      setBrand(vehicle.brand?._id || '');
-      setCategory(categoryId);
-      console.log('Category ID being set:', categoryId);
 
       const zoneId = vehicle.zone?._id || '';
       setZone(zoneId);
       const zoneObj = zones.find((z) => z._id === zoneId) || (vehicle.zone && { name: vehicle.zone.name });
       setSelectedZoneName(zoneObj ? zoneObj.name : '');
+
+      // ============= BASIC INFORMATION =============
+      setName(vehicle.name || '');
+      setDescription(vehicle.description || '');
+      setBrand(vehicle.brand?._id || '');
       setModel(vehicle.model || '');
-      setSeatingCapacity(vehicle.seatingCapacity?.toString() || '');
-      setAirCondition(vehicle.airCondition ? 'yes' : 'no');
       setLicensePlateNumber(vehicle.licensePlateNumber || '');
-      setSearchTags(vehicle.searchTags || []);
-      setVenueAddress(vehicle.venueAddress || '');
-      setLatitude(vehicle.latitude?.toString() || '');
-      setLongitude(vehicle.longitude?.toString() || '');
 
-      setOperatingHours(vehicle.operatingHours || '');
-      console.log('Operating hours being set:', vehicle.operatingHours);
+      // ============= CAPACITY & COMFORT (NESTED) =============
+      if (vehicle.capacityAndComfort) {
+        setSeatingCapacity(vehicle.capacityAndComfort.seatingCapacity?.toString() || '');
+        setPushbackSeats(vehicle.capacityAndComfort.pushbackSeats ? 'yes' : 'no');
+        setReclinerSeats(vehicle.capacityAndComfort.reclinerSeats ? 'yes' : 'no');
 
-      if (vehicle.pricing) {
-        setTripType(vehicle.pricing.type || 'hourly');
-        setHourlyWisePrice(vehicle.pricing.hourly?.toString() || '');
-        setPerDayPrice(vehicle.pricing.perDay?.toString() || '');
-        setDistanceWisePrice(vehicle.pricing.distanceWise?.toString() || '');
+        // Add these if you have state for them:
+        // setLegroomType(vehicle.capacityAndComfort.legroomType || '');
+        // setNumberOfSeats(vehicle.capacityAndComfort.numberOfSeats?.value?.toString() || '');
+        // setNumberOfDoors(vehicle.capacityAndComfort.numberOfDoors?.value?.toString() || '');
       }
-      setDiscount(vehicle.discount?.toString() || '');
-      // ---------------- Additional Vehicle Details ----------------
-      setFeatures({
-        driverIncluded: vehicle.features?.driverIncluded ?? false,
-        sunroof: vehicle.features?.sunroof ?? false,
-        decorationAvailable: vehicle.features?.decorationAvailable ?? false
-      });
-      // ✅ Populate decoration price when editing
-      setDecorationPrice(vehicle.features?.decorationPrice?.toString() || '');
+
+      // ============= ENGINE CHARACTERISTICS (NESTED) =============
+      if (vehicle.engineCharacteristics) {
+        setTransmissionType(vehicle.engineCharacteristics.transmissionType?.value || '');
+        setEnginePower(vehicle.engineCharacteristics.powerBHP?.toString() || '');
+        setEngineCapacity(vehicle.engineCharacteristics.engineCapacityCC?.toString() || '');
+        setTorque(vehicle.engineCharacteristics.torque || '');
+        setMileage(vehicle.engineCharacteristics.mileage || '');
+        setFuelType(vehicle.engineCharacteristics.fuelType || '');
+        setAirCondition(vehicle.engineCharacteristics.airConditioning ? 'yes' : 'no');
+      }
+
+      // ============= LOCATION (NESTED) =============
+      if (vehicle.location) {
+        setVenueAddress(vehicle.location.address || '');
+        setLatitude(vehicle.location.latitude?.toString() || '');
+        setLongitude(vehicle.location.longitude?.toString() || '');
+      }
+
+      // ============= AVAILABILITY (NESTED) =============
+      if (vehicle.availability) {
+        setFeatures((prev) => ({
+          ...prev,
+          driverIncluded: vehicle.availability.driverIncluded ?? false,
+          sunroof: vehicle.availability.sunroof ?? false
+        }));
+
+        if (vehicle.availability.acAvailable !== undefined) {
+          setAirCondition(vehicle.availability.acAvailable ? 'yes' : 'no');
+        }
+      }
+
+      // ============= FEATURES (CATEGORY-SPECIFIC - NESTED) =============
+      if (vehicle.features) {
+        // BUS FEATURES
+        if (vehicle.features.interiorFeatures) {
+          setBusFeatures((prev) => ({
+            ...prev,
+            curtains: vehicle.features.interiorFeatures.curtains ?? false,
+            readingLights: vehicle.features.interiorFeatures.readingLights ?? false,
+            footRest: vehicle.features.interiorFeatures.footRest ?? false
+          }));
+        }
+
+        if (vehicle.features.entertainment) {
+          setBusFeatures((prev) => ({
+            ...prev,
+            musicSystem: vehicle.features.entertainment.musicSystem ?? false,
+            microphone: vehicle.features.entertainment.microphone ?? false,
+            ledDisplay: vehicle.features.entertainment.lcdDisplay ?? false,
+            tvScreen: vehicle.features.entertainment.tvScreen ?? false
+          }));
+        }
+
+        if (vehicle.features.safetyAndCompliance) {
+          setBusFeatures((prev) => ({
+            ...prev,
+            fireExtinguisher: vehicle.features.safetyAndCompliance.fireExtinguisher ?? false,
+            firstAidKit: vehicle.features.safetyAndCompliance.firstAidKit ?? false,
+            ledEmergencyExit: vehicle.features.safetyAndCompliance.emergencyExit ?? false,
+            cctv: vehicle.features.safetyAndCompliance.cctv ?? false
+          }));
+        }
+
+        if (vehicle.features.storage) {
+          setBusFeatures((prev) => ({
+            ...prev,
+            luggageCarrier: vehicle.features.storage.luggageCarrier ?? false,
+            overheadStorage: vehicle.features.storage.overheadStorage ?? false
+          }));
+        }
+
+        // CAR FEATURES
+        if (vehicle.features.interiorComfort) {
+          setCarFeatures((prev) => ({
+            ...prev,
+            leatherSeats: vehicle.features.interiorComfort.leatherSeats ?? false,
+            adjustableSeats: vehicle.features.interiorComfort.adjustableSeats ?? false,
+            armrest: vehicle.features.interiorComfort.armrest ?? false
+          }));
+        }
+
+        if (vehicle.features.entertainment) {
+          setCarFeatures((prev) => ({
+            ...prev,
+            musicSystem: vehicle.features.entertainment.musicSystem ?? false,
+            bluetooth: vehicle.features.entertainment.bluetooth ?? false,
+            usbAux: vehicle.features.entertainment.usbAux ?? false
+          }));
+        }
+
+        if (vehicle.features.safety) {
+          setCarFeatures((prev) => ({
+            ...prev,
+            airbags: vehicle.features.safety.airbags ?? false,
+            abs: vehicle.features.safety.abs ?? false,
+            rearCamera: vehicle.features.safety.rearCamera ?? false,
+            parkingSensors: vehicle.features.safety.parkingSensors ?? false
+          }));
+        }
+
+        if (vehicle.features.convenience) {
+          setCarFeatures((prev) => ({
+            ...prev,
+            powerWindows: vehicle.features.convenience.powerWindows ?? false,
+            centralLock: vehicle.features.convenience.centralLock ?? false,
+            keylessEntry: vehicle.features.convenience.keylessEntry ?? false
+          }));
+        }
+      }
+
+      // ============= EXTRA ADDONS (NESTED) =============
+      if (vehicle.extraAddons) {
+        // Determine if it's bus or car based on category
+        const isBus = vehicle.category?.title?.toLowerCase().includes('bus');
+
+        if (isBus) {
+          setBusFeatures((prev) => ({
+            ...prev,
+            wifi: vehicle.extraAddons.wifi ?? false,
+            chargingPoints: vehicle.extraAddons.chargingPorts ?? false
+          }));
+        } else {
+          setCarFeatures((prev) => ({
+            ...prev,
+            wifi: vehicle.extraAddons.wifi ?? false,
+            chargingPoints: vehicle.extraAddons.chargingPorts ?? false
+          }));
+        }
+
+        setInteriorLighting(vehicle.extraAddons.interiorLighting ? 'premium' : 'normal');
+      }
+
+      // ============= PRICING (NESTED) =============
+      if (vehicle.pricing) {
+        // Basic Package
+        if (vehicle.pricing.basicPackage) {
+          setBasicPackagePrice(vehicle.pricing.basicPackage.price?.toString() || '');
+          setHoursIncluded(vehicle.pricing.basicPackage.includedHours?.toString() || '');
+          setKmIncluded(vehicle.pricing.basicPackage.includedKilometers?.toString() || '');
+        }
+
+        // Extra Charges
+        if (vehicle.pricing.extraKmPrice) {
+          setAdditionalPricePerKm(vehicle.pricing.extraKmPrice.price?.toString() || '');
+          setAfterKilometer(vehicle.pricing.extraKmPrice.km?.toString() || '');
+        }
+
+        // Discount
+        if (vehicle.pricing.discount) {
+          setDiscountType(vehicle.pricing.discount.type === 'flat_rate' ? 'flat' : 'percentage');
+          setDiscount(vehicle.pricing.discount.value?.toString() || '');
+        }
+
+        // Decoration
+        if (vehicle.pricing.decoration) {
+          setFeatures((prev) => ({
+            ...prev,
+            decorationAvailable: vehicle.pricing.decoration.available ?? false
+          }));
+          setDecorationPrice(vehicle.pricing.decoration.price?.toString() || '');
+        }
+      }
+
+      // ============= ADVANCE BOOKING AMOUNT =============
+      setAdvanceAmount(vehicle.advanceBookingAmount?.toString() || '');
+
+      // ============= CAR-SPECIFIC FIELDS =============
+      if (vehicle.vehicleType) {
+        setVehicleType(vehicle.vehicleType);
+      }
+
+      // ============= TERMS & CONDITIONS =============
+      if (vehicle.termsAndConditions && Array.isArray(vehicle.termsAndConditions) && vehicle.termsAndConditions.length > 0) {
+        setTermsSections(
+          vehicle.termsAndConditions.map((section) => ({
+            heading: section.heading || '',
+            points: Array.isArray(section.points) && section.points.length > 0 ? section.points : ['']
+          }))
+        );
+      } else if (typeof vehicle.termsAndConditions === 'string') {
+        // Legacy: if it's stored as a single string
+        setTermsSections([
+          {
+            heading: 'Terms & Conditions',
+            points: [vehicle.termsAndConditions]
+          }
+        ]);
+      } else {
+        // Fallback: create mode or no data
+        setTermsSections([{ heading: '', points: [''] }]);
+      }
+
+      // ============= SEARCH TAGS =============
+      setSearchTags(vehicle.searchTags || []);
+
+      console.log('✅ Vehicle data populated successfully');
     },
-    [brands, categories, zones]
+    [brands, categories, zones, API_BASE_URL]
   );
 
   useEffect(() => {
@@ -624,11 +784,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-            .filter((zone) => zone.isActive)
-            .map((zone) => ({
-              _id: zone._id,
-              name: zone.name
-            }))
+              .filter((zone) => zone.isActive)
+              .map((zone) => ({
+                _id: zone._id,
+                name: zone.name
+              }))
           : [];
 
         setZones(zonesData);
@@ -833,7 +993,6 @@ const Createnew = () => {
     return true;
   };
 
-
   // Reset form
   const handleReset = useCallback(() => {
     // -------- BASIC INFO --------
@@ -918,7 +1077,6 @@ const Createnew = () => {
       chargingPoints: false
     });
 
-
     // -------- PACKAGE PRICING --------
     setBasicPackagePrice('');
     setHoursIncluded('');
@@ -978,7 +1136,6 @@ const Createnew = () => {
         !zone ||
         !seatingCapacity ||
         !licensePlateNumber ||
-        !tripType ||
         !venueAddress ||
         !latitude ||
         !longitude
@@ -999,20 +1156,19 @@ const Createnew = () => {
         return;
       }
 
-      if (
-        (tripType === 'hourly' && !hourlyWisePrice) ||
-        (tripType === 'perDay' && !perDayPrice) ||
-        (tripType === 'distanceWise' && !distanceWisePrice)
-      ) {
-        setToastMessage(`Please provide a price for ${tripType} trip type.`);
-        setToastSeverity('error');
-        setOpenToast(true);
-        setLoading(false);
-        return;
+      // Validate pricing
+      if (isBusCategory || isCarCategory) {
+        if (!basicPackagePrice) {
+          setToastMessage('Please provide a basic package price.');
+          setToastSeverity('error');
+          setOpenToast(true);
+          setLoading(false);
+          return;
+        }
       }
 
       if (!thumbnailFile && !existingThumbnail && !isEdit) {
-        setToastMessage('Please upload a thumbnail image.');
+        setToastMessage('Please upload a featured image.');
         setToastSeverity('error');
         setOpenToast(true);
         setLoading(false);
@@ -1020,7 +1176,7 @@ const Createnew = () => {
       }
 
       if (newVehicleImages.length === 0 && existingImages.length === 0 && !isEdit) {
-        setToastMessage('Please upload at least one vehicle image.');
+        setToastMessage('Please upload at least one gallery image.');
         setToastSeverity('error');
         setOpenToast(true);
         setLoading(false);
@@ -1034,6 +1190,7 @@ const Createnew = () => {
         setLoading(false);
         return;
       }
+
       if (!termsSections.length || !termsSections[0].heading) {
         setToastMessage('Please add at least one Terms & Conditions section.');
         setToastSeverity('error');
@@ -1052,126 +1209,158 @@ const Createnew = () => {
         return;
       }
 
-      // Prepare FormData
+      // ==================== PREPARE FORMDATA ====================
       const formData = new FormData();
-      formData.append('transmissionType', transmissionType);
-      formData.append('enginePower', enginePower ? parseInt(enginePower) : '');
+
+      // Basic Information
       formData.append('name', name);
       formData.append('description', description);
       formData.append('brand', brand);
       formData.append('category', parentCategory);
-      formData.append('subCategories[]', subCategory);
-      formData.append('zone', zone);
+      formData.append('subCategory', subCategory);
       formData.append('model', model);
-      formData.append('seatingCapacity', parseInt(seatingCapacity));
-      formData.append('airCondition', airCondition === 'yes');
 
-      // ✅ FIXED: Send features as individual fields, not nested JSON
-      formData.append('features[driverIncluded]', features.driverIncluded);
-      formData.append('features[sunroof]', features.sunroof);
-      formData.append('features[decorationAvailable]', features.decorationAvailable);
-      if (features.decorationAvailable && decorationPrice) {
-        formData.append('decorationPrice', parseFloat(decorationPrice));
-      }
+      // ==================== CAPACITY & COMFORT (NESTED) ====================
+      formData.append('capacityAndComfort[seatingCapacity]', parseInt(seatingCapacity) || 0);
+      formData.append('capacityAndComfort[pushbackSeats]', pushbackSeats === 'yes');
+      formData.append('capacityAndComfort[reclinerSeats]', reclinerSeats === 'yes');
 
-      // Add category-specific fields
-      if (isCarCategory) {
-        formData.append('vehicleType', vehicleType);
-        formData.append('engineCapacity', engineCapacity);
-        formData.append('torque', torque);
-        formData.append('mileage', mileage);
-        formData.append('fuelType', fuelType);
-        formData.append('interiorLighting', interiorLighting);
+      // ==================== ENGINE CHARACTERISTICS (NESTED) ====================
+      formData.append('engineCharacteristics[transmissionType][value]', transmissionType || '');
+      formData.append('engineCharacteristics[transmissionType][available]', !!transmissionType);
+      formData.append('engineCharacteristics[powerBHP]', enginePower ? parseInt(enginePower) : 0);
+      formData.append('engineCharacteristics[engineCapacityCC]', engineCapacity ? parseInt(engineCapacity) : 0);
+      formData.append('engineCharacteristics[torque]', torque || '');
+      formData.append('engineCharacteristics[mileage]', mileage || '');
+      formData.append('engineCharacteristics[fuelType]', fuelType || '');
+      formData.append('engineCharacteristics[airConditioning]', airCondition === 'yes');
 
-        // Add car features
-        formData.append('carFeatures[leatherSeats]', carFeatures.leatherSeats);
-        formData.append('carFeatures[adjustableSeats]', carFeatures.adjustableSeats);
-        formData.append('carFeatures[armrest]', carFeatures.armrest);
-        formData.append('carFeatures[musicSystem]', carFeatures.musicSystem);
-        formData.append('carFeatures[bluetooth]', carFeatures.bluetooth);
-        formData.append('carFeatures[usbAux]', carFeatures.usbAux);
-        formData.append('carFeatures[airbags]', carFeatures.airbags);
-        formData.append('carFeatures[abs]', carFeatures.abs);
-        formData.append('carFeatures[rearCamera]', carFeatures.rearCamera);
-        formData.append('carFeatures[parkingSensors]', carFeatures.parkingSensors);
-        formData.append('carFeatures[powerWindows]', carFeatures.powerWindows);
-        formData.append('carFeatures[centralLock]', carFeatures.centralLock);
-        formData.append('carFeatures[keylessEntry]', carFeatures.keylessEntry);
-        formData.append('carFeatures[wifi]', carFeatures.wifi);
-        formData.append('carFeatures[chargingPoints]', carFeatures.chargingPoints);
+      // ==================== LOCATION (NESTED) ====================
+      formData.append('location[address]', venueAddress);
+      formData.append('location[latitude]', parseFloat(latitude) || 0);
+      formData.append('location[longitude]', parseFloat(longitude) || 0);
+      formData.append('zone', zone);
 
-        // Package pricing for car
-        formData.append('basicPackagePrice', basicPackagePrice);
-        formData.append('hoursIncluded', hoursIncluded);
-        formData.append('kmIncluded', kmIncluded);
-        formData.append('additionalPricePerKm', additionalPricePerKm);
-        formData.append('afterKilometer', afterKilometer);
-        formData.append('discountType', discountType);
-        formData.append('advanceType', advanceType);
-        formData.append('advanceAmount', advanceAmount);
-      }
+      // ==================== AVAILABILITY (NESTED) ====================
+      formData.append('availability[driverIncluded]', features.driverIncluded || false);
+      formData.append('availability[sunroof]', features.sunroof || false);
+      formData.append('availability[acAvailable]', airCondition === 'yes');
 
+      // ==================== FEATURES (CATEGORY-SPECIFIC - NESTED JSON) ====================
       if (isBusCategory) {
-        formData.append('pushbackSeats', pushbackSeats);
-        formData.append('airConditionZone', airConditionZone);
-        formData.append('fuelType', fuelType);
-
-        // Add bus features
-        formData.append('busFeatures[curtains]', busFeatures.curtains);
-        formData.append('busFeatures[readingLights]', busFeatures.readingLights);
-        formData.append('busFeatures[musicSystem]', busFeatures.musicSystem);
-        formData.append('busFeatures[microphone]', busFeatures.microphone);
-        formData.append('busFeatures[fireExtinguisher]', busFeatures.fireExtinguisher);
-        formData.append('busFeatures[firstAidKit]', busFeatures.firstAidKit);
-        formData.append('busFeatures[luggageCarrier]', busFeatures.luggageCarrier);
-        formData.append('busFeatures[wifi]', busFeatures.wifi);
-        formData.append('busFeatures[chargingPoints]', busFeatures.chargingPoints);
-        formData.append('busFeatures[footRest]', busFeatures.footRest);
-        formData.append('busFeatures[bottleHolder]', busFeatures.bottleHolder);
-
-        formData.append('busFeatures[ledDisplay]', busFeatures.ledDisplay);
-        formData.append('busFeatures[tvScreen]', busFeatures.tvScreen);
-
-        formData.append('busFeatures[ledEmergencyExit]', busFeatures.ledEmergencyExit);
-        formData.append('busFeatures[cctv]', busFeatures.cctv);
-
-        formData.append('busFeatures[overheadStorage]', busFeatures.overheadStorage);
-
+        const busFeatureStructure = {
+          interiorFeatures: {
+            curtains: busFeatures.curtains || false,
+            readingLights: busFeatures.readingLights || false,
+            footRest: busFeatures.footRest || false,
+            mirror: false // Add if you have this field
+          },
+          entertainment: {
+            musicSystem: busFeatures.musicSystem || false,
+            microphone: busFeatures.microphone || false,
+            lcdDisplay: busFeatures.ledDisplay || false,
+            tvScreen: busFeatures.tvScreen || false
+          },
+          safetyAndCompliance: {
+            fireExtinguisher: busFeatures.fireExtinguisher || false,
+            firstAidKit: busFeatures.firstAidKit || false,
+            emergencyExit: busFeatures.ledEmergencyExit || false,
+            cctv: busFeatures.cctv || false
+          },
+          storage: {
+            luggageCarrier: busFeatures.luggageCarrier || false,
+            overheadStorage: busFeatures.overheadStorage || false
+          }
+        };
+        formData.append('features', JSON.stringify(busFeatureStructure));
       }
 
-      // Attach dynamic vehicle attributes
-      formData.append('attributes', JSON.stringify(selectedAttributes));
+      if (isCarCategory) {
+        const carFeatureStructure = {
+          interiorComfort: {
+            leatherSeats: carFeatures.leatherSeats || false,
+            adjustableSeats: carFeatures.adjustableSeats || false,
+            armrest: carFeatures.armrest || false
+          },
+          entertainment: {
+            musicSystem: carFeatures.musicSystem || false,
+            bluetooth: carFeatures.bluetooth || false,
+            usbAux: carFeatures.usbAux || false
+          },
+          safety: {
+            airbags: carFeatures.airbags || false,
+            abs: carFeatures.abs || false,
+            rearCamera: carFeatures.rearCamera || false,
+            parkingSensors: carFeatures.parkingSensors || false
+          },
+          convenience: {
+            powerWindows: carFeatures.powerWindows || false,
+            centralLock: carFeatures.centralLock || false,
+            keylessEntry: carFeatures.keylessEntry || false
+          }
+        };
+        formData.append('features', JSON.stringify(carFeatureStructure));
+      }
 
+      // ==================== EXTRA ADDONS (NESTED) ====================
+      formData.append('extraAddons[wifi]', isBusCategory ? busFeatures.wifi : carFeatures.wifi);
+      formData.append('extraAddons[chargingPorts]', isBusCategory ? busFeatures.chargingPoints : carFeatures.chargingPoints);
+      formData.append('extraAddons[interiorLighting]', interiorLighting === 'premium');
+
+      // ==================== PRICING (NESTED) ====================
+      formData.append('pricing[basicPackage][price]', parseFloat(basicPackagePrice) || 0);
+      formData.append('pricing[basicPackage][includedKilometers]', parseFloat(kmIncluded) || 0);
+      formData.append('pricing[basicPackage][includedHours]', parseFloat(hoursIncluded) || 0);
+
+      formData.append('pricing[extraKmPrice][km]', parseFloat(afterKilometer) || 0);
+      formData.append('pricing[extraKmPrice][price]', parseFloat(additionalPricePerKm) || 0);
+
+      formData.append('pricing[discount][type]', discountType === 'flat' ? 'flat_rate' : 'percentage');
+      formData.append('pricing[discount][value]', parseFloat(discount) || 0);
+
+      formData.append('pricing[decoration][available]', features.decorationAvailable || false);
+      formData.append('pricing[decoration][price]', parseFloat(decorationPrice) || 0);
+
+      // ==================== ADVANCE BOOKING AMOUNT ====================
+      formData.append('advanceBookingAmount', parseFloat(advanceAmount) || 0);
+
+      // ==================== VEHICLE IDENTITY ====================
       formData.append('licensePlateNumber', licensePlateNumber);
+
+      // ==================== CAR-SPECIFIC FIELDS ====================
+      if (isCarCategory && vehicleType) {
+        formData.append('vehicleType', vehicleType);
+      }
+
+      // ==================== TERMS & CONDITIONS ====================
       formData.append('termsAndConditions', JSON.stringify(termsSections));
 
-      formData.append('venueAddress', venueAddress);
-      formData.append('latitude', parseFloat(latitude));
-      formData.append('longitude', parseFloat(longitude));
-      if (operatingHours) formData.append('operatingHours', operatingHours);
-
-      formData.append('pricing[type]', tripType);
-      formData.append('pricing[hourly]', tripType === 'hourly' ? parseFloat(hourlyWisePrice) || 0 : 0);
-      formData.append('pricing[perDay]', tripType === 'perDay' ? parseFloat(perDayPrice) || 0 : 0);
-      formData.append('pricing[distanceWise]', tripType === 'distanceWise' ? parseFloat(distanceWisePrice) || 0 : 0);
-
-      if (discount) formData.append('discount', parseFloat(discount));
-      if (advanceBookingAmount) formData.append('advanceBookingAmount', parseFloat(advanceBookingAmount));
-
+      // ==================== SEARCH TAGS ====================
       searchTags.forEach((tag) => formData.append('searchTags[]', tag));
-      if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
-      newVehicleImages.forEach((file) => formData.append('images', file));
 
-      // Log FormData for debugging
+      // ==================== FILE UPLOADS ====================
+      // Featured Image (was thumbnail)
+      if (thumbnailFile) {
+        formData.append('featuredImage', thumbnailFile);
+      }
+
+      // Gallery Images (was images)
+      newVehicleImages.forEach((file) => {
+        formData.append('galleryImages', file);
+      });
+
+      // ==================== DEBUG LOG ====================
       const formDataEntries = {};
       for (let [key, value] of formData.entries()) {
         formDataEntries[key] = value instanceof File ? value.name : value;
       }
-      console.log('FormData:', formDataEntries);
+      console.log('📤 FormData being sent:', formDataEntries);
 
+      // ==================== API CALL ====================
       try {
         let response;
         let newOrUpdatedVehicle;
+
         if (isEdit) {
           if (!effectiveVehicleId) {
             throw new Error('Invalid vehicle ID for update');
@@ -1192,26 +1381,30 @@ const Createnew = () => {
           });
           newOrUpdatedVehicle = response.data.data || response.data;
         }
-        console.log('API Response:', response.data);
+
+        console.log('✅ API Response:', response.data);
         setToastMessage(isEdit ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
         setToastSeverity('success');
         setOpenToast(true);
         handleReset();
+
         if (isEdit) {
           navigate('/vehicle-setup/lists', { state: { vehicle: newOrUpdatedVehicle } });
         }
       } catch (error) {
-        console.error('API Error:', {
+        console.error('❌ API Error:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,
           headers: error.response?.headers,
           message: error.message
         });
+
         let errorMsg = error.response?.data?.message || 'Failed to save vehicle';
         if (error.response?.data?.errors) {
           errorMsg = error.response.data.errors.map((err) => err.msg).join(', ');
         }
+
         setToastMessage(errorMsg);
         setToastSeverity('error');
         setOpenToast(true);
@@ -1223,44 +1416,20 @@ const Createnew = () => {
       viewMode,
       effectiveVehicleId,
       name,
+      description,
       brand,
       model,
-      category,
+      parentCategory,
+      subCategory,
       zone,
       seatingCapacity,
       airCondition,
       features,
       decorationPrice,
       licensePlateNumber,
-      tripType,
-      hourlyWisePrice,
-      perDayPrice,
-      distanceWisePrice,
-      discount,
-      searchTags,
-      thumbnailFile,
-      newVehicleImages,
-      existingThumbnail,
-      existingImages,
-      validateLicensePlate,
-      handleReset,
-      navigate,
-      API_BASE_URL,
-      moduleId,
-      isDataLoaded,
-      vehicleKeyFromState,
-      setVehicleData,
       venueAddress,
       latitude,
       longitude,
-      operatingHours,
-      parentCategory,
-      subCategory,
-      selectedAttributes,
-      advanceBookingAmount,
-      termsSections,
-      isCarCategory,
-      isBusCategory,
       transmissionType,
       enginePower,
       engineCapacity,
@@ -1270,7 +1439,7 @@ const Createnew = () => {
       interiorLighting,
       fuelType,
       pushbackSeats,
-      airConditionZone,
+      reclinerSeats,
       carFeatures,
       busFeatures,
       basicPackagePrice,
@@ -1279,8 +1448,20 @@ const Createnew = () => {
       additionalPricePerKm,
       afterKilometer,
       discountType,
-      advanceType,
-      advanceAmount
+      discount,
+      advanceAmount,
+      termsSections,
+      searchTags,
+      thumbnailFile,
+      newVehicleImages,
+      existingThumbnail,
+      existingImages,
+      validateLicensePlate,
+      handleReset,
+      navigate,
+      API_BASE_URL,
+      isCarCategory,
+      isBusCategory
     ]
   );
 
@@ -1316,6 +1497,27 @@ const Createnew = () => {
       [feature]: event.target.checked
     }));
   };
+
+  // ================= GRAND TOTAL CALCULATION =================
+  const basePrice = Number(basicPackagePrice) || 0;
+  const discountValue = Number(discount) || 0;
+
+  let discountAmount = 0;
+
+  if (discountType === 'percentage') {
+    discountAmount = (basePrice * discountValue) / 100;
+  }
+
+  if (discountType === 'flat') {
+    discountAmount = discountValue;
+  }
+
+  // Prevent discount from exceeding base price
+  if (discountAmount > basePrice) {
+    discountAmount = basePrice;
+  }
+
+  const grandTotal = Math.max(basePrice - discountAmount, 0);
 
   return (
     <Box sx={{ p: isSmallScreen ? 2 : 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
@@ -1387,7 +1589,7 @@ const Createnew = () => {
             <Card sx={{ flex: isSmallScreen ? 'auto' : 1, p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Typography variant="h6" gutterBottom>
-                  Vehicle Thumbnail*
+                  Featured Image*
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   JPG, JPEG, PNG Less Than 1MB (Ratio 2:1)
@@ -1401,7 +1603,7 @@ const Createnew = () => {
                     <Box>
                       <img
                         src={URL.createObjectURL(thumbnailFile)}
-                        alt="Thumbnail preview"
+                        alt="Featured image preview"
                         style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
                       />
                       <Typography variant="body2" color="text.secondary">
@@ -1412,7 +1614,7 @@ const Createnew = () => {
                     <Box>
                       <img
                         src={existingThumbnail}
-                        alt="Existing thumbnail"
+                        alt="Existing featured image"
                         style={{
                           maxWidth: '100%',
                           maxHeight: 100,
@@ -1422,7 +1624,7 @@ const Createnew = () => {
                         }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        Existing thumbnail. Upload to replace.
+                        Existing featured image. Upload to replace.
                       </Typography>
                     </Box>
                   ) : (
@@ -1439,6 +1641,7 @@ const Createnew = () => {
                   <input
                     type="file"
                     id="thumbnail-upload"
+                    name="featuredImage"
                     hidden
                     accept="image/jpeg,image/png,image/jpg"
                     onChange={handleThumbnailFileChange}
@@ -1450,16 +1653,14 @@ const Createnew = () => {
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                {/* Header */}
                 <Typography variant="h6" gutterBottom>
-                  Images<span style={{ color: '#E15B65' }}>*</span>
+                  Gallery Images<span style={{ color: '#E15B65' }}>*</span>
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Upload high quality images (JPG, JPEG, PNG • Max 1MB • Ratio 2:1)
                 </Typography>
 
-                {/* Upload Area */}
                 <UploadDropArea
                   onDragOver={handleDragOver}
                   onDrop={handleDropImages}
@@ -1475,7 +1676,6 @@ const Createnew = () => {
                     }
                   }}
                 >
-                  {/* IMAGES GRID */}
                   {existingImages.length > 0 || newVehicleImages.length > 0 ? (
                     <Box
                       sx={{
@@ -1485,7 +1685,6 @@ const Createnew = () => {
                         width: '100%'
                       }}
                     >
-                      {/* Existing Images */}
                       {existingImages.map((url, index) => (
                         <Box
                           key={`existing-${index}`}
@@ -1497,7 +1696,6 @@ const Createnew = () => {
                           }}
                         >
                           <img src={url} alt={`Existing ${index}`} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
-
                           <Box
                             sx={{
                               position: 'absolute',
@@ -1517,7 +1715,6 @@ const Createnew = () => {
                         </Box>
                       ))}
 
-                      {/* New Images */}
                       {newVehicleImages.map((file, index) => (
                         <Box
                           key={`new-${index}`}
@@ -1533,7 +1730,6 @@ const Createnew = () => {
                             alt={`New ${index}`}
                             style={{ width: '100%', height: 90, objectFit: 'cover' }}
                           />
-
                           <IconButton
                             size="small"
                             onClick={() => setNewVehicleImages((prev) => prev.filter((_, i) => i !== index))}
@@ -1552,7 +1748,6 @@ const Createnew = () => {
                       ))}
                     </Box>
                   ) : (
-                    /* EMPTY STATE */
                     <Box sx={{ textAlign: 'center' }}>
                       <CloudUploadIcon sx={{ fontSize: 46, color: '#E15B65', mb: 1 }} />
                       <Typography fontWeight={600} color="#E15B65">
@@ -1564,7 +1759,6 @@ const Createnew = () => {
                     </Box>
                   )}
 
-                  {/* Footer Info */}
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
                     {existingImages.length + newVehicleImages.length} image(s) selected
                   </Typography>
@@ -1572,6 +1766,7 @@ const Createnew = () => {
                   <input
                     type="file"
                     id="images-upload"
+                    name="galleryImages"
                     hidden
                     accept="image/jpeg,image/png,image/jpg"
                     multiple
@@ -1650,13 +1845,12 @@ const Createnew = () => {
                     {/* Show Legroom Type only for Bus */}
                     {isBusCategory && (
                       <FormControl fullWidth variant="outlined">
-                        <InputLabel>Select Legroom Type</InputLabel>
+                        <InputLabel id="legroom-label">Select Legroom Type</InputLabel>
                         <Select
-                          value=""
+                          labelId="legroom-label"
+                          value={legroomType} // ✅ controlled value
                           label="Select Legroom Type"
-                          onChange={(e) => {
-                            /* Handle legroom type */
-                          }}
+                          onChange={(e) => setLegroomType(e.target.value)} // ✅ update state
                         >
                           <MenuItem value="">Select Legroom</MenuItem>
                           <MenuItem value="standard">Standard</MenuItem>
@@ -2194,7 +2388,7 @@ const Createnew = () => {
                       ]
                     }
                   ].map((section, idx) => (
-                    <Grid item xs={12} sm={6} md={6} key={section.title} sx={{ display: 'flex' }}>
+                    <Grid item xs={12} sm={12} md={6} lg={6} key={section.title} sx={{ display: 'flex' }}>
                       <Box
                         sx={{
                           width: '100%',
@@ -2452,7 +2646,7 @@ const Createnew = () => {
                       ]
                     }
                   ].map((section) => (
-                    <Grid item xs={12} sm={6} md={6} lg={3} key={section.title} sx={{ display: 'flex' }}>
+                    <Grid item xs={12} sm={12} md={6} lg={3} key={section.title} sx={{ display: 'flex' }}>
                       <Box
                         sx={{
                           width: '100%',
@@ -2837,7 +3031,6 @@ const Createnew = () => {
                                 GRAND TOTAL
                               </Typography>
                             </Box>
-
                             <Typography
                               sx={{
                                 fontWeight: 800,
@@ -2847,8 +3040,21 @@ const Createnew = () => {
                                 color: '#000'
                               }}
                             >
-                              ₹ {basicPackagePrice || '0'}
+                              ₹ {grandTotal}
                             </Typography>
+
+                            {discountAmount > 0 && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  textDecoration: 'line-through',
+                                  color: '#6b7280',
+                                  fontSize: '0.75rem'
+                                }}
+                              >
+                                Original: ₹ {basePrice}
+                              </Typography>
+                            )}
 
                             <Typography
                               variant="caption"
@@ -2858,7 +3064,7 @@ const Createnew = () => {
                                 color: '#000'
                               }}
                             >
-                              Base Price + Taxes
+                              {discountAmount > 0 ? `Discount Applied: ₹ ${discountAmount}` : 'Base Price'}
                             </Typography>
 
                             <Box

@@ -42,8 +42,8 @@ export default function Vehicles() {
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState("success");
-  const [filters, setFilters] = useState({ brand: "", category: "", type: "", search: "" });
-  const [pendingFilters, setPendingFilters] = useState({ brand: "", category: "", type: "", search: "" });
+  const [filters, setFilters] = useState({ search: "" });
+
   const [localSearch, setLocalSearch] = useState("");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
@@ -209,20 +209,9 @@ export default function Vehicles() {
     }
   }, [categories, brands]);
 
-  const handleApplyFilters = () => {
-    setFilters({
-      ...filters,
-      brand: pendingFilters.brand,
-      category: pendingFilters.category,
-      type: pendingFilters.type,
-    });
-  };
+ 
 
-  const handleReset = () => {
-    setFilters({ brand: "", category: "", type: "", search: "" });
-    setPendingFilters({ brand: "", category: "", type: "", search: "" });
-    setLocalSearch("");
-  };
+ 
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: localSearch }));
@@ -385,65 +374,7 @@ export default function Vehicles() {
         </Alert>
       )}
 
-      {/* Filters */}
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" spacing={2} flexWrap="wrap">
-          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E15B65',borderWidth: '2px'},}} size="small">
-            <Select 
-              displayEmpty
-              value={pendingFilters.brand}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })  }>
-              <MenuItem value="">Select vehicle brand</MenuItem>
-              {brands.map((brand) => (
-                <MenuItem key={brand._id} value={brand._id}>
-                  {brand.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': {borderColor: '#E15B65',borderWidth: '2px'},}} size="small">
-            <Select
-              displayEmpty
-              value={pendingFilters.category}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, category: e.target.value })}
-            >
-              <MenuItem value="">Select vehicle category</MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 200 , '& .MuiOutlinedInput-notchedOutline': {borderColor: '#E15B65',borderWidth: '2px'}}} size="small">
-            <Select
-              displayEmpty
-              value={pendingFilters.type}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, type: e.target.value })}
-            >
-              <MenuItem value="">Select vehicle type</MenuItem>
-              <MenuItem value="sedan">Sedan</MenuItem>
-              <MenuItem value="suv">SUV</MenuItem>
-              <MenuItem value="hatchback">Hatchback</MenuItem>
-              <MenuItem value="coupe">Coupe</MenuItem>
-              <MenuItem value="convertible">Convertible</MenuItem>
-              <MenuItem value="truck">Truck</MenuItem>
-              <MenuItem value="van">Van</MenuItem>
-              <MenuItem value="motorcycle">Motorcycle</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Button variant="outlined"  color="#E15B65" sx={{ color:'#E15B65', bgcolor: "white", borderRadius: "8px" }} onClick={handleReset}>
-            Reset
-          </Button>
-          <Button variant="contained" sx={{ bgcolor: "#E15B65", borderRadius: "8px" }} onClick={handleApplyFilters}>
-            Filter
-          </Button>
-        </Stack>
-      </Paper>
-
+     
       {/* Table */}
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2} mb={2}>
