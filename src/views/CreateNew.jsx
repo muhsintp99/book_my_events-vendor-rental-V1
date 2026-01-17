@@ -1222,6 +1222,8 @@ const Createnew = () => {
 
       // ==================== CAPACITY & COMFORT (NESTED) ====================
       formData.append('capacityAndComfort[seatingCapacity]', parseInt(seatingCapacity) || 0);
+      formData.append('capacityAndComfort[legroomType]', legroomType || '');
+
       formData.append('capacityAndComfort[pushbackSeats]', pushbackSeats === 'yes');
       formData.append('capacityAndComfort[reclinerSeats]', reclinerSeats === 'yes');
 
