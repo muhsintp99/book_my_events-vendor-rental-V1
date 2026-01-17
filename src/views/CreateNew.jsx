@@ -1944,7 +1944,6 @@ const Createnew = () => {
               </CardContent>
             </Card>
           </Box>
-
           {/* ---------------- Vehicle Attributes ---------------- */}
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
@@ -2061,7 +2060,6 @@ const Createnew = () => {
               </Box>
             </CardContent>
           </Box>
-
           {/* ================= VEHICLE FEATURES ================= */}
           {/* ================= VEHICLE FEATURES ================= */}
           {isCategorySelected && isCarCategory && (
@@ -2184,7 +2182,6 @@ const Createnew = () => {
               </Box>
             </Card>
           )}
-
           {isCategorySelected && isBusCategory && (
             <Card
               sx={{
@@ -2330,464 +2327,354 @@ const Createnew = () => {
             </Card>
           )}
 
-          {/* Show Package Pricing only for Car category */}
-          {isCategorySelected && (isCarCategory || isBusCategory) && (
-            <Box sx={{ mb: 4 }}>
-              {/* ================= PACKAGE PRICING ================= */}
-              <Card
+{isCategorySelected && (isCarCategory || isBusCategory) && (
+  <Box sx={{ mb: 4 }}>
+    {/* ================= PACKAGE PRICING ================= */}
+    <Card
+      sx={{
+        mt: 6,
+        mb: 6,
+        borderRadius: 3,
+        border: 'none',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          px: 4,
+          py: 3,
+          background: 'linear-gradient(135deg, #f5efef 0%, #efdfe1 100%)',
+          color: 'white'
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+          Package Pricing
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.95 }}>
+          Set base price, discount & advance booking options
+        </Typography>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ p: 4, backgroundColor: '#fafbfc' }}>
+        <Stack spacing={3}>
+          {/* Row 1: Package Details & Offers */}
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '2px solid #e5e7eb',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
+                borderColor: '#E15B65'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box
                 sx={{
-                  mt: 6,
-                  mb: 6,
-                  borderRadius: 3,
-                  border: 'none',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  overflow: 'hidden'
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  backgroundColor: '#E15B65',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
                 }}
               >
-                {/* Header with Gradient */}
-                <Box
-                  sx={{
-                    px: 4,
-                    py: 3,
-                    background: 'linear-gradient(135deg, #f5efef 0%, #efdfe1 100%)',
-                    color: 'white'
-                  }}
-                >
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                    Package Pricing
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.95 }}>
-                    Set base price, discount & advance booking options
-                  </Typography>
-                </Box>
-
-                {/* Content */}
-                <Box sx={{ p: 4, backgroundColor: '#fafbfc' }}>
-                  <Grid container spacing={3}>
-                    {/* Column 1 - Package Details */}
-                    <Grid item xs={12} md={8}>
-                      <Box
-                        sx={{
-                          p: 3,
-                          borderRadius: 2,
-                          backgroundColor: '#ffffff',
-                          border: '2px solid #e5e7eb',
-                          height: '100%',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
-                            borderColor: '#E15B65'
-                          }
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                          <Box
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: '50%',
-                              backgroundColor: '#E15B65',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              mr: 2
-                            }}
-                          >
-                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>₹</Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
-                            Package Details
-                          </Typography>
-                        </Box>
-
-                        <Stack spacing={2.5}>
-                          <Box>
-                            <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
-                              Base Package Price
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              type="number"
-                              value={basicPackagePrice}
-                              onChange={(e) => setBasicPackagePrice(e.target.value)}
-                              placeholder="0"
-                              InputProps={{
-                                startAdornment: <Typography sx={{ mr: 1, color: '#E15B65', fontWeight: 600, fontSize: 18 }}>₹</Typography>
-                              }}
-                              size="small"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '&:hover fieldset': {
-                                    borderColor: '#E15B65'
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#E15B65'
-                                  }
-                                }
-                              }}
-                            />
-                          </Box>
-
-                          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                            <Box>
-                              <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
-                                Hours Included
-                              </Typography>
-                              <FormControl fullWidth size="small">
-                                <Select
-                                  value={hoursIncluded}
-                                  onChange={(e) => setHoursIncluded(e.target.value)}
-                                  displayEmpty
-                                  sx={{
-                                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: '#E15B65'
-                                    },
-                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: '#E15B65'
-                                    }
-                                  }}
-                                >
-                                  <MenuItem value="">Select</MenuItem>
-                                  <MenuItem value="4">4 Hrs</MenuItem>
-                                  <MenuItem value="6">6 Hrs</MenuItem>
-                                  <MenuItem value="8">8 Hrs</MenuItem>
-                                  <MenuItem value="10">10 Hrs</MenuItem>
-                                  <MenuItem value="12">12 Hrs</MenuItem>
-                                </Select>
-                              </FormControl>
-                            </Box>
-
-                            <Box>
-                              <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
-                                KM Included
-                              </Typography>
-                              <FormControl fullWidth size="small">
-                                <Select
-                                  value={kmIncluded}
-                                  onChange={(e) => setKmIncluded(e.target.value)}
-                                  displayEmpty
-                                  sx={{
-                                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: '#E15B65'
-                                    },
-                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                      borderColor: '#E15B65'
-                                    }
-                                  }}
-                                >
-                                  <MenuItem value="">Select</MenuItem>
-                                  <MenuItem value="50">50 KM</MenuItem>
-                                  <MenuItem value="100">100 KM</MenuItem>
-                                  <MenuItem value="150">150 KM</MenuItem>
-                                </Select>
-                              </FormControl>
-                            </Box>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              p: 2,
-                              borderRadius: 1.5,
-                              backgroundColor: '#fef3f2',
-                              border: '1px dashed #E15B65'
-                            }}
-                          >
-                            <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block', fontWeight: 600 }}>
-                              Extra Charges
-                            </Typography>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-                              <TextField
-                                fullWidth
-                                label="Price/KM"
-                                type="number"
-                                value={additionalPricePerKm}
-                                onChange={(e) => setAdditionalPricePerKm(e.target.value)}
-                                InputProps={{
-                                  startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
-                                }}
-                                size="small"
-                              />
-
-                              <FormControl fullWidth size="small">
-                                <InputLabel>After KM</InputLabel>
-                                <Select value={afterKilometer} label="After KM" onChange={(e) => setAfterKilometer(e.target.value)}>
-                                  <MenuItem value="">Select</MenuItem>
-                                  <MenuItem value="1">Per KM</MenuItem>
-                                </Select>
-                              </FormControl>
-                            </Box>
-                          </Box>
-                        </Stack>
-                      </Box>
-                    </Grid>
-
-                    {/* Column 2 - Discounts & Advance */}
-                    <Grid item xs={12} md={4}>
-                      <Box
-                        sx={{
-                          p: 3,
-                          borderRadius: 2,
-                          backgroundColor: '#ffffff',
-                          border: '2px solid #e5e7eb',
-                          height: '100%',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
-                            borderColor: '#E15B65'
-                          }
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                          <Box
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: '50%',
-                              backgroundColor: '#10b981',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              mr: 2
-                            }}
-                          >
-                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>%</Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
-                            Offers & Advance
-                          </Typography>
-                        </Box>
-
-                        <Stack spacing={3}>
-                          <Box
-                            sx={{
-                              p: 2.5,
-                              borderRadius: 2,
-                              backgroundColor: '#f0fdf4',
-                              border: '1px solid #bbf7d0'
-                            }}
-                          >
-                            <Typography variant="body2" fontWeight={600} sx={{ color: '#15803d', mb: 2 }}>
-                              Apply Discount
-                            </Typography>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Type</InputLabel>
-                                <Select value={discountType} label="Type" onChange={(e) => setDiscountType(e.target.value)}>
-                                  <MenuItem value="percentage">Percentage (%)</MenuItem>
-                                  <MenuItem value="flat">Flat Rate (₹)</MenuItem>
-                                </Select>
-                              </FormControl>
-
-                              <TextField
-                                fullWidth
-                                label="Value"
-                                type="number"
-                                value={discount}
-                                onChange={(e) => setDiscount(e.target.value)}
-                                size="small"
-                              />
-                            </Box>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              p: 2.5,
-                              borderRadius: 2,
-                              backgroundColor: '#eff6ff',
-                              border: '1px solid #bfdbfe'
-                            }}
-                          >
-                            <Typography variant="body2" fontWeight={600} sx={{ color: '#1e40af', mb: 2 }}>
-                              Advance Booking
-                            </Typography>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Type</InputLabel>
-                                <Select value={advanceType} label="Type" onChange={(e) => setAdvanceType(e.target.value)}>
-                                  <MenuItem value="percentage">Percentage (%)</MenuItem>
-                                  <MenuItem value="flat">Flat (₹)</MenuItem>
-                                </Select>
-                              </FormControl>
-
-                              <TextField
-                                fullWidth
-                                label="Amount"
-                                type="number"
-                                value={advanceAmount}
-                                onChange={(e) => setAdvanceAmount(e.target.value)}
-                                InputProps={{
-                                  startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
-                                }}
-                                size="small"
-                              />
-                            </Box>
-                          </Box>
-                        </Stack>
-                      </Box>
-                    </Grid>
-
-                    {/* Column 3 - Grand Total */}
-                    <Grid item xs={12} md={4}>
-                      <Box
-                        sx={{
-                          p: 3,
-                          ml: { xs: 0, md: 30 }, // 👈 moves RIGHT on desktop
-                          display: 'flex',
-
-                          borderRadius: 2,
-                          backgroundColor: '#ffffff',
-                          border: '2px solid #e5e7eb',
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
-                            borderColor: '#E15B65'
-                          }
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                          <Box
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: '50%',
-                              backgroundColor: '#f59e0b',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              mr: 2
-                            }}
-                          >
-                            <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>Σ</Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
-                            Summary
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                          <Box
-                            sx={{
-                              p: 5,
-                              borderRadius: 3,
-                              background: 'linear-gradient(135deg, #E15B65 0%, #c94450 100%)',
-                              color: 'white',
-                              textAlign: 'center',
-                              boxShadow: '0 10px 30px rgba(225, 91, 101, 0.35)',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: -30,
-                                right: -30,
-                                width: 120,
-                                height: 120,
-                                borderRadius: '50%',
-                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                              },
-                              '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: -40,
-                                left: -40,
-                                width: 100,
-                                height: 100,
-                                borderRadius: '50%',
-                                backgroundColor: 'rgba(255, 255, 255, 0.06)'
-                              }
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              sx={{
-                                opacity: 1,
-                                mb: 2,
-                                position: 'relative',
-                                zIndex: 1,
-                                letterSpacing: 1,
-                                textTransform: 'uppercase',
-                                fontSize: '0.75rem',
-                                color: 'rgba(255, 255, 255, 0.95)'
-                              }}
-                            >
-                              Grand Total
-                            </Typography>
-
-                            <Box sx={{ position: 'relative', zIndex: 1 }}>
-                              <Typography
-                                variant="h2"
-                                fontWeight={700}
-                                sx={{
-                                  mb: 1.5,
-                                  textShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                                  fontSize: { xs: '2.5rem', md: '3rem' }
-                                }}
-                              >
-                                ₹ {basicPackagePrice || '0'}
-                              </Typography>
-                            </Box>
-
-                            <Box
-                              sx={{
-                                mt: 2.5,
-                                pt: 2.5,
-                                borderTop: '2px solid rgba(255, 255, 255, 0.2)',
-                                position: 'relative',
-                                zIndex: 1
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  opacity: 0.95,
-                                  fontWeight: 500,
-                                  fontSize: '0.85rem',
-                                  lineHeight: 1.5
-                                }}
-                              >
-                                Base Price + Taxes & Fees
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              mt: 3,
-                              p: 2.5,
-                              borderRadius: 2,
-                              backgroundColor: '#fffbeb',
-                              border: '1px solid #fde68a',
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: 1.5
-                            }}
-                          >
-                            <Typography sx={{ fontSize: '1.2rem' }}>💡</Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: '#92400e',
-                                lineHeight: 1.7,
-                                fontSize: '0.813rem',
-                                fontWeight: 500
-                              }}
-                            >
-                              Final amount calculated based on base price and applied discounts
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Card>
+                <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>₹</Typography>
+              </Box>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
+                Package Details
+              </Typography>
             </Box>
-          )}
 
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+              {/* Basic Package Info */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  backgroundColor: '#fef3f2',
+                  border: '1px solid #fecaca',
+                  height: '100%'
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#991b1b', mb: 2 }}>
+                  Basic Package
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Base Package Price"
+                    type="number"
+                    value={basicPackagePrice}
+                    onChange={(e) => setBasicPackagePrice(e.target.value)}
+                    placeholder="0"
+                    InputProps={{
+                      startAdornment: <Typography sx={{ mr: 0.5, color: '#E15B65', fontWeight: 600 }}>₹</Typography>
+                    }}
+                    size="small"
+                  />
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Hours Included</InputLabel>
+                      <Select
+                        value={hoursIncluded}
+                        label="Hours Included"
+                        onChange={(e) => setHoursIncluded(e.target.value)}
+                      >
+                        <MenuItem value="">Select</MenuItem>
+                        <MenuItem value="4">4 Hrs</MenuItem>
+                        <MenuItem value="6">6 Hrs</MenuItem>
+                        <MenuItem value="8">8 Hrs</MenuItem>
+                        <MenuItem value="10">10 Hrs</MenuItem>
+                        <MenuItem value="12">12 Hrs</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth size="small">
+                      <InputLabel>KM Included</InputLabel>
+                      <Select
+                        value={kmIncluded}
+                        label="KM Included"
+                        onChange={(e) => setKmIncluded(e.target.value)}
+                      >
+                        <MenuItem value="">Select</MenuItem>
+                        <MenuItem value="50">50 KM</MenuItem>
+                        <MenuItem value="100">100 KM</MenuItem>
+                        <MenuItem value="150">150 KM</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Stack>
+              </Box>
+
+              {/* Apply Discount */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  height: '100%'
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#15803d', mb: 2 }}>
+                  Apply Discount
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Type</InputLabel>
+                    <Select value={discountType} label="Type" onChange={(e) => setDiscountType(e.target.value)}>
+                      <MenuItem value="percentage">Percentage (%)</MenuItem>
+                      <MenuItem value="flat">Flat Rate (₹)</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    label="Value"
+                    type="number"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Row 2: Summary */}
+          <Box
+            sx={{
+              p: 4,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #eee6e6 0%, #aca5a6 100%)',
+              color: 'white',
+              textAlign: 'center',
+              boxShadow: '0 10px 30px rgba(225, 91, 101, 0.35)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
+                }}
+              >
+                <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>Σ</Typography>
+              </Box>
+              <Typography variant="h6" fontWeight={700}>
+                GRAND TOTAL
+              </Typography>
+            </Box>
+
+            <Typography
+              variant="h2"
+              fontWeight={700}
+              sx={{
+                mb: 1,
+                textShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                fontSize: { xs: '2.5rem', md: '3.5rem' }
+              }}
+            >
+              ₹ {basicPackagePrice || '0'}
+            </Typography>
+
+            <Typography variant="body2" sx={{ opacity: 0.95, fontWeight: 500 }}>
+              Base Price + Taxes & Fees
+            </Typography>
+
+            <Box
+              sx={{
+                mt: 3,
+                pt: 2,
+                borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <Typography sx={{ fontSize: '1.1rem' }}>💡</Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                Final amount calculated based on base price and applied discounts
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Row 3: Extra Charges & Advance */}
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '2px solid #e5e7eb',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 8px 24px rgba(225, 91, 101, 0.15)',
+                borderColor: '#E15B65'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
+                }}
+              >
+                <Typography sx={{ color: 'white', fontSize: 20, fontWeight: 700 }}>%</Typography>
+              </Box>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#1f2937' }}>
+                Offers & Advance
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+              {/* Extra Charges */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  backgroundColor: '#fff7ed',
+                  border: '1px solid #fed7aa',
+                  height: '100%'
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#9a3412', mb: 2 }}>
+                  Extra Charges
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Price/KM"
+                    type="number"
+                    value={additionalPricePerKm}
+                    onChange={(e) => setAdditionalPricePerKm(e.target.value)}
+                    placeholder="0"
+                    InputProps={{
+                      startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
+                    }}
+                    size="small"
+                  />
+
+                  <FormControl fullWidth size="small">
+                    <InputLabel>After KM</InputLabel>
+                    <Select 
+                      value={afterKilometer} 
+                      label="After KM"
+                      onChange={(e) => setAfterKilometer(e.target.value)}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="1">Per KM</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Box>
+
+              {/* Advance Booking */}
+              <Box
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  height: '100%'
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} sx={{ color: '#1e40af', mb: 2 }}>
+                  Advance Booking
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Type</InputLabel>
+                    <Select value={advanceType} label="Type" onChange={(e) => setAdvanceType(e.target.value)}>
+                      <MenuItem value="percentage">Percentage (%)</MenuItem>
+                      <MenuItem value="flat">Flat (₹)</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    label="Amount"
+                    type="number"
+                    value={advanceAmount}
+                    onChange={(e) => setAdvanceAmount(e.target.value)}
+                    InputProps={{
+                      startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
+                    }}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
+    </Card>
+  </Box>
+)}
           <Box
             sx={{
               mt: 3,
@@ -2950,7 +2837,6 @@ const Createnew = () => {
               />
             </UploadDropArea>
           </Box>
-
           {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>
             <Card

@@ -40,11 +40,10 @@ export default function UpgradePlanUI() {
 
         // ✅ Call verify endpoint
         const res = await axios.post(`${API_BASE}/api/razorpay/subscription/verify`, {
-  razorpay_payment_id: params.get("razorpay_payment_id"),
-  razorpay_subscription_id: params.get("razorpay_subscription_id"),
-  razorpay_signature: params.get("razorpay_signature"),
-});
-
+          razorpay_payment_id: params.get('razorpay_payment_id'),
+          razorpay_subscription_id: params.get('razorpay_subscription_id'),
+          razorpay_signature: params.get('razorpay_signature')
+        });
 
         console.log('✅ Verify response:', res.data);
 
@@ -106,7 +105,7 @@ export default function UpgradePlanUI() {
 
             // Redirect to portfolio after 2 seconds
             setTimeout(() => {
-              window.location.replace('/makeupartist/portfolio');
+              window.location.replace('/catering/addpackage');
             }, 2000);
           }
         } else {
@@ -267,32 +266,31 @@ export default function UpgradePlanUI() {
   }, [moduleId]);
 
   // ✅ Load Razorpay Checkout Script
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    // Already loaded
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      // Already loaded
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
 
-    script.onload = () => {
-      console.log("✅ Razorpay SDK loaded");
-      resolve(true);
-    };
+      script.onload = () => {
+        console.log('✅ Razorpay SDK loaded');
+        resolve(true);
+      };
 
-    script.onerror = () => {
-      console.error("❌ Razorpay SDK failed to load");
-      resolve(false);
-    };
+      script.onerror = () => {
+        console.error('❌ Razorpay SDK failed to load');
+        resolve(false);
+      };
 
-    document.body.appendChild(script);
-  });
-};
-
+      document.body.appendChild(script);
+    });
+  };
 
   /* ---------- HANDLE UPGRADE - DIRECT TO PAYMENT ---------- */
   const handleUpgrade = async (plan) => {
@@ -319,12 +317,8 @@ const loadRazorpayScript = () => {
       });
 
       const { razorpay, customer } = res.data;
-      console.log("🔑 Razorpay Key:", razorpay.key);
-console.log(
-  "🧪 Razorpay Mode:",
-  razorpay.key.startsWith("rzp_test_") ? "TEST MODE" : "LIVE MODE"
-);
-
+      console.log('🔑 Razorpay Key:', razorpay.key);
+      console.log('🧪 Razorpay Mode:', razorpay.key.startsWith('rzp_test_') ? 'TEST MODE' : 'LIVE MODE');
 
       if (!razorpay?.subscriptionId) {
         throw new Error('Subscription ID missing from backend');
@@ -352,7 +346,7 @@ console.log(
               });
 
               setTimeout(() => {
-                window.location.replace('/makeupartist/portfolio');
+                window.location.replace('/catering/addpackage');
               }, 1500);
             } else {
               throw new Error('Verification failed');
