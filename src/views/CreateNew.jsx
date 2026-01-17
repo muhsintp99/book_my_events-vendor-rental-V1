@@ -24,7 +24,28 @@ import {
   CircularProgress,
   Checkbox
 } from '@mui/material';
-import { CloudUpload as CloudUploadIcon, ArrowBack as ArrowBackIcon, DirectionsCar as DirectionsCarIcon } from '@mui/icons-material';
+import {
+  CloudUpload as CloudUploadIcon,
+  ArrowBack as ArrowBackIcon,
+  DirectionsCar as DirectionsCarIcon,
+  EventSeat as ChairIcon,
+  MusicNote as MusicIcon,
+  Security as SafetyIcon,
+  Settings as ConvenienceIcon,
+  Wifi as WifiIcon,
+  Usb as UsbIcon,
+  Luggage as LuggageIcon,
+  Tv as TvIcon,
+  VolumeUp as SpeakerIcon,
+  MeetingRoom as DoorIcon,
+  Sensors as SensorsIcon,
+  CameraAlt as CameraIcon,
+  Bluetooth as BluetoothIcon,
+  GpsFixed as GpsIcon,
+  Emergency as EmergencyIcon,
+  Visibility as CctvIcon,
+  Store as StorageIcon
+} from '@mui/icons-material';
 import { styled } from '@mui/system';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -106,14 +127,26 @@ const Createnew = () => {
   const [busFeatures, setBusFeatures] = useState({
     curtains: false,
     readingLights: false,
+    footRest: false,              // NEW
+    bottleHolder: false,          // NEW
+
     musicSystem: false,
     microphone: false,
+    ledDisplay: false,             // NEW
+    tvScreen: false,               // NEW
+
     fireExtinguisher: false,
     firstAidKit: false,
+    ledEmergencyExit: false,       // NEW
+    cctv: false,                   // NEW
+
     luggageCarrier: false,
+    overheadStorage: false,        // NEW
+
     wifi: false,
     chargingPoints: false
   });
+
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
@@ -591,11 +624,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-              .filter((zone) => zone.isActive)
-              .map((zone) => ({
-                _id: zone._id,
-                name: zone.name
-              }))
+            .filter((zone) => zone.isActive)
+            .map((zone) => ({
+              _id: zone._id,
+              name: zone.name
+            }))
           : [];
 
         setZones(zonesData);
@@ -795,15 +828,11 @@ const Createnew = () => {
   }, []);
 
   // License plate validation
-  const validateLicensePlate = useCallback((value) => {
-    const regex = /^[A-Z0-9]{6,8}$/;
-    if (!regex.test(value)) {
-      setLicensePlateError('License plate must be 6-8 alphanumeric characters');
-      return false;
-    }
+  const validateLicensePlate = () => {
     setLicensePlateError('');
     return true;
-  }, []);
+  };
+
 
   // Reset form
   const handleReset = useCallback(() => {
@@ -866,18 +895,29 @@ const Createnew = () => {
       chargingPoints: false
     });
 
-    // Reset bus features
     setBusFeatures({
       curtains: false,
       readingLights: false,
+      footRest: false,
+      bottleHolder: false,
+
       musicSystem: false,
       microphone: false,
+      ledDisplay: false,
+      tvScreen: false,
+
       fireExtinguisher: false,
       firstAidKit: false,
+      ledEmergencyExit: false,
+      cctv: false,
+
       luggageCarrier: false,
+      overheadStorage: false,
+
       wifi: false,
       chargingPoints: false
     });
+
 
     // -------- PACKAGE PRICING --------
     setBasicPackagePrice('');
@@ -1086,6 +1126,17 @@ const Createnew = () => {
         formData.append('busFeatures[luggageCarrier]', busFeatures.luggageCarrier);
         formData.append('busFeatures[wifi]', busFeatures.wifi);
         formData.append('busFeatures[chargingPoints]', busFeatures.chargingPoints);
+        formData.append('busFeatures[footRest]', busFeatures.footRest);
+        formData.append('busFeatures[bottleHolder]', busFeatures.bottleHolder);
+
+        formData.append('busFeatures[ledDisplay]', busFeatures.ledDisplay);
+        formData.append('busFeatures[tvScreen]', busFeatures.tvScreen);
+
+        formData.append('busFeatures[ledEmergencyExit]', busFeatures.ledEmergencyExit);
+        formData.append('busFeatures[cctv]', busFeatures.cctv);
+
+        formData.append('busFeatures[overheadStorage]', busFeatures.overheadStorage);
+
       }
 
       // Attach dynamic vehicle attributes
@@ -1930,7 +1981,7 @@ const Createnew = () => {
                       </Typography>
                     </Box>
                   )}
-                  <TextField
+                  {/* <TextField
                     fullWidth
                     label="Operating Hours"
                     variant="outlined"
@@ -1939,12 +1990,12 @@ const Createnew = () => {
                     placeholder="e.g., 9:00 AM - 6:00 PM"
                     multiline
                     rows={2}
-                  />
+                  /> */}
                 </Box>
               </CardContent>
             </Card>
           </Box>
-          {/* ---------------- Vehicle Attributes ---------------- */}
+          {/* ---------------- Vehicle Attributes ----------------
           <Box sx={{ mb: 4 }}>
             <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
               <CardContent>
@@ -1984,7 +2035,7 @@ const Createnew = () => {
                 </Box>
               </CardContent>
             </Card>
-          </Box>
+          </Box> */}
           <Box sx={{ mb: 4 }}>
             <CardContent sx={{ '&:last-child': { pb: 2 } }}>
               <Typography variant="h6" gutterBottom>
@@ -2067,9 +2118,11 @@ const Createnew = () => {
               sx={{
                 mt: 6,
                 mb: 6,
-                borderRadius: 3,
-                border: '1px solid #e5e7eb',
-                backgroundColor: '#fafafa'
+                borderRadius: 4,
+                border: 'none',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                backgroundColor: '#ffffff',
+                overflow: 'hidden'
               }}
             >
               {/* Header */}
@@ -2077,25 +2130,32 @@ const Createnew = () => {
                 sx={{
                   px: 4,
                   py: 3,
-                  borderBottom: '1px solid #e5e7eb',
-                  background: 'linear-gradient(135deg, #f9fafb, #ffffff)'
+                  background: 'linear-gradient(135deg, #e9ebef 0%, #b3b7c1 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
                 }}
               >
-                <Typography variant="h6" fontWeight={700}>
-                  🚗 Vehicle Features
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Select features available in this vehicle
-                </Typography>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                    Vehicle Features & Amenities
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Customize the luxury and comfort options for your vehicle
+                  </Typography>
+                </Box>
+                <DirectionsCarIcon sx={{ fontSize: 40, opacity: 0.2 }} />
               </Box>
 
-              {/* Content */}
-              <Box sx={{ px: 4, py: 4 }}>
-                <Stack spacing={4}>
-                  {/* Feature Section Component */}
+              {/* Grid Content */}
+              <Box sx={{ p: 4 }}>
+                <Grid container spacing={10} sx={{ width: '100%', m: 0 }}>
                   {[
                     {
                       title: 'Interior Comfort',
+                      icon: <ChairIcon />,
+                      number: '01',
                       items: [
                         ['Leather Seats', 'leatherSeats'],
                         ['Adjustable Seats', 'adjustableSeats'],
@@ -2104,6 +2164,8 @@ const Createnew = () => {
                     },
                     {
                       title: 'Entertainment',
+                      icon: <MusicIcon />,
+                      number: '02',
                       items: [
                         ['Music System', 'musicSystem'],
                         ['Bluetooth', 'bluetooth'],
@@ -2112,6 +2174,8 @@ const Createnew = () => {
                     },
                     {
                       title: 'Safety & Compliance',
+                      icon: <SafetyIcon />,
+                      number: '03',
                       items: [
                         ['Airbags', 'airbags'],
                         ['ABS', 'abs'],
@@ -2121,64 +2185,188 @@ const Createnew = () => {
                     },
                     {
                       title: 'Convenience',
+                      icon: <ConvenienceIcon />,
+                      number: '04',
                       items: [
                         ['Power Windows', 'powerWindows'],
                         ['Central Lock', 'centralLock'],
                         ['Keyless Entry', 'keylessEntry']
                       ]
-                    },
-                    {
-                      title: 'Extra Addons',
-                      items: [
-                        ['Wifi', 'wifi'],
-                        ['Charging Points', 'chargingPoints']
-                      ]
                     }
-                  ].map((section) => (
-                    <Box
-                      key={section.title}
-                      sx={{
-                        p: 3,
-                        backgroundColor: section.title === 'Extra Addons' ? '#e7f0f5' : '#ffffff', // 👈 added
-                        borderRadius: 2,
-                        border: '1px solid #e5e7eb'
-                      }}
-                    >
-                      <Typography fontWeight={600} mb={2}>
-                        {section.title}
-                      </Typography>
-
+                  ].map((section, idx) => (
+                    <Grid item xs={12} sm={6} md={6} key={section.title} sx={{ display: 'flex' }}>
                       <Box
                         sx={{
-                          display: 'grid',
-                          gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
-                          gap: 1.5
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          p: 3,
+                          borderRadius: 3,
+                          border: '1px solid #f0f0f0',
+                          backgroundColor: '#f9fafb',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 20px rgba(0,0,0,0.05)',
+                            borderColor: '#E15B65'
+                          }
                         }}
                       >
-                        {section.items.map(([label, key]) => (
-                          <FormControlLabel
-                            key={key}
-                            control={<Checkbox checked={carFeatures[key]} onChange={handleCarFeatureChange(key)} />}
-                            label={label}
-                          />
-                        ))}
-                      </Box>
-
-                      {/* Interior Lighting only for Extra Addons */}
-                      {section.title === 'Extra Addons' && (
-                        <Box sx={{ mt: 3 }}>
-                          <Typography fontWeight={600} mb={1}>
-                            Interior Lighting
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              backgroundColor: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                              color: '#E15B65'
+                            }}
+                          >
+                            {section.icon}
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 900,
+                              color: '#E15B65',
+                              opacity: 0.2,
+                              fontSize: '1.5rem',
+                              lineHeight: 1
+                            }}
+                          >
+                            {section.number}
                           </Typography>
-                          <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
-                            <FormControlLabel value="normal" control={<Radio />} label="Normal" />
-                            <FormControlLabel value="premium" control={<Radio />} label="Premium" />
-                          </RadioGroup>
                         </Box>
-                      )}
-                    </Box>
+
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#111827' }}>
+                          {section.title}
+                        </Typography>
+
+                        <Stack spacing={1}>
+                          {section.items.map(([label, key]) => (
+                            <FormControlLabel
+                              key={key}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={carFeatures[key]}
+                                  onChange={handleCarFeatureChange(key)}
+                                  sx={{
+                                    color: '#d1d5db',
+                                    '&.Mui-checked': { color: '#E15B65' }
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                                  {label}
+                                </Typography>
+                              }
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Grid>
                   ))}
-                </Stack>
+                </Grid>
+
+                {/* Extra Addons - Full Width Special Section */}
+                <Box
+                  sx={{
+                    mt: 4,
+                    p: 3,
+                    borderRadius: 4,
+                    background: 'linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%)',
+                    border: '1px solid #fee2e2'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        backgroundColor: '#E15B65',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 2,
+                        boxShadow: '0 4px 12px rgba(225, 91, 101, 0.3)'
+                      }}
+                    >
+                      <WifiIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#991b1b' }}>
+                        Premium Add-ons & Lighting
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#b91c1c', opacity: 0.8 }}>
+                        Special features to enhance the premium feel
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Grid container spacing={4} alignItems="center">
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={carFeatures.wifi}
+                              onChange={handleCarFeatureChange('wifi')}
+                              sx={{ '&.Mui-checked': { color: '#E15B65' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>High-Speed Wifi</Typography>}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={carFeatures.chargingPoints}
+                              onChange={handleCarFeatureChange('chargingPoints')}
+                              sx={{ '&.Mui-checked': { color: '#E15B65' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>Charging Points</Typography>}
+                        />
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box
+                        sx={{
+                          p: 2,
+                          backgroundColor: 'white',
+                          borderRadius: 3,
+                          border: '1px solid #fee2e2',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#991b1b', minWidth: 120 }}>
+                          Interior Lighting
+                        </Typography>
+                        <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
+                          <FormControlLabel
+                            value="normal"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#E15B65' } }} />}
+                            label={<Typography variant="body2">Standard</Typography>}
+                          />
+                          <FormControlLabel
+                            value="premium"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#E15B65' } }} />}
+                            label={<Typography variant="body2">Premium RGB</Typography>}
+                          />
+                        </RadioGroup>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
               </Box>
             </Card>
           )}
@@ -2187,9 +2375,11 @@ const Createnew = () => {
               sx={{
                 mt: 6,
                 mb: 6,
-                borderRadius: 3,
-                border: '1px solid #e5e7eb',
-                backgroundColor: '#fafafa'
+                borderRadius: 4,
+                border: 'none',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                backgroundColor: '#ffffff',
+                overflow: 'hidden'
               }}
             >
               {/* Header */}
@@ -2197,132 +2387,244 @@ const Createnew = () => {
                 sx={{
                   px: 4,
                   py: 3,
-                  borderBottom: '1px solid #e5e7eb',
-                  background: 'linear-gradient(135deg, #f9fafb, #ffffff)'
+                  background: 'linear-gradient(135deg, #ecedf1 0%, #adb0ba 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
                 }}
               >
-                <Typography variant="h6" fontWeight={700}>
-                  🚌 Bus Features
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Select features available in this bus
-                </Typography>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                    Bus Features & Amenities
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Configure passenger comfort and safety options for the bus
+                  </Typography>
+                </Box>
+                <SpeakerIcon sx={{ fontSize: 40, opacity: 0.2 }} />
               </Box>
 
-              {/* Content */}
-              <Box sx={{ px: 4, py: 4 }}>
-                <Stack spacing={4}>
+              {/* Grid Content */}
+              <Box sx={{ p: 4 }}>
+                <Grid container spacing={10} sx={{ width: '100%', m: 0 }}>
                   {[
                     {
-                      title: 'Interior Features',
+                      title: 'Interior Comfort',
+                      icon: <ChairIcon />,
+                      number: '01',
                       items: [
                         ['Curtains', 'curtains'],
-                        ['Reading Lights', 'readingLights']
+                        ['Reading Lights', 'readingLights'],
+                        ['Foot Rest', 'footRest'],
+                        ['Bottle Holder', 'bottleHolder']
                       ]
                     },
                     {
-                      title: 'Entertainment & Communication',
+                      title: 'Entertainment',
+                      icon: <TvIcon />,
+                      number: '02',
                       items: [
                         ['Music System', 'musicSystem'],
-                        ['Microphone', 'microphone']
+                        ['Microphone', 'microphone'],
+                        ['LED Display', 'ledDisplay'],
+                        ['TV / Screen', 'tvScreen']
                       ]
                     },
                     {
                       title: 'Safety & Compliance',
+                      icon: <SafetyIcon />,
+                      number: '03',
                       items: [
                         ['Fire Extinguisher', 'fireExtinguisher'],
-                        ['First Aid Kit', 'firstAidKit']
+                        ['First Aid Kit', 'firstAidKit'],
+                        ['LED Emergency Exit', 'ledEmergencyExit'],
+                        ['CCTV', 'cctv']
                       ]
                     },
                     {
-                      title: 'Storage',
-                      items: [['Luggage Carrier', 'luggageCarrier']]
-                    },
-                    {
-                      title: 'Extra Addons',
+                      title: 'Storage & Utilities',
+                      icon: <LuggageIcon />,
+                      number: '04',
                       items: [
-                        ['Wifi', 'wifi'],
-                        ['Charging Points', 'chargingPoints']
+                        ['Luggage Carrier', 'luggageCarrier'],
+                        ['Overhead Storage', 'overheadStorage']
                       ]
                     }
                   ].map((section) => (
-                    <Box
-                      key={section.title}
-                      sx={{
-                        p: 3,
-                        backgroundColor: section.title === 'Extra Addons' ? '#e5edf6' : '#ffffff', // 👈 added
-                        borderRadius: 2,
-                        border: '1px solid #e5e7eb'
-                      }}
-                    >
-                      <Typography fontWeight={600} mb={2}>
-                        {section.title}
-                      </Typography>
-
-                      {/* ===== EXTRA ADDONS (CORRECT LAYOUT) ===== */}
-                      {section.title === 'Extra Addons' ? (
-                        <>
-                          {/* CHECKBOXES ROW */}
+                    <Grid item xs={12} sm={6} md={6} lg={3} key={section.title} sx={{ display: 'flex' }}>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          p: 3,
+                          borderRadius: 3,
+                          border: '1px solid #f0f0f0',
+                          backgroundColor: '#f8fafc',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 20px rgba(0,0,0,0.05)',
+                            borderColor: '#98a0bc'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                           <Box
                             sx={{
-                              display: 'grid',
-                              gridTemplateColumns: isSmallScreen ? '1fr' : '1fr 1fr',
-                              gap: 2,
-                              mb: 3
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              backgroundColor: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                              color: '#7882a3'
                             }}
                           >
-                            <FormControlLabel
-                              control={<Checkbox checked={busFeatures.wifi} onChange={handleBusFeatureChange('wifi')} />}
-                              label="Wifi"
-                            />
-
-                            <FormControlLabel
-                              control={
-                                <Checkbox checked={busFeatures.chargingPoints} onChange={handleBusFeatureChange('chargingPoints')} />
-                              }
-                              label="Charging Points"
-                            />
+                            {section.icon}
                           </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 900,
+                              color: '#1e40af',
+                              opacity: 0.1,
+                              fontSize: '1.5rem',
+                              lineHeight: 1
+                            }}
+                          >
+                            {section.number}
+                          </Typography>
+                        </Box>
 
-                          {/* INTERIOR LIGHTING BELOW */}
-                          <Box>
-                            <Typography
-                              sx={{
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                mb: 1
-                              }}
-                            >
-                              Interior Lighting
-                            </Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#111827' }}>
+                          {section.title}
+                        </Typography>
 
-                            <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
-                              <FormControlLabel value="normal" control={<Radio />} label="Normal" />
-                              <FormControlLabel value="premium" control={<Radio />} label="Premium" />
-                            </RadioGroup>
-                          </Box>
-                        </>
-                      ) : (
-                        /* ===== ALL OTHER SECTIONS ===== */
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)',
-                            gap: 1.5
-                          }}
-                        >
+                        <Stack spacing={1}>
                           {section.items.map(([label, key]) => (
                             <FormControlLabel
                               key={key}
-                              control={<Checkbox checked={busFeatures[key]} onChange={handleBusFeatureChange(key)} />}
-                              label={label}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={busFeatures[key]}
+                                  onChange={handleBusFeatureChange(key)}
+                                  sx={{
+                                    color: '#d1d5db',
+                                    '&.Mui-checked': { color: '#1e40af' }
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                                  {label}
+                                </Typography>
+                              }
                             />
                           ))}
-                        </Box>
-                      )}
-                    </Box>
+                        </Stack>
+                      </Box>
+                    </Grid>
                   ))}
-                </Stack>
+                </Grid>
+
+                {/* Extra Addons - Full Width Special Section */}
+                <Box
+                  sx={{
+                    mt: 4,
+                    p: 3,
+                    borderRadius: 4,
+                    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                    border: '1px solid #bfdbfe'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        backgroundColor: '#42454f',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 2,
+                        boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+                      }}
+                    >
+                      <WifiIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e3a8a' }}>
+                        Premium Add-ons & Lighting
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#1e40af', opacity: 0.8 }}>
+                        Special connectivity and ambient features for passengers
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Grid container spacing={4} alignItems="center">
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={busFeatures.wifi}
+                              onChange={handleBusFeatureChange('wifi')}
+                              sx={{ '&.Mui-checked': { color: '#1e40af' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>Guest Wifi</Typography>}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={busFeatures.chargingPoints}
+                              onChange={handleBusFeatureChange('chargingPoints')}
+                              sx={{ '&.Mui-checked': { color: '#1e40af' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>USB Charging ports</Typography>}
+                        />
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box
+                        sx={{
+                          p: 2,
+                          backgroundColor: 'white',
+                          borderRadius: 3,
+                          border: '1px solid #bfdbfe',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e3a8a', minWidth: 120 }}>
+                          Interior Lighting
+                        </Typography>
+                        <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
+                          <FormControlLabel
+                            value="normal"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#1e40af' } }} />}
+                            label={<Typography variant="body2">Normal</Typography>}
+                          />
+                          <FormControlLabel
+                            value="premium"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#1e40af' } }} />}
+                            label={<Typography variant="body2">Premium Ambient</Typography>}
+                          />
+                        </RadioGroup>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
               </Box>
             </Card>
           )}
@@ -2421,7 +2723,7 @@ const Createnew = () => {
                               }}
                               size="small"
                             />
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5,mt: 3 }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, mt: 3 }}>
                               <FormControl fullWidth size="small">
                                 <InputLabel>Hours Included</InputLabel>
                                 <Select value={hoursIncluded} label="Hours Included" onChange={(e) => setHoursIncluded(e.target.value)}>
