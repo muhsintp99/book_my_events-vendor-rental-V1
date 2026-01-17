@@ -101,7 +101,7 @@ export default function UpgradePlanUI() {
 
             // Redirect to portfolio after 2 seconds
             setTimeout(() => {
-              window.location.replace('/makeupartist/portfolio');
+              window.location.replace('/photography/portfolio');
             }, 2000);
           }
         } else {

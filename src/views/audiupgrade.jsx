@@ -106,7 +106,7 @@ export default function UpgradePlanUI() {
 
             // Redirect to portfolio after 2 seconds
             setTimeout(() => {
-              window.location.replace('/makeupartist/portfolio');
+              window.location.replace('/venue-setup/new');
             }, 2000);
           }
         } else {
@@ -352,7 +352,7 @@ console.log(
               });
 
               setTimeout(() => {
-                window.location.replace('/makeupartist/portfolio');
+                window.location.replace('/venue-setup/new');
               }, 1500);
             } else {
               throw new Error('Verification failed');
