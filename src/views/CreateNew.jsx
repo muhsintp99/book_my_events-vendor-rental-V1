@@ -148,6 +148,35 @@ const Createnew = () => {
     chargingPoints: false
   });
 
+  const [vanFeatures, setVanFeatures] = useState({
+    curtains: false,
+    readingLights: false,
+    footRest: false,
+    bottleHolder: false,
+
+    musicSystem: false,
+    tvScreen: false,
+
+    fireExtinguisher: false,
+    firstAidKit: false,
+    cctv: false,
+
+    luggageCarrier: false,
+    overheadStorage: false,
+
+    wifi: false,
+    chargingPoints: false
+  });
+
+  const [bikeFeatures, setBikeFeatures] = useState({
+    helmet: false,
+    storageBox: false,
+    abs: false,
+    mobileHolder: false,
+    rearRack: false,
+    windshield: false
+  });
+
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
   const moduleId = localStorage.getItem('moduleId');
@@ -245,6 +274,20 @@ const Createnew = () => {
     const selectedParentCat = parentCategories.find((cat) => cat._id === parentCategory);
     console.log('Category check (Car):', selectedParentCat?.title);
     return selectedParentCat?.title?.toLowerCase().includes('car') || selectedParentCat?.title?.toLowerCase().includes('vehicle');
+  }, [parentCategory, parentCategories]);
+
+  const isVanCategory = useMemo(() => {
+    if (!parentCategory || !parentCategories.length) return false;
+    const selectedParentCat = parentCategories.find((cat) => cat._id === parentCategory);
+    console.log('Category check (Van):', selectedParentCat?.title);
+    return selectedParentCat?.title?.toLowerCase().includes('van');
+  }, [parentCategory, parentCategories]);
+
+  const isBikeCategory = useMemo(() => {
+    if (!parentCategory || !parentCategories.length) return false;
+    const selectedParentCat = parentCategories.find((cat) => cat._id === parentCategory);
+    console.log('Category check (Bike):', selectedParentCat?.title);
+    return selectedParentCat?.title?.toLowerCase().includes('bike');
   }, [parentCategory, parentCategories]);
   const handleVehicleDocumentsChange = (event) => {
     const files = Array.from(event.target.files);
@@ -574,7 +617,8 @@ const Createnew = () => {
             ...prev,
             curtains: vehicle.features.interiorFeatures.curtains ?? false,
             readingLights: vehicle.features.interiorFeatures.readingLights ?? false,
-            footRest: vehicle.features.interiorFeatures.footRest ?? false
+            footRest: vehicle.features.interiorFeatures.footRest ?? false,
+            bottleHolder: vehicle.features.interiorFeatures.bottleHolder ?? false
           }));
         }
 
@@ -643,20 +687,80 @@ const Createnew = () => {
             keylessEntry: vehicle.features.convenience.keylessEntry ?? false
           }));
         }
+
+        // VAN FEATURES
+        if (vehicle.features.interiorFeatures) {
+          setVanFeatures((prev) => ({
+            ...prev,
+            curtains: vehicle.features.interiorFeatures.curtains ?? false,
+            readingLights: vehicle.features.interiorFeatures.readingLights ?? false,
+            footRest: vehicle.features.interiorFeatures.footRest ?? false,
+            bottleHolder: vehicle.features.interiorFeatures.bottleHolder ?? false
+          }));
+        }
+
+        if (vehicle.features.entertainment) {
+          setVanFeatures((prev) => ({
+            ...prev,
+            musicSystem: vehicle.features.entertainment.musicSystem ?? false,
+            tvScreen: vehicle.features.entertainment.tvScreen ?? false
+          }));
+        }
+
+        if (vehicle.features.safetyAndCompliance) {
+          setVanFeatures((prev) => ({
+            ...prev,
+            fireExtinguisher: vehicle.features.safetyAndCompliance.fireExtinguisher ?? false,
+            firstAidKit: vehicle.features.safetyAndCompliance.firstAidKit ?? false,
+            cctv: vehicle.features.safetyAndCompliance.cctv ?? false
+          }));
+        }
+
+        if (vehicle.features.storage) {
+          setVanFeatures((prev) => ({
+            ...prev,
+            luggageCarrier: vehicle.features.storage.luggageCarrier ?? false,
+            overheadStorage: vehicle.features.storage.overheadStorage ?? false
+          }));
+        }
+
+        // BIKE FEATURES
+        if (vehicle.features.safetyAccessories) {
+          setBikeFeatures((prev) => ({
+            ...prev,
+            helmet: vehicle.features.safetyAccessories.helmet ?? false,
+            abs: vehicle.features.safetyAccessories.abs ?? false,
+            mobileHolder: vehicle.features.safetyAccessories.mobileHolder ?? false
+          }));
+        }
+
+        if (vehicle.features.utilityStorage) {
+          setBikeFeatures((prev) => ({
+            ...prev,
+            storageBox: vehicle.features.utilityStorage.storageBox ?? false,
+            rearRack: vehicle.features.utilityStorage.rearRack ?? false,
+            windshield: vehicle.features.utilityStorage.windshield ?? false
+          }));
+        }
       }
 
       // ============= EXTRA ADDONS (NESTED) =============
       if (vehicle.extraAddons) {
-        // Determine if it's bus or car based on category
-        const isBus = vehicle.category?.title?.toLowerCase().includes('bus');
+        const catTitle = vehicle.category?.title?.toLowerCase() || '';
 
-        if (isBus) {
+        if (catTitle.includes('bus')) {
           setBusFeatures((prev) => ({
             ...prev,
             wifi: vehicle.extraAddons.wifi ?? false,
             chargingPoints: vehicle.extraAddons.chargingPorts ?? false
           }));
-        } else {
+        } else if (catTitle.includes('van')) {
+          setVanFeatures((prev) => ({
+            ...prev,
+            wifi: vehicle.extraAddons.wifi ?? false,
+            chargingPoints: vehicle.extraAddons.chargingPorts ?? false
+          }));
+        } else if (catTitle.includes('car') || catTitle.includes('vehicle')) {
           setCarFeatures((prev) => ({
             ...prev,
             wifi: vehicle.extraAddons.wifi ?? false,
@@ -732,7 +836,7 @@ const Createnew = () => {
 
       console.log('✅ Vehicle data populated successfully');
     },
-    [brands, categories, zones, API_BASE_URL]
+    [brands, categories, zones, API_BASE_URL, setBusFeatures, setVanFeatures, setCarFeatures, setBikeFeatures]
   );
 
   useEffect(() => {
@@ -784,11 +888,11 @@ const Createnew = () => {
         const rawZones = zonesResponse.data.data || zonesResponse.data || [];
         const zonesData = Array.isArray(rawZones)
           ? rawZones
-              .filter((zone) => zone.isActive)
-              .map((zone) => ({
-                _id: zone._id,
-                name: zone.name
-              }))
+            .filter((zone) => zone.isActive)
+            .map((zone) => ({
+              _id: zone._id,
+              name: zone.name
+            }))
           : [];
 
         setZones(zonesData);
@@ -1304,9 +1408,62 @@ const Createnew = () => {
         formData.append('features', JSON.stringify(carFeatureStructure));
       }
 
+      if (isVanCategory) {
+        const vanFeatureStructure = {
+          interiorFeatures: {
+            curtains: vanFeatures.curtains || false,
+            readingLights: vanFeatures.readingLights || false,
+            footRest: vanFeatures.footRest || false,
+            bottleHolder: vanFeatures.bottleHolder || false
+          },
+          entertainment: {
+            musicSystem: vanFeatures.musicSystem || false,
+            tvScreen: vanFeatures.tvScreen || false
+          },
+          safetyAndCompliance: {
+            fireExtinguisher: vanFeatures.fireExtinguisher || false,
+            firstAidKit: vanFeatures.firstAidKit || false,
+            cctv: vanFeatures.cctv || false
+          },
+          storage: {
+            luggageCarrier: vanFeatures.luggageCarrier || false,
+            overheadStorage: vanFeatures.overheadStorage || false
+          }
+        };
+        formData.append('features', JSON.stringify(vanFeatureStructure));
+      }
+
+      if (isBikeCategory) {
+        const bikeFeatureStructure = {
+          safetyAccessories: {
+            helmet: bikeFeatures.helmet || false,
+            abs: bikeFeatures.abs || false,
+            mobileHolder: bikeFeatures.mobileHolder || false
+          },
+          utilityStorage: {
+            storageBox: bikeFeatures.storageBox || false,
+            rearRack: bikeFeatures.rearRack || false,
+            windshield: bikeFeatures.windshield || false
+          }
+        };
+        formData.append('features', JSON.stringify(bikeFeatureStructure));
+      }
+
       // ==================== EXTRA ADDONS (NESTED) ====================
-      formData.append('extraAddons[wifi]', isBusCategory ? busFeatures.wifi : carFeatures.wifi);
-      formData.append('extraAddons[chargingPorts]', isBusCategory ? busFeatures.chargingPoints : carFeatures.chargingPoints);
+      let wifi = false;
+      let chargingPorts = false;
+      if (isBusCategory) {
+        wifi = busFeatures.wifi;
+        chargingPorts = busFeatures.chargingPoints;
+      } else if (isVanCategory) {
+        wifi = vanFeatures.wifi;
+        chargingPorts = vanFeatures.chargingPoints;
+      } else if (isCarCategory) {
+        wifi = carFeatures.wifi;
+        chargingPorts = carFeatures.chargingPoints;
+      }
+      formData.append('extraAddons[wifi]', wifi);
+      formData.append('extraAddons[chargingPorts]', chargingPorts);
       formData.append('extraAddons[interiorLighting]', interiorLighting === 'premium');
 
       // ==================== PRICING (NESTED) ====================
@@ -1322,6 +1479,24 @@ const Createnew = () => {
 
       formData.append('pricing[decoration][available]', features.decorationAvailable || false);
       formData.append('pricing[decoration][price]', parseFloat(decorationPrice) || 0);
+
+      // ==================== CALCULATE GRAND TOTAL ====================
+      const calculateGrandTotal = () => {
+        const base = parseFloat(basicPackagePrice) || 0;
+        const dec = (features.decorationAvailable && decorationPrice) ? parseFloat(decorationPrice) : 0;
+        const disc = parseFloat(discount) || 0;
+        let discAmt = 0;
+
+        if (discountType === 'percentage') {
+          discAmt = (base * disc) / 100;
+        } else if (discountType === 'flat') {
+          discAmt = disc;
+        }
+
+        return Math.max(base + dec - discAmt, 0);
+      };
+
+      formData.append('pricing[grandTotal]', calculateGrandTotal());
 
       // ==================== ADVANCE BOOKING AMOUNT ====================
       formData.append('advanceBookingAmount', parseFloat(advanceAmount) || 0);
@@ -1462,8 +1637,16 @@ const Createnew = () => {
       handleReset,
       navigate,
       API_BASE_URL,
+      setCarFeatures,
+      setBusFeatures,
+      setVanFeatures,
+      setBikeFeatures,
+      isBusCategory,
       isCarCategory,
-      isBusCategory
+      isVanCategory,
+      isBikeCategory,
+      API_BASE_URL,
+      zones
     ]
   );
 
@@ -1500,8 +1683,25 @@ const Createnew = () => {
     }));
   };
 
+  // Handle van feature changes
+  const handleVanFeatureChange = (feature) => (event) => {
+    setVanFeatures((prev) => ({
+      ...prev,
+      [feature]: event.target.checked
+    }));
+  };
+
+  // Handle bike feature changes
+  const handleBikeFeatureChange = (feature) => (event) => {
+    setBikeFeatures((prev) => ({
+      ...prev,
+      [feature]: event.target.checked
+    }));
+  };
+
   // ================= GRAND TOTAL CALCULATION =================
   const basePrice = Number(basicPackagePrice) || 0;
+  const decPrice = (features.decorationAvailable && decorationPrice) ? Number(decorationPrice) : 0;
   const discountValue = Number(discount) || 0;
 
   let discountAmount = 0;
@@ -1519,7 +1719,7 @@ const Createnew = () => {
     discountAmount = basePrice;
   }
 
-  const grandTotal = Math.max(basePrice - discountAmount, 0);
+  const grandTotal = Math.max(basePrice + decPrice - discountAmount, 0);
 
   return (
     <Box sx={{ p: isSmallScreen ? 2 : 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
@@ -1844,8 +2044,8 @@ const Createnew = () => {
                       required
                     />
 
-                    {/* Show Legroom Type only for Bus */}
-                    {isBusCategory && (
+                    {/* Show Legroom Type only for Bus and Van */}
+                    {(isBusCategory || isVanCategory) && (
                       <FormControl fullWidth variant="outlined">
                         <InputLabel id="legroom-label">Select Legroom Type</InputLabel>
                         <Select
@@ -1862,8 +2062,8 @@ const Createnew = () => {
                       </FormControl>
                     )}
 
-                    {/* Pushback Seats & Recliner Seats - Side by Side for Bus */}
-                    {isBusCategory && (
+                    {/* Pushback Seats & Recliner Seats - Side by Side for Bus and Van */}
+                    {(isBusCategory || isVanCategory) && (
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                         {/* Pushback Seats */}
                         <Box>
@@ -1979,8 +2179,8 @@ const Createnew = () => {
                     Engine & Performance
                   </Typography>
 
-                  {isBusCategory ? (
-                    /* BUS LAYOUT */
+                  {isBusCategory || isVanCategory ? (
+                    /* BUS & VAN LAYOUT */
                     <Stack spacing={3}>
                       <Box sx={{ display: 'grid', gridTemplateColumns: isSmallScreen ? '1fr' : 'repeat(3, 1fr)', gap: theme.spacing(3) }}>
                         <FormControl fullWidth size="small">
@@ -2233,79 +2433,79 @@ const Createnew = () => {
             </Card>
           </Box> */}
           <Box sx={{ mb: 4 }}>
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-              <Typography variant="h6" gutterBottom>
-                Vehicle Identity
-              </Typography>
+            <Card sx={{ p: 2, boxShadow: 'none', border: `1px solid ${theme.palette.grey[200]}` }}>
+              <CardContent sx={{ '&:last-child': { pb: 2 } }}>
+                <Typography variant="h6" gutterBottom>
+                  Vehicle Identity
+                </Typography>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Insert the vehicle number and driver availability
-              </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Insert the vehicle number and driver availability
+                </Typography>
 
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: isSmallScreen ? '1fr' : '2fr 1fr',
-                  gap: 3,
-                  alignItems: 'center'
-                }}
-              >
-                {/* Vehicle Number */}
-                <TextField
-                  fullWidth
-                  label="Vehicle Number*"
-                  variant="outlined"
-                  value={licensePlateNumber}
-                  onChange={(e) => {
-                    setLicensePlateNumber(e.target.value);
-                    validateLicensePlate(e.target.value);
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: isSmallScreen ? '1fr' : '2fr 1fr',
+                    gap: 3,
+                    alignItems: 'center'
                   }}
-                  placeholder="Enter vehicle number"
-                  required
-                  error={!!licensePlateError}
-                  helperText={licensePlateError}
-                />
+                >
+                  <TextField
+                    fullWidth
+                    label="Vehicle Number*"
+                    variant="outlined"
+                    value={licensePlateNumber}
+                    onChange={(e) => {
+                      setLicensePlateNumber(e.target.value);
+                      validateLicensePlate(e.target.value);
+                    }}
+                    placeholder="Enter vehicle number"
+                    required
+                    error={!!licensePlateError}
+                    helperText={licensePlateError}
+                  />
 
-                {/* Driver Included */}
-                <Box>
-                  <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                    Driver Included
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                      Driver Included
+                    </Typography>
 
-                  <Box sx={{ display: 'flex', gap: 3 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={features.driverIncluded === true}
-                          onChange={() =>
-                            setFeatures((prev) => ({
-                              ...prev,
-                              driverIncluded: true
-                            }))
-                          }
-                        />
-                      }
-                      label="Yes"
-                    />
+                    <Box sx={{ display: 'flex', gap: 3 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={features.driverIncluded === true}
+                            onChange={() =>
+                              setFeatures((prev) => ({
+                                ...prev,
+                                driverIncluded: true
+                              }))
+                            }
+                          />
+                        }
+                        label="Yes"
+                      />
 
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={features.driverIncluded === false}
-                          onChange={() =>
-                            setFeatures((prev) => ({
-                              ...prev,
-                              driverIncluded: false
-                            }))
-                          }
-                        />
-                      }
-                      label="No"
-                    />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={features.driverIncluded === false}
+                            onChange={() =>
+                              setFeatures((prev) => ({
+                                ...prev,
+                                driverIncluded: false
+                              }))
+                            }
+                          />
+                        }
+                        label="No"
+                      />
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </CardContent>
+              </CardContent>
+            </Card>
           </Box>
           {/* ================= VEHICLE FEATURES ================= */}
           {/* ================= VEHICLE FEATURES ================= */}
@@ -2824,7 +3024,406 @@ const Createnew = () => {
               </Box>
             </Card>
           )}
-          {isCategorySelected && (isCarCategory || isBusCategory) && (
+          {isCategorySelected && isVanCategory && (
+            <Card
+              sx={{
+                mt: 6,
+                mb: 6,
+                borderRadius: 4,
+                border: 'none',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                backgroundColor: '#ffffff',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header */}
+              <Box
+                sx={{
+                  px: 4,
+                  py: 3,
+                  background: 'linear-gradient(135deg, #ecedf1 0%, #adb0ba 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                    Van Features & Amenities
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Configure passenger comfort and safety options for the van
+                  </Typography>
+                </Box>
+                <SpeakerIcon sx={{ fontSize: 40, opacity: 0.2 }} />
+              </Box>
+
+              {/* Grid Content */}
+              <Box sx={{ p: 4 }}>
+                <Grid container spacing={10} sx={{ width: '100%', m: 0 }}>
+                  {[
+                    {
+                      title: 'Interior Comfort',
+                      icon: <ChairIcon />,
+                      number: '01',
+                      items: [
+                        ['Curtains', 'curtains'],
+                        ['Reading Lights', 'readingLights'],
+                        ['Foot Rest', 'footRest'],
+                        ['Bottle Holder', 'bottleHolder']
+                      ]
+                    },
+                    {
+                      title: 'Entertainment',
+                      icon: <TvIcon />,
+                      number: '02',
+                      items: [
+                        ['Music System', 'musicSystem'],
+                        ['TV / Screen', 'tvScreen']
+                      ]
+                    },
+                    {
+                      title: 'Safety & Compliance',
+                      icon: <SafetyIcon />,
+                      number: '03',
+                      items: [
+                        ['Fire Extinguisher', 'fireExtinguisher'],
+                        ['First Aid Kit', 'firstAidKit'],
+                        ['CCTV', 'cctv']
+                      ]
+                    },
+                    {
+                      title: 'Storage & Utilities',
+                      icon: <LuggageIcon />,
+                      number: '04',
+                      items: [
+                        ['Luggage Carrier', 'luggageCarrier'],
+                        ['Overhead Storage', 'overheadStorage']
+                      ]
+                    }
+                  ].map((section) => (
+                    <Grid item xs={12} sm={12} md={6} lg={3} key={section.title} sx={{ display: 'flex' }}>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          p: 3,
+                          borderRadius: 3,
+                          border: '1px solid #f0f0f0',
+                          backgroundColor: '#f8fafc',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 20px rgba(0,0,0,0.05)',
+                            borderColor: '#98a0bc'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              backgroundColor: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                              color: '#7882a3'
+                            }}
+                          >
+                            {section.icon}
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 900,
+                              color: '#1e40af',
+                              opacity: 0.1,
+                              fontSize: '1.5rem',
+                              lineHeight: 1
+                            }}
+                          >
+                            {section.number}
+                          </Typography>
+                        </Box>
+
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#111827' }}>
+                          {section.title}
+                        </Typography>
+
+                        <Stack spacing={1}>
+                          {section.items.map(([label, key]) => (
+                            <FormControlLabel
+                              key={key}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={vanFeatures[key]}
+                                  onChange={handleVanFeatureChange(key)}
+                                  sx={{
+                                    color: '#d1d5db',
+                                    '&.Mui-checked': { color: '#1e40af' }
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                                  {label}
+                                </Typography>
+                              }
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* Extra Addons - Full Width Special Section */}
+                <Box
+                  sx={{
+                    mt: 4,
+                    p: 3,
+                    borderRadius: 4,
+                    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                    border: '1px solid #bfdbfe'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        backgroundColor: '#42454f',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 2,
+                        boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+                      }}
+                    >
+                      <WifiIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e3a8a' }}>
+                        Premium Add-ons & Lighting
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#1e40af', opacity: 0.8 }}>
+                        Special connectivity and ambient features for passengers
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Grid container spacing={4} alignItems="center">
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={vanFeatures.wifi}
+                              onChange={handleVanFeatureChange('wifi')}
+                              sx={{ '&.Mui-checked': { color: '#1e40af' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>Guest Wifi</Typography>}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={vanFeatures.chargingPoints}
+                              onChange={handleVanFeatureChange('chargingPoints')}
+                              sx={{ '&.Mui-checked': { color: '#1e40af' } }}
+                            />
+                          }
+                          label={<Typography sx={{ fontWeight: 600 }}>USB Charging ports</Typography>}
+                        />
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box
+                        sx={{
+                          p: 2,
+                          backgroundColor: 'white',
+                          borderRadius: 3,
+                          border: '1px solid #bfdbfe',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e3a8a', minWidth: 120 }}>
+                          Interior Lighting
+                        </Typography>
+                        <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
+                          <FormControlLabel
+                            value="normal"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#1e40af' } }} />}
+                            label={<Typography variant="body2">Normal</Typography>}
+                          />
+                          <FormControlLabel
+                            value="premium"
+                            control={<Radio size="small" sx={{ '&.Mui-checked': { color: '#1e40af' } }} />}
+                            label={<Typography variant="body2">Premium Ambient</Typography>}
+                          />
+                        </RadioGroup>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
+            </Card>
+          )}
+
+          {isCategorySelected && isBikeCategory && (
+            <Card
+              sx={{
+                mt: 6,
+                mb: 6,
+                borderRadius: 4,
+                border: 'none',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                backgroundColor: '#ffffff',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header */}
+              <Box
+                sx={{
+                  px: 4,
+                  py: 3,
+                  background: 'linear-gradient(135deg, #e9ebef 0%, #b3b7c1 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                    Bike Features & Amenities
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Customize safety and utility options for your bike
+                  </Typography>
+                </Box>
+                <DirectionsCarIcon sx={{ fontSize: 40, opacity: 0.2 }} />
+              </Box>
+
+              {/* Grid Content */}
+              <Box sx={{ p: 4 }}>
+                <Grid container spacing={10} sx={{ width: '100%', m: 0 }}>
+                  {[
+                    {
+                      title: 'Safety & Accessories',
+                      icon: <SafetyIcon />,
+                      number: '01',
+                      items: [
+                        ['Helmet Included', 'helmet'],
+                        ['ABS', 'abs'],
+                        ['Mobile Holder', 'mobileHolder']
+                      ]
+                    },
+                    {
+                      title: 'Utility & Storage',
+                      icon: <LuggageIcon />,
+                      number: '02',
+                      items: [
+                        ['Storage Box (Top Box)', 'storageBox'],
+                        ['Rear Rack', 'rearRack'],
+                        ['Windshield', 'windshield']
+                      ]
+                    }
+                  ].map((section, idx) => (
+                    <Grid item xs={12} sm={12} md={6} lg={6} key={section.title} sx={{ display: 'flex' }}>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          p: 3,
+                          borderRadius: 3,
+                          border: '1px solid #f0f0f0',
+                          backgroundColor: '#f9fafb',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 20px rgba(0,0,0,0.05)',
+                            borderColor: '#E15B65'
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              backgroundColor: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                              color: '#E15B65'
+                            }}
+                          >
+                            {section.icon}
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 900,
+                              color: '#E15B65',
+                              opacity: 0.2,
+                              fontSize: '1.5rem',
+                              lineHeight: 1
+                            }}
+                          >
+                            {section.number}
+                          </Typography>
+                        </Box>
+
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#111827' }}>
+                          {section.title}
+                        </Typography>
+
+                        <Stack spacing={1}>
+                          {section.items.map(([label, key]) => (
+                            <FormControlLabel
+                              key={key}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={bikeFeatures[key]}
+                                  onChange={handleBikeFeatureChange(key)}
+                                  sx={{
+                                    color: '#d1d5db',
+                                    '&.Mui-checked': { color: '#E15B65' }
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                                  {label}
+                                </Typography>
+                              }
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            </Card>
+          )}
+
+          {isCategorySelected && (isCarCategory || isBusCategory || isVanCategory || isBikeCategory) && (
             <Box sx={{ mb: 4 }}>
               {/* ================= PACKAGE PRICING ================= */}
               <Card
