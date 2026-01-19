@@ -42,7 +42,18 @@ export default function Vehicles() {
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState("success");
-  const [filters, setFilters] = useState({ search: "" });
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "",
+    brand: "",
+    type: ""
+  });
+
+  const [pendingFilters, setPendingFilters] = useState({
+    category: "",
+    brand: "",
+    type: ""
+  });
 
   const [localSearch, setLocalSearch] = useState("");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -51,7 +62,7 @@ export default function Vehicles() {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
   const moduleId = localStorage.getItem("moduleId");
-  const providerId = localStorage.getItem("providerId"); 
+  const providerId = localStorage.getItem("providerId");
 
   // Fetch options for filters
   const fetchOptions = async () => {
@@ -81,70 +92,47 @@ export default function Vehicles() {
     }
   };
 
-  // Helper function to get category title - handles both array and object/string
+  // Helper function to get category title - handles single object or ID
   const getCategoryTitle = (categoryData) => {
-    console.log("getCategoryTitle called with:", categoryData);
-    console.log("Type:", typeof categoryData);
-    console.log("Is Array:", Array.isArray(categoryData));
-    
-    if (!categoryData) {
-      console.log("Category data is null/undefined");
-      return "N/A";
-    }
-    
-    // If it's an array, get the first element
-    if (Array.isArray(categoryData)) {
-      console.log("Category is array, length:", categoryData.length);
-      if (categoryData.length === 0) return "N/A";
-      const firstCategory = categoryData[0];
-      console.log("First category element:", firstCategory);
-      console.log("First category type:", typeof firstCategory);
-      
-      // If the array element is an object with title, return it
-      if (typeof firstCategory === 'object' && firstCategory !== null && firstCategory.title) {
-        console.log("Returning title from object:", firstCategory.title);
-        return firstCategory.title;
-      }
-      // If it's a string ID, look it up
-      if (typeof firstCategory === 'string') {
-        const category = categories.find(cat => cat._id === firstCategory);
-        console.log("Looking up category by ID:", firstCategory, "Found:", category);
-        return category ? category.title : "N/A";
-      }
-    }
-    
+    if (!categoryData) return "N/A";
+
     // If it's an object with title
-    if (typeof categoryData === 'object' && categoryData !== null && categoryData.title) {
-      console.log("Returning title from single object:", categoryData.title);
+    if (typeof categoryData === 'object' && categoryData.title) {
       return categoryData.title;
     }
-    
+
     // If it's a string ID
     if (typeof categoryData === 'string') {
       const category = categories.find(cat => cat._id === categoryData);
-      console.log("Looking up single category by ID:", categoryData, "Found:", category);
       return category ? category.title : "N/A";
     }
-    
-    console.log("No match found, returning N/A");
+
+    // Handle array for backward compatibility
+    if (Array.isArray(categoryData) && categoryData.length > 0) {
+      const first = categoryData[0];
+      if (typeof first === 'object' && first.title) return first.title;
+      const found = categories.find(cat => cat._id === (first._id || first));
+      return found ? found.title : "N/A";
+    }
+
     return "N/A";
   };
 
   // Helper function to get brand title by ID
   const getBrandTitle = (brandData) => {
     if (!brandData) return "N/A";
-    
+
     // If it's an object with title
     if (typeof brandData === 'object' && brandData.title) {
       return brandData.title;
     }
-    
+
     // If it's a string ID
     if (typeof brandData === 'string') {
       const brand = brands.find(b => b._id === brandData);
       return brand ? brand.title : "N/A";
     }
-    
+
     return "N/A";
   };
 
@@ -177,14 +165,14 @@ export default function Vehicles() {
         console.log("Fetched vehicles:", res.data.data);
         console.log("Available categories:", categories);
         console.log("Available brands:", brands);
-        
+
         // Log the first vehicle to see its structure
         if (res.data.data && res.data.data.length > 0) {
           console.log("First vehicle structure:", res.data.data[0]);
           console.log("First vehicle category:", res.data.data[0].category);
           console.log("First vehicle brand:", res.data.data[0].brand);
         }
-        
+
         setVehicles(res.data.data || []);
       } else {
         console.error("Error fetching vehicles:", res.data.message);
@@ -209,9 +197,16 @@ export default function Vehicles() {
     }
   }, [categories, brands]);
 
- 
 
- 
+
+
+
+  const handleApplyFilters = () => {
+    setFilters({
+      ...pendingFilters,
+      search: localSearch,
+    });
+  };
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: localSearch }));
@@ -222,6 +217,21 @@ export default function Vehicles() {
     setFilters((prev) => ({ ...prev, search: "" }));
   };
 
+  const handleReset = () => {
+    setLocalSearch("");
+    setPendingFilters({
+      category: "",
+      brand: "",
+      type: ""
+    });
+    setFilters({
+      search: "",
+      category: "",
+      brand: "",
+      type: ""
+    });
+  };
+
   const confirmDelete = (vehicleId) => {
     setVehicleToDelete(vehicleId);
     setOpenDeleteDialog(true);
@@ -229,19 +239,15 @@ export default function Vehicles() {
 
   const handleExport = () => {
     const headers = [
-      "Sl,Name,Code,Category,Brand,Type,Hourly,Distance,Daily,New,Active",
+      "Sl,Name,Plate,Category,Brand,Seating,Basic Price,Discount,Grand Total,Active",
     ];
-    const rows = filteredVehicles.map(
-      (v, i) =>
-        `${i + 1},${v.name || ""},${v.vinNumber || ""},${getCategoryTitle(v.category)},${
-          getBrandTitle(v.brand)
-        },${v.type || ""},${v.pricing?.hourly || "-"},
-        ${
-          v.pricing?.distance || "-"
-        },${v.pricing?.perDay || "-"},${v.isNew ? "Yes" : "No"},${
-          v.isActive ? "Active" : "Inactive"
-        }`
-    );
+    const rows = filteredVehicles.map((v, i) => {
+      const basicPrice = v.pricing?.basicPackage?.price || v.pricing?.hourly || v.pricing?.perDay || 0;
+      const grandTotal = v.pricing?.grandTotal || basicPrice;
+      const seating = v.capacityAndComfort?.seatingCapacity || v.seatingCapacity || "-";
+
+      return `${i + 1},${v.name || ""},${v.licensePlateNumber || ""},${getCategoryTitle(v.category)},${getBrandTitle(v.brand)},${seating},${basicPrice},${v.pricing?.discount?.value || 0}${v.pricing?.discount?.type === 'percentage' ? '%' : ''},${grandTotal},${v.isActive ? "Active" : "Inactive"}`;
+    });
     const csv = headers.concat(rows).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -317,21 +323,21 @@ export default function Vehicles() {
 
   const filteredVehicles = vehicles.filter((v) => {
     // Extract category ID - handle array format
-    let vehicleCategoryId = null;
+    let vehicleCategoryId = v.category?._id || v.category;
     if (Array.isArray(v.category) && v.category.length > 0) {
       vehicleCategoryId = v.category[0]._id || v.category[0];
-    } else if (v.category) {
-      vehicleCategoryId = v.category._id || v.category;
     }
-    
+
     const vehicleBrandId = v.brand?._id || v.brand;
-    
+
     return (
       (filters.brand ? vehicleBrandId === filters.brand : true) &&
       (filters.category ? vehicleCategoryId === filters.category : true) &&
-      (filters.type ? v.type === filters.type : true) &&
+      (filters.type ? (v.type === filters.type || v.vehicleType === filters.type.toLowerCase() || v.bikeType === filters.type.toLowerCase()) : true) &&
       (filters.search
-        ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase())
+        ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase()) ||
+        (v.licensePlateNumber || "").toLowerCase().includes(filters.search.toLowerCase()) ||
+        (v.model || "").toLowerCase().includes(filters.search.toLowerCase())
         : true)
     );
   });
@@ -374,7 +380,84 @@ export default function Vehicles() {
         </Alert>
       )}
 
-     
+      {/* Filters Section */}
+      <Paper sx={{ p: 2, mt: 2, borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+        <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
+          <FormControl sx={{ minWidth: 200 }} size="small">
+            <Select
+              displayEmpty
+              value={pendingFilters.category}
+              onChange={(e) => setPendingFilters({ ...pendingFilters, category: e.target.value })}
+              sx={{ borderRadius: "8px" }}
+            >
+              <MenuItem value="">All Categories</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat._id} value={cat._id}>
+                  {cat.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 200 }} size="small">
+            <Select
+              displayEmpty
+              value={pendingFilters.brand}
+              onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })}
+              sx={{ borderRadius: "8px" }}
+            >
+              <MenuItem value="">All Brands</MenuItem>
+              {brands.map((brand) => (
+                <MenuItem key={brand._id} value={brand._id}>
+                  {brand.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 200 }} size="small">
+            <Select
+              displayEmpty
+              value={pendingFilters.type}
+              onChange={(e) => setPendingFilters({ ...pendingFilters, type: e.target.value })}
+              sx={{ borderRadius: "8px" }}
+            >
+              <MenuItem value="">All Types</MenuItem>
+              <MenuItem value="Car">Car</MenuItem>
+              <MenuItem value="Bus">Bus</MenuItem>
+              <MenuItem value="Van">Van</MenuItem>
+              <MenuItem value="Bike">Bike</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="contained"
+            onClick={handleApplyFilters}
+            sx={{
+              bgcolor: "#E15B65",
+              "&:hover": { bgcolor: "#d14b55" },
+              borderRadius: "8px",
+              px: 3
+            }}
+          >
+            Filter
+          </Button>
+
+          <Button
+            variant="outlined"
+            onClick={handleReset}
+            sx={{
+              color: "#666",
+              borderColor: "#ccc",
+              "&:hover": { borderColor: "#999", bgcolor: "#f5f5f5" },
+              borderRadius: "8px"
+            }}
+          >
+            Reset
+          </Button>
+        </Stack>
+      </Paper>
+
       {/* Table */}
       <Paper sx={{ p: 2, mt: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2} mb={2}>
@@ -409,11 +492,11 @@ export default function Vehicles() {
                 ),
               }}
             />
-            <Button variant="outlined" color="#E15B65" sx={{color:'#E15B65',borderRadius: "8px" }} onClick={handleExport}>
+            <Button variant="outlined" color="#E15B65" sx={{ color: '#E15B65', borderRadius: "8px" }} onClick={handleExport}>
               Export
             </Button>
             <Button
-              variant="contained" 
+              variant="contained"
               sx={{ bgcolor: "#E15B65" }}
               onClick={() => navigate("/vehicle-setup/leads")}
             >
@@ -440,92 +523,142 @@ export default function Vehicles() {
 
             <TableBody>
               {filteredVehicles.map((v, i) => {
+                const basePrice = v.pricing?.basicPackage?.price || v.pricing?.hourly || v.pricing?.perDay || v.pricing?.distanceWise;
+                const grandTotal = v.pricing?.grandTotal;
+                const seating = v.capacityAndComfort?.seatingCapacity || v.seatingCapacity;
+                const fuel = v.engineCharacteristics?.fuelType || v.fuelType;
+                const transmission = v.engineCharacteristics?.transmissionType?.value || v.engineCharacteristics?.transmissionType || v.transmissionType;
+
                 return (
-                  <TableRow key={v._id}>
+                  <TableRow key={v._id} sx={{ '&:hover': { bgcolor: '#fbfbfb' } }}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "#2563eb" }}>
-                        {v.name || "N/A"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        License: {v.licensePlateNumber || "N/A"}
-                      </Typography>
-                    </TableCell>                  
-                    <TableCell>{getCategoryTitle(v.category)}</TableCell>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Box
+                          component="img"
+                          src={v.featuredImage || "https://via.placeholder.com/100x100?text=No+Image"}
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: "8px",
+                            objectFit: "cover",
+                            border: "1px solid #eee"
+                          }}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/100x100?text=No+Image" }}
+                        />
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: "#2563eb" }}>
+                            {v.name || "N/A"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Plate: {v.licensePlateNumber || "N/A"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Model: {v.model || "N/A"}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={getCategoryTitle(v.category)} size="small" variant="outlined" />
+                    </TableCell>
                     <TableCell>{getBrandTitle(v.brand)}</TableCell>
-                    <TableCell>{v.type || "N/A"}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {v.type || v.vehicleType || v.bikeType || "N/A"}
+                      </Typography>
+                    </TableCell>
 
                     <TableCell>
-                      {v.pricing?.hourly && (
-                        <Typography variant="body2">Hourly: ₹{v.pricing.hourly}</Typography>
-                      )}
-                      {v.pricing?.distanceWise && (
-                        <Typography variant="body2">Distance: ₹{v.pricing.distanceWise}/km</Typography>
-                      )}
-                      {v.pricing?.perDay && (
-                        <Typography variant="body2">Daily: ₹{v.pricing.perDay}</Typography>
-                      )}
-                      {!v.pricing?.hourly && !v.pricing?.distanceWise && !v.pricing?.perDay && (
+                      {grandTotal ? (
+                        <>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#E15B65" }}>
+                            ₹{grandTotal}
+                          </Typography>
+                          {basePrice && basePrice !== grandTotal && (
+                            <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                              ₹{basePrice}
+                            </Typography>
+                          )}
+                        </>
+                      ) : basePrice ? (
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          ₹{basePrice}
+                        </Typography>
+                      ) : (
                         <Typography variant="body2" color="text.secondary">
-                          No pricing set
+                          No pricing
                         </Typography>
                       )}
-                      {v.discount && (
-                        <Typography variant="body2" color="success.main">
-                          Discount: {v.discount}%
+
+                      {v.pricing?.basicPackage?.includedHours && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {v.pricing.basicPackage.includedHours} Hrs / {v.pricing.basicPackage.includedKilometers} KM
                         </Typography>
                       )}
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2">
-                        Engine: {v.engineCapacity || "N/A"}cc, {v.enginePower || "N/A"}hp
-                      </Typography>
-                      <Typography variant="body2">Seats: {v.seatingCapacity || "N/A"}</Typography>
-                      <Typography variant="body2">Fuel: {v.fuelType || "N/A"}</Typography>
-                      <Typography variant="body2">
-                        Transmission: {v.transmissionType || "N/A"}
-                      </Typography>
-                      <Typography variant="body2">A/C: {v.airCondition ? "Yes" : "No"}</Typography>
+                      <Stack spacing={0.5}>
+                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          🪑 <strong>Seats:</strong> {seating || "N/A"}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          ⛽ <strong>Fuel:</strong> {fuel || "N/A"}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          ⚙️ <strong>Trans:</strong> {transmission || "N/A"}
+                        </Typography>
+                        <Stack direction="row" spacing={1}>
+                          {(v.engineCharacteristics?.airConditioning !== undefined || v.availability?.acAvailable !== undefined || v.airCondition !== undefined) && (
+                            <Chip
+                              label={(v.engineCharacteristics?.airConditioning || v.availability?.acAvailable || v.airCondition) ? "AC" : "Non-AC"}
+                              size="small"
+                              sx={{ height: 20, fontSize: '0.65rem' }}
+                            />
+                          )}
+                        </Stack>
+                      </Stack>
                     </TableCell>
 
                     <TableCell>
-                      <Switch
-                        checked={v.isActive !== false}
-                        onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
-                     sx={{
-    '& .MuiSwitch-switchBase.Mui-checked': {
-      color: '#E15B65',
-    },
-    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-      backgroundColor: '#E15B65',
-    },
-    '& .MuiSwitch-track': {
-      backgroundColor: '#ccc',
-    }
-  }}/>
-                      {v.isNew && <Chip label="New" color="primary" size="small" />}
+                      <Stack spacing={1} alignItems="center">
+                        <Switch
+                          checked={v.isActive !== false}
+                          onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
+                          size="small"
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#E15B65',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#E15B65',
+                            },
+                          }}
+                        />
+                        {v.isNew && <Chip label="New" color="success" size="small" sx={{ height: 20, fontSize: '0.65rem' }} />}
+                      </Stack>
                     </TableCell>
 
                     <TableCell>
                       <Stack direction="row" spacing={1}>
                         <IconButton
                           size="small"
-                          sx={{ border: "1px solid #d1d5db", color: "#2563eb", borderRadius: "8px" }}
+                          sx={{ border: "1px solid #eee", color: "#2563eb", borderRadius: "8px", bgcolor: '#fff' }}
                           onClick={() => navigate(`/vehicle-setup/listview/${v._id}`)}
                         >
                           <Visibility fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
-                          sx={{ border: "1px solid #d1d5db", color: "#065f46", borderRadius: "8px" }}
+                          sx={{ border: "1px solid #eee", color: "#065f46", borderRadius: "8px", bgcolor: '#fff' }}
                           onClick={() => handleEdit(v)}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
-                          sx={{ border: "1px solid #d1d5db", color: "#dc2626", borderRadius: "8px" }}
+                          sx={{ border: "1px solid #eee", color: "#dc2626", borderRadius: "8px", bgcolor: '#fff' }}
                           onClick={() => confirmDelete(v._id)}
                         >
                           <Delete fontSize="small" />
