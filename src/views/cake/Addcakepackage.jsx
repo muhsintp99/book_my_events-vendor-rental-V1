@@ -20,428 +20,548 @@ import {
   Checkbox,
   FormGroup,
   OutlinedInput,
-  ListItemText
+  ListItemText,
+  Grid,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
   CloudUpload as CloudUploadIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Settings as SettingsIcon,
+  Info as InfoIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Payments as PaymentsIcon,
+  LocalShipping as ShippingIcon,
+  Label as LabelIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Search as SearchIcon,
+  LocalFlorist as FlowersIcon,
+  Brightness7 as GoldIcon,
+  FilterVintage as SugarIcon,
+  Cake as CakeIcon,
+  WaterDrop as DripIcon,
+  Inventory as BoxIcon,
+  Star as StarIcon
 } from '@mui/icons-material';
+import { styled, alpha } from '@mui/material/styles';
 import axios from 'axios';
 
 const PINK = '#E91E63';
 const API_BASE = 'https://api.bookmyevent.ae';
 const CAKE_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
 
-// ------------------------------
-// Variation Row Component
-// ------------------------------
-const VariationRow = ({ variation, onChange, onDelete }) => {
+// ------------------------------ STYLED COMPONENTS ------------------------------
+
+const PremiumCard = styled(Paper)(({ theme }) => ({
+  borderRadius: '24px',
+  padding: '40px',
+  marginBottom: '40px',
+  border: '1px solid rgba(0, 0, 0, 0.06)',
+  boxShadow: '0px 15px 50px rgba(0, 0, 0, 0.02)',
+  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  backgroundColor: '#ffffff',
+  '&:hover': {
+    boxShadow: '0px 25px 70px rgba(0, 0, 0, 0.05)'
+  }
+}));
+const labelStyle = {
+  mb: 1.5,
+  fontWeight: 800,
+  color: '#374151',
+  textTransform: 'uppercase',
+  fontSize: '11px',
+  letterSpacing: '1px'
+};
+
+const StyledSectionTitle = styled(Typography)(({ theme }) => ({
+  fontSize: '26px',
+  fontWeight: 900,
+  color: '#111827',
+  marginBottom: '10px',
+  letterSpacing: '-1px'
+}));
+
+const StyledSectionSubtitle = styled(Typography)(({ theme }) => ({
+  fontSize: '15px',
+  color: '#6B7280',
+  marginBottom: '40px',
+  fontWeight: 500,
+  lineHeight: 1.6
+}));
+
+const PremiumTextField = styled(TextField)(({ theme }) => ({
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '16px',
+    backgroundColor: '#F9FAFB',
+    border: '1px solid #E5E7EB',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    '& fieldset': {
+      borderColor: 'transparent'
+    },
+    '&:hover': {
+      backgroundColor: '#f3f4f6',
+      borderColor: '#D1D5DB'
+    },
+    '&.Mui-focused': {
+      backgroundColor: '#ffffff',
+      borderColor: PINK,
+      boxShadow: `0px 0px 0px 4px ${alpha(PINK, 0.1)}`,
+      '& fieldset': {
+        borderColor: PINK,
+        borderWidth: '2px'
+      }
+    }
+  },
+  '& .MuiInputBase-input': {
+    padding: '18px 20px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1F2937'
+  }
+}));
+
+const PremiumSelect = styled(Select)(({ theme }) => ({
+  width: '100%',
+  borderRadius: '16px',
+  backgroundColor: '#F9FAFB',
+  border: '1px solid #E5E7EB',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'transparent'
+  },
+  '&:hover': {
+    backgroundColor: '#f3f4f6',
+    borderColor: '#D1D5DB'
+  },
+  '&.Mui-focused': {
+    backgroundColor: '#ffffff',
+    borderColor: PINK,
+    boxShadow: `0px 0px 0px 4px ${alpha(PINK, 0.1)}`,
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: PINK,
+      borderWidth: '2px'
+    }
+  },
+  '& .MuiSelect-select': {
+    padding: '18px 20px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1F2937'
+  }
+}));
+
+const MediaPreviewBox = styled(Box)(({ theme, hasImage }) => ({
+  width: '100%',
+  aspectRatio: '4/3',
+  borderRadius: '20px',
+  border: hasImage ? 'none' : `2px dashed ${alpha(PINK, 0.2)}`,
+  backgroundColor: hasImage ? 'transparent' : alpha(PINK, 0.02),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&:hover': {
+    borderColor: PINK,
+    backgroundColor: alpha(PINK, 0.05),
+    transform: 'translateY(-4px)'
+  }
+}));
+
+const GallerySlotMedium = styled(Box)(({ theme, hasImage }) => ({
+  width: '100%',
+  aspectRatio: '1 / 1', // ✅ always square
+  borderRadius: '18px',
+  border: hasImage ? 'none' : '2px dashed #E5E7EB',
+  backgroundColor: hasImage ? '#F9FAFB' : '#F9FAFB',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  position: 'relative',
+  overflow: 'hidden', // ✅ prevents overflow growth
+  transition: 'all 0.25s ease',
+  '&:hover': {
+    borderColor: PINK,
+    backgroundColor: alpha(PINK, 0.03),
+    transform: 'scale(1.02)'
+  }
+}));
+
+const FeatureGroupBox = styled(Box)(({ theme }) => ({
+  padding: '32px',
+  borderRadius: '24px',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(0, 0, 0, 0.06)',
+  position: 'relative',
+  transition: 'all 0.3s ease',
+  minHeight: '100%',
+  '&:hover': {
+    borderColor: PINK,
+    boxShadow: '0px 10px 30px rgba(233, 30, 99, 0.05)'
+  }
+}));
+
+const GroupBadge = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: '20px',
+  right: '25px',
+  fontSize: '48px',
+  fontWeight: 900,
+  opacity: 0.06,
+  color: PINK,
+  pointerEvents: 'none'
+}));
+
+const InteractionChipRefined = styled(Chip)(({ theme, selected }) => ({
+  borderRadius: '14px',
+  fontWeight: 800,
+  fontSize: '14px',
+  height: '46px',
+  padding: '0 10px',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  backgroundColor: selected ? PINK : '#F3F4F6',
+  color: selected ? '#ffffff' : '#4B5563',
+  border: `2px solid ${selected ? PINK : 'transparent'}`,
+  '&:hover': {
+    backgroundColor: selected ? '#D81B60' : '#E5E7EB',
+    transform: 'translateY(-2px)'
+  }
+}));
+
+const GlassTableContainerRefined = styled(TableContainer)(({ theme }) => ({
+  borderRadius: '24px',
+  border: '1px solid rgba(0, 0, 0, 0.05)',
+  backgroundColor: '#ffffff',
+  marginTop: '32px',
+  overflow: 'hidden',
+  boxShadow: '0px 10px 40px rgba(0,0,0,0.03)'
+}));
+
+// ------------------------------ SUB-COMPONENTS ------------------------------
+
+const VariationRow = ({ variation, onChange, onImageUpload }) => {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
-      <TextField
-        label="Variation Name (e.g. Half Kg)"
-        value={variation.name || ''}
-        onChange={(e) => onChange('name', e.target.value)}
-        sx={{ flex: 1 }}
-      />
-      <TextField
-        label="Price (₹)"
-        type="number"
-        value={variation.price || ''}
-        onChange={(e) => onChange('price', e.target.value)}
-        sx={{ width: 150 }}
-      />
-      <IconButton onClick={onDelete} color="error">
-        <DeleteIcon />
-      </IconButton>
-    </Stack>
+    <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+      <TableCell sx={{ py: 3, pl: 4 }}>
+        <Typography sx={{ fontWeight: 800, color: '#1F2937', fontSize: '15px' }}>{variation.name}</Typography>
+      </TableCell>
+      <TableCell sx={{ py: 3 }}>
+        <PremiumTextField
+          size="small"
+          placeholder="0.00"
+          value={variation.price}
+          onChange={(e) => onChange('price', e.target.value)}
+          sx={{ maxWidth: '180px' }}
+          InputProps={{
+            startAdornment: <Typography sx={{ mr: 1, fontWeight: 700, color: '#9CA3AF' }}>₹</Typography>
+          }}
+        />
+      </TableCell>
+      <TableCell sx={{ py: 3, pr: 4 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <IconButton
+            onClick={() => document.getElementById(`var-img-${variation.id}`).click()}
+            sx={{
+              bgcolor: alpha(PINK, 0.05),
+              color: PINK,
+              '&:hover': { bgcolor: PINK, color: 'white' }
+            }}
+          >
+            <PhotoCameraIcon fontSize="small" />
+          </IconButton>
+          <input id={`var-img-${variation.id}`} type="file" hidden onChange={(e) => onImageUpload(e.target.files[0])} />
+          {variation.image && (
+            <Box
+              sx={{
+                position: 'relative',
+                width: '45px',
+                height: '45px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                border: `2px solid ${PINK}`
+              }}
+            >
+              <img
+                src={typeof variation.image === 'string' ? variation.image : URL.createObjectURL(variation.image)}
+                alt="variant"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => onImageUpload(null)}
+                sx={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  bgcolor: 'white',
+                  p: 0.2,
+                  '&:hover': { bgcolor: PINK, color: 'white' }
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 10 }} />
+              </IconButton>
+            </Box>
+          )}
+        </Stack>
+      </TableCell>
+    </TableRow>
   );
 };
 
-// Main Component
-// ------------------------------
+// ------------------------------ MAIN COMPONENT ------------------------------
+
 const AddCakePackage = () => {
   const navigate = useNavigate();
-
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
   const isEditMode = Boolean(id);
-// ---------------- Add-ons ----------------
-const [addons, setAddons] = useState([
-  { id: Date.now(), name: '', price: '' }
-]);
 
+  // Constants & Categorization
+  const OCCASIONS = ['Marriage', 'Engagement', 'Birthday', 'Anniversary', 'Promotion', 'Other'];
+  const ATTRIBUTES = ['Weight', 'Ingredient'];
+  const ATTRIBUTE_VALUES = {
+    Weight: ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'],
+    Ingredient: ['Egg', 'Eggless', 'Vegan', 'Sugar Free']
+  };
 
+  const ADDON_CATEGORIES = [
+    {
+      title: 'Toppings & Decor',
+      id: '01',
+      items: [
+        { name: 'Fresh Flowers', icon: <FlowersIcon /> },
+        { name: 'Edible Gold Leaf', icon: <GoldIcon /> },
+        { name: 'Sugar Flowers', icon: <SugarIcon /> }
+      ]
+    },
+    {
+      title: 'Chef Special Enhancers',
+      id: '02',
+      items: [
+        { name: 'Premium Filling Upgrade', icon: <CakeIcon /> },
+        { name: 'Drip Icing', icon: <DripIcon /> }
+      ]
+    },
+    {
+      title: 'Packaging & Presentation',
+      id: '03',
+      items: [{ name: 'Premium Cake Box', icon: <BoxIcon /> }]
+    },
+    {
+      title: 'Celebration Finale',
+      id: '04',
+      items: [{ name: 'Sparklers / Cake Fountains', icon: <StarIcon /> }]
+    }
+  ];
+
+  // States
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
-
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-
   const [currentVendor, setCurrentVendor] = useState(null);
 
-  // Form Fields
+  // Form State
   const [name, setName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [category, setCategory] = useState('');
   const [selectedSubCategories, setSelectedSubCategories] = useState([]);
+  const [selectedOccasions, setSelectedOccasions] = useState([]);
   const [itemType, setItemType] = useState('Eggless');
-  const [nutrition, setNutrition] = useState('');
-  const [allergenIngredients, setAllergenIngredients] = useState('');
-
-
   const [searchTags, setSearchTags] = useState('');
-  const [isActive, setIsActive] = useState(true);
+  const [prepTime, setPrepTime] = useState('');
+  const [unit, setUnit] = useState('Kg');
+  const [weight, setWeight] = useState('');
 
-  const [variations, setVariations] = useState([{ id: Date.now(), name: '', price: '' }]);
+  // Variants & Pricing
+  const [unitPrice, setUnitPrice] = useState('');
+  const [discountType, setDiscountType] = useState('no_discount');
+  const [discountValue, setDiscountValue] = useState('');
+  const [attrValues, setAttrValues] = useState({ Weight: [], Ingredient: [] });
+  const [variations, setVariations] = useState([]);
 
-  // Images
+  // Addons & Shipping
+  const [selectedAddons, setSelectedAddons] = useState([]);
+  const [shipping, setShipping] = useState({ free: false, flatRate: true, price: '' });
+
+  // Media
   const [thumbnail, setThumbnail] = useState(null);
   const [existingThumbnail, setExistingThumbnail] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [existingGallery, setExistingGallery] = useState([]);
 
-  // ------------------------------ Load Vendor ------------------------------
-  useEffect(() => {
-    try {
-      const vendorData = localStorage.getItem('vendor') || localStorage.getItem('user') || localStorage.getItem('vendorData');
-      if (vendorData) {
-        setCurrentVendor(JSON.parse(vendorData));
-      }
-    } catch (err) {
-      console.error('Vendor load error:', err);
-    }
-  }, []);
+  // ------------------------------ EFFECTS & HANDLERS ------------------------------
 
-  // ------------------------------ Fetch Parent Categories ------------------------------
   useEffect(() => {
-    const fetchParentCategories = async () => {
+    const loadInitialData = async () => {
       try {
+        const vendorData = localStorage.getItem('vendor') || localStorage.getItem('user');
+        if (vendorData) setCurrentVendor(JSON.parse(vendorData));
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`, {
+        const catRes = await axios.get(`${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
-        const parentCats = response.data?.data || [];
-        setCategories(parentCats);
-
-        console.log('✅ Parent Categories Loaded:', parentCats);
-      } catch (err) {
-        console.error('❌ Failed to load parent categories:', err);
-        setError('Failed to load categories');
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-
-    fetchParentCategories();
-  }, []);
-
-  // ------------------------------ Fetch Subcategories when Parent Category Changes ------------------------------
-  const handleCategoryChange = async (e) => {
-    const parentId = e.target.value;
-    setCategory(parentId);
-    setSelectedSubCategories([]);
-    setSubCategories([]);
-
-    if (!parentId) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE}/api/categories/parents/${parentId}/subcategories`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const subCats = response.data?.data || [];
-      setSubCategories(subCats);
-
-      console.log('✅ Subcategories Loaded:', subCats);
-    } catch (err) {
-      console.error('❌ Failed to load subcategories:', err);
-      setSubCategories([]);
-    }
-  };
-
-  // ------------------------------ Load Existing Cake (EDIT MODE) ------------------------------
-  useEffect(() => {
-    if (!isEditMode) {
-      setLoading(false);
-      return;
-    }
-
-    const loadCake = async () => {
-      try {
-        const { data } = await axios.get(`${API_BASE}/api/cakes/${id}`);
-        const cake = data.data;
-
-        setName(cake.name);
-        setShortDescription(cake.shortDescription);
-
-        // ✅ Handle parent category
-        if (cake.category?.parentCategory?._id) {
-          const parentId = cake.category.parentCategory._id;
-          setCategory(parentId);
-
-          // ✅ Fetch subcategories for this parent
-          const token = localStorage.getItem('token');
-          const response = await axios.get(`${API_BASE}/api/categories/parents/${parentId}/subcategories`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setSubCategories(response.data?.data || []);
-
-          // ✅ Set the selected subcategory
-          setSelectedSubCategories([cake.category._id]);
-        } else if (cake.category?._id) {
-          // Fallback if category structure is different
-          setCategory(cake.category._id);
+        setCategories(catRes.data?.data || []);
+        if (isEditMode && id) {
+          const cakeRes = await axios.get(`${API_BASE}/api/cakes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+          const cake = cakeRes.data?.data;
+          if (cake) {
+            setName(cake.name || '');
+            setShortDescription(cake.shortDescription || '');
+            setCategory(cake.category?._id || cake.category || '');
+            setSelectedSubCategories((cake.subCategories || []).map((s) => s._id || s));
+            setSelectedOccasions(cake.occasions || []);
+            setItemType(cake.itemType || 'Eggless');
+            setSearchTags((cake.searchTags || []).join(', '));
+            setExistingThumbnail(cake.thumbnail || '');
+            setExistingGallery(cake.images || []);
+            setShipping({
+              free: cake.shipping?.free || false,
+              flatRate: cake.shipping?.flatRate || false,
+              price: cake.shipping?.price || ''
+            });
+            if (cake.variations?.length)
+              setVariations(cake.variations.map((v, idx) => ({ id: v._id || `old-${idx}`, name: v.name, price: v.price, image: v.image })));
+            setSelectedAddons(cake.addons || []);
+            setPrepTime(cake.prepTime || '');
+            setUnit(cake.unit || 'Kg');
+            setWeight(cake.weight || '');
+          }
         }
-
-        setItemType(cake.itemType);
-        setNutrition(cake.nutrition?.join(', ') || '');
-        setAllergenIngredients(cake.allergenIngredients?.join(', ') || '');
-
-        
-        setSearchTags(cake.searchTags?.join(', ') || '');
-        setIsActive(cake.isActive);
-
-        // Variations
-        if (cake.variations?.length > 0) {
-          setVariations(
-            cake.variations.map((v) => ({
-              id: v._id || Date.now(),
-              name: v.name,
-              price: v.price
-            }))
-          );
-        }
-// ---------------- Load Add-ons ----------------
-if (cake.addons && cake.addons.length > 0) {
- setAddons(
-  cake.addons.map((a) => ({
-    id: a._id || Date.now(),
-    name: a.name,
-    price: a.price
-  }))
-);
-
-} else {
-  setAddons([{ id: Date.now(), name: '', price: '', isActive: true }]);
-
-}
-
-        // Images
-        if (cake.thumbnail) setExistingThumbnail(cake.thumbnail);
-        if (cake.images?.length > 0) setExistingGallery(cake.images);
       } catch (err) {
-        console.error('Failed to load cake:', err);
-        setError('Failed to load cake details');
+        setError('Failed to load initial data');
       } finally {
         setLoading(false);
       }
     };
+    loadInitialData();
+  }, [id, isEditMode]);
 
-    loadCake();
-  }, [isEditMode, id]);
+  useEffect(() => {
+    const fetchSubCategories = async () => {
+      if (!category) return;
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE}/api/categories/parents/${category}/subcategories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSubCategories(response.data?.data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSubCategories();
+  }, [category]);
 
-  // ------------------------------ Handlers ------------------------------
-  const handleAddVariation = () => {
-    setVariations((prev) => [...prev, { id: Date.now(), name: '', price: '' }]);
+  const handleAttrValueToggle = (attr, value) => {
+    setAttrValues((prev) => {
+      const current = prev[attr] || [];
+      const updated = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      const newAttrValues = { ...prev, [attr]: updated };
+      const activeAttrs = ATTRIBUTES.filter((a) => newAttrValues[a]?.length > 0);
+      if (activeAttrs.length === 0) {
+        setVariations([]);
+      } else {
+        const combinations = activeAttrs.reduce(
+          (acc, curr) =>
+            acc.length === 0 ? newAttrValues[curr].map((v) => [v]) : acc.flatMap((d) => newAttrValues[curr].map((e) => [...d, e])),
+          []
+        );
+        setVariations(
+          combinations.map((combo, idx) => ({
+            id: `new-${idx}`,
+            name: typeof combo === 'string' ? combo : combo.join(' - '),
+            price: unitPrice || '',
+            image: null
+          }))
+        );
+      }
+      return newAttrValues;
+    });
   };
 
-  const handleVariationChange = (id, field, value) => {
-    setVariations((prev) => prev.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
+  const handleAddonToggle = (addonName) =>
+    setSelectedAddons((prev) => (prev.includes(addonName) ? prev.filter((a) => a !== addonName) : [...prev, addonName]));
+
+  const handleReset = () => {
+    setName('');
+    setShortDescription('');
+    setCategory('');
+    setSelectedSubCategories([]);
+    setSelectedOccasions([]);
+    setUnit('Kg');
+    setWeight('');
+    setItemType('Eggless');
+    setSearchTags('');
+    setThumbnail(null);
+    setGalleryImages([]);
+    setVariations([]);
+    setAttrValues({ Weight: [], Ingredient: [] });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteVariation = (id) => {
-    setVariations((prev) => prev.filter((v) => v.id !== id));
-  };
-
-  const handleThumbnailUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) setThumbnail(file);
-  };
-// ---------------- Add-ons handlers ----------------
-const handleAddAddon = () => {
-  setAddons((prev) => [
-    ...prev,
-    { id: Date.now(), name: '', price: '' }
-  ]);
-};
-
-const handleAddonChange = (id, field, value) => {
-  setAddons((prev) =>
-    prev.map((a) => (a.id === id ? { ...a, [field]: value } : a))
-  );
-};
-
-const handleDeleteAddon = (id) => {
-  setAddons((prev) => prev.filter((a) => a.id !== id));
-};
-
-  const handleGalleryUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const total = galleryImages.length + existingGallery.length + files.length;
-    if (total > 10) {
-      alert('Maximum 10 gallery images allowed');
-      return;
-    }
-    setGalleryImages((prev) => [...prev, ...files]);
-  };
-
-  const removeNewGalleryImage = (i) => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i));
-  const removeExistingGalleryImage = (i) => setExistingGallery((prev) => prev.filter((_, idx) => idx !== i));
-
-  // ------------------------------ Submit Handler ------------------------------
   const handleSubmit = async () => {
     const vendorId = currentVendor?._id || currentVendor?.id;
-    if (!vendorId) {
-      setError('Vendor not authenticated');
+    if (!vendorId || !name || !category || (!thumbnail && !existingThumbnail)) {
+      setError('Missing required fields');
       return;
     }
-    if (!name.trim()) {
-      setError('Cake name is required');
-      return;
-    }
-    if (!category) {
-      setError('Select a category');
-      return;
-    }
-  
-    if (!thumbnail && !existingThumbnail) {
-      setError('Thumbnail image is required');
-      return;
-    }
-
     const formData = new FormData();
-
-    // Basic fields
     formData.append('name', name);
     formData.append('shortDescription', shortDescription);
+    formData.append('category', category);
     formData.append('module', CAKE_MODULE_ID);
-    formData.append('category', category); // ✅ This is now the parent category ID
+    formData.append('uom', unit);
+    formData.append('weight', weight);
     formData.append('itemType', itemType);
-    formData.append('isActive', isActive);
     formData.append('provider', vendorId);
-
-    // ✅ Subcategories - send as JSON array
-    if (selectedSubCategories.length > 0) {
-      formData.append('subCategories', JSON.stringify(selectedSubCategories));
-    }
-
-    // Time schedule
-    // formData.append(
-    //   'timeSchedule',
-    //   JSON.stringify({
-    //     startTime,
-    //     startPeriod,
-    //     endTime,
-    //     endPeriod
-    //   })
-    // );
-
-   
-    // Arrays
-    if (nutrition.trim()) {
-      const nutritionArr = nutrition
-        .split(',')
-        .map((i) => i.trim())
-        .filter(Boolean);
-      formData.append('nutrition', JSON.stringify(nutritionArr));
-    }
-
-    if (allergenIngredients.trim()) {
-      const allergenArr = allergenIngredients
-        .split(',')
-        .map((i) => i.trim())
-        .filter(Boolean);
-      formData.append('allergenIngredients', JSON.stringify(allergenArr));
-    }
-
-    if (searchTags.trim()) {
-      const tagsArr = searchTags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-      formData.append('searchTags', JSON.stringify(tagsArr));
-    }
-// ---------------- Add-ons ----------------
-const validAddons = addons
-  .filter((a) => a.name && a.price)
-  .map(({ name, price }) => ({
-    name,
-    price: Number(price)
-  }));
-
-
-if (Array.isArray(validAddons) && validAddons.length > 0) {
-  formData.append('addons', JSON.stringify(validAddons));
-}
-
-
-    // Variations
-    const validVariations = variations.filter((v) => v.name && v.price).map(({ name, price }) => ({ name, price: Number(price) }));
-
-    if (validVariations.length > 0) {
-      formData.append('variations', JSON.stringify(validVariations));
-    }
-
-    // Images
-    if (thumbnail) {
-      formData.append('thumbnail', thumbnail);
-    }
-
-    galleryImages.forEach((file) => {
-      formData.append('images', file);
-    });
-
+    formData.append('subCategories', JSON.stringify(selectedSubCategories));
+    formData.append('occasions', JSON.stringify(selectedOccasions));
+    formData.append(
+      'searchTags',
+      JSON.stringify(
+        searchTags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      )
+    );
+    formData.append('addons', JSON.stringify(selectedAddons));
+    formData.append('shipping', JSON.stringify(shipping));
+    formData.append('prepTime', prepTime);
+    const validVariants = variations.filter((v) => v.price).map((v) => ({ name: v.name, price: Number(v.price) }));
+    if (validVariants.length) formData.append('variations', JSON.stringify(validVariants));
+    if (thumbnail) formData.append('thumbnail', thumbnail);
+    galleryImages.forEach((img) => formData.append('images', img));
     try {
       setSubmitting(true);
-      setError('');
-      setSuccessMessage('');
-
-      let response;
-
-      if (isEditMode) {
-        response = await axios.put(`${API_BASE}/api/cakes/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        setSuccessMessage('Cake updated successfully!');
-      } else {
-        response = await axios.post(`${API_BASE}/api/cakes`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        setSuccessMessage('Cake created successfully!');
-      }
-
-      // ✅ Fetch and populate the created/updated cake data
-      if (response.data.success && response.data.data) {
-        const cakeData = response.data.data;
-
-        console.log('✅ Cake Package Created/Updated:', {
-          id: cakeData._id,
-          name: cakeData.name,
-          cakeId: cakeData.cakeId,
-          category: cakeData.category?.title,
-          provider: cakeData.provider?.storeName,
-          thumbnail: cakeData.thumbnail,
-          priceInfo: cakeData.priceInfo,
-          variations: cakeData.variations,
-          module: cakeData.module?.title
-        });
-
-        // Optionally navigate to cake list or detail page after 2 seconds
-        // setTimeout(() => {
-        //   navigate('/cakes');
-        // }, 2000);
+      const token = localStorage.getItem('token');
+      const res = isEditMode
+        ? await axios.put(`${API_BASE}/api/cakes/${id}`, formData, { headers: { Authorization: `Bearer ${token}` } })
+        : await axios.post(`${API_BASE}/api/cakes`, formData, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data.success) {
+        setSuccessMessage('Saved successfully!');
+        setTimeout(() => navigate('/cakes'), 2000);
       }
     } catch (err) {
-      console.error('Submit error:', err);
       setError(err.response?.data?.message || 'Error saving cake');
     } finally {
       setSubmitting(false);
@@ -449,366 +569,772 @@ if (Array.isArray(validAddons) && validAddons.length > 0) {
     }
   };
 
-  // ------------------------------ Loading Screen ------------------------------
-  if (loading || categoriesLoading) {
+  if (loading)
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress size={60} sx={{ color: PINK }} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress color="inherit" sx={{ color: PINK }} />
       </Box>
     );
-  }
 
   return (
-    <Box sx={{ bgcolor: '#f9f9fc', minHeight: '100vh' }}>
-      {/* HEADER */}
-      <Box sx={{ bgcolor: 'white', borderBottom: '1px solid #eee', p: 2, px: 4, position: 'sticky', top: 0, zIndex: 10 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate(-1)}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5" fontWeight="bold">
-            {isEditMode ? 'Edit' : 'Add'} Cake Package
-          </Typography>
+    <Box sx={{ bgcolor: '#FDFDFF', minHeight: '100vh', pb: 10 }}>
+      {/* 🚀 STICKY HEADER AREA */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          borderBottom: '1px solid #F0F0F0',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          px: { xs: 2, md: 5 },
+          py: 2.5,
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(20px)'
+        }}
+      >
+        <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack direction="row" spacing={3} alignItems="center">
+            <IconButton
+              onClick={() => navigate(-1)}
+              sx={{ bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', '&:hover': { bgcolor: PINK, color: 'white', borderColor: PINK } }}
+            >
+              <ArrowBackIcon fontSize="small" />
+            </IconButton>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 900, color: '#111827', letterSpacing: '-1.2px', fontSize: '28px' }}>
+                {isEditMode ? 'Edit' : 'Create'} Cake Package
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Catering Management / Add New Item
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack direction="row" spacing={2.5}>
+            <Button
+              variant="text"
+              onClick={handleReset}
+              sx={{ px: 4, textTransform: 'none', fontWeight: 800, color: '#4B5563', '&:hover': { color: PINK } }}
+            >
+              Reset Form
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={submitting}
+              sx={{
+                bgcolor: PINK,
+                borderRadius: '18px',
+                px: 6,
+                py: 1.8,
+                textTransform: 'none',
+                fontWeight: 900,
+                fontSize: '16px',
+                boxShadow: `0px 15px 35px ${alpha(PINK, 0.35)}`,
+                '&:hover': { bgcolor: '#D81B60', boxShadow: `0px 20px 45px ${alpha(PINK, 0.45)}` }
+              }}
+            >
+              {submitting ? <CircularProgress size={24} color="inherit" /> : `Publish Package`}
+            </Button>
+          </Stack>
         </Box>
-        {currentVendor && (
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 7 }}>
-            Creating as: {currentVendor.firstName} {currentVendor.lastName}
-          </Typography>
-        )}
       </Box>
 
-      {/* BODY */}
-      <Box sx={{ p: { xs: 2, md: 4 } }}>
+      <Box sx={{ maxWidth: '1200px', margin: '48px auto', px: 3 }}>
         {successMessage && (
-          <Alert severity="success" sx={{ mb: 3 }}>
+          <Alert
+            severity="success"
+            sx={{ mb: 4, borderRadius: '20px', fontWeight: 800, border: 'none', boxShadow: '0px 10px 30px rgba(76, 175, 80, 0.1)' }}
+          >
             {successMessage}
           </Alert>
         )}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert
+            severity="error"
+            sx={{ mb: 4, borderRadius: '20px', fontWeight: 800, border: 'none', boxShadow: '0px 10px 30px rgba(244, 67, 54, 0.1)' }}
+          >
             {error}
           </Alert>
         )}
 
-        <Paper elevation={3} sx={{ borderRadius: 3, p: { xs: 3, md: 6 } }}>
-          {/* Name & Short Description */}
-          <TextField fullWidth label="Cake Name *" value={name} onChange={(e) => setName(e.target.value)} sx={{ mb: 3 }} />
-          <TextField
-            fullWidth
-            label="Short Description *"
-            multiline
-            rows={2}
-            value={shortDescription}
-            onChange={(e) => setShortDescription(e.target.value)}
-            sx={{ mb: 3 }}
-          />
+        <PremiumCard>
+          <StyledSectionTitle>General Information</StyledSectionTitle>
+          <StyledSectionSubtitle>Define the fundamental details that describe your cake creation.</StyledSectionSubtitle>
 
-          {/* Category & Subcategories */}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Parent Category *</InputLabel>
-              <Select value={category} onChange={handleCategoryChange}>
-                <MenuItem value="">Select Parent Category</MenuItem>
-                {categories.map((cat) => (
-                  <MenuItem key={cat._id} value={cat._id}>
-                    {cat.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth disabled={!category}>
-              <InputLabel>Sub Categories</InputLabel>
-              <Select
-                multiple
-                value={selectedSubCategories}
-                onChange={(e) => setSelectedSubCategories(e.target.value)}
-                input={<OutlinedInput />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const sub = subCategories.find((s) => s._id === value);
-                      return <Chip key={value} label={sub?.title || value} size="small" />;
-                    })}
-                  </Box>
-                )}
+          <Stack spacing={4}>
+            {/* PRODUCT NAME */}
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 1.5,
+                  fontWeight: 800,
+                  color: '#374151',
+                  textTransform: 'uppercase',
+                  fontSize: '12px',
+                  letterSpacing: '1px'
+                }}
               >
-                {subCategories.map((sub) => (
-                  <MenuItem key={sub._id} value={sub._id}>
-                    <Checkbox checked={selectedSubCategories.includes(sub._id)} />
-                    <ListItemText primary={sub.title} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-
-          {/* Type & Dietary */}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3, alignItems: 'center' }}>
-            <FormControl fullWidth>
-              <InputLabel>Item Type</InputLabel>
-              <Select value={itemType} onChange={(e) => setItemType(e.target.value)}>
-                <MenuItem value="Eggless">Eggless</MenuItem>
-                <MenuItem value="Egg">Egg</MenuItem>
-              </Select>
-            </FormControl>
-            {/* <FormControlLabel
-              control={
-                <Switch
-                  checked={isHalal}
-                  onChange={() => setIsHalal(!isHalal)}
-                  sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }}
-                />
-              }
-              label="Halal Certified"
-            /> */}
-          </Stack>
-
-          {/* Nutrition & Allergens */}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              label="Nutrition (comma separated)"
-              placeholder="e.g. Sugar, Milk, Flour"
-              value={nutrition}
-              onChange={(e) => setNutrition(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Allergen Ingredients (comma separated)"
-              placeholder="e.g. Nuts, Gluten"
-              value={allergenIngredients}
-              onChange={(e) => setAllergenIngredients(e.target.value)}
-            />
-          </Stack>
-
-
-         
-          {/* Variations */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ color: PINK }}>
-                Variations (Size/Weight)
+                Product Name
               </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{ bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
-                onClick={handleAddVariation}
-              >
-                Add Variation
-              </Button>
-            </Box>
-            {variations.map((variation) => (
-              <VariationRow
-                key={variation.id}
-                variation={variation}
-                onChange={(field, value) => handleVariationChange(variation.id, field, value)}
-                onDelete={() => handleDeleteVariation(variation.id)}
+
+              <PremiumTextField
+                fullWidth
+                placeholder="e.g. Midnight Chocolate Ganache Cake"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
-            ))}
-          </Box>
-{/* ================= Cake Add-ons ================= */}
-<Box sx={{ mb: 4 }}>
-  <Box
+            </Box>
+
+            {/* FULL DESCRIPTION */}
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 1.5,
+                  fontWeight: 800,
+                  color: '#374151',
+                  textTransform: 'uppercase',
+                  fontSize: '12px',
+                  letterSpacing: '1px'
+                }}
+              >
+                Full Description
+              </Typography>
+
+              <PremiumTextField
+                fullWidth
+                multiline
+                rows={4}
+                placeholder="Describe the rich textures, premium ingredients, and the flavor experience..."
+                value={shortDescription}
+                onChange={(e) => setShortDescription(e.target.value)}
+              />
+            </Box>
+
+            {/* ONE ROW: CATEGORY + SUBCATEGORY + UNIT + WEIGHT */}
+            <Box sx={{ width: '100%' }}>
+              <Grid container spacing={4} columnSpacing={6}>
+                <Grid item xs={12} md={4}>
+                  <Typography sx={labelStyle}>Parent Category</Typography>
+                  <FormControl fullWidth>
+                    <PremiumSelect fullWidth value={category} onChange={(e) => setCategory(e.target.value)} displayEmpty>
+                      <MenuItem disabled value="">
+                        Select the primary category
+                      </MenuItem>
+                      {categories.map((cat) => (
+                        <MenuItem key={cat._id} value={cat._id}>
+                          {cat.title}
+                        </MenuItem>
+                      ))}
+                    </PremiumSelect>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Typography sx={labelStyle}>Subcategories</Typography>
+                  <FormControl fullWidth disabled={!category}>
+                    <PremiumSelect
+                      fullWidth
+                      multiple
+                      value={selectedSubCategories}
+                      onChange={(e) => setSelectedSubCategories(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem disabled value="">
+                        Choose related tags
+                      </MenuItem>
+                      {subCategories.map((sub) => (
+                        <MenuItem key={sub._id} value={sub._id}>
+                          <Checkbox checked={selectedSubCategories.includes(sub._id)} />
+                          <ListItemText primary={sub.title} />
+                        </MenuItem>
+                      ))}
+                    </PremiumSelect>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={2}>
+                  <Typography sx={labelStyle}>Select Unit</Typography>
+                  <FormControl fullWidth>
+                    <PremiumSelect fullWidth value={unit} onChange={(e) => setUnit(e.target.value)}>
+                      <MenuItem value="Kg">Kg</MenuItem>
+                      <MenuItem value="Gm">Gm</MenuItem>
+                      <MenuItem value="Piece">Piece</MenuItem>
+                      <MenuItem value="Litre">Litre</MenuItem>
+                    </PremiumSelect>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={2}>
+                  <Typography sx={labelStyle}>Weight in Kg</Typography>
+                  <PremiumTextField fullWidth placeholder="e.g. 1.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* PERFECT FOR OCCASIONS (FIXED TO ROW / COLUMNS) */}
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 1.5,
+                  fontWeight: 800,
+                  color: '#374151',
+                  textTransform: 'uppercase',
+                  fontSize: '12px',
+                  letterSpacing: '1px'
+                }}
+              >
+                Perfect for Occasions
+              </Typography>
+
+              <FormControl fullWidth>
+                <PremiumSelect
+                  multiple
+                  value={selectedOccasions}
+                  onChange={(e) => setSelectedOccasions(e.target.value)}
+                  displayEmpty
+                  renderValue={(selected) =>
+                    selected.length === 0 ? (
+                      <Typography sx={{ color: '#9CA3AF', fontWeight: 600 }}>Select one or many occasions</Typography>
+                    ) : (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {selected.map((val) => (
+                          <Chip
+                            key={val}
+                            label={val}
+                            size="small"
+                            sx={{
+                              borderRadius: '10px',
+                              fontWeight: 800,
+                              bgcolor: alpha(PINK, 0.08),
+                              color: PINK
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    )
+                  }
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 300,
+                        mt: 1,
+                        p: 1
+                      }
+                    },
+                    MenuListProps: {
+                      sx: {
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: 1
+                      }
+                    }
+                  }}
+                >
+                  {OCCASIONS.map((occ) => (
+                    <MenuItem key={occ} value={occ} sx={{ borderRadius: '10px', fontWeight: 700 }}>
+                      <Checkbox
+                        checked={selectedOccasions.includes(occ)}
+                        size="small"
+                        sx={{ color: PINK, '&.Mui-checked': { color: PINK } }}
+                      />
+                      <ListItemText primary={occ} />
+                    </MenuItem>
+                  ))}
+                </PremiumSelect>
+              </FormControl>
+            </Box>
+          </Stack>
+        </PremiumCard>
+
+        {/* 🖼️ SECTION 2: HIGH-FIDELITY MEDIA GALLERY */}
+        <PremiumCard>
+          <StyledSectionTitle>Media & Show Reels</StyledSectionTitle>
+          <StyledSectionSubtitle>High-resolution captures significantly increase conversion rates.</StyledSectionSubtitle>
+
+          <Grid container spacing={6}>
+            {/* THUMBNAIL AREA (LEFT 4/12) */}
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" sx={{ mb: 2.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
+                Primary Display Photo
+              </Typography>
+              <MediaPreviewBox hasImage={thumbnail || existingThumbnail} onClick={() => document.getElementById('thumb-in').click()}>
+                <input id="thumb-in" type="file" hidden onChange={(e) => setThumbnail(e.target.files[0])} />
+                {thumbnail || existingThumbnail ? (
+                  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                    <img
+                      src={thumbnail ? URL.createObjectURL(thumbnail) : existingThumbnail}
+                      alt="thumb"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setThumbnail(null);
+                        setExistingThumbnail('');
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        top: 15,
+                        right: 15,
+                        bgcolor: 'white',
+                        color: PINK,
+                        '&:hover': { bgcolor: PINK, color: 'white' }
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Stack alignItems="center" spacing={2.5}>
+                    <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 3, borderRadius: '50%' }}>
+                      <CloudUploadIcon sx={{ color: PINK, fontSize: 40 }} />
+                    </Box>
+                    <Box textAlign="center">
+                      <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '18px', color: '#111827' }}>
+                        Upload Main View
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 700 }}>
+                        Recommended: 1000 x 800 pixels
+                      </Typography>
+                    </Box>
+                  </Stack>
+                )}
+              </MediaPreviewBox>
+            </Grid>
+
+            {/* GALLERY AREA (RIGHT 8/12) */}
+<Grid item xs={12} md={8}>
+  <Typography
+    variant="body2"
     sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      mb: 2
+      mb: 2.5,
+      fontWeight: 800,
+      color: '#374151',
+      textTransform: 'uppercase',
+      fontSize: '13px'
     }}
   >
-    <Typography variant="h6" sx={{ color: PINK }}>
-      Cake Add-ons
-    </Typography>
+    Gallery Showcase (Up to 10)
+  </Typography>
 
-    <Button
-      variant="outlined"
-      startIcon={<AddIcon />}
-      onClick={handleAddAddon}
-      sx={{ borderColor: PINK, color: PINK }}
-    >
-      Add Add-on
-    </Button>
+  <Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 1 }}>
+    <Grid container spacing={2}>
+      {[...Array(10)].map((_, i) => (
+        <Grid item xs={6} sm={4} md={3} key={i}>
+          <GallerySlotMedium
+            hasImage={galleryImages[i] || existingGallery[i]}
+            onClick={() => document.getElementById('gall-in').click()}
+          >
+            <input
+              id="gall-in"
+              type="file"
+              hidden
+              multiple
+              onChange={(e) =>
+                setGalleryImages((prev) => [...prev, ...Array.from(e.target.files)])
+              }
+            />
+
+            {galleryImages[i] || existingGallery[i] ? (
+              <>
+                <img
+                  src={
+                    galleryImages[i]
+                      ? URL.createObjectURL(galleryImages[i])
+                      : existingGallery[i]
+                  }
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    i < existingGallery.length
+                      ? setExistingGallery((prev) =>
+                          prev.filter((_, idx) => idx !== i)
+                        )
+                      : setGalleryImages((prev) =>
+                          prev.filter(
+                            (_, idx) => idx !== i - existingGallery.length
+                          )
+                        );
+                  }}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    bgcolor: 'rgba(255,255,255,0.9)',
+                    p: 0.5,
+                    color: PINK,
+                    '&:hover': { bgcolor: PINK, color: 'white' }
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </>
+            ) : (
+              <AddIcon sx={{ color: '#D1D5DB', fontSize: 32 }} />
+            )}
+          </GallerySlotMedium>
+        </Grid>
+      ))}
+    </Grid>
   </Box>
 
-  {addons.map((addon) => (
-    <Paper
-      key={addon.id}
-      sx={{
-        p: 2,
-        mb: 2,
-        border: '1px solid #eee',
-        borderRadius: 2
-      }}
+  {/* PRO TIP */}
+  <Box
+    sx={{
+      mt: 4,
+      p: 3,
+      borderRadius: '16px',
+      bgcolor: alpha(PINK, 0.03),
+      border: `1px solid ${alpha(PINK, 0.08)}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2
+    }}
+  >
+    <AutoAwesomeIcon sx={{ color: PINK, fontSize: 24 }} />
+    <Typography
+      variant="caption"
+      sx={{ color: '#4B5563', fontWeight: 700, lineHeight: 1.6 }}
     >
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={2}
-        alignItems="center"
-      >
-        <TextField
-          label="Add-on Name"
-          placeholder="e.g. Birthday Candles"
-          value={addon.name}
-          onChange={(e) =>
-            handleAddonChange(addon.id, 'name', e.target.value)
-          }
-          fullWidth
-        />
+      Pro Tip: Include images of the slice texture and the interior filling to WOW
+      your customers.
+    </Typography>
+  </Box>
+</Grid>
 
-        <TextField
-          label="Price (₹)"
-          type="number"
-          value={addon.price}
-          onChange={(e) =>
-            handleAddonChange(addon.id, 'price', e.target.value)
-          }
-          sx={{ width: 160 }}
-        />
+          </Grid>
+        </PremiumCard>
 
+        {/* 💰 SECTION 3: ATTRACTIVE PRICING & DYNAMIC VARIANTS */}
+        <PremiumCard>
+          <StyledSectionTitle>Pricing & Intelligent Variations</StyledSectionTitle>
+          <StyledSectionSubtitle>Configure smart pricing tiers based on user-selected preferences.</StyledSectionSubtitle>
 
-        <IconButton
-          color="error"
-          onClick={() => handleDeleteAddon(addon.id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Stack>
-    </Paper>
-  ))}
-</Box>
-
-          {/* Search Tags */}
-          <TextField
-            fullWidth
-            label="Search Tags (comma separated)"
-            placeholder="e.g. chocolate, birthday, wedding"
-            value={searchTags}
-            onChange={(e) => setSearchTags(e.target.value)}
-            sx={{ mb: 4 }}
-          />
-
-          {/* Toggles */}
-          <Stack direction="row" spacing={4} sx={{ mb: 4 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isActive}
-                  onChange={() => setIsActive(!isActive)}
-                  sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }}
-                />
-              }
-              label="Active"
+          <Box
+            sx={{
+              mb: 5,
+              p: 5,
+              borderRadius: '32px',
+              bgcolor: alpha(PINK, 0.01),
+              border: `2.5px solid ${alpha(PINK, 0.05)}`,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '200px',
+                height: '100%',
+                background: `linear-gradient(to left, ${alpha(PINK, 0.03)}, transparent)`,
+                pointerEvents: 'none'
+              }}
             />
-            {/* <FormControlLabel
-              control={
-                <Switch
-                  checked={isTopPick}
-                  onChange={() => setIsTopPick(!isTopPick)}
-                  sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: PINK } }}
-                />
-              }
-              label="Top Pick"
-            /> */}
-          </Stack>
-
-          {/* Thumbnail */}
-          <Typography variant="h6" sx={{ color: PINK, mb: 2 }}>
-            Thumbnail Image *
-          </Typography>
-          <Paper
-            onClick={() => document.getElementById('thumbnail-input').click()}
-            sx={{ border: '2px dashed #ddd', borderRadius: 2, p: 4, textAlign: 'center', cursor: 'pointer', mb: 4 }}
-          >
-            <input id="thumbnail-input" type="file" hidden accept="image/*" onChange={handleThumbnailUpload} />
-            {thumbnail || existingThumbnail ? (
-              <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                <img
-                  src={thumbnail ? URL.createObjectURL(thumbnail) : existingThumbnail}
-                  alt="Thumbnail"
-                  style={{ width: 200, height: 200, objectFit: 'cover', borderRadius: 8 }}
-                />
-                {thumbnail && (
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setThumbnail(null);
+            <Typography
+              variant="h6"
+              sx={{ mb: 4, fontWeight: 900, color: '#111827', display: 'flex', alignItems: 'center', gap: 2, fontSize: '20px' }}
+            >
+              <SettingsIcon sx={{ color: PINK }} /> Variant Configuration
+            </Typography>
+            <Stack spacing={5}>
+              {ATTRIBUTES.map((attr) => (
+                <Box key={attr}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mb: 2,
+                      display: 'block',
+                      fontWeight: 800,
+                      color: '#6B7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '2px',
+                      fontSize: '11px'
                     }}
-                    sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
                   >
-                    <CloseIcon />
-                  </IconButton>
-                )}
-              </Box>
-            ) : (
-              <>
-                <CloudUploadIcon sx={{ fontSize: 60, color: '#ccc' }} />
-                <Typography sx={{ mt: 2, color: PINK, fontWeight: 'bold' }}>Click to Upload Thumbnail</Typography>
-              </>
-            )}
-          </Paper>
-
-          {/* Gallery */}
-          <Typography variant="h6" sx={{ color: PINK, mb: 2 }}>
-            Gallery Images (Max 10)
-          </Typography>
-          <Paper
-            onClick={() => document.getElementById('gallery-input').click()}
-            sx={{ border: '2px dashed #ddd', borderRadius: 2, p: 4, textAlign: 'center', cursor: 'pointer', mb: 4 }}
-          >
-            <input id="gallery-input" type="file" hidden multiple accept="image/*" onChange={handleGalleryUpload} />
-            {galleryImages.length > 0 || existingGallery.length > 0 ? (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-                {existingGallery.map((img, i) => (
-                  <Box key={`ex-${i}`} sx={{ position: 'relative' }}>
-                    <img src={img} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeExistingGalleryImage(i);
-                      }}
-                      sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
+                    Available {attr}s
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    {ATTRIBUTE_VALUES[attr].map((val) => (
+                      <InteractionChipRefined
+                        key={val}
+                        label={val}
+                        selected={attrValues[attr]?.includes(val)}
+                        onClick={() => handleAttrValueToggle(attr, val)}
+                      />
+                    ))}
                   </Box>
-                ))}
-                {galleryImages.map((file, i) => (
-                  <Box key={`new-${i}`} sx={{ position: 'relative' }}>
-                    <img src={URL.createObjectURL(file)} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeNewGalleryImage(i);
-                      }}
-                      sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white' }}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <>
-                <CloudUploadIcon sx={{ fontSize: 60, color: '#ccc' }} />
-                <Typography sx={{ mt: 2, color: PINK, fontWeight: 'bold' }}>Click to Upload Gallery Images</Typography>
-              </>
-            )}
-          </Paper>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
 
-          {/* Submit */}
-          <Button
-            fullWidth
-            variant="contained"
-            size="large"
-            onClick={handleSubmit}
-            disabled={submitting || !currentVendor}
-            sx={{ py: 2, bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
-          >
-            {submitting ? <CircularProgress size={28} color="inherit" /> : isEditMode ? 'Update Cake Package' : 'Create Cake Package'}
-          </Button>
-        </Paper>
+          <Grid container spacing={3} sx={{ mb: 6 }}>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
+                Base Price (Starting From)
+              </Typography>
+              <PremiumTextField
+                fullWidth
+                placeholder="0.00"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(e.target.value)}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1, fontWeight: 900, color: '#9CA3AF', fontSize: '18px' }}>₹</Typography>
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
+                Discount Policy
+              </Typography>
+              <PremiumSelect fullWidth value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                <MenuItem value="no_discount">Standard Pricing (No Discount)</MenuItem>
+                <MenuItem value="percentage">Promotional Percentage (%)</MenuItem>
+                <MenuItem value="flat">Direct Flat Reduction (₹)</MenuItem>
+              </PremiumSelect>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
+                Reduction Value
+              </Typography>
+              <PremiumTextField fullWidth placeholder="e.g. 50" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} />
+            </Grid>
+          </Grid>
+
+          {variations.length > 0 && (
+            <GlassTableContainerRefined>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(PINK, 0.02) }}>
+                    <TableCell sx={{ fontWeight: 900, color: '#111827', fontSize: '14px', py: 3, pl: 4 }}>Variation Details</TableCell>
+                    <TableCell sx={{ fontWeight: 900, color: '#111827', fontSize: '14px', py: 3 }}>Market Listing Price</TableCell>
+                    <TableCell sx={{ fontWeight: 900, color: '#111827', fontSize: '14px', py: 3, pr: 4 }}>Display Media</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {variations.map((v) => (
+                    <VariationRow
+                      key={v.id}
+                      variation={v}
+                      onChange={(f, val) => setVariations((prev) => prev.map((p) => (p.id === v.id ? { ...p, [f]: val } : p)))}
+                      onImageUpload={(img) => setVariations((prev) => prev.map((p) => (p.id === v.id ? { ...p, image: img } : p)))}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </GlassTableContainerRefined>
+          )}
+        </PremiumCard>
+
+        {/* 🎂 SECTION 4: THEMED GROUPED ADD-ONS */}
+        <PremiumCard>
+          <StyledSectionTitle>Curated Boosters & Add-ons</StyledSectionTitle>
+          <StyledSectionSubtitle>Group related extras to enhance the customer's celebration experience.</StyledSectionSubtitle>
+          <Grid container spacing={4}>
+            {ADDON_CATEGORIES.map((group) => (
+              <Grid item xs={12} md={6} key={group.id}>
+                <FeatureGroupBox>
+                  <GroupBadge>{group.id}</GroupBadge>
+                  <Typography variant="h6" sx={{ fontWeight: 900, mb: 3.5, color: '#111827', letterSpacing: '-0.5px' }}>
+                    {group.title}
+                  </Typography>
+                  <Stack spacing={2.5}>
+                    {group.items.map((addon) => (
+                      <Box
+                        key={addon.name}
+                        sx={{
+                          p: 2.5,
+                          borderRadius: '16px',
+                          border: '1px solid #F3F4F6',
+                          bgcolor: selectedAddons.includes(addon.name) ? alpha(PINK, 0.02) : 'transparent',
+                          borderColor: selectedAddons.includes(addon.name) ? PINK : '#F3F4F6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': { bgcolor: alpha(PINK, 0.01), borderColor: PINK }
+                        }}
+                        onClick={() => handleAddonToggle(addon.name)}
+                      >
+                        <Stack direction="row" spacing={2.5} alignItems="center">
+                          <Box sx={{ color: selectedAddons.includes(addon.name) ? PINK : '#9CA3AF' }}>{addon.icon}</Box>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 800, color: selectedAddons.includes(addon.name) ? '#111827' : '#4B5563' }}
+                          >
+                            {addon.name}
+                          </Typography>
+                        </Stack>
+                        <Checkbox
+                          checked={selectedAddons.includes(addon.name)}
+                          sx={{ color: '#D1D5DB', '&.Mui-checked': { color: PINK } }}
+                        />
+                      </Box>
+                    ))}
+                  </Stack>
+                </FeatureGroupBox>
+              </Grid>
+            ))}
+          </Grid>
+        </PremiumCard>
+
+        {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
+        <PremiumCard>
+          <StyledSectionTitle>Delivery & Logistics</StyledSectionTitle>
+          <StyledSectionSubtitle>Ensure your cake arrives safely with precise delivery controls.</StyledSectionSubtitle>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  p: 4,
+                  borderRadius: '24px',
+                  border: '2px solid #F3F4F6',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { borderColor: PINK, bgcolor: alpha(PINK, 0.01) }
+                }}
+              >
+                <Stack direction="row" spacing={3} alignItems="center">
+                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
+                    <ShippingIcon sx={{ color: PINK }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 900 }}>Complimentary Delivery</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                      Free for the customer
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Switch checked={shipping.free} onChange={(e) => setShipping({ ...shipping, free: e.target.checked })} />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  p: 4,
+                  borderRadius: '24px',
+                  border: '2px solid #F3F4F6',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { borderColor: PINK, bgcolor: alpha(PINK, 0.01) }
+                }}
+              >
+                <Stack direction="row" spacing={3} alignItems="center">
+                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
+                    <PaymentsIcon sx={{ color: PINK }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 900 }}>Standard Flat Rate</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                      Fixed cost per delivery
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Switch checked={shipping.flatRate} onChange={(e) => setShipping({ ...shipping, flatRate: e.target.checked })} />
+              </Box>
+            </Grid>
+            {shipping.flatRate && (
+              <Grid item xs={12}>
+                <Box sx={{ p: 4, bgcolor: '#F9FAFB', borderRadius: '24px', border: '1px solid #E5E7EB' }}>
+                  <Typography variant="body2" sx={{ mb: 2, fontWeight: 800 }}>
+                    Defined Flat Rate Fee ( ₹ )
+                  </Typography>
+                  <PremiumTextField
+                    sx={{ width: '300px' }}
+                    value={shipping.price}
+                    onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </PremiumCard>
+
+        {/* 🏷️ SECTION 6: SEARCH ENGINE OPTIMIZATION */}
+        <PremiumCard>
+          <StyledSectionTitle>Optimization & Search Visibility</StyledSectionTitle>
+          <StyledSectionSubtitle>Boost discoverability with targeted keywords and meta-tags.</StyledSectionSubtitle>
+          <Box>
+            <Typography variant="body2" sx={{ mb: 2, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <LabelIcon sx={{ color: PINK }} /> Dynamic Search Tags (Use comma as separator)
+            </Typography>
+            <PremiumTextField
+              fullWidth
+              placeholder="e.g. Birthday, Luxury Cake, Eggless, Anniversary Surprise"
+              value={searchTags}
+              onChange={(e) => setSearchTags(e.target.value)}
+            />
+          </Box>
+        </PremiumCard>
+
+        {/* 🤝 SECTION 7: CROSS-SELLING ECOSYSTEM */}
+        <PremiumCard sx={{ mb: 8 }}>
+          <StyledSectionTitle>Cross-Selling Ecosystem</StyledSectionTitle>
+          <StyledSectionSubtitle>Increase item value by connecting toppers, candles, or cards.</StyledSectionSubtitle>
+          <Stack spacing={5}>
+            <RadioGroup row>
+              <FormControlLabel
+                value="product"
+                control={<Radio sx={{ color: PINK, '&.Mui-checked': { color: PINK } }} />}
+                label={<Typography sx={{ fontWeight: 800 }}>Specific Products</Typography>}
+              />
+              <FormControlLabel
+                value="category"
+                control={<Radio sx={{ color: PINK, '&.Mui-checked': { color: PINK } }} />}
+                label={<Typography sx={{ fontWeight: 800 }}>Thematic Categories</Typography>}
+              />
+            </RadioGroup>
+            <Box
+              sx={{
+                p: 8,
+                borderRadius: '32px',
+                bgcolor: alpha(PINK, 0.01),
+                border: `2.5px dashed ${alpha(PINK, 0.1)}`,
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': { bgcolor: alpha(PINK, 0.02), borderColor: PINK }
+              }}
+            >
+              <Button
+                startIcon={<SearchIcon />}
+                sx={{
+                  px: 8,
+                  py: 2.5,
+                  borderRadius: '20px',
+                  bgcolor: 'white',
+                  color: '#111827',
+                  fontWeight: 900,
+                  textTransform: 'none',
+                  boxShadow: '0px 10px 30px rgba(0,0,0,0.05)',
+                  '&:hover': { bgcolor: PINK, color: 'white' }
+                }}
+              >
+                Discover Items to Link
+              </Button>
+            </Box>
+          </Stack>
+        </PremiumCard>
       </Box>
     </Box>
   );

@@ -89,7 +89,10 @@ export default function ProfileSection() {
         youtube: social.youtube || '',
         pinterest: social.pinterest || '',
         whatsapp: social.whatsapp || '',
-        other: social.other || ''
+        other: social.other || '',
+        bioTitle: '',
+        bioSubtitle: '',
+        bioDescription: ''
       }));
     }
     if (storedVendorType) {
@@ -145,23 +148,37 @@ export default function ProfileSection() {
           snapchat: socialLinks.snapchat || (currentUser.socialMedia && currentUser.socialMedia.snapchat) || '',
           whatsapp: socialLinks.whatsapp || (currentUser.socialMedia && currentUser.socialMedia.whatsapp) || '',
           telegram: socialLinks.telegram || (currentUser.socialMedia && currentUser.socialMedia.telegram) || '',
-          other: socialLinks.other || (currentUser.socialMedia && currentUser.socialMedia.other) || ''
+          other: socialLinks.other || (currentUser.socialMedia && currentUser.socialMedia.other) || '',
+          bioTitle: '',
+          bioSubtitle: '',
+          bioDescription: ''
         });
       }
 
-      // Fetch vendor profile separately to get the logo
+      // Fetch vendor profile separately to get the logo and bio
       try {
         const vendorResponse = await axios.get(`https://api.bookmyevent.ae/api/profile/vendor/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        console.log(vendorResponse.data.data.logo);
-        console.log('https://api.bookmyevent.ae' + vendorResponse);
+        if (vendorResponse.data.success && vendorResponse.data.data) {
+          const vendorData = vendorResponse.data.data;
 
-        if (vendorResponse.data.success && vendorResponse.data.data && vendorResponse.data.data.logo) {
           // Update profile preview with logo from vendor API
-          const logoUrl = `https://api.bookmyevent.ae${vendorResponse.data.data.logo}`;
-          setProfilePreview(logoUrl);
+          if (vendorData.logo) {
+            const logoUrl = `https://api.bookmyevent.ae${vendorData.logo}`;
+            setProfilePreview(logoUrl);
+          }
+
+          // Populate Bio fields if they exist
+          if (vendorData.bio) {
+            setFormData(prev => ({
+              ...prev,
+              bioTitle: vendorData.bio.title || '',
+              bioSubtitle: vendorData.bio.subtitle || '',
+              bioDescription: vendorData.bio.description || ''
+            }));
+          }
         }
       } catch (vendorError) {
         console.error('Failed to fetch vendor logo:', vendorError);
@@ -215,16 +232,38 @@ export default function ProfileSection() {
       updatePayload.append('mobileNumber', formData.phone);
       updatePayload.append('businessAddress', formData.businessAddress);
       updatePayload.append('socialLinks', JSON.stringify(socialLinksObj));
+
+      // Bio fields
+      updatePayload.append('bioTitle', formData.bioTitle || '');
+      updatePayload.append('bioSubtitle', formData.bioSubtitle || '');
+      updatePayload.append('bioDescription', formData.bioDescription || '');
+
       if (formData.profilePhoto instanceof File) {
         updatePayload.append('profilePhoto', formData.profilePhoto);
       }
       updatePayload.append('role', role || 'vendor'); // Fallback to 'vendor' if role is missing
       if (!profile?._id) throw new Error('Profile ID not found');
-      await axios.put(`${PROFILE_API}/${profile._id}`, updatePayload, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+// 1. Update profile (basic info)
+await axios.put(`${PROFILE_API}/${profile._id}`, updatePayload, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+
+// 2. Update vendor bio
+await axios.put(
+  `https://api.bookmyevent.ae/api/profile/vendor/${user._id}/bio
+`,
+  {
+    bio: {
+      title: formData.bioTitle,
+      subtitle: formData.bioSubtitle,
+      description: formData.bioDescription
+    }
+  },
+  {
+    headers: { Authorization: `Bearer ${token}` }
+  }
+);
+
       setToastMessage('Profile updated successfully!');
       setToastSeverity('success');
       setShowToast(true);
@@ -904,6 +943,77 @@ export default function ProfileSection() {
                             </Grid>
                           </Grid>
                         </Box>
+
+                        {/* Bio Information Section */}
+                        <Box sx={{ mb: 6 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                            <Box sx={{
+                              width: 42,
+                              height: 42,
+                              borderRadius: 2.5,
+                              bgcolor: 'rgba(225, 91, 101, 0.08)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '1px solid rgba(225, 91, 101, 0.15)'
+                            }}>
+                              <Business sx={{ color: '#E15B65', fontSize: 22 }} />
+                            </Box>
+                            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                              Bio Information
+                            </Typography>
+                          </Box>
+                          <Grid container spacing={3.5}>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                label="Bio Title"
+                                value={formData.bioTitle || ''}
+                                onChange={handleInputChange('bioTitle')}
+                                placeholder="Enter bio title (e.g. Professional Photographer)"
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2.5,
+                                    '&:hover fieldset': { borderColor: '#E15B65' }
+                                  }
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                fullWidth
+                                label="Bio Subtitle"
+                                value={formData.bioSubtitle || ''}
+                                onChange={handleInputChange('bioSubtitle')}
+                                placeholder="Enter bio subtitle"
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2.5,
+                                    '&:hover fieldset': { borderColor: '#E15B65' }
+                                  }
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <TextField
+                                fullWidth
+                                label="Bio Description"
+                                value={formData.bioDescription || ''}
+                                onChange={handleInputChange('bioDescription')}
+                                placeholder="Tell your customers about yourself and your experience..."
+                                multiline
+                                rows={4}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2.5,
+                                    '&:hover fieldset': { borderColor: '#E15B65' }
+                                  }
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Box>
+
                         {/* Social Media Section */}
                         <Box sx={{ mb: 4 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
