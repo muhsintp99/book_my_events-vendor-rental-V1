@@ -75,14 +75,21 @@ const PremiumCard = styled(Paper)(({ theme }) => ({
     boxShadow: '0px 25px 70px rgba(0, 0, 0, 0.05)'
   }
 }));
-const labelStyle = {
-  mb: 1.5,
-  fontWeight: 800,
-  color: '#374151',
-  textTransform: 'uppercase',
-  fontSize: '11px',
-  letterSpacing: '1px'
-};
+const SmallGalleryThumb = styled(Box)(({ theme }) => ({
+  width: 80,
+  height: 80,
+  borderRadius: '12px',
+  overflow: 'hidden',
+  position: 'relative',
+  border: '1px solid #E5E7EB',
+  backgroundColor: '#fff',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+  transition: '0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.12)'
+  }
+}));
 
 const StyledSectionTitle = styled(Typography)(({ theme }) => ({
   fontSize: '26px',
@@ -162,12 +169,13 @@ const PremiumSelect = styled(Select)(({ theme }) => ({
   }
 }));
 
-const MediaPreviewBox = styled(Box)(({ theme, hasImage }) => ({
+const HeroUploadBox = styled(Box)(({ theme, hasImage }) => ({
   width: '100%',
-  aspectRatio: '4/3',
-  borderRadius: '20px',
-  border: hasImage ? 'none' : `2px dashed ${alpha(PINK, 0.2)}`,
-  backgroundColor: hasImage ? 'transparent' : alpha(PINK, 0.02),
+  height: '380px',
+  borderRadius: '28px',
+  border: hasImage ? 'none' : `3px dashed ${alpha(PINK, 0.15)}`,
+  backgroundColor: hasImage ? 'transparent' : '#FAFAFA',
+  backgroundImage: hasImage ? 'none' : `linear-gradient(180deg, rgba(255,255,255,0) 0%, ${alpha(PINK, 0.02)} 100%)`,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -176,30 +184,47 @@ const MediaPreviewBox = styled(Box)(({ theme, hasImage }) => ({
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
-  '&:hover': {
-    borderColor: PINK,
-    backgroundColor: alpha(PINK, 0.05),
-    transform: 'translateY(-4px)'
-  }
-}));
-
-const GallerySlotMedium = styled(Box)(({ theme, hasImage }) => ({
-  width: '100%',
-  aspectRatio: '1 / 1', // ✅ always square
-  borderRadius: '18px',
-  border: hasImage ? 'none' : '2px dashed #E5E7EB',
-  backgroundColor: hasImage ? '#F9FAFB' : '#F9FAFB',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  position: 'relative',
-  overflow: 'hidden', // ✅ prevents overflow growth
-  transition: 'all 0.25s ease',
+  boxShadow: hasImage ? '0 20px 40px rgba(0,0,0,0.1)' : 'none',
   '&:hover': {
     borderColor: PINK,
     backgroundColor: alpha(PINK, 0.03),
-    transform: 'scale(1.02)'
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 28px rgba(233, 30, 99, 0.15)'
+  }
+}));
+
+const GalleryDropzone = styled(Box)(({ theme }) => ({
+  width: '100%',
+  minHeight: '200px',
+  borderRadius: '24px',
+  border: `2px dashed ${alpha(PINK, 0.3)}`,
+  backgroundColor: '#FAFAFA',
+  backgroundImage: `linear-gradient(135deg, ${alpha(PINK, 0.01)} 0%, rgba(255,255,255,1) 100%)`,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    borderColor: PINK,
+    backgroundColor: alpha(PINK, 0.04),
+    boxShadow: `0 10px 40px ${alpha(PINK, 0.1)}`
+  }
+}));
+
+const PreviewImageSlot = styled(Box)(({ theme }) => ({
+  width: '100%',
+  aspectRatio: '1/1',
+  borderRadius: '20px',
+  overflow: 'hidden',
+  position: 'relative',
+  boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+  transition: 'all 0.3s ease',
+  group: 'slot',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 15px 30px rgba(0,0,0,0.12)'
   }
 }));
 
@@ -657,6 +682,7 @@ const AddCakePackage = () => {
           </Alert>
         )}
 
+        {/* 📋 SECTION 1: CORE CHARACTERISTICS */}
         <PremiumCard>
           <StyledSectionTitle>General Information</StyledSectionTitle>
           <StyledSectionSubtitle>Define the fundamental details that describe your cake creation.</StyledSectionSubtitle>
@@ -666,18 +692,10 @@ const AddCakePackage = () => {
             <Box>
               <Typography
                 variant="body2"
-                sx={{
-                  mb: 1.5,
-                  fontWeight: 800,
-                  color: '#374151',
-                  textTransform: 'uppercase',
-                  fontSize: '12px',
-                  letterSpacing: '1px'
-                }}
+                sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}
               >
                 Product Name
               </Typography>
-
               <PremiumTextField
                 fullWidth
                 placeholder="e.g. Midnight Chocolate Ganache Cake"
@@ -690,18 +708,10 @@ const AddCakePackage = () => {
             <Box>
               <Typography
                 variant="body2"
-                sx={{
-                  mb: 1.5,
-                  fontWeight: 800,
-                  color: '#374151',
-                  textTransform: 'uppercase',
-                  fontSize: '12px',
-                  letterSpacing: '1px'
-                }}
+                sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}
               >
                 Full Description
               </Typography>
-
               <PremiumTextField
                 fullWidth
                 multiline
@@ -712,11 +722,17 @@ const AddCakePackage = () => {
               />
             </Box>
 
-            {/* ONE ROW: CATEGORY + SUBCATEGORY + UNIT + WEIGHT */}
+            {/* CATEGORY & WEIGHT GROUP (COMBINED ROW) */}
             <Box sx={{ width: '100%' }}>
-              <Grid container spacing={4} columnSpacing={6}>
-                <Grid item xs={12} md={4}>
-                  <Typography sx={labelStyle}>Parent Category</Typography>
+              <Grid container spacing={3}>
+                {/* PARENT CATEGORY */}
+                <Grid item xs={12} md={3}>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                  >
+                    Parent Category
+                  </Typography>
                   <FormControl fullWidth>
                     <PremiumSelect fullWidth value={category} onChange={(e) => setCategory(e.target.value)} displayEmpty>
                       <MenuItem disabled value="">
@@ -731,14 +747,37 @@ const AddCakePackage = () => {
                   </FormControl>
                 </Grid>
 
+                {/* SUBCATEGORIES */}
                 <Grid item xs={12} md={4}>
-                  <Typography sx={labelStyle}>Subcategories</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                  >
+                    Subcategories
+                  </Typography>
                   <FormControl fullWidth disabled={!category}>
                     <PremiumSelect
                       fullWidth
                       multiple
                       value={selectedSubCategories}
                       onChange={(e) => setSelectedSubCategories(e.target.value)}
+                      renderValue={(selected) => {
+                        if (selected.length === 0) {
+                          return <Typography sx={{ color: '#9CA3AF', fontWeight: 600, fontSize: '15px' }}>Choose related tags</Typography>;
+                        }
+                        return (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {selected.map((val) => (
+                              <Chip
+                                key={val}
+                                label={subCategories.find((s) => s._id === val)?.title || val}
+                                size="small"
+                                sx={{ borderRadius: '10px', fontWeight: 800, bgcolor: 'white', border: '1px solid #E5E7EB', color: PINK }}
+                              />
+                            ))}
+                          </Box>
+                        );
+                      }}
                       displayEmpty
                     >
                       <MenuItem disabled value="">
@@ -746,16 +785,26 @@ const AddCakePackage = () => {
                       </MenuItem>
                       {subCategories.map((sub) => (
                         <MenuItem key={sub._id} value={sub._id}>
-                          <Checkbox checked={selectedSubCategories.includes(sub._id)} />
-                          <ListItemText primary={sub.title} />
+                          <Checkbox
+                            checked={selectedSubCategories.includes(sub._id)}
+                            size="small"
+                            sx={{ color: PINK, '&.Mui-checked': { color: PINK } }}
+                          />
+                          <ListItemText primary={sub.title} primaryTypographyProps={{ fontSize: '14px', fontWeight: 700 }} />
                         </MenuItem>
                       ))}
                     </PremiumSelect>
                   </FormControl>
                 </Grid>
 
+                {/* SELECT UNIT */}
                 <Grid item xs={12} md={2}>
-                  <Typography sx={labelStyle}>Select Unit</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                  >
+                    Select Unit
+                  </Typography>
                   <FormControl fullWidth>
                     <PremiumSelect fullWidth value={unit} onChange={(e) => setUnit(e.target.value)}>
                       <MenuItem value="Kg">Kg</MenuItem>
@@ -766,81 +815,63 @@ const AddCakePackage = () => {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} md={2}>
-                  <Typography sx={labelStyle}>Weight in Kg</Typography>
+                {/* WEIGHT */}
+                <Grid item xs={12} md={3}>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                  >
+                    Weight in Kg
+                  </Typography>
                   <PremiumTextField fullWidth placeholder="e.g. 1.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
                 </Grid>
               </Grid>
             </Box>
 
-            {/* PERFECT FOR OCCASIONS (FIXED TO ROW / COLUMNS) */}
+            {/* OCCASIONS */}
             <Box>
               <Typography
                 variant="body2"
-                sx={{
-                  mb: 1.5,
-                  fontWeight: 800,
-                  color: '#374151',
-                  textTransform: 'uppercase',
-                  fontSize: '12px',
-                  letterSpacing: '1px'
-                }}
+                sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}
               >
                 Perfect for Occasions
               </Typography>
-
               <FormControl fullWidth>
                 <PremiumSelect
                   multiple
                   value={selectedOccasions}
                   onChange={(e) => setSelectedOccasions(e.target.value)}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {selected.map((val) => (
+                        <Chip
+                          key={val}
+                          label={val}
+                          size="small"
+                          sx={{
+                            borderRadius: '10px',
+                            fontWeight: 800,
+                            bgcolor: alpha(PINK, 0.05),
+                            color: PINK,
+                            border: `1px solid ${alpha(PINK, 0.1)}`
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
                   displayEmpty
-                  renderValue={(selected) =>
-                    selected.length === 0 ? (
-                      <Typography sx={{ color: '#9CA3AF', fontWeight: 600 }}>Select one or many occasions</Typography>
-                    ) : (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {selected.map((val) => (
-                          <Chip
-                            key={val}
-                            label={val}
-                            size="small"
-                            sx={{
-                              borderRadius: '10px',
-                              fontWeight: 800,
-                              bgcolor: alpha(PINK, 0.08),
-                              color: PINK
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )
-                  }
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxHeight: 300,
-                        mt: 1,
-                        p: 1
-                      }
-                    },
-                    MenuListProps: {
-                      sx: {
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: 1
-                      }
-                    }
-                  }}
                 >
+                  <MenuItem disabled value="">
+                    Select one or many occasions
+                  </MenuItem>
                   {OCCASIONS.map((occ) => (
-                    <MenuItem key={occ} value={occ} sx={{ borderRadius: '10px', fontWeight: 700 }}>
+                    <MenuItem key={occ} value={occ}>
                       <Checkbox
                         checked={selectedOccasions.includes(occ)}
                         size="small"
                         sx={{ color: PINK, '&.Mui-checked': { color: PINK } }}
                       />
-                      <ListItemText primary={occ} />
+                      <ListItemText primary={occ} primaryTypographyProps={{ fontSize: '14px', fontWeight: 700 }} />
                     </MenuItem>
                   ))}
                 </PremiumSelect>
@@ -854,168 +885,269 @@ const AddCakePackage = () => {
           <StyledSectionTitle>Media & Show Reels</StyledSectionTitle>
           <StyledSectionSubtitle>High-resolution captures significantly increase conversion rates.</StyledSectionSubtitle>
 
-          <Grid container spacing={6}>
-            {/* THUMBNAIL AREA (LEFT 4/12) */}
-            <Grid item xs={12} md={4}>
-              <Typography variant="body2" sx={{ mb: 2.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
-                Primary Display Photo
+          <Stack spacing={5}>
+            {/* HERO MAIN IMAGE (FULL WIDTH for Impact) */}
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 2,
+                  fontWeight: 800,
+                  color: '#374151',
+                  textTransform: 'uppercase',
+                  fontSize: '12px',
+                  letterSpacing: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <StarIcon sx={{ fontSize: 16, color: '#F59E0B' }} /> Primary Display Photo (Cover)
               </Typography>
-              <MediaPreviewBox hasImage={thumbnail || existingThumbnail} onClick={() => document.getElementById('thumb-in').click()}>
+
+              <HeroUploadBox hasImage={thumbnail || existingThumbnail} onClick={() => document.getElementById('thumb-in').click()}>
                 <input id="thumb-in" type="file" hidden onChange={(e) => setThumbnail(e.target.files[0])} />
+
                 {thumbnail || existingThumbnail ? (
                   <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
                     <img
                       src={thumbnail ? URL.createObjectURL(thumbnail) : existingThumbnail}
-                      alt="thumb"
+                      alt="Main Cover"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setThumbnail(null);
-                        setExistingThumbnail('');
-                      }}
+                    <Box
                       sx={{
                         position: 'absolute',
-                        top: 15,
-                        right: 15,
-                        bgcolor: 'white',
-                        color: PINK,
-                        '&:hover': { bgcolor: PINK, color: 'white' }
+                        inset: 0,
+                        bgcolor: 'rgba(0,0,0,0.3)',
+                        opacity: 0,
+                        transition: '0.3s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 2,
+                        '.MuiBox-root:hover &': { opacity: 1 }
                       }}
                     >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
+                      <Button variant="contained" sx={{ bgcolor: 'white', color: 'black', '&:hover': { bgcolor: '#f0f0f0' } }}>
+                        Change Cover
+                      </Button>
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setThumbnail(null);
+                          setExistingThumbnail('');
+                        }}
+                        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', '&:hover': { bgcolor: '#ef4444' } }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
                   </Box>
                 ) : (
-                  <Stack alignItems="center" spacing={2.5}>
-                    <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 3, borderRadius: '50%' }}>
-                      <CloudUploadIcon sx={{ color: PINK, fontSize: 40 }} />
+                  <Stack alignItems="center" spacing={3}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        bgcolor: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.06)'
+                      }}
+                    >
+                      <CloudUploadIcon sx={{ color: PINK, fontSize: 36 }} />
                     </Box>
                     <Box textAlign="center">
-                      <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '18px', color: '#111827' }}>
-                        Upload Main View
+                      <Typography variant="h5" sx={{ fontWeight: 800, color: '#111827', mb: 0.5 }}>
+                        Drop your main image here
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 700 }}>
-                        Recommended: 1000 x 800 pixels
+                      <Typography variant="body2" sx={{ color: '#6B7280', maxWidth: '300px' }}>
+                        Supports JPG, PNG, WEBP. High resolution (1600x1200) recommended for best results.
                       </Typography>
                     </Box>
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        borderColor: '#E5E7EB',
+                        color: '#374151',
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        '&:hover': { borderColor: PINK, color: PINK, bgcolor: 'transparent' }
+                      }}
+                    >
+                      Browse Files
+                    </Button>
                   </Stack>
                 )}
-              </MediaPreviewBox>
-            </Grid>
+              </HeroUploadBox>
+            </Box>
 
-            {/* GALLERY AREA (RIGHT 8/12) */}
-<Grid item xs={12} md={8}>
-  <Typography
-    variant="body2"
-    sx={{
-      mb: 2.5,
-      fontWeight: 800,
-      color: '#374151',
-      textTransform: 'uppercase',
-      fontSize: '13px'
-    }}
-  >
-    Gallery Showcase (Up to 10)
-  </Typography>
+            {/* GALLERY GRID */}
+            <Box>
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 2.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}
+                >
+                  Gallery Collection (Max 10)
+                </Typography>
 
-  <Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 1 }}>
-    <Grid container spacing={2}>
-      {[...Array(10)].map((_, i) => (
-        <Grid item xs={6} sm={4} md={3} key={i}>
-          <GallerySlotMedium
-            hasImage={galleryImages[i] || existingGallery[i]}
-            onClick={() => document.getElementById('gall-in').click()}
-          >
-            <input
-              id="gall-in"
-              type="file"
-              hidden
-              multiple
-              onChange={(e) =>
-                setGalleryImages((prev) => [...prev, ...Array.from(e.target.files)])
-              }
-            />
-
-            {galleryImages[i] || existingGallery[i] ? (
-              <>
-                <img
-                  src={
-                    galleryImages[i]
-                      ? URL.createObjectURL(galleryImages[i])
-                      : existingGallery[i]
-                  }
-                  alt=""
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-
-                <IconButton
-                  size="small"
+                <GalleryDropzone
                   onClick={(e) => {
-                    e.stopPropagation();
-                    i < existingGallery.length
-                      ? setExistingGallery((prev) =>
-                          prev.filter((_, idx) => idx !== i)
-                        )
-                      : setGalleryImages((prev) =>
-                          prev.filter(
-                            (_, idx) => idx !== i - existingGallery.length
-                          )
-                        );
+                    document.getElementById('gall-in').click();
                   }}
                   sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    bgcolor: 'rgba(255,255,255,0.9)',
-                    p: 0.5,
-                    color: PINK,
-                    '&:hover': { bgcolor: PINK, color: 'white' }
+                    p: 3,
+                    alignItems: existingGallery.length + galleryImages.length > 0 ? 'flex-start' : 'center',
+                    justifyContent: existingGallery.length + galleryImages.length > 0 ? 'flex-start' : 'center'
                   }}
                 >
-                  <CloseIcon sx={{ fontSize: 14 }} />
-                </IconButton>
-              </>
-            ) : (
-              <AddIcon sx={{ color: '#D1D5DB', fontSize: 32 }} />
-            )}
-          </GallerySlotMedium>
-        </Grid>
-      ))}
-    </Grid>
-  </Box>
+                  <input
+                    id="gall-in"
+                    type="file"
+                    hidden
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      const combinedLength = existingGallery.length + galleryImages.length + files.length;
+                      if (combinedLength > 10) {
+                        alert('You can only upload a maximum of 10 images.');
+                        return;
+                      }
+                      setGalleryImages((prev) => [...prev, ...files]);
+                      e.target.value = null;
+                    }}
+                  />
 
-  {/* PRO TIP */}
-  <Box
-    sx={{
-      mt: 4,
-      p: 3,
-      borderRadius: '16px',
-      bgcolor: alpha(PINK, 0.03),
-      border: `1px solid ${alpha(PINK, 0.08)}`,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2
-    }}
-  >
-    <AutoAwesomeIcon sx={{ color: PINK, fontSize: 24 }} />
-    <Typography
-      variant="caption"
-      sx={{ color: '#4B5563', fontWeight: 700, lineHeight: 1.6 }}
-    >
-      Pro Tip: Include images of the slice texture and the interior filling to WOW
-      your customers.
-    </Typography>
-  </Box>
-</Grid>
+                  {existingGallery.length === 0 && galleryImages.length === 0 ? (
+                    <>
+                      <Box
+                        sx={{
+                          width: 70,
+                          height: 70,
+                          borderRadius: '50%',
+                          bgcolor: '#E3F2FD',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2
+                        }}
+                      >
+                        <CloudUploadIcon sx={{ color: '#2196F3', fontSize: 36 }} />
+                      </Box>
+                      <Typography variant="h6" sx={{ color: PINK, fontWeight: 800 }}>
+                        Click to Upload Images
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 600, mt: 1 }}>
+                        Supported: JPG, PNG, WEBP
+                      </Typography>
+                    </>
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 2
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* EXISTING IMAGES */}
+                      {existingGallery.map((img, i) => (
+                        <Box
+                          key={`exist-${i}`}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            border: '1px solid #E5E7EB'
+                          }}
+                        >
+                          <img src={img} alt={`gallery-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <IconButton
+                            size="small"
+                            onClick={() => setExistingGallery((prev) => prev.filter((_, idx) => idx !== i))}
+                            sx={{
+                              position: 'absolute',
+                              top: 2,
+                              right: 2,
+                              bgcolor: 'rgba(0,0,0,0.6)',
+                              color: 'white',
+                              p: 0.5,
+                              '&:hover': { bgcolor: '#ef4444' }
+                            }}
+                          >
+                            <CloseIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Box>
+                      ))}
 
-          </Grid>
+                      {/* NEW UPLOADED IMAGES */}
+                      {galleryImages.map((file, i) => (
+                        <Box
+                          key={`new-${i}`}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            border: '1px solid #E5E7EB'
+                          }}
+                        >
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`preview-${i}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
+                            sx={{
+                              position: 'absolute',
+                              top: 2,
+                              right: 2,
+                              bgcolor: 'rgba(0,0,0,0.6)',
+                              color: 'white',
+                              p: 0.5,
+                              '&:hover': { bgcolor: '#ef4444' }
+                            }}
+                          >
+                            <CloseIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Box>
+                      ))}
+
+                      {/* ADD MORE BOX */}
+                      {existingGallery.length + galleryImages.length < 10 && (
+                        <Box
+                          onClick={() => document.getElementById('gall-in').click()}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '12px',
+                            border: `2px dashed ${alpha(PINK, 0.3)}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <CloudUploadIcon sx={{ color: PINK }} />
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+                </GalleryDropzone>
+              </Box>
+            </Box>
+          </Stack>
         </PremiumCard>
 
         {/* 💰 SECTION 3: ATTRACTIVE PRICING & DYNAMIC VARIANTS */}
@@ -1051,36 +1183,49 @@ const AddCakePackage = () => {
             >
               <SettingsIcon sx={{ color: PINK }} /> Variant Configuration
             </Typography>
-            <Stack spacing={5}>
-              {ATTRIBUTES.map((attr) => (
-                <Box key={attr}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mb: 2,
-                      display: 'block',
-                      fontWeight: 800,
-                      color: '#6B7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '2px',
-                      fontSize: '11px'
-                    }}
-                  >
-                    Available {attr}s
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {ATTRIBUTE_VALUES[attr].map((val) => (
-                      <InteractionChipRefined
-                        key={val}
-                        label={val}
-                        selected={attrValues[attr]?.includes(val)}
-                        onClick={() => handleAttrValueToggle(attr, val)}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              ))}
-            </Stack>
+            <Stack
+  spacing={5}
+  alignItems="center"
+  textAlign="center"
+>
+  {ATTRIBUTES.map((attr) => (
+    <Box key={attr}>
+      <Typography
+        variant="caption"
+        sx={{
+          mb: 2,
+          display: 'block',
+          fontWeight: 800,
+          color: '#6B7280',
+          textTransform: 'uppercase',
+          letterSpacing: '2px',
+          fontSize: '11px'
+        }}
+      >
+        Available {attr}s
+      </Typography>
+
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          justifyContent: 'center'
+        }}
+      >
+        {ATTRIBUTE_VALUES[attr].map((val) => (
+          <InteractionChipRefined
+            key={val}
+            label={val}
+            selected={attrValues[attr]?.includes(val)}
+            onClick={() => handleAttrValueToggle(attr, val)}
+          />
+        ))}
+      </Box>
+    </Box>
+  ))}
+</Stack>
+
           </Box>
 
           <Grid container spacing={3} sx={{ mb: 6 }}>

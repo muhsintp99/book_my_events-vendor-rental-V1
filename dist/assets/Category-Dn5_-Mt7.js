@@ -1,0 +1,1 @@
+import{c as s,j as c}from"./index-bQPICHQS.js";const o=s([c.jsx("path",{d:"m12 2-5.5 9h11z"},"0"),c.jsx("circle",{cx:"17.5",cy:"17.5",r:"4.5"},"1"),c.jsx("path",{d:"M3 13.5h8v8H3z"},"2")]);export{o as C};

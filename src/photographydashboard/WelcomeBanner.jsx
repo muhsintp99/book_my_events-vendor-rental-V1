@@ -3,6 +3,8 @@ import { Box, Typography, Chip } from '@mui/material';
 import { keyframes } from '@mui/system';
 import StarsIcon from '@mui/icons-material/Stars';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+
 
 const fadeSlide = keyframes`
   from {
