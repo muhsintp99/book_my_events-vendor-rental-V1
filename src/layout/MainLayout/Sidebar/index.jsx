@@ -83,7 +83,7 @@ function Sidebar() {
               mt: downMD ? 0 : 11,
               zIndex: 1099,
               width: drawerWidth,
-              bgcolor: '#e77f86ff',
+              bgcolor: '#ffffff',
               color: 'text.primary',
               borderRight: 'none',
               height: 'auto'
