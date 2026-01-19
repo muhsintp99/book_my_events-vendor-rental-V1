@@ -94,7 +94,7 @@ const CarListingView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
-  
+
   const [activeImage, setActiveImage] = useState(0);
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -106,8 +106,13 @@ const CarListingView = () => {
   const [mainImageLoading, setMainImageLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState(new Set());
 
-  const BASE_UPLOAD_URL = (API_BASE_URL || 'https://api.bookmyevent.ae/api').replace(/\/api\/?$/, '');
-  const getImageUrl = (filename) => filename ? `${BASE_UPLOAD_URL}/Uploads/vehicles/${filename}` : '';
+  const BASE_UPLOAD_URL = (import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api').replace(/\/api\/?$/, '');
+  const getImageUrl = (path) => {
+    if (!path) return "https://placehold.co/100x100?text=No+Image";
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${BASE_UPLOAD_URL}${cleanPath}`;
+  };
 
   useEffect(() => {
     if (location.state?.vehicle) {
@@ -142,26 +147,26 @@ const CarListingView = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         throw new Error('No authentication token found');
       }
 
       console.log('Fetching vehicle with ID:', id);
-      
+
       const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const vehicleData = response.data.data || response.data;
       console.log('Vehicle data received:', vehicleData);
-      
+
       setVehicle(vehicleData);
       setError('');
     } catch (error) {
       console.error('Error fetching vehicle:', error);
       console.error('Error response:', error.response?.data);
-      
+
       const errorMessage = error.response?.data?.message || error.message || 'Failed to load vehicle data';
       setError(errorMessage);
       setToastMessage(errorMessage);
@@ -172,10 +177,25 @@ const CarListingView = () => {
     }
   };
 
-  const handleImageError = (index) => {
-    console.error(`Image load error for index ${index}:`, images[index]);
-    setImageErrors(prev => new Set([...prev, index]));
-    setMainImageLoading(false);
+  const handleImageError = (e, index) => {
+    const currentSrc = e.target.src;
+    console.error(`Image load error for index ${index}:`, currentSrc);
+
+    // Attempt fallbacks
+    if (currentSrc.includes("/uploads/") && !e.target.dataset.triedCapital) {
+      console.log(`Retrying index ${index} with capital 'Uploads'`);
+      e.target.src = currentSrc.replace("/uploads/", "/Uploads/");
+      e.target.dataset.triedCapital = "true";
+    } else if (!e.target.dataset.triedApi) {
+      console.log(`Retrying index ${index} with '/api' prefix`);
+      const urlObj = new URL(currentSrc);
+      e.target.src = `${urlObj.origin}/api${urlObj.pathname}`;
+      e.target.dataset.triedApi = "true";
+    } else {
+      console.error(`All image fallbacks failed for index ${index}:`, currentSrc);
+      setImageErrors(prev => new Set([...prev, index]));
+      setMainImageLoading(false);
+    }
   };
 
   const confirmDelete = () => {
@@ -230,10 +250,10 @@ const CarListingView = () => {
 
   if (loading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)'
       }}>
@@ -244,18 +264,18 @@ const CarListingView = () => {
 
   if (error || !vehicle) {
     return (
-      <Box sx={{ 
-        maxWidth: 1400, 
-        mx: 'auto', 
-        p: 3, 
+      <Box sx={{
+        maxWidth: 1400,
+        mx: 'auto',
+        p: 3,
         background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
-        minHeight: '100vh' 
+        minHeight: '100vh'
       }}>
         <Box sx={{ mb: 2 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={handleBack}
-            sx={{ 
+            sx={{
               mb: 2,
               color: '#666',
               '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
@@ -279,19 +299,19 @@ const CarListingView = () => {
   const showNoImage = images.length === 0 || imageErrors.has(activeImage);
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      mx: 'auto', 
-      p: { xs: 2, md: 3 }, 
+    <Box sx={{
+      width: '100%',
+      mx: 'auto',
+      p: { xs: 2, md: 3 },
       background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
-      minHeight: '100vh' 
+      minHeight: '100vh'
     }}>
       {/* Back Button */}
       <Box sx={{ mb: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={handleBack}
-          sx={{ 
+          sx={{
             color: '#666',
             fontSize: '14px',
             '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
@@ -302,36 +322,36 @@ const CarListingView = () => {
       </Box>
 
       {/* Header Section */}
-      <Box sx={{ 
+      <Box sx={{
         background: '#ffffff',
         borderRadius: 3,
         p: 3,
         mb: 3,
         boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        display: 'flex', 
-        alignItems: 'center', 
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: 2
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{ 
+          <Avatar sx={{
             background: 'linear-gradient(135deg, #d9505d 0%, #ed081f 100%)',
-            width: 56, 
+            width: 56,
             height: 56,
             boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)'
           }}>
             <CarIcon sx={{ fontSize: 30 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" fontWeight="700" sx={{ 
+            <Typography variant="h4" fontWeight="700" sx={{
               color: '#2c3e50',
               fontSize: { xs: '22px', md: '28px' }
             }}>
               {vehicle.name || 'Vehicle Details'}
             </Typography>
             {vehicle.discount && (
-              <Box sx={{ 
+              <Box sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 0.5,
@@ -350,12 +370,12 @@ const CarListingView = () => {
             )}
           </Box>
         </Box>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             startIcon={<DeleteIcon />}
-            onClick={confirmDelete}  
+            onClick={confirmDelete}
             sx={{
               color: '#dc3545',
               borderColor: '#dc3545',
@@ -374,7 +394,7 @@ const CarListingView = () => {
           >
             Delete
           </Button>
-          
+
           <Button
             variant="contained"
             startIcon={<EditIcon />}
@@ -400,8 +420,8 @@ const CarListingView = () => {
       </Box>
 
       {/* Main Content Card */}
-      <Card sx={{ 
-        borderRadius: 3, 
+      <Card sx={{
+        borderRadius: 3,
         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
         bgcolor: '#ffffff',
         overflow: 'hidden'
@@ -442,8 +462,11 @@ const CarListingView = () => {
                       <img
                         src={images[activeImage]}
                         alt={vehicle.name || 'Vehicle'}
-                        onLoad={() => setMainImageLoading(false)}
-                        onError={() => handleImageError(activeImage)}
+                        onLoad={(e) => {
+                          setMainImageLoading(false);
+                          console.log("Successfully loaded main image:", e.target.src);
+                        }}
+                        onError={(e) => handleImageError(e, activeImage)}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -464,7 +487,8 @@ const CarListingView = () => {
                         alt={`${vehicle.name} view ${index + 1}`}
                         active={activeImage === index}
                         onClick={() => setActiveImage(index)}
-                        onError={() => handleImageError(index)}
+                        onLoad={(e) => console.log("Successfully loaded thumbnail:", e.target.src)}
+                        onError={(e) => handleImageError(e, index)}
                         loading="lazy"
                       />
                     ))}
@@ -474,21 +498,21 @@ const CarListingView = () => {
             </Grid>
 
             <Grid item xs={12} md={7}>
-              <Typography variant="h4" fontWeight="700" mb={2} sx={{ 
+              <Typography variant="h4" fontWeight="700" mb={2} sx={{
                 color: '#2c3e50',
                 fontSize: { xs: '24px', md: '32px' }
               }}>
                 {vehicle.name || 'Vehicle Name'}
               </Typography>
-              
-              <Box sx={{ 
+
+              <Box sx={{
                 bgcolor: '#f8f9fa',
                 borderRadius: 2,
                 p: 2.5,
                 mb: 3,
                 border: '1px solid #e9ecef'
               }}>
-                <Typography variant="subtitle1" color="#495057" mb={1} fontWeight="600" sx={{ 
+                <Typography variant="subtitle1" color="#495057" mb={1} fontWeight="600" sx={{
                   fontSize: '15px',
                   display: 'flex',
                   alignItems: 'center',
@@ -497,7 +521,7 @@ const CarListingView = () => {
                   <EventIcon sx={{ fontSize: 18 }} />
                   Description
                 </Typography>
-                
+
                 <Typography variant="body1" color="#6c757d" lineHeight={1.7} sx={{ fontSize: '14px' }}>
                   {vehicle.description || 'No description available.'}
                 </Typography>
@@ -505,7 +529,7 @@ const CarListingView = () => {
 
               {vehicle.searchTags && vehicle.searchTags.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle1" color="#495057" mb={1.5} fontWeight="600" sx={{ 
+                  <Typography variant="subtitle1" color="#495057" mb={1.5} fontWeight="600" sx={{
                     fontSize: '15px',
                     display: 'flex',
                     alignItems: 'center',
@@ -545,9 +569,9 @@ const CarListingView = () => {
             {/* General Info */}
             <Grid item xs={12} md={4} sx={{ width: 335 }}>
               <InfoCard>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   mb: 3
                 }}>
@@ -559,14 +583,14 @@ const CarListingView = () => {
                   }}>
                     <CarIcon sx={{ fontSize: 32, color: '#dc3545' }} />
                   </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{ 
+                  <Typography variant="h6" fontWeight="700" sx={{
                     fontSize: '18px',
                     color: '#2c3e50'
                   }}>
                     General Info
                   </Typography>
                 </Box>
-                
+
                 <Box>
                   {[
                     { label: 'Brand', value: vehicle.brand?.title || 'N/A' },
@@ -575,9 +599,9 @@ const CarListingView = () => {
                     { label: 'Type', value: vehicle.type || 'N/A' },
                     { label: 'License Plate', value: vehicle.licensePlateNumber || 'N/A' }
                   ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <Box key={index} sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       mb: 2,
                       pb: 2,
                       borderBottom: index !== 4 ? '1px solid #f0f0f0' : 'none'
@@ -591,10 +615,10 @@ const CarListingView = () => {
                     </Box>
                   ))}
                 </Box>
-                
-                <Box sx={{ 
-                  mt: 3, 
-                  pt: 3, 
+
+                <Box sx={{
+                  mt: 3,
+                  pt: 3,
                   borderTop: '2px solid #f0f0f0',
                   display: 'flex',
                   alignItems: 'center',
@@ -606,7 +630,7 @@ const CarListingView = () => {
                       Zone
                     </Typography>
                   </Box>
-                  <Typography variant="body2" fontWeight="600" sx={{ 
+                  <Typography variant="body2" fontWeight="600" sx={{
                     fontSize: '14px',
                     color: '#d9505d'
                   }}>
@@ -619,9 +643,9 @@ const CarListingView = () => {
             {/* Fare & Discounts */}
             <Grid item xs={12} md={4} sx={{ width: 335 }}>
               <InfoCard>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   mb: 3
                 }}>
@@ -633,23 +657,23 @@ const CarListingView = () => {
                   }}>
                     <TagIcon sx={{ fontSize: 32, color: '#28a745' }} />
                   </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{ 
+                  <Typography variant="h6" fontWeight="700" sx={{
                     fontSize: '18px',
                     color: '#2c3e50'
                   }}>
                     Fare & Discounts
                   </Typography>
                 </Box>
-                
+
                 <Box>
                   {[
                     { label: 'Hourly', value: vehicle.pricing?.hourly ? `₹ ${vehicle.pricing.hourly}` : 'N/A' },
                     { label: 'Per Day', value: vehicle.pricing?.perDay ? `₹ ${vehicle.pricing.perDay}` : 'N/A' },
                     { label: 'Distance', value: vehicle.pricing?.distanceWise ? `₹ ${vehicle.pricing.distanceWise}/km` : 'N/A' }
                   ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <Box key={index} sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       mb: 2,
                       pb: 2,
                       borderBottom: '1px solid #f0f0f0'
@@ -687,7 +711,7 @@ const CarListingView = () => {
                     <Typography variant="body2" color="#6c757d" sx={{ fontSize: '13px', mb: 0.5 }}>
                       Pricing Type
                     </Typography>
-                    <Typography fontWeight="600" sx={{ 
+                    <Typography fontWeight="600" sx={{
                       fontSize: '14px',
                       color: '#d9505d',
                       textTransform: 'capitalize'
@@ -702,9 +726,9 @@ const CarListingView = () => {
             {/* Other Features */}
             <Grid item xs={12} md={4} sx={{ width: 340 }}>
               <InfoCard>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   mb: 3
                 }}>
@@ -716,57 +740,57 @@ const CarListingView = () => {
                   }}>
                     <SpeedIcon sx={{ fontSize: 32, color: '#0d6efd' }} />
                   </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{ 
+                  <Typography variant="h6" fontWeight="700" sx={{
                     fontSize: '18px',
                     color: '#2c3e50'
                   }}>
                     Features
                   </Typography>
                 </Box>
-                
+
                 <Box>
                   {[
-                    { 
+                    {
                       icon: <AcIcon sx={{ fontSize: 18 }} />,
-                      label: 'Air Condition', 
+                      label: 'Air Condition',
                       value: vehicle.airCondition ? 'Yes' : 'No',
                       color: vehicle.airCondition ? '#28a745' : '#6c757d'
                     },
-                    { 
+                    {
                       icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Engine Capacity', 
+                      label: 'Engine Capacity',
                       value: vehicle.engineCapacity ? `${vehicle.engineCapacity} cc` : 'N/A',
                       color: '#0d6efd'
                     },
-                    { 
+                    {
                       icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Transmission', 
+                      label: 'Transmission',
                       value: vehicle.transmissionType ? vehicle.transmissionType.charAt(0).toUpperCase() + vehicle.transmissionType.slice(1) : 'N/A',
                       color: '#6f42c1'
                     },
-                    { 
+                    {
                       icon: <PersonIcon sx={{ fontSize: 18 }} />,
-                      label: 'Seating Capacity', 
+                      label: 'Seating Capacity',
                       value: vehicle.seatingCapacity || 'N/A',
                       color: '#fd7e14'
                     },
-                    { 
+                    {
                       icon: <FuelIcon sx={{ fontSize: 18 }} />,
-                      label: 'Fuel Type', 
+                      label: 'Fuel Type',
                       value: vehicle.fuelType ? vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1) : 'N/A',
                       color: '#ffc107'
                     },
-                    { 
+                    {
                       icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Engine Power', 
+                      label: 'Engine Power',
                       value: vehicle.enginePower ? `${vehicle.enginePower} hp` : 'N/A',
                       color: '#dc3545'
                     }
                   ].map((item, index) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
+                    <Box key={index} sx={{
+                      display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between', 
+                      justifyContent: 'space-between',
                       mb: 2,
                       pb: 2,
                       borderBottom: index !== 5 ? '1px solid #f0f0f0' : 'none'
@@ -801,8 +825,8 @@ const CarListingView = () => {
           sx: { borderRadius: 3 }
         }}
       >
-        <DialogTitle sx={{ 
-          color: '#dc3545', 
+        <DialogTitle sx={{
+          color: '#dc3545',
           fontWeight: 700,
           fontSize: '20px'
         }}>
@@ -817,9 +841,9 @@ const CarListingView = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button 
+          <Button
             onClick={() => setOpenDeleteDialog(false)}
-            sx={{ 
+            sx={{
               textTransform: 'none',
               fontWeight: 500,
               px: 3
@@ -830,7 +854,7 @@ const CarListingView = () => {
           <Button
             onClick={handleDelete}
             variant="contained"
-            sx={{ 
+            sx={{
               textTransform: 'none',
               fontWeight: 500,
               px: 3,

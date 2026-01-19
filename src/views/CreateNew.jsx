@@ -101,6 +101,7 @@ const Createnew = () => {
   const [hoursIncluded, setHoursIncluded] = useState('');
   const [kmIncluded, setKmIncluded] = useState('');
   const [additionalPricePerKm, setAdditionalPricePerKm] = useState('');
+  const [extraHourPrice, setExtraHourPrice] = useState('');
   const [afterKilometer, setAfterKilometer] = useState('');
   const [discountType, setDiscountType] = useState('');
   const [advanceType, setAdvanceType] = useState('');
@@ -177,7 +178,8 @@ const Createnew = () => {
     windshield: false
   });
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+  const API_BASE_URL = import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
+  const BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
   const moduleId = localStorage.getItem('moduleId');
 
@@ -248,6 +250,29 @@ const Createnew = () => {
 
   const [subCategory, setSubCategory] = useState('');
   const isCategorySelected = Boolean(parentCategory);
+
+  const getImageUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${BASE_URL}${cleanPath}`;
+  };
+
+  const handleImageError = (e) => {
+    const currentSrc = e.target.src;
+    if (currentSrc.includes('/uploads/') && !e.target.dataset.triedCapital) {
+      console.log('Retrying image with capital Uploads:', currentSrc);
+      e.target.src = currentSrc.replace('/uploads/', '/Uploads/');
+      e.target.dataset.triedCapital = 'true';
+    } else if (!e.target.dataset.triedApi) {
+      console.log('Retrying image with /api prefix:', currentSrc);
+      const urlObj = new URL(currentSrc);
+      e.target.src = `${urlObj.origin}/api${urlObj.pathname}`;
+      e.target.dataset.triedApi = 'true';
+    } else {
+      e.target.src = 'https://placehold.co/100x100?text=No+Image';
+    }
+  };
 
   const [zones, setZones] = useState([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -786,6 +811,10 @@ const Createnew = () => {
           setAfterKilometer(vehicle.pricing.extraKmPrice.km?.toString() || '');
         }
 
+        if (vehicle.pricing.extraHourPrice) {
+          setExtraHourPrice(vehicle.pricing.extraHourPrice?.toString() || '');
+        }
+
         // Discount
         if (vehicle.pricing.discount) {
           setDiscountType(vehicle.pricing.discount.type === 'flat_rate' ? 'flat' : 'percentage');
@@ -1186,6 +1215,7 @@ const Createnew = () => {
     setHoursIncluded('');
     setKmIncluded('');
     setAdditionalPricePerKm('');
+    setExtraHourPrice('');
     setAfterKilometer('');
     setDiscountType('');
     setAdvanceType('');
@@ -1471,8 +1501,9 @@ const Createnew = () => {
       formData.append('pricing[basicPackage][includedKilometers]', parseFloat(kmIncluded) || 0);
       formData.append('pricing[basicPackage][includedHours]', parseFloat(hoursIncluded) || 0);
 
-      formData.append('pricing[extraKmPrice][km]', parseFloat(afterKilometer) || 0);
+      formData.append('pricing[extraKmPrice][km]', parseFloat(afterKilometer) || 1);
       formData.append('pricing[extraKmPrice][price]', parseFloat(additionalPricePerKm) || 0);
+      formData.append('pricing[extraHourPrice]', parseFloat(extraHourPrice) || 0);
 
       formData.append('pricing[discount][type]', discountType === 'flat' ? 'flat_rate' : 'percentage');
       formData.append('pricing[discount][value]', parseFloat(discount) || 0);
@@ -1815,7 +1846,7 @@ const Createnew = () => {
                   ) : existingThumbnail ? (
                     <Box>
                       <img
-                        src={existingThumbnail}
+                        src={getImageUrl(existingThumbnail)}
                         alt="Existing featured image"
                         style={{
                           maxWidth: '100%',
@@ -1824,6 +1855,7 @@ const Createnew = () => {
                           marginBottom: theme.spacing(1),
                           borderColor: '#E15B65'
                         }}
+                        onError={handleImageError}
                       />
                       <Typography variant="body2" color="text.secondary">
                         Existing featured image. Upload to replace.
@@ -1897,7 +1929,7 @@ const Createnew = () => {
                             border: '1px solid #e5e7eb'
                           }}
                         >
-                          <img src={url} alt={`Existing ${index}`} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+                          <img src={getImageUrl(url)} alt={`Existing ${index}`} style={{ width: '100%', height: 90, objectFit: 'cover' }} onError={handleImageError} />
                           <Box
                             sx={{
                               position: 'absolute',
@@ -3536,6 +3568,7 @@ const Createnew = () => {
                                 <Select value={kmIncluded} label="KM Included" onChange={(e) => setKmIncluded(e.target.value)}>
                                   <MenuItem value="">Select</MenuItem>
                                   <MenuItem value="50">50 KM</MenuItem>
+                                  <MenuItem value="80">80 KM</MenuItem>
                                   <MenuItem value="100">100 KM</MenuItem>
                                   <MenuItem value="150">150 KM</MenuItem>
                                 </Select>
@@ -3751,13 +3784,19 @@ const Createnew = () => {
                               size="small"
                             />
 
-                            <FormControl fullWidth size="small">
-                              <InputLabel>After KM</InputLabel>
-                              <Select value={afterKilometer} label="After KM" onChange={(e) => setAfterKilometer(e.target.value)}>
-                                <MenuItem value="">Select</MenuItem>
-                                <MenuItem value="1">Per KM</MenuItem>
-                              </Select>
-                            </FormControl>
+                            <TextField
+                              fullWidth
+                              label="Extra Hour Price"
+                              type="number"
+                              value={extraHourPrice}
+                              onChange={(e) => setExtraHourPrice(e.target.value)}
+                              placeholder="0"
+                              InputProps={{
+                                startAdornment: <Typography sx={{ mr: 0.5, color: 'text.secondary', fontSize: 14 }}>₹</Typography>
+                              }}
+                              size="small"
+
+                            />
                           </Box>
                         </Box>
 

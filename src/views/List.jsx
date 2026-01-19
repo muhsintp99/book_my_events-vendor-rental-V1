@@ -60,7 +60,10 @@ export default function Vehicles() {
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
 
   const navigate = useNavigate();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
+  const API_BASE_URL = import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
+  const BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+  console.log("Debug - API_BASE_URL:", API_BASE_URL);
+  console.log("Debug - BASE_URL:", BASE_URL);
   const moduleId = localStorage.getItem("moduleId");
   const providerId = localStorage.getItem("providerId");
 
@@ -136,6 +139,48 @@ export default function Vehicles() {
     return "N/A";
   };
 
+  const getImageUrl = (path) => {
+    if (!path) return "https://placehold.co/100x100?text=No+Image";
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${BASE_URL}${cleanPath}`;
+  };
+
+  const handleImageError = (e) => {
+    const currentSrc = e.target.src;
+    const urlObj = new URL(currentSrc);
+    const path = urlObj.pathname;
+
+    // Advanced Fallback Logic
+    if (path.includes("/uploads/") && !e.target.dataset.triedCapital) {
+      console.log("Retrying with capital 'Uploads':", currentSrc);
+      e.target.src = currentSrc.replace("/uploads/", "/Uploads/");
+      e.target.dataset.triedCapital = "true";
+    }
+    else if (path.includes("/Uploads/") && !e.target.dataset.triedNoUploads) {
+      console.log("Retrying without 'Uploads/' prefix:", currentSrc);
+      e.target.src = currentSrc.replace("/Uploads/", "/");
+      e.target.dataset.triedNoUploads = "true";
+    }
+    else if (path.includes("/uploads/") && !e.target.dataset.triedNoUploads) {
+      console.log("Retrying without 'uploads/' prefix:", currentSrc);
+      e.target.src = currentSrc.replace("/uploads/", "/");
+      e.target.dataset.triedNoUploads = "true";
+    }
+    else if (!path.startsWith("/api") && !e.target.dataset.triedApi) {
+      console.log("Retrying with '/api' prefix:", currentSrc);
+      // Construct /api/pathname
+      const newPath = path.startsWith('/') ? `/api${path}` : `/api/${path}`;
+      e.target.src = `${urlObj.origin}${newPath}`;
+      e.target.dataset.triedApi = "true";
+    }
+    else {
+      console.error("All image fallbacks failed for:", currentSrc);
+      // Use a more generic placeholder but keep it nice
+      e.target.src = "https://placehold.co/600x400?text=No+Image+Found";
+    }
+  };
+
   const fetchVehicles = async () => {
     setLoading(true);
     try {
@@ -167,10 +212,12 @@ export default function Vehicles() {
         console.log("Available brands:", brands);
 
         // Log the first vehicle to see its structure
+        console.log("All vehicles data:", res.data.data);
         if (res.data.data && res.data.data.length > 0) {
           console.log("First vehicle structure:", res.data.data[0]);
           console.log("First vehicle category:", res.data.data[0].category);
           console.log("First vehicle brand:", res.data.data[0].brand);
+          console.log("First vehicle featuredImage URL:", getImageUrl(res.data.data[0].featuredImage));
         }
 
         setVehicles(res.data.data || []);
@@ -536,7 +583,7 @@ export default function Vehicles() {
                       <Stack direction="row" spacing={2} alignItems="center">
                         <Box
                           component="img"
-                          src={v.featuredImage || "https://via.placeholder.com/100x100?text=No+Image"}
+                          src={getImageUrl(v.featuredImage)}
                           sx={{
                             width: 50,
                             height: 50,
@@ -544,7 +591,8 @@ export default function Vehicles() {
                             objectFit: "cover",
                             border: "1px solid #eee"
                           }}
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/100x100?text=No+Image" }}
+                          onLoad={(e) => console.log("Successfully loaded image:", e.target.src)}
+                          onError={handleImageError}
                         />
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 700, color: "#2563eb" }}>
