@@ -51,24 +51,49 @@ import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Switch } from '@mui/material';
 
-// Styled component for the upload area
+// Styled component for the upload area with premium design and mobile responsiveness
 const UploadDropArea = styled(Box)(({ theme }) => ({
-  border: '2px dashed #e0e0e0',
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(3),
+  border: '2px dashed #d1d5db',
+  borderRadius: '16px',
+  padding: theme.spacing(4),
   textAlign: 'center',
-  backgroundColor: theme.palette.grey[50],
+  background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
   cursor: 'pointer',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  minHeight: '150px',
+  minHeight: '180px',
+  position: 'relative',
+  overflow: 'hidden',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.03) 0%, rgba(124, 58, 237, 0.03) 100%)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease'
+  },
   '&:hover': {
-    borderColor: theme.palette.primary.main
+    borderColor: '#4f46e5',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 10px 25px rgba(79, 70, 229, 0.1), 0 6px 10px rgba(0,0,0,0.05)',
+    '&::before': {
+      opacity: 1
+    }
   },
   '& input[type="file"]': {
     display: 'none'
+  },
+  // Mobile responsiveness
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(3),
+    minHeight: '150px',
+    borderRadius: '12px'
   }
 }));
 
@@ -1354,33 +1379,46 @@ const Createnew = () => {
       formData.append('subCategory', subCategory);
       formData.append('model', model);
 
-      // ==================== CAPACITY & COMFORT (NESTED) ====================
-      formData.append('capacityAndComfort[seatingCapacity]', parseInt(seatingCapacity) || 0);
-      formData.append('capacityAndComfort[legroomType]', legroomType || '');
+      // ==================== CAPACITY & COMFORT (NESTED JSON) ====================
+      const capacityData = {
+        seatingCapacity: parseInt(seatingCapacity) || 0,
+        legroomType: legroomType || '',
+        pushbackSeats: pushbackSeats === 'yes',
+        reclinerSeats: reclinerSeats === 'yes'
+      };
+      formData.append('capacityAndComfort', JSON.stringify(capacityData));
 
-      formData.append('capacityAndComfort[pushbackSeats]', pushbackSeats === 'yes');
-      formData.append('capacityAndComfort[reclinerSeats]', reclinerSeats === 'yes');
+      // ==================== ENGINE CHARACTERISTICS (NESTED JSON) ====================
+      const engineData = {
+        transmissionType: {
+          value: transmissionType || '',
+          available: !!transmissionType
+        },
+        powerBHP: enginePower ? parseInt(enginePower) : 0,
+        engineCapacityCC: engineCapacity ? parseInt(engineCapacity) : 0,
+        torque: torque || '',
+        mileage: mileage || '',
+        fuelType: fuelType || '',
+        airConditioning: airCondition === 'yes'
+      };
+      formData.append('engineCharacteristics', JSON.stringify(engineData));
 
-      // ==================== ENGINE CHARACTERISTICS (NESTED) ====================
-      formData.append('engineCharacteristics[transmissionType][value]', transmissionType || '');
-      formData.append('engineCharacteristics[transmissionType][available]', !!transmissionType);
-      formData.append('engineCharacteristics[powerBHP]', enginePower ? parseInt(enginePower) : 0);
-      formData.append('engineCharacteristics[engineCapacityCC]', engineCapacity ? parseInt(engineCapacity) : 0);
-      formData.append('engineCharacteristics[torque]', torque || '');
-      formData.append('engineCharacteristics[mileage]', mileage || '');
-      formData.append('engineCharacteristics[fuelType]', fuelType || '');
-      formData.append('engineCharacteristics[airConditioning]', airCondition === 'yes');
-
-      // ==================== LOCATION (NESTED) ====================
-      formData.append('location[address]', venueAddress);
-      formData.append('location[latitude]', parseFloat(latitude) || 0);
-      formData.append('location[longitude]', parseFloat(longitude) || 0);
+      // ==================== LOCATION (NESTED JSON) ====================
+      const locationData = {
+        address: venueAddress,
+        latitude: parseFloat(latitude) || 0,
+        longitude: parseFloat(longitude) || 0
+      };
+      formData.append('location', JSON.stringify(locationData));
       formData.append('zone', zone);
 
-      // ==================== AVAILABILITY (NESTED) ====================
-      formData.append('availability[driverIncluded]', features.driverIncluded || false);
-      formData.append('availability[sunroof]', features.sunroof || false);
-      formData.append('availability[acAvailable]', airCondition === 'yes');
+      // ==================== AVAILABILITY (NESTED JSON) ====================
+      const availabilityData = {
+        driverIncluded: features.driverIncluded || false,
+        sunroof: features.sunroof || false,
+        acAvailable: airCondition === 'yes'
+      };
+      formData.append('availability', JSON.stringify(availabilityData));
 
       // ==================== FEATURES (CATEGORY-SPECIFIC - NESTED JSON) ====================
       if (isBusCategory) {
@@ -1389,7 +1427,7 @@ const Createnew = () => {
             curtains: busFeatures.curtains || false,
             readingLights: busFeatures.readingLights || false,
             footRest: busFeatures.footRest || false,
-            mirror: false // Add if you have this field
+            mirror: false
           },
           entertainment: {
             musicSystem: busFeatures.musicSystem || false,
@@ -1479,40 +1517,29 @@ const Createnew = () => {
         formData.append('features', JSON.stringify(bikeFeatureStructure));
       }
 
-      // ==================== EXTRA ADDONS (NESTED) ====================
-      let wifi = false;
-      let chargingPorts = false;
+      // ==================== EXTRA ADDONS (NESTED JSON) ====================
+      let wifiValue = false;
+      let chargingPortsValue = false;
       if (isBusCategory) {
-        wifi = busFeatures.wifi;
-        chargingPorts = busFeatures.chargingPoints;
+        wifiValue = busFeatures.wifi;
+        chargingPortsValue = busFeatures.chargingPoints;
       } else if (isVanCategory) {
-        wifi = vanFeatures.wifi;
-        chargingPorts = vanFeatures.chargingPoints;
+        wifiValue = vanFeatures.wifi;
+        chargingPortsValue = vanFeatures.chargingPoints;
       } else if (isCarCategory) {
-        wifi = carFeatures.wifi;
-        chargingPorts = carFeatures.chargingPoints;
+        wifiValue = carFeatures.wifi;
+        chargingPortsValue = carFeatures.chargingPoints;
       }
-      formData.append('extraAddons[wifi]', wifi);
-      formData.append('extraAddons[chargingPorts]', chargingPorts);
-      formData.append('extraAddons[interiorLighting]', interiorLighting === 'premium');
 
-      // ==================== PRICING (NESTED) ====================
-      formData.append('pricing[basicPackage][price]', parseFloat(basicPackagePrice) || 0);
-      formData.append('pricing[basicPackage][includedKilometers]', parseFloat(kmIncluded) || 0);
-      formData.append('pricing[basicPackage][includedHours]', parseFloat(hoursIncluded) || 0);
+      const extraAddonsData = {
+        wifi: wifiValue,
+        chargingPorts: chargingPortsValue,
+        interiorLighting: interiorLighting === 'premium'
+      };
+      formData.append('extraAddons', JSON.stringify(extraAddonsData));
 
-      formData.append('pricing[extraKmPrice][km]', parseFloat(afterKilometer) || 1);
-      formData.append('pricing[extraKmPrice][price]', parseFloat(additionalPricePerKm) || 0);
-      formData.append('pricing[extraHourPrice]', parseFloat(extraHourPrice) || 0);
-
-      formData.append('pricing[discount][type]', discountType === 'flat' ? 'flat_rate' : 'percentage');
-      formData.append('pricing[discount][value]', parseFloat(discount) || 0);
-
-      formData.append('pricing[decoration][available]', features.decorationAvailable || false);
-      formData.append('pricing[decoration][price]', parseFloat(decorationPrice) || 0);
-
-      // ==================== CALCULATE GRAND TOTAL ====================
-      const calculateGrandTotal = () => {
+      // ==================== PRICING (NESTED JSON) ====================
+      const calculateGrandTotalFn = () => {
         const base = parseFloat(basicPackagePrice) || 0;
         const dec = (features.decorationAvailable && decorationPrice) ? parseFloat(decorationPrice) : 0;
         const disc = parseFloat(discount) || 0;
@@ -1527,7 +1554,25 @@ const Createnew = () => {
         return Math.max(base + dec - discAmt, 0);
       };
 
-      formData.append('pricing[grandTotal]', calculateGrandTotal());
+      const pricingData = {
+        basicPackage: {
+          price: parseFloat(basicPackagePrice) || 0,
+          includedKilometers: parseFloat(kmIncluded) || 0,
+          includedHours: parseFloat(hoursIncluded) || 0,
+        },
+        extraKmPrice: parseFloat(additionalPricePerKm) || 0,
+        extraHourPrice: parseFloat(extraHourPrice) || 0,
+        discount: {
+          type: discountType === 'flat' ? 'flat_rate' : 'percentage',
+          value: parseFloat(discount) || 0,
+        },
+        decoration: {
+          available: features.decorationAvailable || false,
+          price: parseFloat(decorationPrice) || 0,
+        },
+        grandTotal: calculateGrandTotalFn()
+      };
+      formData.append('pricing', JSON.stringify(pricingData));
 
       // ==================== ADVANCE BOOKING AMOUNT ====================
       formData.append('advanceBookingAmount', parseFloat(advanceAmount) || 0);
@@ -1547,12 +1592,10 @@ const Createnew = () => {
       searchTags.forEach((tag) => formData.append('searchTags[]', tag));
 
       // ==================== FILE UPLOADS ====================
-      // Featured Image (was thumbnail)
       if (thumbnailFile) {
         formData.append('featuredImage', thumbnailFile);
       }
 
-      // Gallery Images (was images)
       newVehicleImages.forEach((file) => {
         formData.append('galleryImages', file);
       });
@@ -1569,24 +1612,20 @@ const Createnew = () => {
         let response;
         let newOrUpdatedVehicle;
 
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        };
+
         if (isEdit) {
           if (!effectiveVehicleId) {
             throw new Error('Invalid vehicle ID for update');
           }
-          response = await axios.put(`${API_BASE_URL}/vehicles/${effectiveVehicleId}`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          response = await axios.put(`${API_BASE_URL}/vehicles/${effectiveVehicleId}`, formData, config);
           newOrUpdatedVehicle = response.data.data || response.data;
         } else {
-          response = await axios.post(`${API_BASE_URL}/vehicles`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          response = await axios.post(`${API_BASE_URL}/vehicles`, formData, config);
           newOrUpdatedVehicle = response.data.data || response.data;
         }
 
@@ -1753,34 +1792,114 @@ const Createnew = () => {
   const grandTotal = Math.max(basePrice + decPrice - discountAmount, 0);
 
   return (
-    <Box sx={{ p: isSmallScreen ? 2 : 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh', width: '100%' }}>
+    <Box
+      sx={{
+        p: isSmallScreen ? 2 : 4,
+        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+        minHeight: '100vh',
+        width: '100%'
+      }}
+    >
       <Box
         sx={{
           maxWidth: 'lg',
           margin: 'auto',
-          backgroundColor: 'white',
-          borderRadius: theme.shape.borderRadius,
-          boxShadow: theme.shadows[1],
-          p: isSmallScreen ? 2 : 3,
+          backgroundColor: '#ffffff',
+          borderRadius: { xs: '12px', sm: '16px', md: '20px' },
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
+          p: { xs: 2, sm: 3, md: 4 },
           overflowX: 'hidden'
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isEdit && (
-              <IconButton onClick={() => navigate('/vehicle-setup/lists')} color="primary">
-                <ArrowBackIcon />
-              </IconButton>
-            )}
-            <DirectionsCarIcon sx={{ fontSize: 24, mr: 1 }} />
-            <Typography variant="h5" component="h1">
-              {isEdit ? 'Edit Vehicle' : 'Add New Vehicle'}
-            </Typography>
+        {/* Premium Header Section */}
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            borderRadius: { xs: '12px', sm: '14px', md: '16px' },
+            p: { xs: 2, sm: 2.5, md: 3 },
+            mb: { xs: 3, md: 4 },
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 8px 24px rgba(79, 70, 229, 0.2)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: '-50%',
+              right: '-10%',
+              width: '300px',
+              height: '300px',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+              borderRadius: '50%',
+              display: { xs: 'none', sm: 'block' }
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, position: 'relative', zIndex: 1, gap: { xs: 2, sm: 0 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, width: '100%' }}>
+              {isEdit && (
+                <IconButton
+                  onClick={() => navigate('/vehicle-setup/lists')}
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(10px)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.3)',
+                      transform: 'translateX(-2px)'
+                    },
+                    transition: 'all 0.3s ease',
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 }
+                  }}
+                >
+                  <ArrowBackIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                </IconButton>
+              )}
+              <Box
+                sx={{
+                  width: { xs: 40, sm: 44, md: 48 },
+                  height: { xs: 40, sm: 44, md: 48 },
+                  borderRadius: { xs: '10px', md: '12px' },
+                  background: 'rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(10px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  flexShrink: 0
+                }}
+              >
+                <DirectionsCarIcon sx={{ fontSize: { xs: 22, sm: 26, md: 28 }, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'white',
+                    letterSpacing: '-0.5px',
+                    fontSize: { xs: '1.25rem', sm: '1.75rem', md: '2rem' },
+                    lineHeight: 1.2
+                  }}
+                >
+                  {isEdit ? 'Edit Vehicle' : 'Add New Vehicle'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'rgba(255,255,255,0.9)',
+                    mt: 0.5,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    display: { xs: 'none', sm: 'block' }
+                  }}
+                >
+                  {isEdit ? 'Update vehicle information and details' : 'Create a new vehicle package with all details'}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
         </Box>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4 }}>
-          Insert the basic information of the vehicle
-        </Typography>
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
             <CircularProgress />
@@ -2741,7 +2860,7 @@ const Createnew = () => {
 
                   <Grid container spacing={4} alignItems="center">
                     <Grid item xs={12} md={6}>
-                      <Box sx={{ display: 'flex', gap: 4 }}>
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 4 } }}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -2772,11 +2891,12 @@ const Createnew = () => {
                           borderRadius: 3,
                           border: '1px solid #fee2e2',
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: 3
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 1.5, sm: 3 }
                         }}
                       >
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#991b1b', minWidth: 120 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#991b1b', minWidth: { xs: 'auto', sm: 120 } }}>
                           Interior Lighting
                         </Typography>
                         <RadioGroup row value={interiorLighting} onChange={(e) => setInteriorLighting(e.target.value)}>
@@ -3522,7 +3642,7 @@ const Createnew = () => {
                         </Typography>
                       </Box>
 
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 2, md: 2 } }}>
                         {/* Basic Package Info */}
                         <Box
                           sx={{
@@ -3550,7 +3670,7 @@ const Createnew = () => {
                               }}
                               size="small"
                             />
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, mt: 3 }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 1.5, sm: 2 }, mt: 2 }}>
                               <FormControl fullWidth size="small">
                                 <InputLabel>Hours Included</InputLabel>
                                 <Select value={hoursIncluded} label="Hours Included" onChange={(e) => setHoursIncluded(e.target.value)}>
@@ -3591,7 +3711,7 @@ const Createnew = () => {
                           <Typography variant="body2" fontWeight={600} sx={{ color: '#15803d', mb: 2 }}>
                             Apply Discount
                           </Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
                             <FormControl fullWidth size="small">
                               <InputLabel>Type</InputLabel>
                               <Select value={discountType} label="Type" onChange={(e) => setDiscountType(e.target.value)}>
@@ -3756,7 +3876,7 @@ const Createnew = () => {
                         </Typography>
                       </Box>
 
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
                         {/* Extra Charges */}
                         <Box
                           sx={{
@@ -3770,7 +3890,7 @@ const Createnew = () => {
                           <Typography variant="body2" fontWeight={600} sx={{ color: '#9a3412', mb: 2 }}>
                             Extra Charges
                           </Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                             <TextField
                               fullWidth
                               label="Price/KM"
@@ -3813,7 +3933,7 @@ const Createnew = () => {
                           <Typography variant="body2" fontWeight={600} sx={{ color: '#1e40af', mb: 2 }}>
                             Advance Booking
                           </Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                             <FormControl fullWidth size="small">
                               <InputLabel>Type</InputLabel>
                               <Select value={advanceType} label="Type" onChange={(e) => setAdvanceType(e.target.value)}>
