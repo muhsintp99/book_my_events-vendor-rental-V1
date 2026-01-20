@@ -63,6 +63,15 @@ const cakemanagement = {
     },
 
     {
+      id: 'cake-addons',
+      title: 'Add-ons',
+      type: 'item',
+      url: '/cake/Addons',
+      icon: icons.IconCategory,
+      breadcrumbs: false
+    },
+
+    {
       id: 'cake-categories',
       title: 'Categories',
       type: 'item',

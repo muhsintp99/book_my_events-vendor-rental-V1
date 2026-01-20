@@ -210,21 +210,7 @@ const MakeupConfirmed = () => {
         Confirmed Makeup Bookings
       </Typography>
 
-      {/* Debug Info Alert */}
-      {debugInfo && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            <strong>Debug Info:</strong> Total Bookings: {debugInfo.total} | Accepted/Confirmed: {debugInfo.accepted} | Makeup Module:{' '}
-            {debugInfo.makeup} |<strong> Confirmed Makeup: {debugInfo.confirmedMakeup}</strong>
-          </Typography>
-          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-            Status breakdown: {JSON.stringify(debugInfo.statusCounts)}
-          </Typography>
-          <Typography variant="caption" display="block">
-            Module breakdown: {JSON.stringify(debugInfo.moduleCounts)}
-          </Typography>
-        </Alert>
-      )}
+      
 
       <Paper sx={{ mt: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center" p={2}>

@@ -80,6 +80,7 @@ const MakeupConfirmed = () => {
         console.log('Bookings by module:', moduleCounts);
 
         // ✅ STRICT FILTER: Only Accepted + Makeup bookings
+        // ✅ STRICT FILTER: Only Accepted + Cake bookings
         const confirmed = all.filter((b) => {
           const status = String(b.status || '')
             .trim()
@@ -88,15 +89,13 @@ const MakeupConfirmed = () => {
             .trim()
             .toLowerCase();
 
-          // Check for various status variations
           const isAccepted = status === 'accepted' || status === 'confirmed' || status === 'approve' || status === 'approved';
 
-          // Check for makeup module variations
-          const isMakeup = moduleType === 'makeup' || moduleType === 'makeup artist' || moduleType === 'makeupartist';
+          const isCake = moduleType === 'cake' || moduleType === 'cakes' || moduleType === 'cake service' || moduleType === 'cake booking';
 
-          console.log(`Booking ${b._id}: status=${status}, module=${moduleType}, isAccepted=${isAccepted}, isMakeup=${isMakeup}`);
+          console.log(`Booking ${b._id}: status=${status}, module=${moduleType}, isAccepted=${isAccepted}, isCake=${isCake}`);
 
-          return isAccepted && isMakeup;
+          return isAccepted && isCake;
         });
 
         console.log('✅ Filtered confirmed makeup bookings:', confirmed.length);
@@ -210,21 +209,6 @@ const MakeupConfirmed = () => {
         Confirmed Makeup Bookings
       </Typography>
 
-      {/* Debug Info Alert */}
-      {debugInfo && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            <strong>Debug Info:</strong> Total Bookings: {debugInfo.total} | Accepted/Confirmed: {debugInfo.accepted} | Makeup Module:{' '}
-            {debugInfo.makeup} |<strong> Confirmed Makeup: {debugInfo.confirmedMakeup}</strong>
-          </Typography>
-          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-            Status breakdown: {JSON.stringify(debugInfo.statusCounts)}
-          </Typography>
-          <Typography variant="caption" display="block">
-            Module breakdown: {JSON.stringify(debugInfo.moduleCounts)}
-          </Typography>
-        </Alert>
-      )}
 
       <Paper sx={{ mt: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center" p={2}>
@@ -324,8 +308,9 @@ const MakeupConfirmed = () => {
                       <Typography variant="body2">
                         {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-GB') : '-'}
                       </Typography>
+
                       <Typography variant="caption" color="text.secondary">
-                        {booking.timeSlot || ''}
+                        {booking.timeSlot?.label || booking.timeSlot?.time || ''}
                       </Typography>
                     </TableCell>
 

@@ -235,7 +235,10 @@ const FeatureGroupBox = styled(Box)(({ theme }) => ({
   border: '1px solid rgba(0, 0, 0, 0.06)',
   position: 'relative',
   transition: 'all 0.3s ease',
-  minHeight: '100%',
+  height: '100%', // 🔥 makes all cards equal height
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
   '&:hover': {
     borderColor: PINK,
     boxShadow: '0px 10px 30px rgba(233, 30, 99, 0.05)'
@@ -361,9 +364,10 @@ const AddCakePackage = () => {
   const OCCASIONS = ['Marriage', 'Engagement', 'Birthday', 'Anniversary', 'Promotion', 'Other'];
   const ATTRIBUTES = ['Weight', 'Ingredient'];
   const ATTRIBUTE_VALUES = {
-    Weight: ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'],
-    Ingredient: ['Egg', 'Eggless', 'Vegan', 'Sugar Free']
-  };
+  Weight: ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'],
+  Ingredient: ['Egg', 'Eggless']
+};
+
 
   const ADDON_CATEGORIES = [
     {
@@ -522,6 +526,20 @@ const AddCakePackage = () => {
       return newAttrValues;
     });
   };
+  const base = Number(unitPrice || 0);
+  const reduction = Number(discountValue || 0);
+
+  let totalPrice = base;
+
+  if (discountType === 'percentage') {
+    totalPrice = base - (base * reduction) / 100;
+  }
+
+  if (discountType === 'flat') {
+    totalPrice = base - reduction;
+  }
+
+  totalPrice = Math.max(totalPrice, 0);
 
   const handleAddonToggle = (addonName) =>
     setSelectedAddons((prev) => (prev.includes(addonName) ? prev.filter((a) => a !== addonName) : [...prev, addonName]));
@@ -604,64 +622,8 @@ const AddCakePackage = () => {
   return (
     <Box sx={{ bgcolor: '#FDFDFF', minHeight: '100vh', pb: 10 }}>
       {/* 🚀 STICKY HEADER AREA */}
-      <Box
-        sx={{
-          bgcolor: 'white',
-          borderBottom: '1px solid #F0F0F0',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          px: { xs: 2, md: 5 },
-          py: 2.5,
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          backdropFilter: 'blur(20px)'
-        }}
-      >
-        <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Stack direction="row" spacing={3} alignItems="center">
-            <IconButton
-              onClick={() => navigate(-1)}
-              sx={{ bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', '&:hover': { bgcolor: PINK, color: 'white', borderColor: PINK } }}
-            >
-              <ArrowBackIcon fontSize="small" />
-            </IconButton>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 900, color: '#111827', letterSpacing: '-1.2px', fontSize: '28px' }}>
-                {isEditMode ? 'Edit' : 'Create'} Cake Package
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Catering Management / Add New Item
-              </Typography>
-            </Box>
-          </Stack>
-          <Stack direction="row" spacing={2.5}>
-            <Button
-              variant="text"
-              onClick={handleReset}
-              sx={{ px: 4, textTransform: 'none', fontWeight: 800, color: '#4B5563', '&:hover': { color: PINK } }}
-            >
-              Reset Form
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={submitting}
-              sx={{
-                bgcolor: PINK,
-                borderRadius: '18px',
-                px: 6,
-                py: 1.8,
-                textTransform: 'none',
-                fontWeight: 900,
-                fontSize: '16px',
-                boxShadow: `0px 15px 35px ${alpha(PINK, 0.35)}`,
-                '&:hover': { bgcolor: '#D81B60', boxShadow: `0px 20px 45px ${alpha(PINK, 0.45)}` }
-              }}
-            >
-              {submitting ? <CircularProgress size={24} color="inherit" /> : `Publish Package`}
-            </Button>
-          </Stack>
-        </Box>
+      <Box>
+        <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}></Box>
       </Box>
 
       <Box sx={{ maxWidth: '1200px', margin: '48px auto', px: 3 }}>
@@ -798,15 +760,33 @@ const AddCakePackage = () => {
                 </Grid>
 
                 {/* SELECT UNIT */}
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} md={3}>
                   <Typography
                     variant="body2"
-                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                    sx={{
+                      mb: 1.5,
+                      fontWeight: 800,
+                      color: '#374151',
+                      textTransform: 'uppercase',
+                      fontSize: '11px',
+                      letterSpacing: '1px'
+                    }}
                   >
                     Select Unit
                   </Typography>
                   <FormControl fullWidth>
-                    <PremiumSelect fullWidth value={unit} onChange={(e) => setUnit(e.target.value)}>
+                    <PremiumSelect
+                      fullWidth
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      displayEmpty
+                      renderValue={(selected) =>
+                        selected ? selected : <Typography sx={{ color: '#9CA3AF', fontWeight: 600 }}>Select unit</Typography>
+                      }
+                    >
+                      <MenuItem disabled value="">
+                        Select unit
+                      </MenuItem>
                       <MenuItem value="Kg">Kg</MenuItem>
                       <MenuItem value="Gm">Gm</MenuItem>
                       <MenuItem value="Piece">Piece</MenuItem>
@@ -816,12 +796,19 @@ const AddCakePackage = () => {
                 </Grid>
 
                 {/* WEIGHT */}
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={4}>
                   <Typography
                     variant="body2"
-                    sx={{ mb: 1.5, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+                    sx={{
+                      mb: 1.5,
+                      fontWeight: 800,
+                      color: '#374151',
+                      textTransform: 'uppercase',
+                      fontSize: '11px',
+                      letterSpacing: '1px'
+                    }}
                   >
-                    Weight in Kg
+                    Weight
                   </Typography>
                   <PremiumTextField fullWidth placeholder="e.g. 1.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
                 </Grid>
@@ -841,29 +828,46 @@ const AddCakePackage = () => {
                   multiple
                   value={selectedOccasions}
                   onChange={(e) => setSelectedOccasions(e.target.value)}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selected.map((val) => (
-                        <Chip
-                          key={val}
-                          label={val}
-                          size="small"
-                          sx={{
-                            borderRadius: '10px',
-                            fontWeight: 800,
-                            bgcolor: alpha(PINK, 0.05),
-                            color: PINK,
-                            border: `1px solid ${alpha(PINK, 0.1)}`
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  )}
                   displayEmpty
+                  renderValue={(selected) => {
+                    if (selected.length === 0) {
+                      return (
+                        <Typography
+                          sx={{
+                            color: '#9CA3AF',
+                            fontWeight: 600,
+                            fontSize: '15px'
+                          }}
+                        >
+                          Select one or many occasions
+                        </Typography>
+                      );
+                    }
+
+                    return (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {selected.map((val) => (
+                          <Chip
+                            key={val}
+                            label={val}
+                            size="small"
+                            sx={{
+                              borderRadius: '10px',
+                              fontWeight: 800,
+                              bgcolor: alpha(PINK, 0.05),
+                              color: PINK,
+                              border: `1px solid ${alpha(PINK, 0.1)}`
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  }}
                 >
                   <MenuItem disabled value="">
                     Select one or many occasions
                   </MenuItem>
+
                   {OCCASIONS.map((occ) => (
                     <MenuItem key={occ} value={occ}>
                       <Checkbox
@@ -1179,87 +1183,167 @@ const AddCakePackage = () => {
             />
             <Typography
               variant="h6"
-              sx={{ mb: 4, fontWeight: 900, color: '#111827', display: 'flex', alignItems: 'center', gap: 2, fontSize: '20px' }}
+              sx={{
+                mb: 4,
+                fontWeight: 900,
+                color: '#111827',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                fontSize: '20px',
+                textAlign: 'center'
+              }}
             >
-              <SettingsIcon sx={{ color: PINK }} /> Variant Configuration
+              <SettingsIcon sx={{ color: PINK }} />
+              Variant Configuration
             </Typography>
-            <Stack
-  spacing={5}
-  alignItems="center"
-  textAlign="center"
->
-  {ATTRIBUTES.map((attr) => (
-    <Box key={attr}>
-      <Typography
-        variant="caption"
-        sx={{
-          mb: 2,
-          display: 'block',
-          fontWeight: 800,
-          color: '#6B7280',
-          textTransform: 'uppercase',
-          letterSpacing: '2px',
-          fontSize: '11px'
-        }}
-      >
-        Available {attr}s
-      </Typography>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          justifyContent: 'center'
-        }}
-      >
-        {ATTRIBUTE_VALUES[attr].map((val) => (
-          <InteractionChipRefined
-            key={val}
-            label={val}
-            selected={attrValues[attr]?.includes(val)}
-            onClick={() => handleAttrValueToggle(attr, val)}
-          />
-        ))}
-      </Box>
-    </Box>
-  ))}
-</Stack>
+            <Stack spacing={5} alignItems="center" textAlign="center">
+              {ATTRIBUTES.map((attr) => (
+                <Box key={attr}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mb: 2,
+                      display: 'block',
+                      fontWeight: 800,
+                      color: '#6B7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '2px',
+                      fontSize: '11px'
+                    }}
+                  >
+                    Available {attr}s
+                  </Typography>
 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 2,
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {ATTRIBUTE_VALUES[attr].map((val) => (
+                      <InteractionChipRefined
+                        key={val}
+                        label={val}
+                        selected={attrValues[attr]?.includes(val)}
+                        onClick={() => handleAttrValueToggle(attr, val)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              ))}
+            </Stack>
           </Box>
 
-          <Grid container spacing={3} sx={{ mb: 6 }}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
-                Base Price (Starting From)
-              </Typography>
-              <PremiumTextField
-                fullWidth
-                placeholder="0.00"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1, fontWeight: 900, color: '#9CA3AF', fontSize: '18px' }}>₹</Typography>
-                }}
-              />
+          {/* 💳 BILLING & PRICING */}
+          <Box
+            sx={{
+              mb: 6,
+              p: 5,
+              borderRadius: '32px',
+              background: `linear-gradient(180deg, #ffffff, ${alpha(PINK, 0.04)})`,
+              border: `1.5px solid ${alpha(PINK, 0.15)}`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.04)'
+            }}
+          >
+            {/* Input Row */}
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={4}>
+                <Typography sx={{ mb: 1.5, fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', color: '#374151' }}>
+                  Base Price
+                </Typography>
+                <PremiumTextField
+                  fullWidth
+                  placeholder="0.00"
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(e.target.value)}
+                  InputProps={{
+                    startAdornment: <Typography sx={{ mr: 1, fontWeight: 900, color: '#9CA3AF' }}>₹</Typography>
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Typography sx={{ mb: 1.5, fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', color: '#374151' }}>
+                  Discount Type
+                </Typography>
+                <PremiumSelect fullWidth value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                  <MenuItem value="no_discount">No Discount</MenuItem>
+                  <MenuItem value="percentage">Percentage (%)</MenuItem>
+                  <MenuItem value="flat">Flat Amount (₹)</MenuItem>
+                </PremiumSelect>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Typography sx={{ mb: 1.5, fontWeight: 800, fontSize: '13px', textTransform: 'uppercase', color: '#374151' }}>
+                  Discount Value
+                </Typography>
+                <PremiumTextField
+                  fullWidth
+                  placeholder={discountType === 'percentage' ? 'e.g. 10%' : 'e.g. 50'}
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
-                Discount Policy
-              </Typography>
-              <PremiumSelect fullWidth value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
-                <MenuItem value="no_discount">Standard Pricing (No Discount)</MenuItem>
-                <MenuItem value="percentage">Promotional Percentage (%)</MenuItem>
-                <MenuItem value="flat">Direct Flat Reduction (₹)</MenuItem>
-              </PremiumSelect>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="body2" sx={{ mb: 1.8, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '13px' }}>
-                Reduction Value
-              </Typography>
-              <PremiumTextField fullWidth placeholder="e.g. 50" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} />
-            </Grid>
-          </Grid>
+
+            {/* Divider */}
+            <Divider sx={{ my: 5 }} />
+
+            {/* Billing Summary */}
+            <Box
+              sx={{
+                p: 4,
+                borderRadius: '24px',
+                bgcolor: '#ffffff',
+                border: `2px dashed ${alpha(PINK, 0.3)}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontWeight: 900, fontSize: '18px', color: '#111827' }}>Billing Summary</Typography>
+                <Typography sx={{ mt: 0.5, fontSize: '14px', color: '#6B7280' }}>Final amount after discount</Typography>
+              </Box>
+
+              <Box textAlign="right">
+                {discountType !== 'no_discount' && (
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#6B7280',
+                      textDecoration: 'line-through'
+                    }}
+                  >
+                    ₹ {base.toFixed(2)}
+                  </Typography>
+                )}
+
+                <Typography
+                  sx={{
+                    fontSize: '32px',
+                    fontWeight: 900,
+                    color: PINK,
+                    lineHeight: 1.1
+                  }}
+                >
+                  ₹ {totalPrice.toFixed(2)}
+                </Typography>
+
+                {discountType !== 'no_discount' && (
+                  <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#16A34A' }}>
+                    You save ₹ {(base - totalPrice).toFixed(2)}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Box>
 
           {variations.length > 0 && (
             <GlassTableContainerRefined>
@@ -1286,64 +1370,164 @@ const AddCakePackage = () => {
           )}
         </PremiumCard>
 
-        {/* 🎂 SECTION 4: THEMED GROUPED ADD-ONS */}
         <PremiumCard>
-          <StyledSectionTitle>Curated Boosters & Add-ons</StyledSectionTitle>
-          <StyledSectionSubtitle>Group related extras to enhance the customer's celebration experience.</StyledSectionSubtitle>
-          <Grid container spacing={4}>
-            {ADDON_CATEGORIES.map((group) => (
-              <Grid item xs={12} md={6} key={group.id}>
-                <FeatureGroupBox>
-                  <GroupBadge>{group.id}</GroupBadge>
-                  <Typography variant="h6" sx={{ fontWeight: 900, mb: 3.5, color: '#111827', letterSpacing: '-0.5px' }}>
-                    {group.title}
-                  </Typography>
-                  <Stack spacing={2.5}>
-                    {group.items.map((addon) => (
-                      <Box
-                        key={addon.name}
-                        sx={{
-                          p: 2.5,
-                          borderRadius: '16px',
-                          border: '1px solid #F3F4F6',
-                          bgcolor: selectedAddons.includes(addon.name) ? alpha(PINK, 0.02) : 'transparent',
-                          borderColor: selectedAddons.includes(addon.name) ? PINK : '#F3F4F6',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          '&:hover': { bgcolor: alpha(PINK, 0.01), borderColor: PINK }
-                        }}
-                        onClick={() => handleAddonToggle(addon.name)}
-                      >
-                        <Stack direction="row" spacing={2.5} alignItems="center">
-                          <Box sx={{ color: selectedAddons.includes(addon.name) ? PINK : '#9CA3AF' }}>{addon.icon}</Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 800, color: selectedAddons.includes(addon.name) ? '#111827' : '#4B5563' }}
-                          >
-                            {addon.name}
-                          </Typography>
-                        </Stack>
-                        <Checkbox
-                          checked={selectedAddons.includes(addon.name)}
-                          sx={{ color: '#D1D5DB', '&.Mui-checked': { color: PINK } }}
-                        />
-                      </Box>
-                    ))}
+  {/* Header */}
+  <Box sx={{ mb: 6, textAlign: 'center' }}>
+    <StyledSectionTitle sx={{ fontSize: 28 }}>
+      Curated Boosters & Add-ons
+    </StyledSectionTitle>
+    <StyledSectionSubtitle sx={{ maxWidth: 720, mx: 'auto', mt: 1 }}>
+      Group related extras to enhance the customer's celebration experience
+    </StyledSectionSubtitle>
+  </Box>
+
+  <Grid
+    container
+    spacing={4}
+    sx={{
+      flexWrap: {
+        xs: 'wrap',
+        sm: 'wrap',
+        md: 'nowrap'
+      }
+    }}
+  >
+    {ADDON_CATEGORIES.map((group) => (
+      <Grid item xs={12} sm={6} md={3} key={group.id}>
+        <FeatureGroupBox
+          sx={{
+            height: '100%',
+            borderRadius: '24px',
+            p: 3,
+            background:
+              'linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%)',
+            boxShadow: '0 12px 32px rgba(17,24,39,0.06)',
+            position: 'relative'
+          }}
+        >
+          {/* Floating badge */}
+          <GroupBadge
+            sx={{
+              position: 'absolute',
+              top: -14,
+              left: 24,
+              px: 2.5,
+              py: 0.75,
+              borderRadius: '999px',
+              fontSize: 12,
+              fontWeight: 800,
+              background: alpha(PINK, 0.1),
+              color: PINK
+            }}
+          >
+            {group.id}
+          </GroupBadge>
+
+          {/* Group title */}
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 900,
+              mb: 4,
+              mt: 2,
+              color: '#111827',
+              letterSpacing: '-0.6px'
+            }}
+          >
+            {group.title}
+          </Typography>
+
+          {/* Add-on items */}
+          <Stack spacing={2}>
+            {group.items.map((addon) => {
+              const active = selectedAddons.includes(addon.name);
+
+              return (
+                <Box
+                  key={addon.name}
+                  onClick={() => handleAddonToggle(addon.name)}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    background: active
+                      ? `linear-gradient(135deg, ${alpha(PINK, 0.12)}, ${alpha(PINK, 0.04)})`
+                      : '#FFFFFF',
+                    boxShadow: active
+                      ? `0 8px 24px ${alpha(PINK, 0.25)}`
+                      : '0 4px 14px rgba(0,0,0,0.04)',
+                    border: active
+                      ? `1.5px solid ${PINK}`
+                      : '1px solid #F1F5F9',
+                    transition: 'all 0.25s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
+                    }
+                  }}
+                >
+                  {/* Left */}
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: active
+                          ? alpha(PINK, 0.15)
+                          : '#F9FAFB',
+                        color: active ? PINK : '#9CA3AF'
+                      }}
+                    >
+                      {addon.icon}
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 800,
+                        color: active ? '#111827' : '#4B5563'
+                      }}
+                    >
+                      {addon.name}
+                    </Typography>
                   </Stack>
-                </FeatureGroupBox>
-              </Grid>
-            ))}
-          </Grid>
-        </PremiumCard>
+
+                  {/* Right */}
+                  <Checkbox
+                    checked={active}
+                    disableRipple
+                    sx={{
+                      p: 0,
+                      color: '#CBD5E1',
+                      '&.Mui-checked': {
+                        color: PINK
+                      }
+                    }}
+                  />
+                </Box>
+              );
+            })}
+          </Stack>
+        </FeatureGroupBox>
+      </Grid>
+    ))}
+  </Grid>
+</PremiumCard>
 
         {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
         <PremiumCard>
           <StyledSectionTitle>Delivery & Logistics</StyledSectionTitle>
           <StyledSectionSubtitle>Ensure your cake arrives safely with precise delivery controls.</StyledSectionSubtitle>
+
           <Grid container spacing={4}>
+            {/* Complimentary Delivery */}
             <Grid item xs={12} md={6}>
               <Box
                 sx={{
@@ -1354,7 +1538,10 @@ const AddCakePackage = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   transition: 'all 0.3s ease',
-                  '&:hover': { borderColor: PINK, bgcolor: alpha(PINK, 0.01) }
+                  '&:hover': {
+                    borderColor: PINK,
+                    bgcolor: alpha(PINK, 0.01)
+                  }
                 }}
               >
                 <Stack direction="row" spacing={3} alignItems="center">
@@ -1368,51 +1555,117 @@ const AddCakePackage = () => {
                     </Typography>
                   </Box>
                 </Stack>
+
                 <Switch checked={shipping.free} onChange={(e) => setShipping({ ...shipping, free: e.target.checked })} />
               </Box>
             </Grid>
+
+            {/* Standard Flat Rate + Redesigned Amount */}
             <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  p: 4,
-                  borderRadius: '24px',
-                  border: '2px solid #F3F4F6',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  transition: 'all 0.3s ease',
-                  '&:hover': { borderColor: PINK, bgcolor: alpha(PINK, 0.01) }
-                }}
-              >
-                <Stack direction="row" spacing={3} alignItems="center">
-                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
-                    <PaymentsIcon sx={{ color: PINK }} />
+              <Grid container spacing={3} alignItems="center">
+                {/* Flat rate card */}
+                <Grid item xs={12} md={shipping.flatRate ? 7 : 12}>
+                  <Box
+                    sx={{
+                      p: 4,
+                      borderRadius: '24px',
+                      border: `2px solid ${shipping.flatRate ? PINK : '#F3F4F6'}`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: PINK,
+                        bgcolor: alpha(PINK, 0.01)
+                      }
+                    }}
+                  >
+                    <Stack direction="row" spacing={3} alignItems="center">
+                      <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
+                        <PaymentsIcon sx={{ color: PINK }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 900 }}>Standard Flat Rate</Typography>
+                        <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                          Fixed cost per delivery
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Switch checked={shipping.flatRate} onChange={(e) => setShipping({ ...shipping, flatRate: e.target.checked })} />
                   </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 900 }}>Standard Flat Rate</Typography>
-                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                      Fixed cost per delivery
-                    </Typography>
-                  </Box>
-                </Stack>
-                <Switch checked={shipping.flatRate} onChange={(e) => setShipping({ ...shipping, flatRate: e.target.checked })} />
-              </Box>
-            </Grid>
-            {shipping.flatRate && (
-              <Grid item xs={12}>
-                <Box sx={{ p: 4, bgcolor: '#F9FAFB', borderRadius: '24px', border: '1px solid #E5E7EB' }}>
-                  <Typography variant="body2" sx={{ mb: 2, fontWeight: 800 }}>
-                    Defined Flat Rate Fee ( ₹ )
-                  </Typography>
-                  <PremiumTextField
-                    sx={{ width: '300px' }}
-                    value={shipping.price}
-                    onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </Box>
+                </Grid>
+
+                {/* Redesigned Amount Field – OUTSIDE */}
+                {shipping.flatRate && (
+                  <Grid item xs={12} md={5}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        borderRadius: '22px',
+                        background: `linear-gradient(135deg, ${alpha(PINK, 0.06)}, #ffffff)`,
+                        border: `1.5px solid ${alpha(PINK, 0.25)}`,
+                        boxShadow: `0 10px 30px ${alpha(PINK, 0.12)}`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: `0 14px 40px ${alpha(PINK, 0.18)}`
+                        }
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 900,
+                          color: '#6B7280',
+                          letterSpacing: '1px',
+                          textTransform: 'uppercase',
+                          mb: 1,
+                          display: 'block'
+                        }}
+                      >
+                        Flat Rate Amount
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5
+                        }}
+                      >
+                        {/* Currency badge */}
+                        <Box
+                          sx={{
+                            px: 2,
+                            py: 1,
+                            borderRadius: '12px',
+                            bgcolor: alpha(PINK, 0.15),
+                            color: PINK,
+                            fontWeight: 900,
+                            fontSize: '16px'
+                          }}
+                        >
+                          ₹
+                        </Box>
+
+                        {/* Input */}
+                        <PremiumTextField
+                          value={shipping.price}
+                          onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
+                          placeholder="0.00"
+                          sx={{
+                            flex: 1,
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#fff'
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
-            )}
+            </Grid>
           </Grid>
         </PremiumCard>
 
@@ -1433,52 +1686,173 @@ const AddCakePackage = () => {
           </Box>
         </PremiumCard>
 
-        {/* 🤝 SECTION 7: CROSS-SELLING ECOSYSTEM */}
+        {/* 🤝 SECTION 7: FREQUENTLY BOUGHT TOGETHER */}
         <PremiumCard sx={{ mb: 8 }}>
-          <StyledSectionTitle>Cross-Selling Ecosystem</StyledSectionTitle>
-          <StyledSectionSubtitle>Increase item value by connecting toppers, candles, or cards.</StyledSectionSubtitle>
-          <Stack spacing={5}>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              sx={{
+                fontSize: '22px',
+                fontWeight: 900,
+                color: '#111827'
+              }}
+            >
+              Frequently Bought Together
+              <Typography component="span" sx={{ ml: 1, fontWeight: 600, color: '#6B7280', fontSize: '14px' }}>
+                (Related Products)
+              </Typography>
+            </Typography>
+
+            <Typography
+              sx={{
+                mt: 1,
+                fontSize: '14px',
+                color: '#6B7280'
+              }}
+            >
+              Suggest complementary items to increase order value.
+            </Typography>
+          </Box>
+
+          {/* Selection Type */}
+          <Box
+            sx={{
+              p: 3,
+              mb: 4,
+              borderRadius: '16px',
+              bgcolor: '#F9FAFB',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <Typography sx={{ fontWeight: 800, color: '#374151' }}>Link by:</Typography>
+
             <RadioGroup row>
               <FormControlLabel
                 value="product"
-                control={<Radio sx={{ color: PINK, '&.Mui-checked': { color: PINK } }} />}
-                label={<Typography sx={{ fontWeight: 800 }}>Specific Products</Typography>}
+                control={
+                  <Radio
+                    sx={{
+                      color: '#9CA3AF',
+                      '&.Mui-checked': { color: PINK }
+                    }}
+                  />
+                }
+                label={<Typography sx={{ fontWeight: 700 }}>Product</Typography>}
               />
+
               <FormControlLabel
                 value="category"
-                control={<Radio sx={{ color: PINK, '&.Mui-checked': { color: PINK } }} />}
-                label={<Typography sx={{ fontWeight: 800 }}>Thematic Categories</Typography>}
+                control={
+                  <Radio
+                    sx={{
+                      color: '#9CA3AF',
+                      '&.Mui-checked': { color: PINK }
+                    }}
+                  />
+                }
+                label={<Typography sx={{ fontWeight: 700 }}>Category</Typography>}
               />
             </RadioGroup>
+          </Box>
+
+          {/* Add More Area */}
+          <Box
+            sx={{
+              p: 6,
+              borderRadius: '20px',
+              border: `2px dashed ${alpha(PINK, 0.35)}`,
+              bgcolor: '#FFFFFF',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: alpha(PINK, 0.03),
+                borderColor: PINK,
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
             <Box
               sx={{
-                p: 8,
-                borderRadius: '32px',
-                bgcolor: alpha(PINK, 0.01),
-                border: `2.5px dashed ${alpha(PINK, 0.1)}`,
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': { bgcolor: alpha(PINK, 0.02), borderColor: PINK }
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                bgcolor: alpha(PINK, 0.12),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 2
               }}
             >
-              <Button
-                startIcon={<SearchIcon />}
-                sx={{
-                  px: 8,
-                  py: 2.5,
-                  borderRadius: '20px',
-                  bgcolor: 'white',
-                  color: '#111827',
-                  fontWeight: 900,
-                  textTransform: 'none',
-                  boxShadow: '0px 10px 30px rgba(0,0,0,0.05)',
-                  '&:hover': { bgcolor: PINK, color: 'white' }
-                }}
-              >
-                Discover Items to Link
-              </Button>
+              <Typography sx={{ fontSize: '28px', fontWeight: 900, color: PINK }}>+</Typography>
             </Box>
-          </Stack>
+
+            <Typography sx={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Add Related Item</Typography>
+
+            <Typography sx={{ mt: 0.5, fontSize: '13px', color: '#6B7280' }}>
+              Choose products or categories frequently bought together
+            </Typography>
+          </Box>
+          {/* ✅ FINAL ACTION BAR */}
+          <Box
+            sx={{
+              mt: 6,
+              pt: 4,
+              borderTop: '1px solid #E5E7EB',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 2.5
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={handleReset}
+              sx={{
+                px: 6,
+                py: 1.8,
+                borderRadius: '18px',
+                textTransform: 'none',
+                fontWeight: 900,
+                fontSize: '15px',
+                color: '#374151',
+                borderColor: '#D1D5DB',
+                '&:hover': {
+                  borderColor: PINK,
+                  color: PINK,
+                  bgcolor: alpha(PINK, 0.04)
+                }
+              }}
+            >
+              Reset Form
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={submitting}
+              sx={{
+                bgcolor: PINK,
+                borderRadius: '18px',
+                px: 7,
+                py: 1.9,
+                textTransform: 'none',
+                fontWeight: 900,
+                fontSize: '16px',
+                boxShadow: `0px 18px 40px ${alpha(PINK, 0.4)}`,
+                '&:hover': {
+                  bgcolor: '#D81B60',
+                  boxShadow: `0px 22px 50px ${alpha(PINK, 0.5)}`
+                }
+              }}
+            >
+              {submitting ? <CircularProgress size={24} color="inherit" /> : 'Publish Package'}
+            </Button>
+          </Box>
         </PremiumCard>
       </Box>
     </Box>

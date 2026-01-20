@@ -165,6 +165,9 @@ const Cakeenquiry = Loadable(lazy(() => import('../views/cake/Cakeenquiries')));
 const Cakeenquirychat = Loadable(lazy(() => import('../views/cake/EnquiryChatPage')));
 const CakeSchedules = Loadable(lazy(() => import('../views/cake/Schedulescake')));
 const Cakecategories = Loadable(lazy(() => import('../views/cake/Categories')));
+const Cakeaddons = Loadable(lazy(() => import('../views/cake/Add-ons.jsx')));
+
+
 
 
 
@@ -425,7 +428,9 @@ const MainRoutes = {
             { path: 'enquiry', element: <Cakeenquiry /> },
             { path: 'Enqurychat', element: <Cakeenquirychat /> },
             { path: 'schedules', element: <CakeSchedules /> },
-            { path: 'categories', element: <Cakecategories /> }
+            { path: 'categories', element: <Cakecategories /> },
+            { path: 'Addons', element: <Cakeaddons/> }
+
 
           ]
         }
