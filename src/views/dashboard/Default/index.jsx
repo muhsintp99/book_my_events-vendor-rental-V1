@@ -20,84 +20,20 @@ import TotalGrowthBarChart from './TotalGrowthBarChart';
 // welcome banner
 import WelcomeBanner from '../../../makeupdashboard/WelcomeBanner';
 
-// KYC popup
-import KycUpdateDialog from '../../KycUpdateDialog';
-
 // constants
 import { gridSpacing } from 'store/constant';
 import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
-  const [showKycPopup, setShowKycPopup] = useState(false);
+
 
   const Module = localStorage.getItem('logRes');
-  const user = JSON.parse(localStorage.getItem('user'));
 
   // ================= INITIAL LOAD =================
   useEffect(() => {
     setLoading(false);
-    checkKycStatus();
-    // eslint-disable-next-line
   }, []);
-
-  // ================= KYC STATUS CHECK =================
-  const checkKycStatus = async () => {
-    if (!user?._id) return;
-
-    try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api';
-
-      const res = await axios.get(
-        `${API_BASE_URL}/profile/kyc/${user._id}`
-      );
-
-      const status = res?.data?.data?.status;
-
-      console.log('KYC STATUS:', status);
-
-      // ✅ VERIFIED → no popup
-      if (status === 'verified') {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ ...user, kycStatus: 'verified' })
-        );
-        setShowKycPopup(false);
-        return;
-      }
-
-      // 🟡 PENDING → no popup
-      if (status === 'pending') {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ ...user, kycStatus: 'pending' })
-        );
-        setShowKycPopup(false);
-        return;
-      }
-
-      // 🔴 NOT SUBMITTED → show popup
-      if (status === 'not_submitted') {
-        triggerKycPopup();
-      }
-
-    } catch (err) {
-      console.error('KYC Status check failed:', err);
-
-      // ❗ No KYC record → show popup
-      if (err.response?.status === 404) {
-        triggerKycPopup();
-      }
-    }
-  };
-
-  // ================= POPUP TRIGGER =================
-  const triggerKycPopup = () => {
-    setTimeout(() => {
-      setShowKycPopup(true);
-    }, 3000);
-  };
 
   // ================= DASHBOARD RENDER =================
   const renderDashboard = () => {
@@ -158,12 +94,6 @@ export default function Dashboard() {
   return (
     <>
       {renderDashboard()}
-
-      {/* ================= KYC POPUP ================= */}
-      <KycUpdateDialog
-        open={showKycPopup}
-        onClose={() => setShowKycPopup(false)}
-      />
     </>
   );
 }

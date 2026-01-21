@@ -46,12 +46,15 @@ import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
 import User1 from 'assets/images/users/user-round.svg';
 import { IconLogout, IconUser, IconMapPin, IconCheck } from '@tabler/icons-react';
+import KycUpdateDialog from 'views/KycUpdateDialog';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 export default function ProfileSection() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { borderRadius } = useConfig();
   const [open, setOpen] = useState(false);
+  const [openKyc, setOpenKyc] = useState(false);
   const [isedit, SetIsedit] = useState(false);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('');
@@ -242,28 +245,13 @@ export default function ProfileSection() {
         updatePayload.append('profilePhoto', formData.profilePhoto);
       }
       updatePayload.append('role', role || 'vendor'); // Fallback to 'vendor' if role is missing
-      if (!profile?._id) throw new Error('Profile ID not found');
-// 1. Update profile (basic info)
-await axios.put(`${PROFILE_API}/${profile._id}`, updatePayload, {
-  headers: { Authorization: `Bearer ${token}` }
-});
-
-// 2. Update vendor bio
-await axios.put(
-  `https://api.bookmyevent.ae/api/profile/vendor/${user._id}/bio
-`,
-  {
-    bio: {
-      title: formData.bioTitle,
-      subtitle: formData.bioSubtitle,
-      description: formData.bioDescription
-    }
-  },
-  {
-    headers: { Authorization: `Bearer ${token}` }
-  }
-);
-
+      const userIdToUpdate = user?._id || user?.id;
+      if (!userIdToUpdate) throw new Error('User ID not found');
+      await axios.put(`${PROFILE_API}/${userIdToUpdate}`, updatePayload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setToastMessage('Profile updated successfully!');
       setToastSeverity('success');
       setShowToast(true);
@@ -430,6 +418,7 @@ await axios.put(
 
   return (
     <>
+      <KycUpdateDialog open={openKyc} onClose={() => setOpenKyc(false)} />
       <Avatar
         src={profilePreview || undefined}
         alt="user-avatar"
@@ -604,6 +593,13 @@ await axios.put(
                       <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2, pl: 0.5 }}>
                         Settings
                       </Typography>
+
+                      <SettingsItem
+                        icon={<VerifiedUserIcon sx={{ fontSize: 24, color: '#E15B65' }} />}
+                        title="KYC Update"
+                        subtitle="Update identification & docs"
+                        onClick={() => setOpenKyc(true)}
+                      />
 
                       <SettingsItem
                         icon={<IconUser size={24} style={{ color: '#E15B65' }} />}

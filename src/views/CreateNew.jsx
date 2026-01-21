@@ -137,6 +137,7 @@ const Createnew = () => {
     leatherSeats: false,
     adjustableSeats: false,
     armrest: false,
+    sunroof: false, // Added sunroof here
     musicSystem: false,
     bluetooth: false,
     usbAux: false,
@@ -651,8 +652,13 @@ const Createnew = () => {
         setFeatures((prev) => ({
           ...prev,
           driverIncluded: vehicle.availability.driverIncluded ?? false,
-          sunroof: vehicle.availability.sunroof ?? false
+          // sunroof: vehicle.availability.sunroof ?? false  // Removed from here
         }));
+
+        // Set into carFeatures for UI consistency
+        if (vehicle.availability.sunroof !== undefined) {
+          setCarFeatures(prev => ({ ...prev, sunroof: vehicle.availability.sunroof }));
+        }
 
         if (vehicle.availability.acAvailable !== undefined) {
           setAirCondition(vehicle.availability.acAvailable ? 'yes' : 'no');
@@ -1415,7 +1421,7 @@ const Createnew = () => {
       // ==================== AVAILABILITY (NESTED JSON) ====================
       const availabilityData = {
         driverIncluded: features.driverIncluded || false,
-        sunroof: features.sunroof || false,
+        sunroof: carFeatures.sunroof || false,
         acAvailable: airCondition === 'yes'
       };
       formData.append('availability', JSON.stringify(availabilityData));
@@ -1814,7 +1820,7 @@ const Createnew = () => {
         {/* Premium Header Section */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            background: 'linear-gradient(135deg, #4d4d4f 0%, #dedbe3 100%)',
             borderRadius: { xs: '12px', sm: '14px', md: '16px' },
             p: { xs: 2, sm: 2.5, md: 3 },
             mb: { xs: 3, md: 4 },
@@ -2706,7 +2712,8 @@ const Createnew = () => {
                       items: [
                         ['Leather Seats', 'leatherSeats'],
                         ['Adjustable Seats', 'adjustableSeats'],
-                        ['Armrest', 'armrest']
+                        ['Armrest', 'armrest'],
+                        ['Sunroof', 'sunroof']
                       ]
                     },
                     {

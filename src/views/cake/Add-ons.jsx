@@ -86,7 +86,7 @@ const CakeAddonsAdmin = () => {
   const [addons, setAddons] = useState([{ id: 1, name: '', price: '' }]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState(null);
+  const [icon, setIcon] = useState(null);
   const [saved, setSaved] = useState(false);
 
   const handleAddRow = () => {
@@ -103,10 +103,10 @@ const CakeAddonsAdmin = () => {
     setAddons(addons.map((addon) => (addon.id === id ? { ...addon, [field]: value } : addon)));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
+  const handleIconUpload = (e) => {
+    const file = e.target.files?.[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setIcon(URL.createObjectURL(file));
     }
   };
 
@@ -212,7 +212,7 @@ const CakeAddonsAdmin = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-<CurrencyRupee color="primary" sx={{ mr: 2 }} />
+                    <CurrencyRupee color="primary" sx={{ mr: 2 }} />
                     <Typography variant="h6" fontWeight={600}>
                       Add-ons Pricing
                     </Typography>
@@ -288,45 +288,34 @@ const CakeAddonsAdmin = () => {
           {/* Right Column - Image & Preview */}
           <Grid item xs={12} md={4}>
             {/* Image Upload */}
-            <Card sx={{ mb: 4, borderRadius: 3 }}>
+            {/* Icon Upload */}
+            <Card xs={12} sx={{ mb: 4, borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <Image color="primary" sx={{ mr: 2 }} />
                   <Typography variant="h6" fontWeight={600}>
-                    Add-on Image
+                    Add-on Icon
                   </Typography>
                 </Box>
 
-                <UploadBox onClick={() => document.getElementById('image-upload').click()}>
-                  <input id="image-upload" hidden type="file" accept="image/*" onChange={handleImageUpload} />
+                <UploadBox onClick={() => document.getElementById('icon-upload')?.click()}>
+                  <input id="icon-upload" hidden type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} />
 
-                  {image ? (
-                    <>
-                      <CardMedia
-                        component="img"
-                        image={image}
-                        alt="Add-on preview"
-                        sx={{
-                          borderRadius: 2,
-                          mb: 2,
-                          maxHeight: 200,
-                          objectFit: 'cover'
-                        }}
-                      />
+                  {icon ? (
+                    <Stack spacing={2} alignItems="center">
+                      <Avatar src={icon} sx={{ width: 80, height: 80, bgcolor: 'grey.100' }} />
                       <Button variant="outlined" startIcon={<CloudUpload />} size="small">
-                        Change Image
+                        Change Icon
                       </Button>
-                    </>
+                    </Stack>
                   ) : (
-                    <>
-                      <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                      <Typography variant="body1" gutterBottom>
-                        Upload an image for your add-ons
-                      </Typography>
+                    <Stack spacing={1.5} alignItems="center">
+                      <AddCircle sx={{ fontSize: 56, color: 'text.secondary' }} />
+                      <Typography variant="body1">Upload an add-on icon</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        PNG, JPG up to 5MB
+                        SVG or PNG (icon style)
                       </Typography>
-                    </>
+                    </Stack>
                   )}
                 </UploadBox>
               </CardContent>
