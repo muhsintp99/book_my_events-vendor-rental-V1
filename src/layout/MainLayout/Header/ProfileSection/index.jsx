@@ -12,18 +12,7 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Badge from '@mui/material/Badge';
 import Switch from '@mui/material/Switch';
-import {
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  InputAdornment,
-  IconButton,
-  AppBar,
-  Toolbar,
-  Snackbar,
-  Alert,
-} from '@mui/material';
+import { TextField, Button, Card, CardContent, InputAdornment, IconButton, AppBar, Toolbar, Snackbar, Alert } from '@mui/material';
 import { ArrowBack, Phone, Language, Business, Store, Email, Web } from '@mui/icons-material';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -175,7 +164,7 @@ export default function ProfileSection() {
 
           // Populate Bio fields if they exist
           if (vendorData.bio) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               bioTitle: vendorData.bio.title || '',
               bioSubtitle: vendorData.bio.subtitle || '',
@@ -187,7 +176,6 @@ export default function ProfileSection() {
         console.error('Failed to fetch vendor logo:', vendorError);
         // Continue with existing profile photo if vendor API fails
       }
-
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     }
@@ -341,10 +329,10 @@ export default function ProfileSection() {
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            borderColor: 'transparent',
-            transform: 'translateY(-1px)'
-          }
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              borderColor: 'transparent',
+              transform: 'translateY(-1px)'
+            }
           : {}
       }}
       onClick={onClick}
@@ -810,7 +798,11 @@ export default function ProfileSection() {
                                 <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, color: 'text.primary', letterSpacing: '-0.02em' }}>
                                   {formData.vendorName || user?.name || 'Vendor Name'}
                                 </Typography>
-                                <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 500, letterSpacing: '0.01em', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                                <Typography
+                                  variant="subtitle1"
+                                  color="text.secondary"
+                                  sx={{ fontWeight: 500, letterSpacing: '0.01em', textTransform: 'uppercase', fontSize: '0.75rem' }}
+                                >
                                   {vendorType ? vendorType : role ? role : 'Vendor'}
                                 </Typography>
                               </Box>
@@ -820,16 +812,18 @@ export default function ProfileSection() {
 
                         <Box sx={{ mb: 6 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: 2.5,
-                              bgcolor: 'rgba(225, 91, 101, 0.08)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              border: '1px solid rgba(225, 91, 101, 0.15)'
-                            }}>
+                            <Box
+                              sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 2.5,
+                                bgcolor: 'rgba(225, 91, 101, 0.08)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(225, 91, 101, 0.15)'
+                              }}
+                            >
                               <Store sx={{ color: '#E15B65', fontSize: 22 }} />
                             </Box>
                             <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
@@ -845,7 +839,11 @@ export default function ProfileSection() {
                                 onChange={handleInputChange('vendorName')}
                                 placeholder="Enter your vendor name"
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><Store sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Store sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -865,7 +863,11 @@ export default function ProfileSection() {
                                   input: { readOnly: true }
                                 }}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><Email sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Email sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -885,7 +887,11 @@ export default function ProfileSection() {
                                 onChange={handleInputChange('phone')}
                                 placeholder="Enter phone number"
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Phone sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -903,7 +909,11 @@ export default function ProfileSection() {
                                 onChange={handleSocialLinkChange('website')}
                                 placeholder="https://yourwebsite.com"
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><Web sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Web sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -943,16 +953,18 @@ export default function ProfileSection() {
                         {/* Bio Information Section */}
                         <Box sx={{ mb: 6 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: 2.5,
-                              bgcolor: 'rgba(225, 91, 101, 0.08)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              border: '1px solid rgba(225, 91, 101, 0.15)'
-                            }}>
+                            <Box
+                              sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 2.5,
+                                bgcolor: 'rgba(225, 91, 101, 0.08)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(225, 91, 101, 0.15)'
+                              }}
+                            >
                               <Business sx={{ color: '#E15B65', fontSize: 22 }} />
                             </Box>
                             <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
@@ -1013,16 +1025,18 @@ export default function ProfileSection() {
                         {/* Social Media Section */}
                         <Box sx={{ mb: 4 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: 2.5,
-                              bgcolor: 'rgba(225, 91, 101, 0.08)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              border: '1px solid rgba(225, 91, 101, 0.15)'
-                            }}>
+                            <Box
+                              sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 2.5,
+                                bgcolor: 'rgba(225, 91, 101, 0.08)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(225, 91, 101, 0.15)'
+                              }}
+                            >
                               <Language sx={{ color: '#E15B65', fontSize: 22 }} />
                             </Box>
                             <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
@@ -1038,7 +1052,11 @@ export default function ProfileSection() {
                                 value={formData.instagram || ''}
                                 onChange={handleSocialLinkChange('instagram')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><InstagramIcon sx={{ color: '#E1306C', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <InstagramIcon sx={{ color: '#E1306C', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1056,7 +1074,11 @@ export default function ProfileSection() {
                                 value={formData.facebook || ''}
                                 onChange={handleSocialLinkChange('facebook')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><FacebookIcon sx={{ color: '#1877F2', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <FacebookIcon sx={{ color: '#1877F2', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1074,7 +1096,11 @@ export default function ProfileSection() {
                                 value={formData.twitter || ''}
                                 onChange={handleSocialLinkChange('twitter')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><TwitterIcon sx={{ color: '#1DA1F2', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <TwitterIcon sx={{ color: '#1DA1F2', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1092,7 +1118,11 @@ export default function ProfileSection() {
                                 value={formData.linkedin || ''}
                                 onChange={handleSocialLinkChange('linkedin')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><LinkedInIcon sx={{ color: '#0A66C2', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <LinkedInIcon sx={{ color: '#0A66C2', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1110,7 +1140,11 @@ export default function ProfileSection() {
                                 value={formData.whatsapp || ''}
                                 onChange={handleInputChange('whatsapp')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><WhatsAppIcon sx={{ color: '#25D366', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <WhatsAppIcon sx={{ color: '#25D366', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1128,7 +1162,11 @@ export default function ProfileSection() {
                                 value={formData.telegram || ''}
                                 onChange={handleInputChange('telegram')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><TelegramIcon sx={{ color: '#0088cc', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <TelegramIcon sx={{ color: '#0088cc', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1146,7 +1184,11 @@ export default function ProfileSection() {
                                 value={formData.youtube || ''}
                                 onChange={handleSocialLinkChange('youtube')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><YouTubeIcon sx={{ color: '#FF0000', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <YouTubeIcon sx={{ color: '#FF0000', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1164,7 +1206,11 @@ export default function ProfileSection() {
                                 value={formData.pinterest || ''}
                                 onChange={handleSocialLinkChange('pinterest')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><PinterestIcon sx={{ color: '#BD081C', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <PinterestIcon sx={{ color: '#BD081C', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
@@ -1182,7 +1228,11 @@ export default function ProfileSection() {
                                 value={formData.other || ''}
                                 onChange={handleSocialLinkChange('other')}
                                 InputProps={{
-                                  startAdornment: <InputAdornment position="start"><Language sx={{ color: '#64748b', fontSize: 20 }} /></InputAdornment>,
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Language sx={{ color: '#64748b', fontSize: 20 }} />
+                                    </InputAdornment>
+                                  )
                                 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {

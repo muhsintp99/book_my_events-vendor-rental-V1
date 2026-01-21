@@ -13,7 +13,23 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
+  Chip,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  Stack,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -26,8 +42,29 @@ import {
   AcUnit as AcIcon,
   LocalGasStation as FuelIcon,
   Event as EventIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
+  Star as StarIcon,
+  ExpandMore as ExpandMoreIcon,
+  EventSeat as SeatIcon,
+  Settings as SettingsIcon,
+  MusicNote as MusicIcon,
+  Security as SecurityIcon,
+  Wifi as WifiIcon,
+  Bolt as BoltIcon,
+  EmojiEvents as PremiumIcon,
+  Description as DocumentIcon,
+  AttachMoney as MoneyIcon,
+  Directions as DirectionsIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  Badge as BadgeIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
+
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -43,29 +80,35 @@ const ThumbnailImage = styled('img')(({ theme, active }) => ({
   transition: 'all 0.3s ease',
   '&:hover': {
     opacity: 1,
-    transform: 'scale(1.05)',
-  },
+    transform: 'scale(1.05)'
+  }
 }));
 
-const InfoCard = styled(Box)(({ theme }) => ({
-  background: '#ffffff',
-  borderRadius: 16,
-  padding: '24px',
-  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+const FeatureCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: 12,
+  background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+  border: '1px solid #dee2e6',
   height: '100%',
-  border: '1px solid #f0f0f0',
   transition: 'all 0.3s ease',
   '&:hover': {
-    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-    transform: 'translateY(-2px)',
-  },
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+  }
+}));
+
+const StatusBadge = styled(Chip)(({ theme, status }) => ({
+  fontWeight: 'bold',
+  backgroundColor: status === 'active' ? '#d4edda' : status === 'available' ? '#d1ecf1' : '#f8d7da',
+  color: status === 'active' ? '#155724' : status === 'available' ? '#0c5460' : '#721c24',
+  border: `1px solid ${status === 'active' ? '#c3e6cb' : status === 'available' ? '#bee5eb' : '#f5c6cb'}`
 }));
 
 const NoImageBox = ({ loading }) => (
   <Box
     sx={{
       width: '100%',
-      height: { xs: 240, md: 300 },
+      height: { xs: 240, md: 400 },
       background: loading ? 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)' : '#f5f5f5',
       borderRadius: 3,
       display: 'flex',
@@ -105,14 +148,46 @@ const CarListingView = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [mainImageLoading, setMainImageLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [expanded, setExpanded] = useState('panel1');
 
-  const BASE_UPLOAD_URL = (import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae/api').replace(/\/api\/?$/, '');
+  // FIXED: Proper URL construction for images
   const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/100x100?text=No+Image";
-    if (path.startsWith("http")) return path;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    return `${BASE_UPLOAD_URL}${cleanPath}`;
+    if (!path || path === 'undefined') return null;
+
+    // If already a full URL
+    if (path.startsWith('http')) return path;
+
+    // Remove leading slash if present to avoid double slash
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+
+    // Use the correct base URL - ensure no trailing slash
+    let baseUrl = import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || 'https://api.bookmyevent.ae';
+
+    // Remove /api suffix if present
+    baseUrl = baseUrl.replace(/\/api\/?$/, '');
+
+    // Construct final URL
+    const finalUrl = `${baseUrl}/${cleanPath}`;
+    console.log('Image URL constructed:', { original: path, final: finalUrl });
+    return finalUrl;
   };
+  const InfoRow = ({ icon, label, value }) => (
+    <Grid container alignItems="center" spacing={2} sx={{ py: 1 }}>
+      <Grid item xs={1}>
+        {icon}
+      </Grid>
+      <Grid item xs={4}>
+        <Typography variant="body2" color="text.secondary">
+          {label}
+        </Typography>
+      </Grid>
+      <Grid item xs={7}>
+        <Typography variant="body1" fontWeight={600}>
+          {value || 'N/A'}
+        </Typography>
+      </Grid>
+    </Grid>
+  );
 
   useEffect(() => {
     if (location.state?.vehicle) {
@@ -127,46 +202,56 @@ const CarListingView = () => {
     }
   }, [id, location.state]);
 
-  let imageList = [];
-  if (vehicle && vehicle.images && vehicle.images.length > 0) {
-    imageList = vehicle.images.map(getImageUrl).filter(url => url);
-  } else if (vehicle && vehicle.thumbnail) {
-    imageList = [getImageUrl(vehicle.thumbnail)].filter(url => url);
-  }
-  const images = imageList.length > 0 ? imageList : [];
+  // Prepare image list - FIXED URL construction
+  const images = React.useMemo(() => {
+    if (!vehicle) return [];
+
+    const imageList = [];
+
+    // Add featured image
+    if (vehicle.featuredImage) {
+      const url = getImageUrl(vehicle.featuredImage);
+      if (url) imageList.push(url);
+    }
+
+    // Add gallery images
+    if (vehicle.galleryImages && Array.isArray(vehicle.galleryImages)) {
+      vehicle.galleryImages.forEach((img) => {
+        const url = getImageUrl(img);
+        if (url) imageList.push(url);
+      });
+    }
+
+    console.log('Image list prepared:', imageList);
+    return imageList;
+  }, [vehicle]);
 
   useEffect(() => {
-    setMainImageLoading(true);
     setImageErrors(new Set());
     if (images.length > 0) {
       setActiveImage(0);
     }
-  }, [vehicle, images.length]);
+  }, [images]);
 
   const fetchVehicle = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-
       if (!token) {
         throw new Error('No authentication token found');
       }
 
       console.log('Fetching vehicle with ID:', id);
-
       const response = await axios.get(`${API_BASE_URL}/vehicles/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       const vehicleData = response.data.data || response.data;
       console.log('Vehicle data received:', vehicleData);
-
       setVehicle(vehicleData);
       setError('');
     } catch (error) {
       console.error('Error fetching vehicle:', error);
-      console.error('Error response:', error.response?.data);
-
       const errorMessage = error.response?.data?.message || error.message || 'Failed to load vehicle data';
       setError(errorMessage);
       setToastMessage(errorMessage);
@@ -178,24 +263,19 @@ const CarListingView = () => {
   };
 
   const handleImageError = (e, index) => {
-    const currentSrc = e.target.src;
-    console.error(`Image load error for index ${index}:`, currentSrc);
+    console.error(`Image load error for index ${index}:`, e.target.src);
+    setImageErrors((prev) => new Set([...prev, index]));
+    setMainImageLoading(false);
+  };
 
-    // Attempt fallbacks
-    if (currentSrc.includes("/uploads/") && !e.target.dataset.triedCapital) {
-      console.log(`Retrying index ${index} with capital 'Uploads'`);
-      e.target.src = currentSrc.replace("/uploads/", "/Uploads/");
-      e.target.dataset.triedCapital = "true";
-    } else if (!e.target.dataset.triedApi) {
-      console.log(`Retrying index ${index} with '/api' prefix`);
-      const urlObj = new URL(currentSrc);
-      e.target.src = `${urlObj.origin}/api${urlObj.pathname}`;
-      e.target.dataset.triedApi = "true";
-    } else {
-      console.error(`All image fallbacks failed for index ${index}:`, currentSrc);
-      setImageErrors(prev => new Set([...prev, index]));
+  const handleImageLoad = () => {
+    requestAnimationFrame(() => {
       setMainImageLoading(false);
-    }
+    });
+  };
+
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
   };
 
   const confirmDelete = () => {
@@ -213,7 +293,7 @@ const CarListingView = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_BASE_URL}/vehicles/${vehicle._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
       setToastMessage('Vehicle deleted successfully');
       setToastSeverity('success');
@@ -248,15 +328,21 @@ const CarListingView = () => {
     navigate('/vehicle-setup/lists');
   };
 
+  const renderBooleanIcon = (value) => {
+    return value ? <CheckIcon sx={{ color: '#28a745', fontSize: 20 }} /> : <CloseIcon sx={{ color: '#dc3545', fontSize: 20 }} />;
+  };
+
   if (loading) {
     return (
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)'
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)'
+        }}
+      >
         <CircularProgress sx={{ color: '#d9505d' }} />
       </Box>
     );
@@ -264,13 +350,15 @@ const CarListingView = () => {
 
   if (error || !vehicle) {
     return (
-      <Box sx={{
-        maxWidth: 1400,
-        mx: 'auto',
-        p: 3,
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
-        minHeight: '100vh'
-      }}>
+      <Box
+        sx={{
+          maxWidth: 1400,
+          mx: 'auto',
+          p: 3,
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
+          minHeight: '100vh'
+        }}
+      >
         <Box sx={{ mb: 2 }}>
           <Button
             startIcon={<ArrowBackIcon />}
@@ -299,13 +387,15 @@ const CarListingView = () => {
   const showNoImage = images.length === 0 || imageErrors.has(activeImage);
 
   return (
-    <Box sx={{
-      width: '100%',
-      mx: 'auto',
-      p: { xs: 2, md: 3 },
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
-      minHeight: '100vh'
-    }}>
+    <Box
+      sx={{
+        width: '100%',
+        mx: 'auto',
+        p: { xs: 2, md: 3 },
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%)',
+        minHeight: '100vh'
+      }}
+    >
       {/* Back Button */}
       <Box sx={{ mb: 3 }}>
         <Button
@@ -322,498 +412,716 @@ const CarListingView = () => {
       </Box>
 
       {/* Header Section */}
-      <Box sx={{
-        background: '#ffffff',
-        borderRadius: 3,
-        p: 3,
-        mb: 3,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{
-            background: 'linear-gradient(135deg, #d9505d 0%, #ed081f 100%)',
-            width: 56,
-            height: 56,
-            boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)'
-          }}>
-            <CarIcon sx={{ fontSize: 30 }} />
-          </Avatar>
-          <Box>
-            <Typography variant="h4" fontWeight="700" sx={{
-              color: '#2c3e50',
-              fontSize: { xs: '22px', md: '28px' }
-            }}>
-              {vehicle.name || 'Vehicle Details'}
-            </Typography>
-            {vehicle.discount && (
-              <Box sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                mt: 0.5,
-                px: 2,
-                py: 0.5,
-                bgcolor: '#d4edda',
-                borderRadius: 2,
-                border: '1px solid #c3e6cb'
-              }}>
-                <TagIcon sx={{ fontSize: 14, color: '#155724' }} />
-                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#155724' }}>
-                  {vehicle.discount}% OFF
-                </Typography>
+      <Card sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Grid container alignItems="center" justifyContent="space-between" spacing={2}>
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Avatar
+                  sx={{
+                    background: 'linear-gradient(135deg, #d9505d 0%, #ed081f 100%)',
+                    width: 56,
+                    height: 56,
+                    boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)'
+                  }}
+                >
+                  <CarIcon sx={{ fontSize: 30 }} />
+                </Avatar>
+                <Box>
+                  <Typography
+                    variant="h4"
+                    fontWeight="700"
+                    sx={{
+                      color: '#2c3e50',
+                      fontSize: { xs: '24px', md: '32px' }
+                    }}
+                  >
+                    {vehicle.name || 'Vehicle Details'}
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', gap: 1 }}>
+                    <StatusBadge
+                      label={vehicle.isActive ? 'Active' : 'Inactive'}
+                      status={vehicle.isActive ? 'active' : 'inactive'}
+                      size="small"
+                    />
+                    <StatusBadge
+                      label={vehicle.isAvailable ? 'Available' : 'Unavailable'}
+                      status={vehicle.isAvailable ? 'available' : 'unavailable'}
+                      size="small"
+                    />
+                    <Chip
+                      label={vehicle.vehicleType || 'Standard'}
+                      size="small"
+                      sx={{
+                        bgcolor: vehicle.vehicleType === 'luxury' ? '#fff3cd' : '#d1ecf1',
+                        color: vehicle.vehicleType === 'luxury' ? '#856404' : '#0c5460',
+                        fontWeight: 'bold',
+                        textTransform: 'capitalize'
+                      }}
+                    />
+                  </Stack>
+                </Box>
               </Box>
-            )}
-          </Box>
-        </Box>
+            </Grid>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Button
-            variant="outlined"
-            startIcon={<DeleteIcon />}
-            onClick={confirmDelete}
-            sx={{
-              color: '#dc3545',
-              borderColor: '#dc3545',
-              bgcolor: '#fff5f5',
-              textTransform: 'none',
-              fontSize: '14px',
-              px: 3,
-              py: 1,
-              fontWeight: 500,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: '#fee',
-                borderColor: '#ff0019ff'
-              }
-            }}
-          >
-            Delete
-          </Button>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2 }}>
+                <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+                  <Typography variant="h3" fontWeight="900" color="#d9505d">
+                    ₹ {vehicle.pricing?.grandTotal?.toLocaleString() || '0'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Grand Total
+                  </Typography>
+                </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
-            sx={{
-              background: 'linear-gradient(135deg, #E15B65 0%, #e98e8eff 100%)',
-              textTransform: 'none',
-              fontSize: '14px',
-              px: 3,
-              py: 1,
-              fontWeight: 500,
-              borderRadius: 2,
-              boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #f68b96ff 0%, #c52131ff 100%)',
-                boxShadow: '0 6px 16px rgba(217, 80, 93, 0.4)'
-              }
-            }}
-          >
-            Edit Vehicle
-          </Button>
-        </Box>
-      </Box>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<DeleteIcon />}
+                    onClick={confirmDelete}
+                    sx={{
+                      color: '#dc3545',
+                      borderColor: '#dc3545',
+                      bgcolor: '#fff5f5',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      px: 3,
+                      py: 1,
+                      fontWeight: 500,
+                      borderRadius: 2,
+                      '&:hover': {
+                        bgcolor: '#fee',
+                        borderColor: '#ff0019ff'
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
 
-      {/* Main Content Card */}
-      <Card sx={{
-        borderRadius: 3,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        bgcolor: '#ffffff',
-        overflow: 'hidden'
-      }}>
-        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          {/* Image Gallery Section */}
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={5}>
-              <Box sx={{ position: 'relative' }}>
-                <Box sx={{
-                  width: '100%',
-                  height: { xs: 240, md: 300 },
-                  borderRadius: 3,
-                  mb: 2,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  overflow: 'hidden'
-                }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={handleEdit}
+                    sx={{
+                      background: 'linear-gradient(135deg, #E15B65 0%, #e98e8eff 100%)',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      px: 3,
+                      py: 1,
+                      fontWeight: 500,
+                      borderRadius: 2,
+                      boxShadow: '0 4px 12px rgba(217, 80, 93, 0.3)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #f68b96ff 0%, #c52131ff 100%)',
+                        boxShadow: '0 6px 16px rgba(217, 80, 93, 0.4)'
+                      }
+                    }}
+                  >
+                    Edit Vehicle
+                  </Button>
+                </Stack>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Main Content */}
+      <Grid container spacing={4}>
+        {/* Left Column - Images & Basic Info */}
+        <Grid item xs={12} md={8}>
+          {/* Image Gallery */}
+          <Card sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ position: 'relative', mb: 2 }}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: { xs: 240, md: 400 },
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    backgroundColor: '#f5f5f5'
+                  }}
+                >
                   {showNoImage ? (
                     <NoImageBox loading={mainImageLoading} />
                   ) : (
                     <>
                       {mainImageLoading && (
-                        <Box sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'rgba(255,255,255,0.8)',
-                          zIndex: 1
-                        }}>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(255,255,255,0.9)',
+                            zIndex: 1
+                          }}
+                        >
                           <CircularProgress size={40} sx={{ color: '#d9505d' }} />
                         </Box>
                       )}
                       <img
                         src={images[activeImage]}
                         alt={vehicle.name || 'Vehicle'}
-                        onLoad={(e) => {
-                          setMainImageLoading(false);
-                          console.log("Successfully loaded main image:", e.target.src);
-                        }}
+                        onLoad={handleImageLoad}
                         onError={(e) => handleImageError(e, activeImage)}
                         style={{
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
-                          display: mainImageLoading ? 'none' : 'block'
+                          opacity: mainImageLoading ? 0 : 1,
+                          transition: 'opacity 0.3s ease'
                         }}
-                        loading="lazy"
+                        loading="eager"
                       />
                     </>
                   )}
                 </Box>
-                {images.length > 0 && (
-                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                    {images.map((img, index) => (
-                      <ThumbnailImage
-                        key={index}
-                        src={img}
-                        alt={`${vehicle.name} view ${index + 1}`}
-                        active={activeImage === index}
-                        onClick={() => setActiveImage(index)}
-                        onLoad={(e) => console.log("Successfully loaded thumbnail:", e.target.src)}
-                        onError={(e) => handleImageError(e, index)}
-                        loading="lazy"
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={7}>
-              <Typography variant="h4" fontWeight="700" mb={2} sx={{
-                color: '#2c3e50',
-                fontSize: { xs: '24px', md: '32px' }
-              }}>
-                {vehicle.name || 'Vehicle Name'}
-              </Typography>
-
-              <Box sx={{
-                bgcolor: '#f8f9fa',
-                borderRadius: 2,
-                p: 2.5,
-                mb: 3,
-                border: '1px solid #e9ecef'
-              }}>
-                <Typography variant="subtitle1" color="#495057" mb={1} fontWeight="600" sx={{
-                  fontSize: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
-                  <EventIcon sx={{ fontSize: 18 }} />
-                  Description
-                </Typography>
-
-                <Typography variant="body1" color="#6c757d" lineHeight={1.7} sx={{ fontSize: '14px' }}>
-                  {vehicle.description || 'No description available.'}
-                </Typography>
               </Box>
 
-              {vehicle.searchTags && vehicle.searchTags.length > 0 && (
-                <Box>
-                  <Typography variant="subtitle1" color="#495057" mb={1.5} fontWeight="600" sx={{
-                    fontSize: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}>
-                    <TagIcon sx={{ fontSize: 18 }} />
-                    Search Tags
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {vehicle.searchTags.map((tag, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          px: 2.5,
-                          py: 0.8,
-                          background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                          color: '#1565c0',
-                          borderRadius: 2,
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          border: '1px solid #90caf9'
-                        }}
-                      >
-                        {tag}
-                      </Box>
-                    ))}
-                  </Box>
+              {/* Thumbnails */}
+              {images.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mt: 2 }}>
+                  {images.map((img, index) => (
+                    <ThumbnailImage
+                      key={index}
+                      src={img}
+                      alt={`${vehicle.name} view ${index + 1}`}
+                      active={activeImage === index}
+                      onClick={() => {
+                        setMainImageLoading(true);
+                        setActiveImage(index);
+                      }}
+                      loading="lazy"
+                    />
+                  ))}
                 </Box>
               )}
-            </Grid>
-          </Grid>
+            </CardContent>
+          </Card>
 
-          <Box sx={{ my: 5, height: '1px', bgcolor: '#e9ecef' }} />
+          {/* Description & Details */}
+          <Card sx={{ borderRadius: 3, mb: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h5" fontWeight="700" mb={2} sx={{ color: '#2c3e50' }}>
+                Description
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph sx={{ lineHeight: 1.8 }}>
+                {vehicle.description || 'No description available.'}
+              </Typography>
 
-          {/* Three Column Info Section */}
-          <Grid container spacing={3}>
-            {/* General Info */}
-            <Grid item xs={12} md={4} sx={{ width: 335 }}>
-              <InfoCard>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #fee 0%, #fcc 100%)',
-                    mb: 2
-                  }}>
-                    <CarIcon sx={{ fontSize: 32, color: '#dc3545' }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{
-                    fontSize: '18px',
-                    color: '#2c3e50'
-                  }}>
-                    General Info
-                  </Typography>
-                </Box>
-
-                <Box>
-                  {[
-                    { label: 'Brand', value: vehicle.brand?.title || 'N/A' },
-                    { label: 'Model', value: vehicle.model || 'N/A' },
-                    { label: 'Category', value: vehicle.category?.title || 'N/A' },
-                    { label: 'Type', value: vehicle.type || 'N/A' },
-                    { label: 'License Plate', value: vehicle.licensePlateNumber || 'N/A' }
-                  ].map((item, index) => (
-                    <Box key={index} sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                      pb: 2,
-                      borderBottom: index !== 4 ? '1px solid #f0f0f0' : 'none'
-                    }}>
-                      <Typography color="#6c757d" fontWeight="500" sx={{ fontSize: '14px' }}>
-                        {item.label}
-                      </Typography>
-                      <Typography fontWeight="600" sx={{ fontSize: '14px', color: '#2c3e50' }}>
-                        {item.value}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                <Box sx={{
-                  mt: 3,
-                  pt: 3,
-                  borderTop: '2px solid #f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocationIcon sx={{ fontSize: 20, color: '#6c757d' }} />
-                    <Typography variant="subtitle2" fontWeight="600" color="#495057" sx={{ fontSize: '15px' }}>
-                      Zone
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight="600" sx={{
-                    fontSize: '14px',
-                    color: '#d9505d'
-                  }}>
-                    {vehicle.zone?.name || 'N/A'}
-                  </Typography>
-                </Box>
-              </InfoCard>
-            </Grid>
-
-            {/* Fare & Discounts */}
-            <Grid item xs={12} md={4} sx={{ width: 335 }}>
-              <InfoCard>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
-                    mb: 2
-                  }}>
-                    <TagIcon sx={{ fontSize: 32, color: '#28a745' }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{
-                    fontSize: '18px',
-                    color: '#2c3e50'
-                  }}>
-                    Fare & Discounts
-                  </Typography>
-                </Box>
-
-                <Box>
-                  {[
-                    { label: 'Hourly', value: vehicle.pricing?.hourly ? `₹ ${vehicle.pricing.hourly}` : 'N/A' },
-                    { label: 'Per Day', value: vehicle.pricing?.perDay ? `₹ ${vehicle.pricing.perDay}` : 'N/A' },
-                    { label: 'Distance', value: vehicle.pricing?.distanceWise ? `₹ ${vehicle.pricing.distanceWise}/km` : 'N/A' }
-                  ].map((item, index) => (
-                    <Box key={index} sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                      pb: 2,
-                      borderBottom: '1px solid #f0f0f0'
-                    }}>
-                      <Typography color="#6c757d" fontWeight="500" sx={{ fontSize: '14px' }}>
-                        {item.label}
-                      </Typography>
-                      <Typography fontWeight="600" sx={{ fontSize: '14px', color: '#2c3e50' }}>
-                        {item.value}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                <Box sx={{
-                  mt: 3,
-                  p: 2.5,
-                  borderRadius: 2,
-                  background: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
-                  border: '2px solid #28a745',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <Typography fontWeight="700" sx={{ fontSize: '16px', color: '#155724' }}>
-                    Discount
-                  </Typography>
-                  <Typography fontWeight="900" sx={{ fontSize: '28px', color: '#28a745' }}>
-                    {vehicle.discount ? `${vehicle.discount}%` : 'N/A'}
-                  </Typography>
-                </Box>
-
-                {vehicle.pricing?.type && (
-                  <Box sx={{ mt: 3, pt: 3, borderTop: '2px solid #f0f0f0' }}>
-                    <Typography variant="body2" color="#6c757d" sx={{ fontSize: '13px', mb: 0.5 }}>
-                      Pricing Type
-                    </Typography>
-                    <Typography fontWeight="600" sx={{
-                      fontSize: '14px',
-                      color: '#d9505d',
-                      textTransform: 'capitalize'
-                    }}>
-                      {vehicle.pricing.type}
-                    </Typography>
-                  </Box>
-                )}
-              </InfoCard>
-            </Grid>
-
-            {/* Other Features */}
-            <Grid item xs={12} md={4} sx={{ width: 340 }}>
-              <InfoCard>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(135deg, #cfe2ff 0%, #9ec5fe 100%)',
-                    mb: 2
-                  }}>
-                    <SpeedIcon sx={{ fontSize: 32, color: '#0d6efd' }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight="700" sx={{
-                    fontSize: '18px',
-                    color: '#2c3e50'
-                  }}>
-                    Features
-                  </Typography>
-                </Box>
-
-                <Box>
-                  {[
-                    {
-                      icon: <AcIcon sx={{ fontSize: 18 }} />,
-                      label: 'Air Condition',
-                      value: vehicle.airCondition ? 'Yes' : 'No',
-                      color: vehicle.airCondition ? '#28a745' : '#6c757d'
-                    },
-                    {
-                      icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Engine Capacity',
-                      value: vehicle.engineCapacity ? `${vehicle.engineCapacity} cc` : 'N/A',
-                      color: '#0d6efd'
-                    },
-                    {
-                      icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Transmission',
-                      value: vehicle.transmissionType ? vehicle.transmissionType.charAt(0).toUpperCase() + vehicle.transmissionType.slice(1) : 'N/A',
-                      color: '#6f42c1'
-                    },
-                    {
-                      icon: <PersonIcon sx={{ fontSize: 18 }} />,
-                      label: 'Seating Capacity',
-                      value: vehicle.seatingCapacity || 'N/A',
-                      color: '#fd7e14'
-                    },
-                    {
-                      icon: <FuelIcon sx={{ fontSize: 18 }} />,
-                      label: 'Fuel Type',
-                      value: vehicle.fuelType ? vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1) : 'N/A',
-                      color: '#ffc107'
-                    },
-                    {
-                      icon: <SpeedIcon sx={{ fontSize: 18 }} />,
-                      label: 'Engine Power',
-                      value: vehicle.enginePower ? `${vehicle.enginePower} hp` : 'N/A',
-                      color: '#dc3545'
-                    }
-                  ].map((item, index) => (
-                    <Box key={index} sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                      pb: 2,
-                      borderBottom: index !== 5 ? '1px solid #f0f0f0' : 'none'
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ color: item.color }}>
-                          {item.icon}
-                        </Box>
-                        <Typography color="#6c757d" fontWeight="500" sx={{ fontSize: '13px' }}>
-                          {item.label}
+              {/* Vehicle Specifications */}
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" fontWeight="700" mb={3} sx={{ color: '#2c3e50' }}>
+                  Specifications
+                </Typography>
+                <Grid container spacing={3}>
+                  {/* Engine Specifications */}
+                  <Grid item xs={12} md={6}>
+                    <FeatureCard>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <SettingsIcon sx={{ color: '#d9505d', fontSize: 28 }} />
+                        <Typography variant="h6" fontWeight="600">
+                          Engine & Performance
                         </Typography>
                       </Box>
-                      <Typography fontWeight="600" sx={{ fontSize: '13px', color: item.color }}>
-                        {item.value}
+                      <TableContainer>
+                        <Table size="small">
+                          <TableBody>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Engine Capacity</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                {vehicle.engineCharacteristics?.engineCapacityCC
+                                  ? `${vehicle.engineCharacteristics.engineCapacityCC.toLocaleString()} cc`
+                                  : 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Power</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                {vehicle.engineCharacteristics?.powerBHP ? `${vehicle.engineCharacteristics.powerBHP} BHP` : 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Torque</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>{vehicle.engineCharacteristics?.torque || 'N/A'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Mileage</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>{vehicle.engineCharacteristics?.mileage || 'N/A'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Fuel Type</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                {vehicle.engineCharacteristics?.fuelType?.toUpperCase() || 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Transmission</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                {vehicle.engineCharacteristics?.transmissionType?.value?.toUpperCase() || 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </FeatureCard>
+                  </Grid>
+
+                  {/* Capacity & Comfort - UPDATED */}
+                  <Grid item xs={12} md={6}>
+                    <FeatureCard>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <SeatIcon sx={{ color: '#28a745', fontSize: 28 }} />
+                        <Typography variant="h6" fontWeight="600">
+                          Capacity & Comfort
+                        </Typography>
+                      </Box>
+                      <TableContainer>
+                        <Table size="small">
+                          <TableBody>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Seating Capacity</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>{vehicle.capacityAndComfort?.seatingCapacity || 'N/A'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Legroom Type</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1 }}>{vehicle.capacityAndComfort?.legroomType || 'Standard'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Pushback Seats</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1, textAlign: 'center' }}>
+                                {vehicle.capacityAndComfort?.pushbackSeats ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Recliner Seats</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1, textAlign: 'center' }}>
+                                {vehicle.capacityAndComfort?.reclinerSeats ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Air Conditioning</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1, textAlign: 'center' }}>
+                                {vehicle.engineCharacteristics?.airConditioning ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell sx={{ border: 'none', py: 1 }}>
+                                <strong>Driver Included</strong>
+                              </TableCell>
+                              <TableCell sx={{ border: 'none', py: 1, textAlign: 'center' }}>
+                                {vehicle.availability?.driverIncluded ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </FeatureCard>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Features Accordion */}
+              <Box sx={{ mt: 4 }}>
+                <Accordion
+                  expanded={expanded === 'panel1'}
+                  onChange={handleAccordionChange('panel1')}
+                  sx={{ borderRadius: '12px !important', mb: 2 }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <PremiumIcon sx={{ color: '#ffc107' }} />
+                      <Typography variant="h6" fontWeight="600">
+                        Features & Amenities
                       </Typography>
                     </Box>
-                  ))}
-                </Box>
-              </InfoCard>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      {/* Interior Comfort */}
+                      <Grid item xs={12} md={6}>
+                        <FeatureCard>
+                          <Typography variant="subtitle1" fontWeight="600" mb={2} sx={{ color: '#495057' }}>
+                            Interior Comfort
+                          </Typography>
+                          <List dense>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.interiorComfort?.leatherSeats ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Leather Seats" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.interiorComfort?.adjustableSeats ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Adjustable Seats" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.interiorComfort?.armrest ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Armrest" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.availability?.sunroof ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Sunroof" />
+                            </ListItem>
+                          </List>
+                        </FeatureCard>
+                      </Grid>
+
+                      {/* Entertainment */}
+                      <Grid item xs={12} md={6}>
+                        <FeatureCard>
+                          <Typography variant="subtitle1" fontWeight="600" mb={2} sx={{ color: '#495057' }}>
+                            Entertainment
+                          </Typography>
+                          <List dense>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.entertainment?.musicSystem ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Music System" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.entertainment?.bluetooth ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Bluetooth" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.entertainment?.usbAux ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="USB/AUX" />
+                            </ListItem>
+                          </List>
+                        </FeatureCard>
+                      </Grid>
+
+                      {/* Safety Features */}
+                      <Grid item xs={12} md={6}>
+                        <FeatureCard>
+                          <Typography variant="subtitle1" fontWeight="600" mb={2} sx={{ color: '#495057' }}>
+                            Safety Features
+                          </Typography>
+                          <List dense>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.safety?.airbags ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Airbags" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.safety?.abs ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="ABS" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.safety?.rearCamera ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Rear Camera" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.features?.safety?.parkingSensors ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Parking Sensors" />
+                            </ListItem>
+                          </List>
+                        </FeatureCard>
+                      </Grid>
+
+                      {/* Extra Addons */}
+                      <Grid item xs={12} md={6}>
+                        <FeatureCard>
+                          <Typography variant="subtitle1" fontWeight="600" mb={2} sx={{ color: '#495057' }}>
+                            Extra Addons
+                          </Typography>
+                          <List dense>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.extraAddons?.wifi ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="WiFi" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.extraAddons?.chargingPorts ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Charging Ports" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.extraAddons?.interiorLighting ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Interior Lighting" />
+                            </ListItem>
+                            <ListItem>
+                              <ListItemIcon>
+                                {vehicle.extraAddons?.powerLuggage ? (
+                                  <CheckCircleIcon sx={{ color: '#28a745' }} />
+                                ) : (
+                                  <CancelIcon sx={{ color: '#dc3545' }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText primary="Power Luggage" />
+                            </ListItem>
+                          </List>
+                        </FeatureCard>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* ROW TYPE INFO SECTIONS */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            {/* Vehicle Information */}
+            <Grid item xs={12} md={3}>
+              <Card sx={{ borderRadius: 3, height: '100%' }}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={700} mb={2}>
+                    Vehicle Information
+                  </Typography>
+
+                  <InfoRow icon={<CarIcon />} label="Brand" value={vehicle.brand?.title} />
+                  <Divider />
+                  <InfoRow icon={<SettingsIcon />} label="Model" value={vehicle.model} />
+                  <Divider />
+                  <InfoRow icon={<BadgeIcon />} label="License Plate" value={vehicle.licensePlateNumber} />
+                  <Divider />
+                  <InfoRow icon={<EventIcon />} label="Category" value={vehicle.category?.title} />
+                  <Divider />
+                  <InfoRow icon={<LocationIcon />} label="Zone" value={vehicle.zone?.name} />
+
+                  <Box sx={{ mt: 2, bgcolor: '#f8f9fa', p: 2, borderRadius: 2 }}>
+                    <Grid container>
+                      <Grid item xs={6} textAlign="center">
+                        <Typography fontWeight={700}>{vehicle.totalTrips || 0}</Typography>
+                        <Typography variant="caption">Trips</Typography>
+                      </Grid>
+                      <Grid item xs={6} textAlign="center">
+                        <Typography fontWeight={700}>{vehicle.rating || 0}</Typography>
+                        <Typography variant="caption">Rating</Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
+
+            {/* Location Details */}
+            <Grid item xs={12} md={3}>
+              <Card sx={{ borderRadius: 3, height: '100%' }}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={700} mb={2}>
+                    Location Details →
+                  </Typography>
+
+                  <InfoRow icon={<LocationIcon color="error" />} label="Address" value={vehicle.location?.address} />
+                  <Divider />
+                  <InfoRow
+                    icon={<DirectionsIcon color="primary" />}
+                    label="Coordinates"
+                    value={`Lat: ${vehicle.location?.latitude}, Lng: ${vehicle.location?.longitude}`}
+                  />
+                  <Divider />
+                  <InfoRow
+                    icon={<DirectionsIcon color="primary" />}
+                    label="Zone Coverage"
+                    value={`${vehicle.zone?.city}, ${vehicle.zone?.country}`}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Provider Information */}
+            <Grid item xs={12} md={3}>
+              <Card sx={{ borderRadius: 3, height: '100%' }}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={700} mb={2}>
+                    Provider Information
+                  </Typography>
+
+                  <InfoRow icon={<PersonIcon />} label="Vendor ID" value={vehicle.provider?.userId} />
+                  <Divider />
+                  <InfoRow icon={<PhoneIcon />} label="Phone" value={vehicle.provider?.phone} />
+                  <Divider />
+                  <InfoRow
+                    icon={<EmailIcon />}
+                    label="Status"
+                    value={
+                      <Chip
+                        label={vehicle.provider?.isVerified ? 'Verified' : 'Unverified'}
+                        size="small"
+                        color={vehicle.provider?.isVerified ? 'success' : 'warning'}
+                      />
+                    }
+                  />
+                  <Divider />
+                  <InfoRow
+                    icon={<BadgeIcon />}
+                    label="Last Login"
+                    value={vehicle.provider?.lastLogin ? new Date(vehicle.provider.lastLogin).toLocaleDateString() : 'N/A'}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+            {/* Advance Pricing */}
+<Grid item xs={12} md={3}>
+  <Card
+    sx={{
+      borderRadius: 3,
+      height: '100%',
+      bgcolor: '#fff7e6',
+      border: '1px solid #ffc107'
+    }}
+  >
+    <CardContent>
+      <Typography variant="h6" fontWeight={700} mb={2}>
+        Advance Pricing
+      </Typography>
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          p: 2,
+          borderRadius: 2,
+          bgcolor: '#fff3cd'
+        }}
+      >
+        <CurrencyRupeeIcon sx={{ fontSize: 40, color: '#856404' }} />
+
+        <Box>
+          <Typography variant="body2" color="text.secondary">
+            Advance Booking Amount
+          </Typography>
+          <Typography variant="h4" fontWeight={800} color="#856404">
+            ₹ {Number(vehicle.advanceBookingAmount || 0).toLocaleString('en-IN')}
+          </Typography>
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+</Grid>
+
           </Grid>
-        </CardContent>
-      </Card>
+        </Grid>
+      </Grid>
 
       {/* Delete Dialog */}
       <Dialog
@@ -825,11 +1133,13 @@ const CarListingView = () => {
           sx: { borderRadius: 3 }
         }}
       >
-        <DialogTitle sx={{
-          color: '#dc3545',
-          fontWeight: 700,
-          fontSize: '20px'
-        }}>
+        <DialogTitle
+          sx={{
+            color: '#dc3545',
+            fontWeight: 700,
+            fontSize: '20px'
+          }}
+        >
           Delete Vehicle
         </DialogTitle>
         <DialogContent>

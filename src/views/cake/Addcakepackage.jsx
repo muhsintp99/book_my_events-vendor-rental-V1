@@ -364,10 +364,9 @@ const AddCakePackage = () => {
   const OCCASIONS = ['Marriage', 'Engagement', 'Birthday', 'Anniversary', 'Promotion', 'Other'];
   const ATTRIBUTES = ['Weight', 'Ingredient'];
   const ATTRIBUTE_VALUES = {
-  Weight: ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'],
-  Ingredient: ['Egg', 'Eggless']
-};
-
+    Weight: ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'],
+    Ingredient: ['Egg', 'Eggless']
+  };
 
   const ADDON_CATEGORIES = [
     {
@@ -398,6 +397,7 @@ const AddCakePackage = () => {
       items: [{ name: 'Sparklers / Cake Fountains', icon: <StarIcon /> }]
     }
   ];
+  const DEFAULT_WEIGHTS = ['0.5Kg', '1 Kg', '2 Kg', '3 Kg', '5 Kg+'];
 
   // States
   const [loading, setLoading] = useState(true);
@@ -419,6 +419,10 @@ const AddCakePackage = () => {
   const [prepTime, setPrepTime] = useState('');
   const [unit, setUnit] = useState('Kg');
   const [weight, setWeight] = useState('');
+  const [showAddWeight, setShowAddWeight] = useState(false);
+
+  const [customWeight, setCustomWeight] = useState('');
+  const [weightOptions, setWeightOptions] = useState(ATTRIBUTE_VALUES.Weight);
 
   // Variants & Pricing
   const [unitPrice, setUnitPrice] = useState('');
@@ -426,6 +430,7 @@ const AddCakePackage = () => {
   const [discountValue, setDiscountValue] = useState('');
   const [attrValues, setAttrValues] = useState({ Weight: [], Ingredient: [] });
   const [variations, setVariations] = useState([]);
+  const [selectedAttributes, setSelectedAttributes] = useState(['Weight', 'Ingredient']);
 
   // Addons & Shipping
   const [selectedAddons, setSelectedAddons] = useState([]);
@@ -500,32 +505,76 @@ const AddCakePackage = () => {
     fetchSubCategories();
   }, [category]);
 
-  const handleAttrValueToggle = (attr, value) => {
-    setAttrValues((prev) => {
-      const current = prev[attr] || [];
-      const updated = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-      const newAttrValues = { ...prev, [attr]: updated };
-      const activeAttrs = ATTRIBUTES.filter((a) => newAttrValues[a]?.length > 0);
-      if (activeAttrs.length === 0) {
-        setVariations([]);
-      } else {
-        const combinations = activeAttrs.reduce(
-          (acc, curr) =>
-            acc.length === 0 ? newAttrValues[curr].map((v) => [v]) : acc.flatMap((d) => newAttrValues[curr].map((e) => [...d, e])),
-          []
-        );
-        setVariations(
-          combinations.map((combo, idx) => ({
-            id: `new-${idx}`,
-            name: typeof combo === 'string' ? combo : combo.join(' - '),
-            price: unitPrice || '',
-            image: null
-          }))
-        );
-      }
-      return newAttrValues;
-    });
+  const handleAttrValueToggle = (attr, values) => {
+    const newAttrValues = {
+      ...attrValues,
+      [attr]: values
+    };
+
+    setAttrValues(newAttrValues);
+
+    const activeAttrs = ATTRIBUTES.filter((a) => newAttrValues[a]?.length > 0);
+
+    if (!activeAttrs.length) {
+      setVariations([]);
+      return;
+    }
+
+    const combinations = activeAttrs.reduce(
+      (acc, curr) =>
+        acc.length === 0 ? newAttrValues[curr].map((v) => [v]) : acc.flatMap((d) => newAttrValues[curr].map((e) => [...d, e])),
+      []
+    );
+
+    setVariations(
+      combinations.map((combo, idx) => ({
+        id: `new-${idx}`,
+        name: combo.join(' - '),
+        price: unitPrice || '',
+        image: null
+      }))
+    );
   };
+const removeWeight = (weight) => {
+  // 1️⃣ Remove from weight options
+  setWeightOptions((prev) => prev.filter((w) => w !== weight));
+
+  // 2️⃣ Remove from selected attribute values
+  setAttrValues((prev) => {
+    const updated = {
+      ...prev,
+      Weight: prev.Weight.filter((w) => w !== weight)
+    };
+
+    // 3️⃣ Rebuild variations correctly
+    const activeAttrs = ATTRIBUTES.filter((a) => updated[a]?.length > 0);
+
+    if (!activeAttrs.length) {
+      setVariations([]);
+      return updated;
+    }
+
+    const combinations = activeAttrs.reduce(
+      (acc, curr) =>
+        acc.length === 0
+          ? updated[curr].map((v) => [v])
+          : acc.flatMap((d) => updated[curr].map((e) => [...d, e])),
+      []
+    );
+
+    setVariations(
+      combinations.map((combo, idx) => ({
+        id: `new-${idx}`,
+        name: combo.join(' - '),
+        price: unitPrice || '',
+        image: null
+      }))
+    );
+
+    return updated;
+  });
+};
+
   const base = Number(unitPrice || 0);
   const reduction = Number(discountValue || 0);
 
@@ -1199,44 +1248,219 @@ const AddCakePackage = () => {
               Variant Configuration
             </Typography>
 
-            <Stack spacing={5} alignItems="center" textAlign="center">
-              {ATTRIBUTES.map((attr) => (
-                <Box key={attr}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mb: 2,
-                      display: 'block',
-                      fontWeight: 800,
-                      color: '#6B7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '2px',
-                      fontSize: '11px'
-                    }}
-                  >
-                    Available {attr}s
-                  </Typography>
+            {/* 🧾 Pricing Details – Attribute Based UI */}
+            <Box
+              sx={{
+                p: 4,
+                borderRadius: 2,
+                border: '1px solid #E5E7EB',
+                bgcolor: '#FFFFFF'
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 1 }}>Variant Details</Typography>
 
+              <Typography sx={{ color: '#6B7280', fontSize: 14, mb: 3 }}>Choose the Attributes & Input Values Of Each Attribute</Typography>
+
+              {/* ATTRIBUTE SELECTOR */}
+              <FormControl fullWidth>
+                <PremiumSelect
+                  multiple
+                  value={selectedAttributes}
+                  onChange={(e) => {
+                    const attrs = e.target.value;
+                    setSelectedAttributes(attrs);
+
+                    // Clear values for unselected attributes
+                    setAttrValues((prev) => ({
+                      Weight: attrs.includes('Weight') ? prev.Weight : [],
+                      Ingredient: attrs.includes('Ingredient') ? prev.Ingredient : []
+                    }));
+                  }}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {selected.map((attr) => (
+                        <Chip key={attr} label={attr} sx={{ fontWeight: 700 }} />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {ATTRIBUTES.map((attr) => (
+                    <MenuItem key={attr} value={attr}>
+                      <Checkbox checked={selectedAttributes.includes(attr)} />
+                      <ListItemText primary={attr} />
+                    </MenuItem>
+                  ))}
+                </PremiumSelect>
+              </FormControl>
+
+              {/* VALUES OF EACH ATTRIBUTE */}
+              <Box sx={{ mt: 4 }}>
+                <Typography sx={{ fontWeight: 600, mb: 2 }}>Values of Each Attribute</Typography>
+
+                {selectedAttributes.includes('Weight') && (
                   <Box
                     sx={{
                       display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 2,
-                      justifyContent: 'center'
+                      alignItems: 'flex-start',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: 2,
+                      mb: 2,
+                      overflow: 'hidden'
                     }}
                   >
-                    {ATTRIBUTE_VALUES[attr].map((val) => (
-                      <InteractionChipRefined
-                        key={val}
-                        label={val}
-                        selected={attrValues[attr]?.includes(val)}
-                        onClick={() => handleAttrValueToggle(attr, val)}
-                      />
-                    ))}
+                    {/* Left label */}
+                    <Box
+                      sx={{
+                        px: 2.5,
+                        py: 2,
+                        bgcolor: '#E5E7EB',
+                        fontWeight: 700,
+                        minWidth: 160
+                      }}
+                    >
+                      Select Weight
+                    </Box>
+
+                    {/* Right content */}
+                    <Box sx={{ p: 2, flex: 1 }}>
+                      {/* Weight chips */}
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {weightOptions.map((w) => {
+                          const isSelected = attrValues.Weight.includes(w);
+                          const isCustom = !DEFAULT_WEIGHTS.includes(w);
+
+                          return (
+                            <Chip
+                              key={w}
+                              label={w}
+                              onClick={() =>
+                                handleAttrValueToggle(
+                                  'Weight',
+                                  isSelected ? attrValues.Weight.filter((x) => x !== w) : [...attrValues.Weight, w]
+                                )
+                              }
+                              onDelete={isCustom ? () => removeWeight(w) : undefined}
+                              variant={isSelected ? 'filled' : 'outlined'}
+                              sx={{
+                                fontWeight: 700,
+                                bgcolor: isSelected ? alpha(PINK, 0.15) : undefined,
+                                color: isSelected ? PINK : undefined,
+                                borderColor: isSelected ? PINK : undefined
+                              }}
+                            />
+                          );
+                        })}
+
+                        {/* Add weight trigger */}
+                        {!showAddWeight && (
+                          <Chip
+                            label="+ Add Weight"
+                            onClick={() => setShowAddWeight(true)}
+                            sx={{
+                              fontWeight: 800,
+                              color: PINK,
+                              border: `2px dashed ${alpha(PINK, 0.4)}`,
+                              bgcolor: alpha(PINK, 0.05),
+                              cursor: 'pointer'
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      {/* Add weight panel */}
+                      {showAddWeight && (
+                        <Box
+                          sx={{
+                            mt: 2,
+                            p: 2,
+                            borderRadius: 2,
+                            border: `1.5px solid ${alpha(PINK, 0.3)}`,
+                            background: `linear-gradient(135deg, ${alpha(PINK, 0.05)}, #fff)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            maxWidth: 320
+                          }}
+                        >
+                          <TextField
+                            size="small"
+                            autoFocus
+                            placeholder="e.g. 6 Kg"
+                            value={customWeight}
+                            onChange={(e) => setCustomWeight(e.target.value)}
+                            sx={{ flex: 1 }}
+                          />
+
+                          <Button
+                            variant="contained"
+                            sx={{ bgcolor: PINK, fontWeight: 800 }}
+                            onClick={() => {
+                              const value = customWeight.trim();
+
+                              if (!value || weightOptions.includes(value)) return;
+
+                              setWeightOptions((prev) => [...prev, value]);
+                              handleAttrValueToggle('Weight', [...attrValues.Weight, value]);
+
+                              setCustomWeight('');
+                              setShowAddWeight(false);
+                            }}
+                          >
+                            Add
+                          </Button>
+
+                          <IconButton onClick={() => setShowAddWeight(false)}>
+                            <CloseIcon />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-              ))}
-            </Stack>
+                )}
+                {selectedAttributes.includes('Ingredient') && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: 1,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        px: 2.5,
+                        py: 1.5,
+                        bgcolor: '#E5E7EB',
+                        fontWeight: 600,
+                        minWidth: 160
+                      }}
+                    >
+                      Select Ingredient
+                    </Box>
+
+                    <Box sx={{ p: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {ATTRIBUTE_VALUES.Ingredient.map((ing) => (
+                        <Chip
+                          key={ing}
+                          label={ing}
+                          onClick={() =>
+                            handleAttrValueToggle(
+                              'Ingredient',
+                              attrValues.Ingredient.includes(ing)
+                                ? attrValues.Ingredient.filter((x) => x !== ing)
+                                : [...attrValues.Ingredient, ing]
+                            )
+                          }
+                          variant={attrValues.Ingredient.includes(ing) ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Box>
 
           {/* 💳 BILLING & PRICING */}
@@ -1371,155 +1595,144 @@ const AddCakePackage = () => {
         </PremiumCard>
 
         <PremiumCard>
-  {/* Header */}
-  <Box sx={{ mb: 6, textAlign: 'center' }}>
-    <StyledSectionTitle sx={{ fontSize: 28 }}>
-      Curated Boosters & Add-ons
-    </StyledSectionTitle>
-    <StyledSectionSubtitle sx={{ maxWidth: 720, mx: 'auto', mt: 1 }}>
-      Group related extras to enhance the customer's celebration experience
-    </StyledSectionSubtitle>
-  </Box>
+          {/* Header */}
+          <Box sx={{ mb: 6, textAlign: 'center' }}>
+            <StyledSectionTitle sx={{ fontSize: 28 }}>Curated Boosters & Add-ons</StyledSectionTitle>
+            <StyledSectionSubtitle sx={{ maxWidth: 720, mx: 'auto', mt: 1 }}>
+              Group related extras to enhance the customer's celebration experience
+            </StyledSectionSubtitle>
+          </Box>
 
-  <Grid
-    container
-    spacing={4}
-    sx={{
-      flexWrap: {
-        xs: 'wrap',
-        sm: 'wrap',
-        md: 'nowrap'
-      }
-    }}
-  >
-    {ADDON_CATEGORIES.map((group) => (
-      <Grid item xs={12} sm={6} md={3} key={group.id}>
-        <FeatureGroupBox
-          sx={{
-            height: '100%',
-            borderRadius: '24px',
-            p: 3,
-            background:
-              'linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%)',
-            boxShadow: '0 12px 32px rgba(17,24,39,0.06)',
-            position: 'relative'
-          }}
-        >
-          {/* Floating badge */}
-          <GroupBadge
+          <Grid
+            container
+            spacing={4}
             sx={{
-              position: 'absolute',
-              top: -14,
-              left: 24,
-              px: 2.5,
-              py: 0.75,
-              borderRadius: '999px',
-              fontSize: 12,
-              fontWeight: 800,
-              background: alpha(PINK, 0.1),
-              color: PINK
+              flexWrap: {
+                xs: 'wrap',
+                sm: 'wrap',
+                md: 'nowrap'
+              }
             }}
           >
-            {group.id}
-          </GroupBadge>
-
-          {/* Group title */}
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 900,
-              mb: 4,
-              mt: 2,
-              color: '#111827',
-              letterSpacing: '-0.6px'
-            }}
-          >
-            {group.title}
-          </Typography>
-
-          {/* Add-on items */}
-          <Stack spacing={2}>
-            {group.items.map((addon) => {
-              const active = selectedAddons.includes(addon.name);
-
-              return (
-                <Box
-                  key={addon.name}
-                  onClick={() => handleAddonToggle(addon.name)}
+            {ADDON_CATEGORIES.map((group) => (
+              <Grid item xs={12} sm={6} md={3} key={group.id}>
+                <FeatureGroupBox
                   sx={{
-                    p: 2.5,
-                    borderRadius: '18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    background: active
-                      ? `linear-gradient(135deg, ${alpha(PINK, 0.12)}, ${alpha(PINK, 0.04)})`
-                      : '#FFFFFF',
-                    boxShadow: active
-                      ? `0 8px 24px ${alpha(PINK, 0.25)}`
-                      : '0 4px 14px rgba(0,0,0,0.04)',
-                    border: active
-                      ? `1.5px solid ${PINK}`
-                      : '1px solid #F1F5F9',
-                    transition: 'all 0.25s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
-                    }
+                    height: '100%',
+                    borderRadius: '24px',
+                    p: 3,
+                    background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%)',
+                    boxShadow: '0 12px 32px rgba(17,24,39,0.06)',
+                    position: 'relative'
                   }}
                 >
-                  {/* Left */}
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: active
-                          ? alpha(PINK, 0.15)
-                          : '#F9FAFB',
-                        color: active ? PINK : '#9CA3AF'
-                      }}
-                    >
-                      {addon.icon}
-                    </Box>
-
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 800,
-                        color: active ? '#111827' : '#4B5563'
-                      }}
-                    >
-                      {addon.name}
-                    </Typography>
-                  </Stack>
-
-                  {/* Right */}
-                  <Checkbox
-                    checked={active}
-                    disableRipple
+                  {/* Floating badge */}
+                  <GroupBadge
                     sx={{
-                      p: 0,
-                      color: '#CBD5E1',
-                      '&.Mui-checked': {
-                        color: PINK
-                      }
+                      position: 'absolute',
+                      top: -14,
+                      left: 24,
+                      px: 2.5,
+                      py: 0.75,
+                      borderRadius: '999px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      background: alpha(PINK, 0.1),
+                      color: PINK
                     }}
-                  />
-                </Box>
-              );
-            })}
-          </Stack>
-        </FeatureGroupBox>
-      </Grid>
-    ))}
-  </Grid>
-</PremiumCard>
+                  >
+                    {group.id}
+                  </GroupBadge>
+
+                  {/* Group title */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 900,
+                      mb: 4,
+                      mt: 2,
+                      color: '#111827',
+                      letterSpacing: '-0.6px'
+                    }}
+                  >
+                    {group.title}
+                  </Typography>
+
+                  {/* Add-on items */}
+                  <Stack spacing={2}>
+                    {group.items.map((addon) => {
+                      const active = selectedAddons.includes(addon.name);
+
+                      return (
+                        <Box
+                          key={addon.name}
+                          onClick={() => handleAddonToggle(addon.name)}
+                          sx={{
+                            p: 2.5,
+                            borderRadius: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            background: active ? `linear-gradient(135deg, ${alpha(PINK, 0.12)}, ${alpha(PINK, 0.04)})` : '#FFFFFF',
+                            boxShadow: active ? `0 8px 24px ${alpha(PINK, 0.25)}` : '0 4px 14px rgba(0,0,0,0.04)',
+                            border: active ? `1.5px solid ${PINK}` : '1px solid #F1F5F9',
+                            transition: 'all 0.25s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
+                            }
+                          }}
+                        >
+                          {/* Left */}
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: active ? alpha(PINK, 0.15) : '#F9FAFB',
+                                color: active ? PINK : '#9CA3AF'
+                              }}
+                            >
+                              {addon.icon}
+                            </Box>
+
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 800,
+                                color: active ? '#111827' : '#4B5563'
+                              }}
+                            >
+                              {addon.name}
+                            </Typography>
+                          </Stack>
+
+                          {/* Right */}
+                          <Checkbox
+                            checked={active}
+                            disableRipple
+                            sx={{
+                              p: 0,
+                              color: '#CBD5E1',
+                              '&.Mui-checked': {
+                                color: PINK
+                              }
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </FeatureGroupBox>
+              </Grid>
+            ))}
+          </Grid>
+        </PremiumCard>
 
         {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
         <PremiumCard>
