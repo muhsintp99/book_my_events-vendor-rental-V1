@@ -30,7 +30,11 @@ import {
   TableHead,
   TableRow,
   Radio,
-  RadioGroup
+  RadioGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -283,12 +287,15 @@ const GlassTableContainerRefined = styled(TableContainer)(({ theme }) => ({
 
 // ------------------------------ SUB-COMPONENTS ------------------------------
 
-const VariationRow = ({ variation, onChange, onImageUpload }) => {
+const VariationRow = ({ variation, onChange, onImageUpload, onDelete }) => {
   return (
     <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+      {/* Variation Name */}
       <TableCell sx={{ py: 3, pl: 4 }}>
         <Typography sx={{ fontWeight: 800, color: '#1F2937', fontSize: '15px' }}>{variation.name}</Typography>
       </TableCell>
+
+      {/* Price */}
       <TableCell sx={{ py: 3 }}>
         <PremiumTextField
           size="small"
@@ -301,8 +308,11 @@ const VariationRow = ({ variation, onChange, onImageUpload }) => {
           }}
         />
       </TableCell>
+
+      {/* Media + Actions */}
       <TableCell sx={{ py: 3, pr: 4 }}>
         <Stack direction="row" spacing={2} alignItems="center">
+          {/* Upload image */}
           <IconButton
             onClick={() => document.getElementById(`var-img-${variation.id}`).click()}
             sx={{
@@ -313,13 +323,16 @@ const VariationRow = ({ variation, onChange, onImageUpload }) => {
           >
             <PhotoCameraIcon fontSize="small" />
           </IconButton>
+
           <input id={`var-img-${variation.id}`} type="file" hidden onChange={(e) => onImageUpload(e.target.files[0])} />
+
+          {/* Preview */}
           {variation.image && (
             <Box
               sx={{
                 position: 'relative',
-                width: '45px',
-                height: '45px',
+                width: 45,
+                height: 45,
                 borderRadius: '10px',
                 overflow: 'hidden',
                 border: `2px solid ${PINK}`
@@ -330,22 +343,23 @@ const VariationRow = ({ variation, onChange, onImageUpload }) => {
                 alt="variant"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-              <IconButton
-                size="small"
-                onClick={() => onImageUpload(null)}
-                sx={{
-                  position: 'absolute',
-                  top: -2,
-                  right: -2,
-                  bgcolor: 'white',
-                  p: 0.2,
-                  '&:hover': { bgcolor: PINK, color: 'white' }
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 10 }} />
-              </IconButton>
             </Box>
           )}
+
+          {/* ❌ DELETE VARIATION */}
+          <IconButton
+            onClick={onDelete}
+            sx={{
+              bgcolor: alpha('#EF4444', 0.1),
+              color: '#EF4444',
+              '&:hover': {
+                bgcolor: '#EF4444',
+                color: '#fff'
+              }
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
         </Stack>
       </TableCell>
     </TableRow>
@@ -407,6 +421,11 @@ const AddCakePackage = () => {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [currentVendor, setCurrentVendor] = useState(null);
+  const [relatedLinkBy, setRelatedLinkBy] = useState('product');
+  const [relatedItems, setRelatedItems] = useState([]);
+  const [selectedRelatedObjects, setSelectedRelatedObjects] = useState([]);
+  const [openRelatedModal, setOpenRelatedModal] = useState(false);
+  const [drilldownCategory, setDrilldownCategory] = useState(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -420,6 +439,8 @@ const AddCakePackage = () => {
   const [unit, setUnit] = useState('Kg');
   const [weight, setWeight] = useState('');
   const [showAddWeight, setShowAddWeight] = useState(false);
+  const [relatedOptions, setRelatedOptions] = useState([]); // products OR categories
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   const [customWeight, setCustomWeight] = useState('');
   const [weightOptions, setWeightOptions] = useState(ATTRIBUTE_VALUES.Weight);
@@ -441,6 +462,7 @@ const AddCakePackage = () => {
   const [existingThumbnail, setExistingThumbnail] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [existingGallery, setExistingGallery] = useState([]);
+  const [availableAddons, setAvailableAddons] = useState([]);
 
   // ------------------------------ EFFECTS & HANDLERS ------------------------------
 
@@ -475,9 +497,15 @@ const AddCakePackage = () => {
             if (cake.variations?.length)
               setVariations(cake.variations.map((v, idx) => ({ id: v._id || `old-${idx}`, name: v.name, price: v.price, image: v.image })));
             setSelectedAddons(cake.addons || []);
-            setPrepTime(cake.prepTime || '');
             setUnit(cake.unit || 'Kg');
             setWeight(cake.weight || '');
+
+            // Load related items objects if they exist
+            if (cake.relatedItems?.items?.length) {
+              setRelatedItems(cake.relatedItems.items.map((i) => i._id || i));
+              setSelectedRelatedObjects(cake.relatedItems.items);
+              setRelatedLinkBy(cake.relatedItems.linkBy || 'product');
+            }
           }
         }
       } catch (err) {
@@ -488,6 +516,25 @@ const AddCakePackage = () => {
     };
     loadInitialData();
   }, [id, isEditMode]);
+
+  useEffect(() => {
+    const fetchAddons = async () => {
+      const vendorId = currentVendor?._id || currentVendor?.id;
+      if (!vendorId) return;
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${API_BASE}/api/cake-addons/provider/${vendorId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          setAvailableAddons(res.data.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching addons:', err);
+      }
+    };
+    fetchAddons();
+  }, [currentVendor]);
 
   useEffect(() => {
     const fetchSubCategories = async () => {
@@ -535,45 +582,122 @@ const AddCakePackage = () => {
       }))
     );
   };
-const removeWeight = (weight) => {
-  // 1️⃣ Remove from weight options
-  setWeightOptions((prev) => prev.filter((w) => w !== weight));
+  const fetchRelatedOptions = async () => {
+    try {
+      setLoadingRelated(true);
+      setDrilldownCategory(null); // Reset drilldown when starting fresh
 
-  // 2️⃣ Remove from selected attribute values
-  setAttrValues((prev) => {
-    const updated = {
-      ...prev,
-      Weight: prev.Weight.filter((w) => w !== weight)
-    };
+      const token = localStorage.getItem('token');
+      const providerId = currentVendor?._id || currentVendor?.id;
 
-    // 3️⃣ Rebuild variations correctly
-    const activeAttrs = ATTRIBUTES.filter((a) => updated[a]?.length > 0);
+      let url = '';
 
-    if (!activeAttrs.length) {
-      setVariations([]);
-      return updated;
+      if (relatedLinkBy === 'product') {
+        if (!providerId) {
+          console.error('Provider ID missing');
+          return;
+        }
+        url = `${API_BASE}/api/cakes/provider/${providerId}`;
+      } else {
+        url = `${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`;
+      }
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const options = res.data?.data || [];
+      setRelatedOptions(options);
+
+      // Cache info for already selected items if they appear in options
+      setSelectedRelatedObjects((prev) => {
+        const updated = [...prev];
+        options.forEach((opt) => {
+          const idx = updated.findIndex((x) => x._id === opt._id);
+          if (idx !== -1) updated[idx] = opt;
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to load related items', err);
+      setRelatedOptions([]);
+    } finally {
+      setLoadingRelated(false);
     }
+  };
 
-    const combinations = activeAttrs.reduce(
-      (acc, curr) =>
-        acc.length === 0
-          ? updated[curr].map((v) => [v])
-          : acc.flatMap((d) => updated[curr].map((e) => [...d, e])),
-      []
-    );
+  const handleCategoryClick = async (cat) => {
+    try {
+      setLoadingRelated(true);
+      setDrilldownCategory(cat);
+      const token = localStorage.getItem('token');
+      // Fetch cakes for this specific category - Ensure limit is high for selection
+      const res = await axios.get(`${API_BASE}/api/cakes/category/${cat._id}?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const cakes = res.data?.data || [];
+      setRelatedOptions(cakes);
 
-    setVariations(
-      combinations.map((combo, idx) => ({
-        id: `new-${idx}`,
-        name: combo.join(' - '),
-        price: unitPrice || '',
-        image: null
-      }))
-    );
+      // Cache info
+      setSelectedRelatedObjects((prev) => {
+        const updated = [...prev];
+        cakes.forEach((c) => {
+          const idx = updated.findIndex((x) => x._id === c._id);
+          if (idx !== -1) updated[idx] = c;
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to load cakes for category', err);
+      setRelatedOptions([]);
+    } finally {
+      setLoadingRelated(false);
+    }
+  };
 
-    return updated;
-  });
-};
+  const handleBackToCategories = () => {
+    setDrilldownCategory(null);
+    fetchRelatedOptions();
+  };
+
+  const removeWeight = (weight) => {
+    // 1️⃣ Remove from weight options
+    setWeightOptions((prev) => prev.filter((w) => w !== weight));
+
+    // 2️⃣ Remove from selected attribute values
+    setAttrValues((prev) => {
+      const updated = {
+        ...prev,
+        Weight: prev.Weight.filter((w) => w !== weight)
+      };
+
+      // 3️⃣ Rebuild variations correctly
+      const activeAttrs = ATTRIBUTES.filter((a) => updated[a]?.length > 0);
+
+      if (!activeAttrs.length) {
+        setVariations([]);
+        return updated;
+      }
+
+      const combinations = activeAttrs.reduce(
+        (acc, curr) => (acc.length === 0 ? updated[curr].map((v) => [v]) : acc.flatMap((d) => updated[curr].map((e) => [...d, e]))),
+        []
+      );
+
+      setVariations(
+        combinations.map((combo, idx) => ({
+          id: `new-${idx}`,
+          name: combo.join(' - '),
+          price: unitPrice || '',
+          image: null
+        }))
+      );
+
+      return updated;
+    });
+  };
 
   const base = Number(unitPrice || 0);
   const reduction = Number(discountValue || 0);
@@ -590,8 +714,57 @@ const removeWeight = (weight) => {
 
   totalPrice = Math.max(totalPrice, 0);
 
-  const handleAddonToggle = (addonName) =>
-    setSelectedAddons((prev) => (prev.includes(addonName) ? prev.filter((a) => a !== addonName) : [...prev, addonName]));
+  /* ------------------------------ HANDLERS ------------------------------ */
+
+  const handleAddonToggle = (addonId) => {
+    setSelectedAddons((prev) => {
+      const exists = prev.find((item) => item.addonId === addonId);
+      if (exists) {
+        // Deselect addon completely
+        return prev.filter((item) => item.addonId !== addonId);
+      } else {
+        // Select addon (default to all/empty variants which implies all in backend)
+        return [...prev, { addonId, selectedItems: [] }];
+      }
+    });
+  };
+
+  const handleVariantToggle = (addonId, variantId) => {
+    setSelectedAddons((prev) => {
+      const existingAddon = prev.find((item) => item.addonId === addonId);
+
+      if (!existingAddon) {
+        // Addon not selected yet -> Select it properly with this SPECIFIC variant
+        return [...prev, { addonId, selectedItems: [variantId] }];
+      }
+
+      // Addon is already selected
+      let newSelectedItems;
+      const currentItems = existingAddon.selectedItems || [];
+
+      if (currentItems.length === 0) {
+        // Currently "All" are selected (implied). User clicked one, so switch to "Specific" mode.
+        // If we switch to specific, we assume they want ONLY the one they clicked?
+        // OR they want to toggle the one they clicked OFF (meaning: All EXCEPT this one)?
+        // Usually, clicking an item in "All" mode implies selecting JUST that item.
+        newSelectedItems = [variantId];
+      } else {
+        // Already in specific mode
+        if (currentItems.includes(variantId)) {
+          newSelectedItems = currentItems.filter((id) => id !== variantId);
+        } else {
+          newSelectedItems = [...currentItems, variantId];
+        }
+      }
+
+      // If deselecting the last item, do we revert to "All" or remove addon?
+      // Let's keep it consistent: If list becomes empty, it means "All" again. change logic if user prefers "None"
+      // User request "i want elect the pricing fields".
+      // Let's assume empty array = All.
+
+      return prev.map((item) => (item.addonId === addonId ? { ...item, selectedItems: newSelectedItems } : item));
+    });
+  };
 
   const handleReset = () => {
     setName('');
@@ -607,6 +780,9 @@ const removeWeight = (weight) => {
     setGalleryImages([]);
     setVariations([]);
     setAttrValues({ Weight: [], Ingredient: [] });
+    setRelatedItems([]);
+    setSelectedRelatedObjects([]);
+    setDrilldownCategory(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -639,6 +815,15 @@ const removeWeight = (weight) => {
     formData.append('addons', JSON.stringify(selectedAddons));
     formData.append('shipping', JSON.stringify(shipping));
     formData.append('prepTime', prepTime);
+    formData.append(
+      'relatedItems',
+      JSON.stringify({
+        linkBy: relatedLinkBy,
+        items: relatedItems,
+        linkByRef: relatedLinkBy === 'product' ? 'Cake' : 'Category'
+      })
+    );
+
     const validVariants = variations.filter((v) => v.price).map((v) => ({ name: v.name, price: Number(v.price) }));
     if (validVariants.length) formData.append('variations', JSON.stringify(validVariants));
     if (thumbnail) formData.append('thumbnail', thumbnail);
@@ -651,7 +836,7 @@ const removeWeight = (weight) => {
         : await axios.post(`${API_BASE}/api/cakes`, formData, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data.success) {
         setSuccessMessage('Saved successfully!');
-        setTimeout(() => navigate('/cakes'), 2000);
+        setTimeout(() => navigate('/cake/packagelist'), 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Error saving cake');
@@ -1586,6 +1771,7 @@ const removeWeight = (weight) => {
                       variation={v}
                       onChange={(f, val) => setVariations((prev) => prev.map((p) => (p.id === v.id ? { ...p, [f]: val } : p)))}
                       onImageUpload={(img) => setVariations((prev) => prev.map((p) => (p.id === v.id ? { ...p, image: img } : p)))}
+                      onDelete={() => setVariations((prev) => prev.filter((p) => p.id !== v.id))}
                     />
                   ))}
                 </TableBody>
@@ -1603,135 +1789,139 @@ const removeWeight = (weight) => {
             </StyledSectionSubtitle>
           </Box>
 
-          <Grid
-            container
-            spacing={4}
-            sx={{
-              flexWrap: {
-                xs: 'wrap',
-                sm: 'wrap',
-                md: 'nowrap'
-              }
-            }}
-          >
-            {ADDON_CATEGORIES.map((group) => (
-              <Grid item xs={12} sm={6} md={3} key={group.id}>
-                <FeatureGroupBox
-                  sx={{
-                    height: '100%',
-                    borderRadius: '24px',
-                    p: 3,
-                    background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%)',
-                    boxShadow: '0 12px 32px rgba(17,24,39,0.06)',
-                    position: 'relative'
-                  }}
-                >
-                  {/* Floating badge */}
-                  <GroupBadge
-                    sx={{
-                      position: 'absolute',
-                      top: -14,
-                      left: 24,
-                      px: 2.5,
-                      py: 0.75,
-                      borderRadius: '999px',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      background: alpha(PINK, 0.1),
-                      color: PINK
-                    }}
-                  >
-                    {group.id}
-                  </GroupBadge>
+          {availableAddons.length === 0 ? (
+            <Box sx={{ textAlign: 'center', p: 4, bgcolor: '#F9FAFB', borderRadius: '20px', border: '1px dashed #E5E7EB' }}>
+              <Typography variant="h6" sx={{ color: '#6B7280', fontWeight: 700 }}>
+                No Add-ons Available
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#9CA3AF', mt: 1 }}>
+                Create add-ons in the "Add-ons" management section to see them here.
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={4}>
+              {availableAddons.map((addon) => {
+                const selection = selectedAddons.find((s) => s.addonId === addon._id);
+                const isAddonActive = !!selection;
+                const selectedVariants = selection?.selectedItems || [];
+                const isAllSelected = isAddonActive && selectedVariants.length === 0;
 
-                  {/* Group title */}
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 900,
-                      mb: 4,
-                      mt: 2,
-                      color: '#111827',
-                      letterSpacing: '-0.6px'
-                    }}
-                  >
-                    {group.title}
-                  </Typography>
-
-                  {/* Add-on items */}
-                  <Stack spacing={2}>
-                    {group.items.map((addon) => {
-                      const active = selectedAddons.includes(addon.name);
-
-                      return (
-                        <Box
-                          key={addon.name}
-                          onClick={() => handleAddonToggle(addon.name)}
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={addon._id}>
+                    <FeatureGroupBox
+                      sx={{
+                        height: '100%',
+                        borderRadius: '24px',
+                        p: 3,
+                        background: isAddonActive ? `linear-gradient(135deg, ${alpha(PINK, 0.05)}, #ffffff)` : '#FFFFFF', // Lighter background
+                        boxShadow: isAddonActive ? `0 8px 24px ${alpha(PINK, 0.25)}` : '0 12px 32px rgba(17,24,39,0.06)',
+                        border: isAddonActive ? `1.5px solid ${PINK}` : '1px solid #F1F5F9',
+                        position: 'relative',
+                        transition: 'all 0.25s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
+                        }
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 900, color: isAddonActive ? '#111827' : '#374151' }}>
+                          {addon.title}
+                        </Typography>
+                        <Checkbox
+                          checked={isAddonActive}
+                          onClick={() => handleAddonToggle(addon._id)}
+                          disableRipple
                           sx={{
-                            p: 2.5,
-                            borderRadius: '18px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            background: active ? `linear-gradient(135deg, ${alpha(PINK, 0.12)}, ${alpha(PINK, 0.04)})` : '#FFFFFF',
-                            boxShadow: active ? `0 8px 24px ${alpha(PINK, 0.25)}` : '0 4px 14px rgba(0,0,0,0.04)',
-                            border: active ? `1.5px solid ${PINK}` : '1px solid #F1F5F9',
-                            transition: 'all 0.25s ease',
-                            '&:hover': {
-                              transform: 'translateY(-2px)',
-                              boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
-                            }
+                            p: 0,
+                            color: '#CBD5E1',
+                            '&.Mui-checked': { color: PINK }
                           }}
-                        >
-                          {/* Left */}
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: active ? alpha(PINK, 0.15) : '#F9FAFB',
-                                color: active ? PINK : '#9CA3AF'
-                              }}
-                            >
-                              {addon.icon}
-                            </Box>
+                        />
+                      </Stack>
 
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 800,
-                                color: active ? '#111827' : '#4B5563'
-                              }}
-                            >
-                              {addon.name}
-                            </Typography>
-                          </Stack>
+                      <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', mb: 2 }}>
+                        {addon.description && addon.description.substring(0, 50)}
+                        {addon.description && addon.description.length > 50 ? '...' : ''}
+                      </Typography>
 
-                          {/* Right */}
-                          <Checkbox
-                            checked={active}
-                            disableRipple
-                            sx={{
-                              p: 0,
-                              color: '#CBD5E1',
-                              '&.Mui-checked': {
-                                color: PINK
-                              }
-                            }}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                </FeatureGroupBox>
-              </Grid>
-            ))}
-          </Grid>
+                      {/* Price List Variants */}
+                      {addon.priceList && addon.priceList.length > 0 && (
+                        <Stack spacing={1} sx={{ mb: 3 }}>
+                          {addon.priceList.map((variant) => {
+                            const isVariantSelected = isAllSelected || selectedVariants.includes(variant._id);
+                            return (
+                              <Box
+                                key={variant._id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleVariantToggle(addon._id, variant._id);
+                                }}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  p: 1.5,
+                                  borderRadius: '12px',
+                                  cursor: 'pointer',
+                                  bgcolor: isVariantSelected ? alpha(PINK, 0.1) : '#FFFFFF',
+                                  border: '1px solid',
+                                  borderColor: isVariantSelected ? PINK : '#E5E7EB',
+                                  transition: 'all 0.2s',
+                                  '&:hover': {
+                                    borderColor: PINK,
+                                    bgcolor: alpha(PINK, 0.05)
+                                  }
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#374151', fontSize: '13px' }}>
+                                  {variant.name}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 800,
+                                    color: isVariantSelected ? '#FFF' : PINK,
+                                    bgcolor: isVariantSelected ? PINK : '#FFF',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderRadius: '8px',
+                                    border: `1px solid ${PINK}`
+                                  }}
+                                >
+                                  ₹{variant.price}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Stack>
+                      )}
+
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: isAddonActive ? alpha(PINK, 0.15) : '#F9FAFB',
+                          color: isAddonActive ? PINK : '#9CA3AF',
+                          mt: 'auto' // push to bottom if flex column
+                        }}
+                      >
+                        {addon.icon ? (
+                          <img src={addon.icon} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                        ) : (
+                          <StarIcon sx={{ fontSize: 18 }} />
+                        )}
+                      </Box>
+                    </FeatureGroupBox>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
         </PremiumCard>
 
         {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
@@ -1941,37 +2131,34 @@ const removeWeight = (weight) => {
           >
             <Typography sx={{ fontWeight: 800, color: '#374151' }}>Link by:</Typography>
 
-            <RadioGroup row>
+            <RadioGroup
+              row
+              value={relatedLinkBy}
+              onChange={(e) => {
+                setRelatedLinkBy(e.target.value);
+                setRelatedItems([]); // reset selection
+                setRelatedOptions([]); // reset data
+              }}
+            >
               <FormControlLabel
                 value="product"
-                control={
-                  <Radio
-                    sx={{
-                      color: '#9CA3AF',
-                      '&.Mui-checked': { color: PINK }
-                    }}
-                  />
-                }
+                control={<Radio sx={{ '&.Mui-checked': { color: PINK } }} />}
                 label={<Typography sx={{ fontWeight: 700 }}>Product</Typography>}
               />
 
               <FormControlLabel
                 value="category"
-                control={
-                  <Radio
-                    sx={{
-                      color: '#9CA3AF',
-                      '&.Mui-checked': { color: PINK }
-                    }}
-                  />
-                }
+                control={<Radio sx={{ '&.Mui-checked': { color: PINK } }} />}
                 label={<Typography sx={{ fontWeight: 700 }}>Category</Typography>}
               />
             </RadioGroup>
           </Box>
 
-          {/* Add More Area */}
           <Box
+            onClick={() => {
+              fetchRelatedOptions(); // ✅ FETCH DATA
+              setOpenRelatedModal(true);
+            }}
             sx={{
               p: 6,
               borderRadius: '20px',
@@ -2011,6 +2198,91 @@ const removeWeight = (weight) => {
               Choose products or categories frequently bought together
             </Typography>
           </Box>
+
+          {relatedItems.length > 0 && (
+            <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}>
+                Selected Items ({relatedItems.length})
+              </Typography>
+              <Grid container spacing={2}>
+                {relatedItems.map((id) => {
+                  const item = selectedRelatedObjects.find((x) => x._id === id) || relatedOptions.find((x) => x._id === id) || categories.find((x) => x._id === id);
+
+                  if (!item) return null;
+
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={id}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          p: 1.5,
+                          borderRadius: '16px',
+                          bgcolor: '#F9FAFB',
+                          border: '1px solid #E5E7EB',
+                          position: 'relative',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: PINK,
+                            bgcolor: '#fff',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            bgcolor: '#fff',
+                            border: '1px solid #eee'
+                          }}
+                        >
+                          <img
+                            src={item.thumbnail || (item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`) : '/placeholder.png')}
+                            alt=""
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        </Box>
+                        <Box sx={{ ml: 2, flex: 1, minWidth: 0 }}>
+                          <Typography
+                            noWrap
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: '13px',
+                              color: '#111827'
+                            }}
+                          >
+                            {item.name || item.title}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                            {item.price ? `₹${item.price}` : (item.module?.title || 'Related')}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setRelatedItems((prev) => prev.filter((x) => x !== id));
+                            setSelectedRelatedObjects((prev) => prev.filter((x) => x._id !== id));
+                          }}
+                          sx={{
+                            ml: 1,
+                            color: '#9CA3AF',
+                            '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) }
+                          }}
+                        >
+                          <CloseIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          )}
+
           {/* ✅ FINAL ACTION BAR */}
           <Box
             sx={{
@@ -2068,6 +2340,219 @@ const removeWeight = (weight) => {
           </Box>
         </PremiumCard>
       </Box>
+      {/* 🔽 ADD RELATED ITEM MODAL HERE */}
+      <Dialog open={openRelatedModal} onClose={() => setOpenRelatedModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {drilldownCategory && (
+              <IconButton size="small" onClick={handleBackToCategories} sx={{ mr: 1 }}>
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              {drilldownCategory ? `Packages in ${drilldownCategory.title}` : `Select ${relatedLinkBy === 'product' ? 'Products' : 'Categories'}`}
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setOpenRelatedModal(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {loadingRelated ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress color="inherit" sx={{ color: PINK }} />
+            </Box>
+          ) : (
+            <>
+              {drilldownCategory && (
+                <Box
+                  sx={{
+                    mb: 3,
+                    p: 2,
+                    borderRadius: '16px',
+                    bgcolor: alpha(PINK, 0.03),
+                    border: `1px dashed ${PINK}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontWeight: 800, color: '#111827' }}>Link Entire Category</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                      Add "{drilldownCategory.title}" to related items
+                    </Typography>
+                  </Box>
+                  <Checkbox
+                    checked={relatedItems.includes(drilldownCategory._id)}
+                    onChange={() =>
+                      setRelatedItems((prev) =>
+                        prev.includes(drilldownCategory._id)
+                          ? prev.filter((x) => x !== drilldownCategory._id)
+                          : [...prev, drilldownCategory._id]
+                      )
+                    }
+                    sx={{ color: PINK, '&.Mui-checked': { color: PINK } }}
+                  />
+                </Box>
+              )}
+
+              {relatedOptions.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                  <Typography sx={{ color: '#6B7280', fontWeight: 600 }}>
+                    {drilldownCategory ? 'No packages found in this category' : `No ${relatedLinkBy}s found`}
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={2}>
+                  {relatedOptions.map((item) => {
+                    const id = item._id;
+                    const isItemCategory = relatedLinkBy === 'category' && !drilldownCategory;
+                    const selected = relatedItems.includes(id);
+
+                    return (
+                      <Grid item xs={12} key={id}>
+                        <Box
+                          onClick={() => {
+                            if (isItemCategory) {
+                              handleCategoryClick(item);
+                            } else {
+                              // If in product mode OR selecting a specific product from category
+                              const isSelected = relatedItems.includes(id);
+                              if (isSelected) {
+                                setRelatedItems((prev) => prev.filter((x) => x !== id));
+                                setSelectedRelatedObjects((prev) => prev.filter((x) => x._id !== id));
+                              } else {
+                                setRelatedItems((prev) => [...prev, id]);
+                                setSelectedRelatedObjects((prev) => [...prev, item]);
+                              }
+                            }
+                          }}
+                          sx={{
+                            display: 'flex',
+                            gap: 2,
+                            p: 2,
+                            borderRadius: '14px',
+                            cursor: 'pointer',
+                            border: selected ? `2px solid ${PINK}` : '1px solid #E5E7EB',
+                            bgcolor: selected ? alpha(PINK, 0.06) : '#FFFFFF',
+                            transition: 'all 0.25s ease',
+                            '&:hover': {
+                              borderColor: PINK,
+                              boxShadow: `0 4px 12px ${alpha(PINK, 0.1)}`
+                            }
+                          }}
+                        >
+                          {/* IMAGE */}
+                          <Box
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                              bgcolor: '#F3F4F6'
+                            }}
+                          >
+                            <img
+                              src={
+                                isItemCategory
+                                  ? item.image
+                                    ? `${API_BASE}${item.image}`
+                                    : '/placeholder.png'
+                                  : item.thumbnail || '/placeholder.png'
+                              }
+                              alt={item.title || item.name}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </Box>
+
+                          {/* DETAILS */}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontWeight: 800,
+                                fontSize: '14px',
+                                color: '#111827',
+                                mb: 0.5
+                              }}
+                            >
+                              {item.title || item.name}
+                            </Typography>
+
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontSize: '12px',
+                                color: '#6B7280'
+                              }}
+                            >
+                              {isItemCategory ? item.module?.title || 'Category' : item.category?.title || 'Package'}
+                            </Typography>
+                          </Box>
+
+                          {/* ACTION AREA */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {item.price && (
+                              <Typography sx={{ fontWeight: 900, color: PINK, mr: 1 }}>₹{item.price}</Typography>
+                            )}
+                            {isItemCategory ? (
+                              <ArrowBackIcon sx={{ transform: 'rotate(180deg)', color: '#CBD5E1', fontSize: 20 }} />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: 22,
+                                  height: 22,
+                                  borderRadius: '6px',
+                                  border: `2px solid ${selected ? PINK : '#D1D5DB'}`,
+                                  bgcolor: selected ? PINK : 'transparent',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#fff',
+                                  fontSize: 14
+                                }}
+                              >
+                                {selected && '✓'}
+                              </Box>
+                            )}
+                          </Box>
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              )}
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2, bgcolor: '#F9FAFB' }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => setOpenRelatedModal(false)}
+            sx={{
+              bgcolor: PINK,
+              color: '#fff',
+              borderRadius: '14px',
+              py: 1.5,
+              fontWeight: 900,
+              textTransform: 'none',
+              boxShadow: `0 8px 20px ${alpha(PINK, 0.3)}`,
+              '&:hover': { bgcolor: '#D81B60', boxShadow: `0 10px 25px ${alpha(PINK, 0.4)}` }
+            }}
+          >
+            Confirm Selection ({relatedItems.length})
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
