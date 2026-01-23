@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -56,7 +56,8 @@ import {
   Cake as CakeIcon,
   WaterDrop as DripIcon,
   Inventory as BoxIcon,
-  Star as StarIcon
+  Star as StarIcon,
+  Storefront as TakeawayIcon
 } from '@mui/icons-material';
 import { styled, alpha } from '@mui/material/styles';
 import axios from 'axios';
@@ -175,7 +176,7 @@ const PremiumSelect = styled(Select)(({ theme }) => ({
 
 const HeroUploadBox = styled(Box)(({ theme, hasImage }) => ({
   width: '100%',
-  height: '380px',
+  height: '250px',
   borderRadius: '28px',
   border: hasImage ? 'none' : `3px dashed ${alpha(PINK, 0.15)}`,
   backgroundColor: hasImage ? 'transparent' : '#FAFAFA',
@@ -233,13 +234,13 @@ const PreviewImageSlot = styled(Box)(({ theme }) => ({
 }));
 
 const FeatureGroupBox = styled(Box)(({ theme }) => ({
-  padding: '32px',
+  padding: '20px',
   borderRadius: '24px',
   backgroundColor: '#FFFFFF',
   border: '1px solid rgba(0, 0, 0, 0.06)',
   position: 'relative',
   transition: 'all 0.3s ease',
-  height: '100%', // 🔥 makes all cards equal height
+  height: '100%',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'flex-start',
@@ -427,6 +428,19 @@ const AddCakePackage = () => {
   const [openRelatedModal, setOpenRelatedModal] = useState(false);
   const [drilldownCategory, setDrilldownCategory] = useState(null);
 
+  // Google Maps
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [map, setMap] = useState(null);
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
+  const [pickupLocation, setPickupLocation] = useState({
+    latitude: '',
+    longitude: '',
+    address: ''
+  });
+
   // Form State
   const [name, setName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
@@ -455,7 +469,7 @@ const AddCakePackage = () => {
 
   // Addons & Shipping
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [shipping, setShipping] = useState({ free: false, flatRate: true, price: '' });
+  const [shipping, setShipping] = useState({ free: false, flatRate: false, takeaway: false, takeawayLocation: '', price: '' });
 
   // Media
   const [thumbnail, setThumbnail] = useState(null);
@@ -492,6 +506,8 @@ const AddCakePackage = () => {
             setShipping({
               free: cake.shipping?.free || false,
               flatRate: cake.shipping?.flatRate || false,
+              takeaway: cake.shipping?.takeaway || false,
+              takeawayLocation: cake.shipping?.takeawayLocation || '',
               price: cake.shipping?.price || ''
             });
             if (cake.variations?.length)
@@ -502,8 +518,12 @@ const AddCakePackage = () => {
 
             // Load related items objects if they exist
             if (cake.relatedItems?.items?.length) {
-              setRelatedItems(cake.relatedItems.items.map((i) => i._id || i));
-              setSelectedRelatedObjects(cake.relatedItems.items);
+              const itemIds = cake.relatedItems.items.map((i) => i._id || i);
+              setRelatedItems(itemIds);
+
+              // Only set objects for items that are actually objects
+              const objects = cake.relatedItems.items.filter((i) => typeof i === 'object' && i !== null);
+              setSelectedRelatedObjects(objects);
               setRelatedLinkBy(cake.relatedItems.linkBy || 'product');
             }
           }
@@ -516,6 +536,117 @@ const AddCakePackage = () => {
     };
     loadInitialData();
   }, [id, isEditMode]);
+
+  useEffect(() => {
+    if (window.google?.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setMapsLoaded(true);
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        try {
+          document.head.removeChild(script);
+        } catch (e) {
+          console.error('Error removing map script');
+        }
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mapsLoaded && shipping.takeaway && window.google?.maps) {
+      initPickupMap();
+    }
+  }, [mapsLoaded, shipping.takeaway]);
+
+  const initPickupMap = useCallback(() => {
+    if (!window.google || !mapRef.current) return;
+
+    const center = {
+      lat: pickupLocation.latitude ? parseFloat(pickupLocation.latitude) : 25.2048,
+      lng: pickupLocation.longitude ? parseFloat(pickupLocation.longitude) : 55.2708
+    };
+
+    const newMap = new window.google.maps.Map(mapRef.current, {
+      zoom: 12,
+      center,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'off' }]
+        }
+      ]
+    });
+
+    newMap.addListener('click', (event) => {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+
+      setPickupLocation((prev) => ({
+        ...prev,
+        latitude: lat.toString(),
+        longitude: lng.toString()
+      }));
+
+      if (markerRef.current) markerRef.current.setMap(null);
+      markerRef.current = new window.google.maps.Marker({
+        position: { lat, lng },
+        map: newMap,
+        animation: window.google.maps.Animation.DROP
+      });
+
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          setPickupLocation((prev) => ({
+            ...prev,
+            address: results[0].formatted_address
+          }));
+          setShipping((prev) => ({ ...prev, takeawayLocation: results[0].formatted_address }));
+        }
+      });
+    });
+
+    setMap(newMap);
+
+    if (searchInputRef.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+        fields: ['geometry', 'formatted_address']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry?.location) return;
+
+        const loc = place.geometry.location;
+
+        if (markerRef.current) markerRef.current.setMap(null);
+        markerRef.current = new window.google.maps.Marker({
+          position: loc,
+          map: newMap,
+          animation: window.google.maps.Animation.DROP
+        });
+
+        setPickupLocation({
+          latitude: loc.lat().toString(),
+          longitude: loc.lng().toString(),
+          address: place.formatted_address
+        });
+
+        setShipping((prev) => ({ ...prev, takeawayLocation: place.formatted_address }));
+        newMap.setCenter(loc);
+        newMap.setZoom(17);
+      });
+    }
+  }, [pickupLocation.latitude, pickupLocation.longitude, shipping.takeaway]);
 
   useEffect(() => {
     const fetchAddons = async () => {
@@ -578,7 +709,8 @@ const AddCakePackage = () => {
         id: `new-${idx}`,
         name: combo.join(' - '),
         price: unitPrice || '',
-        image: null
+        image: null,
+        attributeValues: combo
       }))
     );
   };
@@ -813,8 +945,28 @@ const AddCakePackage = () => {
       )
     );
     formData.append('addons', JSON.stringify(selectedAddons));
-    formData.append('shipping', JSON.stringify(shipping));
+    formData.append(
+      'shipping',
+      JSON.stringify({
+        ...shipping,
+        pickupLatitude: pickupLocation.latitude,
+        pickupLongitude: pickupLocation.longitude
+      })
+    );
     formData.append('prepTime', prepTime);
+    formData.append('basePrice', unitPrice || 0);
+    formData.append('discountType', discountType);
+    formData.append('discountValue', discountValue || 0);
+
+    // Format attributes for backend: [{ name: 'Weight', values: [...] }, ...]
+    const formattedAttributes = Object.keys(attrValues)
+      .filter((key) => attrValues[key] && attrValues[key].length > 0)
+      .map((key) => ({
+        name: key,
+        values: attrValues[key]
+      }));
+    formData.append('attributes', JSON.stringify(formattedAttributes));
+
     formData.append(
       'relatedItems',
       JSON.stringify({
@@ -824,7 +976,27 @@ const AddCakePackage = () => {
       })
     );
 
-    const validVariants = variations.filter((v) => v.price).map((v) => ({ name: v.name, price: Number(v.price) }));
+    let variationFileIdx = 0;
+    const validVariants = variations
+      .filter((v) => v.price)
+      .map((v) => {
+        const variant = {
+          name: v.name,
+          price: Number(v.price),
+          attributeValues: v.attributeValues || []
+        };
+
+        if (v.image) {
+          if (typeof v.image === 'string') {
+            variant.image = v.image; // Keep existing image path
+          } else if (v.image instanceof File) {
+            variant.image = `VAR_FILE_${variationFileIdx}`;
+            formData.append('variationImages', v.image);
+            variationFileIdx++;
+          }
+        }
+        return variant;
+      });
     if (validVariants.length) formData.append('variations', JSON.stringify(validVariants));
     if (thumbnail) formData.append('thumbnail', thumbnail);
     galleryImages.forEach((img) => formData.append('images', img));
@@ -846,6 +1018,23 @@ const AddCakePackage = () => {
     }
   };
 
+  const handleTakeawayToggle = (checked) => {
+    let location = shipping.takeawayLocation;
+    if (checked && !location && currentVendor) {
+      const addr = currentVendor.storeAddress || currentVendor.address;
+      if (addr) {
+        if (typeof addr === 'string') {
+          location = addr;
+        } else {
+          location =
+            addr.fullAddress ||
+            `${addr.street ? addr.street + ', ' : ''}${addr.city ? addr.city + ', ' : ''}${addr.state || ''}`.trim().replace(/, *$/, '');
+        }
+      }
+    }
+    setShipping({ ...shipping, takeaway: checked, takeawayLocation: location });
+  };
+
   if (loading)
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -860,7 +1049,7 @@ const AddCakePackage = () => {
         <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}></Box>
       </Box>
 
-      <Box sx={{ maxWidth: '1200px', margin: '48px auto', px: 3 }}>
+      <Box sx={{ maxWidth: '100%', margin: '48px auto', px: { xs: 2, md: 4 } }}>
         {successMessage && (
           <Alert
             severity="success"
@@ -1140,7 +1329,7 @@ const AddCakePackage = () => {
                   gap: 1
                 }}
               >
-                <StarIcon sx={{ fontSize: 16, color: '#F59E0B' }} /> Primary Display Photo (Cover)
+                <StarIcon sx={{ fontSize: 16, color: '#F59E0B' }} /> Thumbnail
               </Typography>
 
               <HeroUploadBox hasImage={thumbnail || existingThumbnail} onClick={() => document.getElementById('thumb-in').click()}>
@@ -1825,7 +2014,7 @@ const AddCakePackage = () => {
                       }}
                     >
                       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 900, color: isAddonActive ? '#111827' : '#374151' }}>
+                        <Typography sx={{ fontWeight: 900, fontSize: '16px', color: isAddonActive ? '#111827' : '#374151' }}>
                           {addon.title}
                         </Typography>
                         <Checkbox
@@ -1874,9 +2063,21 @@ const AddCakePackage = () => {
                                   }
                                 }}
                               >
-                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#374151', fontSize: '13px' }}>
-                                  {variant.name}
-                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Checkbox
+                                    size="small"
+                                    checked={isVariantSelected}
+                                    disableRipple
+                                    sx={{
+                                      p: 0,
+                                      color: '#CBD5E1',
+                                      '&.Mui-checked': { color: PINK }
+                                    }}
+                                  />
+                                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#374151', fontSize: '13px' }}>
+                                    {variant.name}
+                                  </Typography>
+                                </Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1926,17 +2127,17 @@ const AddCakePackage = () => {
 
         {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
         <PremiumCard>
-          <StyledSectionTitle>Delivery & Logistics</StyledSectionTitle>
+          <StyledSectionTitle>Shipping</StyledSectionTitle>
           <StyledSectionSubtitle>Ensure your cake arrives safely with precise delivery controls.</StyledSectionSubtitle>
 
           <Grid container spacing={4}>
-            {/* Complimentary Delivery */}
-            <Grid item xs={12} md={6}>
+            {/* Delivery Master Toggle */}
+            <Grid item xs={12}>
               <Box
                 sx={{
-                  p: 4,
+                  p: 3.5,
                   borderRadius: '24px',
-                  border: '2px solid #F3F4F6',
+                  border: `2px solid ${shipping.free ? PINK : '#F3F4F6'}`,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -1947,128 +2148,226 @@ const AddCakePackage = () => {
                   }
                 }}
               >
-                <Stack direction="row" spacing={3} alignItems="center">
-                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
+                <Stack direction="row" spacing={2.5} alignItems="center">
+                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 1.5, borderRadius: '14px' }}>
                     <ShippingIcon sx={{ color: PINK }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 900 }}>Complimentary Delivery</Typography>
+                    <Typography sx={{ fontWeight: 900, fontSize: '15px' }}>Home Delivery</Typography>
                     <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                      Free for the customer
+                      {shipping.free
+                        ? shipping.flatRate
+                          ? 'Paid Delivery Enabled'
+                          : 'Complimentary Delivery Enabled'
+                        : 'Enable Doorstep Delivery'}
                     </Typography>
                   </Box>
                 </Stack>
 
                 <Switch checked={shipping.free} onChange={(e) => setShipping({ ...shipping, free: e.target.checked })} />
               </Box>
-            </Grid>
 
-            {/* Standard Flat Rate + Redesigned Amount */}
-            <Grid item xs={12} md={6}>
-              <Grid container spacing={3} alignItems="center">
-                {/* Flat rate card */}
-                <Grid item xs={12} md={shipping.flatRate ? 7 : 12}>
+              {/* Conditional Delivery Options */}
+              {shipping.free && (
+                <Stack spacing={3} sx={{ mt: 3 }}>
                   <Box
                     sx={{
-                      p: 4,
-                      borderRadius: '24px',
+                      p: 3,
+                      borderRadius: '22px',
                       border: `2px solid ${shipping.flatRate ? PINK : '#F3F4F6'}`,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        borderColor: PINK,
-                        bgcolor: alpha(PINK, 0.01)
-                      }
+                      bgcolor: shipping.flatRate ? alpha(PINK, 0.02) : '#fff'
                     }}
                   >
-                    <Stack direction="row" spacing={3} alignItems="center">
-                      <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 2, borderRadius: '16px' }}>
-                        <PaymentsIcon sx={{ color: PINK }} />
-                      </Box>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <PaymentsIcon sx={{ color: PINK, fontSize: 20 }} />
                       <Box>
-                        <Typography sx={{ fontWeight: 900 }}>Standard Flat Rate</Typography>
-                        <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                          Fixed cost per delivery
-                        </Typography>
+                        <Typography sx={{ fontWeight: 800, fontSize: '14px' }}>Standard Flat Rate</Typography>
+                        <Typography variant="caption">Charge customer for delivery</Typography>
                       </Box>
                     </Stack>
-
-                    <Switch checked={shipping.flatRate} onChange={(e) => setShipping({ ...shipping, flatRate: e.target.checked })} />
+                    <Switch
+                      size="small"
+                      checked={shipping.flatRate}
+                      onChange={(e) =>
+                        setShipping({ ...shipping, flatRate: e.target.checked, price: e.target.checked ? shipping.price : 0 })
+                      }
+                    />
                   </Box>
-                </Grid>
 
-                {/* Redesigned Amount Field – OUTSIDE */}
-                {shipping.flatRate && (
-                  <Grid item xs={12} md={5}>
-                    <Box
-                      sx={{
-                        p: 3,
-                        borderRadius: '22px',
-                        background: `linear-gradient(135deg, ${alpha(PINK, 0.06)}, #ffffff)`,
-                        border: `1.5px solid ${alpha(PINK, 0.25)}`,
-                        boxShadow: `0 10px 30px ${alpha(PINK, 0.12)}`,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: `0 14px 40px ${alpha(PINK, 0.18)}`
-                        }
+                  {shipping.flatRate && (
+                    <PremiumTextField
+                      fullWidth
+                      label="Flat Rate amount"
+                      placeholder="0.00"
+                      value={shipping.price}
+                      onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
+                      InputProps={{
+                        startAdornment: <Typography sx={{ mr: 1, fontWeight: 700, color: '#9CA3AF' }}>₹</Typography>
                       }}
-                    >
+                    />
+                  )}
+                </Stack>
+              )}
+            </Grid>
+
+            {/* Takeaway Master Toggle */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  p: 3.5,
+                  borderRadius: '24px',
+                  border: `2px solid ${shipping.takeaway ? PINK : '#F3F4F6'}`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: PINK,
+                    bgcolor: alpha(PINK, 0.01)
+                  }
+                }}
+              >
+                <Stack direction="row" spacing={2.5} alignItems="center">
+                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 1.5, borderRadius: '14px' }}>
+                    <TakeawayIcon sx={{ color: PINK }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 900, fontSize: '15px' }}>Takeaway / Pickup</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                      Allow customer to collect from store
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Switch checked={shipping.takeaway} onChange={(e) => handleTakeawayToggle(e.target.checked)} />
+              </Box>
+            </Grid>
+
+            {/* FULL WIDTH MAP & LOCATION SECTION */}
+            {shipping.takeaway && (
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: { xs: 2, md: 4 },
+                    borderRadius: '24px',
+                    bgcolor: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <Stack spacing={3}>
+                    {/* Search Location */}
+                    <Box>
                       <Typography
-                        variant="caption"
                         sx={{
-                          fontWeight: 900,
-                          color: '#6B7280',
-                          letterSpacing: '1px',
+                          mb: 1.5,
+                          fontWeight: 800,
+                          color: '#374151',
                           textTransform: 'uppercase',
-                          mb: 1,
-                          display: 'block'
+                          fontSize: '11px',
+                          letterSpacing: '1px'
                         }}
                       >
-                        Flat Rate Amount
+                        Search Pickup Location
                       </Typography>
+                      <PremiumTextField fullWidth inputRef={searchInputRef} placeholder="Search for your store location or landmark..." />
+                    </Box>
 
+                    {/* Instruction */}
+                    <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <InfoIcon fontSize="small" sx={{ color: PINK }} />
+                      Click on the map to pin the exact pickup location for customers
+                    </Typography>
+
+                    {/* Google Map */}
+                    {mapsLoaded ? (
+                      <Box
+                        ref={mapRef}
+                        sx={{
+                          height: 400,
+                          width: '100%',
+                          borderRadius: '20px',
+                          border: '1px solid #E5E7EB',
+                          overflow: 'hidden',
+                          boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)'
+                        }}
+                      />
+                    ) : (
                       <Box
                         sx={{
+                          height: 400,
                           display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
-                          gap: 1.5
+                          justifyContent: 'center',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '20px',
+                          bgcolor: '#F9FAFB'
                         }}
                       >
-                        {/* Currency badge */}
-                        <Box
+                        <CircularProgress sx={{ color: PINK, mb: 2 }} />
+                        <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>Initializing Map Engine...</Typography>
+                      </Box>
+                    )}
+
+                    {/* Coordinates & Address */}
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <Stack direction="row" spacing={2}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ mb: 1, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px' }}>
+                              Latitude
+                            </Typography>
+                            <PremiumTextField
+                              value={pickupLocation.latitude}
+                              onChange={(e) => setPickupLocation((p) => ({ ...p, latitude: e.target.value }))}
+                              placeholder="0.0000"
+                              disabled
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ mb: 1, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px' }}>
+                              Longitude
+                            </Typography>
+                            <PremiumTextField
+                              value={pickupLocation.longitude}
+                              onChange={(e) => setPickupLocation((p) => ({ ...p, longitude: e.target.value }))}
+                              placeholder="0.0000"
+                              disabled
+                            />
+                          </Box>
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography
                           sx={{
-                            px: 2,
-                            py: 1,
-                            borderRadius: '12px',
-                            bgcolor: alpha(PINK, 0.15),
-                            color: PINK,
-                            fontWeight: 900,
-                            fontSize: '16px'
+                            mb: 1,
+                            fontWeight: 800,
+                            color: '#374151',
+                            textTransform: 'uppercase',
+                            fontSize: '11px',
+                            letterSpacing: '1px'
                           }}
                         >
-                          ₹
-                        </Box>
-
-                        {/* Input */}
+                          Final Pickup Address
+                        </Typography>
                         <PremiumTextField
-                          value={shipping.price}
-                          onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
-                          placeholder="0.00"
-                          sx={{
-                            flex: 1,
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#fff'
-                            }
-                          }}
+                          multiline
+                          rows={2}
+                          value={shipping.takeawayLocation}
+                          onChange={(e) => setShipping({ ...shipping, takeawayLocation: e.target.value })}
+                          placeholder="Pin on map or type full address here..."
                         />
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </Box>
               </Grid>
-            </Grid>
+            )}
           </Grid>
         </PremiumCard>
 
@@ -2201,12 +2500,18 @@ const AddCakePackage = () => {
 
           {relatedItems.length > 0 && (
             <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px' }}
+              >
                 Selected Items ({relatedItems.length})
               </Typography>
               <Grid container spacing={2}>
                 {relatedItems.map((id) => {
-                  const item = selectedRelatedObjects.find((x) => x._id === id) || relatedOptions.find((x) => x._id === id) || categories.find((x) => x._id === id);
+                  const item =
+                    selectedRelatedObjects.find((x) => x._id === id) ||
+                    relatedOptions.find((x) => x._id === id) ||
+                    categories.find((x) => x._id === id);
 
                   if (!item) return null;
 
@@ -2241,7 +2546,10 @@ const AddCakePackage = () => {
                           }}
                         >
                           <img
-                            src={item.thumbnail || (item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`) : '/placeholder.png')}
+                            src={
+                              item.thumbnail ||
+                              (item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`) : '/placeholder.png')
+                            }
                             alt=""
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
@@ -2258,7 +2566,7 @@ const AddCakePackage = () => {
                             {item.name || item.title}
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                            {item.price ? `₹${item.price}` : (item.module?.title || 'Related')}
+                            {item.price ? `₹${item.price}` : item.module?.title || 'Related'}
                           </Typography>
                         </Box>
                         <IconButton
@@ -2350,7 +2658,9 @@ const AddCakePackage = () => {
               </IconButton>
             )}
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              {drilldownCategory ? `Packages in ${drilldownCategory.title}` : `Select ${relatedLinkBy === 'product' ? 'Products' : 'Categories'}`}
+              {drilldownCategory
+                ? `Packages in ${drilldownCategory.title}`
+                : `Select ${relatedLinkBy === 'product' ? 'Products' : 'Categories'}`}
             </Typography>
           </Box>
           <IconButton onClick={() => setOpenRelatedModal(false)} size="small">
@@ -2499,9 +2809,7 @@ const AddCakePackage = () => {
 
                           {/* ACTION AREA */}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {item.price && (
-                              <Typography sx={{ fontWeight: 900, color: PINK, mr: 1 }}>₹{item.price}</Typography>
-                            )}
+                            {item.price && <Typography sx={{ fontWeight: 900, color: PINK, mr: 1 }}>₹{item.price}</Typography>}
                             {isItemCategory ? (
                               <ArrowBackIcon sx={{ transform: 'rotate(180deg)', color: '#CBD5E1', fontSize: 20 }} />
                             ) : (
