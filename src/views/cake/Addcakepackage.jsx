@@ -2437,9 +2437,7 @@ const AddCakePackage = () => {
           </Box>
         </PremiumCard>
 
-        {/* 🤝 SECTION 7: FREQUENTLY BOUGHT TOGETHER */}
-        <PremiumCard sx={{ mb: 8 }}>
-          {/* Header */}
+        {/* <PremiumCard sx={{ mb: 8 }}>
           <Box sx={{ mb: 4 }}>
             <Typography
               sx={{
@@ -2465,7 +2463,6 @@ const AddCakePackage = () => {
             </Typography>
           </Box>
 
-          {/* Selection Type */}
           <Box
             sx={{
               p: 3,
@@ -2484,8 +2481,8 @@ const AddCakePackage = () => {
               value={relatedLinkBy}
               onChange={(e) => {
                 setRelatedLinkBy(e.target.value);
-                setRelatedItems([]); // reset selection
-                setRelatedOptions([]); // reset data
+                setRelatedItems([]); 
+                setRelatedOptions([]); 
               }}
             >
               <FormControlLabel
@@ -2504,7 +2501,7 @@ const AddCakePackage = () => {
 
           <Box
             onClick={() => {
-              fetchRelatedOptions(); // ✅ FETCH DATA
+              fetchRelatedOptions(); 
               setOpenRelatedModal(true);
             }}
             sx={{
@@ -2640,8 +2637,10 @@ const AddCakePackage = () => {
             </Box>
           )}
 
-          {/* ✅ FINAL ACTION BAR */}
-          <Box
+         
+        </PremiumCard> */}
+
+         <Box
             sx={{
               mt: 6,
               pt: 4,
@@ -2695,9 +2694,7 @@ const AddCakePackage = () => {
               {submitting ? <CircularProgress size={24} color="inherit" /> : 'Publish Package'}
             </Button>
           </Box>
-        </PremiumCard>
       </Box>
-      {/* 🔽 ADD RELATED ITEM MODAL HERE */}
       <Dialog open={openRelatedModal} onClose={() => setOpenRelatedModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2803,7 +2800,6 @@ const AddCakePackage = () => {
                             }
                           }}
                         >
-                          {/* IMAGE */}
                           <Box
                             sx={{
                               width: 60,
@@ -2831,7 +2827,6 @@ const AddCakePackage = () => {
                             />
                           </Box>
 
-                          {/* DETAILS */}
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                               noWrap
@@ -2856,7 +2851,6 @@ const AddCakePackage = () => {
                             </Typography>
                           </Box>
 
-                          {/* ACTION AREA */}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {item.price && <Typography sx={{ fontWeight: 900, color: PINK, mr: 1 }}>₹{item.price}</Typography>}
                             {isItemCategory ? (
