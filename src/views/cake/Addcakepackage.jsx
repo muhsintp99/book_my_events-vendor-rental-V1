@@ -1045,11 +1045,60 @@ const AddCakePackage = () => {
   return (
     <Box sx={{ bgcolor: '#FDFDFF', minHeight: '100vh', pb: 10 }}>
       {/* 🚀 STICKY HEADER AREA */}
+      {/* 🧁 PAGE HEADER */}
+<Box
+  sx={{
+    bgcolor: '#ffffff',
+    borderRadius: '16px',
+    px: { xs: 2, md: 4 },
+    py: 3,
+    mb: 4,
+    border: '1px solid #E5E7EB'
+  }}
+>
+  <Stack direction="row" spacing={2} alignItems="center">
+    {/* Back Button */}
+    <IconButton
+      onClick={() => navigate(-1)}
+      sx={{
+        bgcolor: '#F3F4F6',
+        '&:hover': { bgcolor: '#E5E7EB' }
+      }}
+    >
+      <ArrowBackIcon />
+    </IconButton>
+
+    {/* Title + Subtitle */}
+    <Box>
+      <Typography
+        sx={{
+          fontSize: '20px',
+          fontWeight: 900,
+          color: '#111827'
+        }}
+      >
+        Add Cake Package
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: '14px',
+          color: '#6B7280',
+          fontWeight: 600,
+          mt: 0.5
+        }}
+      >
+        Creating as: {currentVendor?.firstName || currentVendor?.name || 'Vendor'}
+      </Typography>
+    </Box>
+  </Stack>
+</Box>
+
       <Box>
         <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}></Box>
       </Box>
 
-      <Box sx={{ maxWidth: '100%', margin: '48px auto', px: { xs: 2, md: 4 } }}>
+      <Box sx={{ width: '100%', margin: '48px auto', px: { xs: 2, md: 4 } }}>
         {successMessage && (
           <Alert
             severity="success"
@@ -1309,7 +1358,7 @@ const AddCakePackage = () => {
 
         {/* 🖼️ SECTION 2: HIGH-FIDELITY MEDIA GALLERY */}
         <PremiumCard>
-          <StyledSectionTitle>Media & Show Reels</StyledSectionTitle>
+          <StyledSectionTitle>Gallery </StyledSectionTitle>
           <StyledSectionSubtitle>High-resolution captures significantly increase conversion rates.</StyledSectionSubtitle>
 
           <Stack spacing={5}>
@@ -2316,7 +2365,7 @@ const AddCakePackage = () => {
 
                     {/* Coordinates & Address */}
                     <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12}>
                         <Stack direction="row" spacing={2}>
                           <Box sx={{ flex: 1 }}>
                             <Typography sx={{ mb: 1, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px' }}>
@@ -2342,7 +2391,7 @@ const AddCakePackage = () => {
                           </Box>
                         </Stack>
                       </Grid>
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12}>
                         <Typography
                           sx={{
                             mb: 1,
@@ -2373,7 +2422,7 @@ const AddCakePackage = () => {
 
         {/* 🏷️ SECTION 6: SEARCH ENGINE OPTIMIZATION */}
         <PremiumCard>
-          <StyledSectionTitle>Optimization & Search Visibility</StyledSectionTitle>
+          <StyledSectionTitle>Tags</StyledSectionTitle>
           <StyledSectionSubtitle>Boost discoverability with targeted keywords and meta-tags.</StyledSectionSubtitle>
           <Box>
             <Typography variant="body2" sx={{ mb: 2, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1.5 }}>

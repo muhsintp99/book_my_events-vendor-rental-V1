@@ -168,7 +168,21 @@ const Cakecategories = Loadable(lazy(() => import('../views/cake/Categories')));
 const Cakeaddons = Loadable(lazy(() => import('../views/cake/Add-ons.jsx')));
 
 
+// ornamnets//////////////////
 
+const AddornamentsPackage = Loadable(lazy(() => import('../views/ornaments/Addornaments.jsx')));
+const Ornamentslist = Loadable(lazy(() => import('../views/ornaments/Ornamentslist.jsx')));
+const Ornamentsupgrade = Loadable(lazy(() => import('../views/ornaments/Ornamnetsupgrade.jsx')));
+const Ornamentsenquiry = Loadable(lazy(() => import('../views/ornaments/Ornamentsenquiries.jsx')));
+const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/EnquiryChatPage.jsx')));
+const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
+const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
+
+const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
+const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
+const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
+const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamnetscompleted.jsx')));
+const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Ornamentscancelled.jsx')));
 
 
 
@@ -334,6 +348,13 @@ const MainRoutes = {
             { path: 'completedcake', element: <CakeCompleted /> },
             { path: 'cancelledcake', element: <CakeCancelled /> },
             // { path: 'paymentfailedcake', element: <CPaymentFailed /> }
+
+             // ornaments BOOKINGS///////////////
+            { path: 'allornaments', element: <Allornaments /> },
+            { path: 'pendingornaments', element: <OrnamentsPending /> },
+            { path: 'ornamentsconfirmed', element: <OrnamentsConfirmed /> },
+            { path: 'completedornaments', element: <OrnamentsCompleted /> },
+            { path: 'cancelledornaments', element: <OrnamentsCancelled /> },
           ]
         },
 
@@ -430,6 +451,22 @@ const MainRoutes = {
             { path: 'schedules', element: <CakeSchedules /> },
             { path: 'categories', element: <Cakecategories /> },
             { path: 'Addons', element: <Cakeaddons/> }
+
+
+          ]
+        },
+
+
+         {
+          path: 'ornaments',
+          children: [
+            { path: 'addpackage', element: <AddornamentsPackage/> },
+            { path: 'packagelist', element: <Ornamentslist /> },
+            { path: 'upgrade', element: <Ornamentsupgrade /> },
+            { path: 'enquiry', element: <Ornamentsenquiry /> },
+            { path: 'Enqurychat', element: <Ornamentsenquirychat /> },
+            { path: 'schedules', element: <OrnamentsSchedules /> },
+            { path: 'categories', element: <Ornamentscategories /> },
 
 
           ]

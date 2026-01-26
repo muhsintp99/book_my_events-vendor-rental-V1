@@ -8,6 +8,7 @@ import CateringIndex from '../../../cateringdashboard';
 import MakeupIndex from '../../../makeupdashboard';
 import PhotographyIndex from '../../../photographydashboard';
 import CakeIndex from '../../../cakedashboard';
+import OrnamentsIndex from '../../../ornamentsdashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -37,11 +38,15 @@ export default function Dashboard() {
 
   // ================= DASHBOARD RENDER =================
   const renderDashboard = () => {
-    if (Module === 'Transport') return <VehicleIndex isLoading={isLoading} />;
-    if (Module === 'Catering') return <CateringIndex isLoading={isLoading} />;
-    if (Module === 'Makeup Artist') return <MakeupIndex isLoading={isLoading} />;
-    if (Module === 'Photography') return <PhotographyIndex isLoading={isLoading} />;
-    if (Module === 'Cake') return <CakeIndex isLoading={isLoading} />;
+    const activeModule = (Module || '').trim();
+    console.log('Dashboard Module Identified:', activeModule);
+
+    if (activeModule.toLowerCase() === 'transport') return <VehicleIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase() === 'catering') return <CateringIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase() === 'makeup artist' || activeModule.toLowerCase() === 'makeup') return <MakeupIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase() === 'photography') return <PhotographyIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase() === 'cake') return <CakeIndex isLoading={isLoading} />;
+    if (['ornaments', 'ornament'].includes(activeModule.toLowerCase())) return <OrnamentsIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

@@ -128,6 +128,9 @@ import cakemanagement from './cakes/cakemanagement';
 import Cakesection from './cakes/cakesections';
 import cakeManagementMenu from './cakes/managementcake';
 import tripmanagement from './vendors/tripmanagement';
+import ornamentsManagementMenu from './ornaments/managementornaments';
+import ornamentsmanagement from './ornaments/ornamentsmanagement';
+import ornamentsection from './ornaments/ornamentssections';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -168,7 +171,10 @@ if (logRes === 'transport') {
 }else if (logRes === 'cake') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
     specificSections = [cakeManagementMenu,cakemanagement];
-
+}
+else if (logRes === 'ornaments') {
+  // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
+    specificSections = [ornamentsManagementMenu,ornamentsmanagement];
 }
 
 const menuItems = {
