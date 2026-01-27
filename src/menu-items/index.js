@@ -131,6 +131,8 @@ import tripmanagement from './vendors/tripmanagement';
 import ornamentsManagementMenu from './ornaments/managementornaments';
 import ornamentsmanagement from './ornaments/ornamentsmanagement';
 import ornamentsection from './ornaments/ornamentssections';
+import boutiqueManagementMenu from './boutique/managementboutique';
+import boutiquemanagement from './boutique/boutiquemanagement';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '')
@@ -176,6 +178,11 @@ else if (logRes === 'ornaments') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
     specificSections = [ornamentsManagementMenu,ornamentsmanagement];
 }
+else if (logRes === 'boutique') {
+  // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
+    specificSections = [boutiqueManagementMenu,boutiquemanagement];
+}
+
 
 const menuItems = {
   items: [

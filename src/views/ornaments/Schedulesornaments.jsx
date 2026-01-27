@@ -95,13 +95,14 @@ function BookingCalendar() {
 
   const providerId = getProviderId();
 
-  useEffect(() => {
-    if (providerId) {
-      fetchBookings();
-      fetchModules();
-      fetchMakeupPackages(); // ✅ ADD THIS LINE
-    }
-  }, [currentDate, providerId]);
+ useEffect(() => {
+  if (providerId) {
+    fetchBookings();
+    fetchModules();
+    fetchOrnamentPackages();
+  }
+}, [currentDate, providerId]);
+
 
 
   // Auto-select module if only one is available
@@ -182,11 +183,11 @@ function BookingCalendar() {
 
       // Filter modules: Only show "Venues" module by default
       // Or filter by modules that this provider has venues for
-      const filteredModules = modulesList.filter(module => {
-        const moduleTitle = (module.title || module.name || '').toLowerCase();
-        // Only show Venues module (you can adjust this logic)
-        return moduleTitle === 'makeup artist';
-      });
+    const filteredModules = modulesList.filter(module => {
+  const moduleTitle = (module.title || module.name || '').toLowerCase();
+  return moduleTitle.includes('ornaments');
+});
+
 
       console.log('Filtered modules for provider:', filteredModules);
       setModules(filteredModules);
@@ -201,23 +202,24 @@ function BookingCalendar() {
     }
   };
 
-  const fetchMakeupPackages = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/makeup-packages/provider/${providerId}`
-      );
-      const data = await response.json();
+ const fetchOrnamentPackages = async () => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/ornaments/provider/${providerId}`
+    );
+    const data = await response.json();
 
-      if (data.success) {
-        setPackages(data.data || []);
-      } else {
-        setPackages([]);
-      }
-    } catch (err) {
-      console.error('Fetch makeup packages error:', err);
+    if (data.success) {
+      setPackages(data.data || []);
+    } else {
       setPackages([]);
     }
-  };
+  } catch (err) {
+    console.error('Fetch ornaments packages error:', err);
+    setPackages([]);
+  }
+};
+
 
 
   const handleDeleteBooking = async (bookingId) => {
@@ -527,7 +529,7 @@ function BookingCalendar() {
       // ✅ BUILD PAYLOAD (optional fields only if filled)
       const bookingData = {
         moduleId: formData.moduleId,
-        makeupId: formData.packageId,
+ornamentPackageId: formData.packageId,
         fullName: formData.fullName,
         contactNumber: formData.contactNumber,
         bookingDate: formData.bookingDate,

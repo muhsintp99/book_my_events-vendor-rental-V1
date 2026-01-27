@@ -205,7 +205,7 @@ export default function OrnamentsList() {
     <Box sx={{ bgcolor: '#F7FAFC', minHeight: '100vh', pb: 8 }}>
       {/* Premium Gradient Header */}
       <Box sx={{
-        background: `linear-gradient(135deg, ${THEME_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
+background: 'linear-gradient(135deg, #ece6f5 0%, #a44c7a 100%)',
         color: 'white',
         pt: 6,
         pb: 12,
@@ -220,7 +220,7 @@ export default function OrnamentsList() {
           right: '-10%',
           width: '300px',
           height: '300px',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
           borderRadius: '50%'
         }
       }}>

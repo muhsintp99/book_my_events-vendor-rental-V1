@@ -510,6 +510,14 @@ const AddCakePackage = () => {
               takeawayLocation: cake.shipping?.takeawayLocation || '',
               price: cake.shipping?.price || ''
             });
+
+            if (cake.shipping?.pickupLatitude && cake.shipping?.pickupLongitude) {
+              setPickupLocation({
+                latitude: cake.shipping.pickupLatitude.toString(),
+                longitude: cake.shipping.pickupLongitude.toString(),
+                address: cake.shipping.takeawayLocation || ''
+              });
+            }
             if (cake.variations?.length)
               setVariations(cake.variations.map((v, idx) => ({ id: v._id || `old-${idx}`, name: v.name, price: v.price, image: v.image })));
             setSelectedAddons(cake.addons || []);
@@ -1045,55 +1053,6 @@ const AddCakePackage = () => {
   return (
     <Box sx={{ bgcolor: '#FDFDFF', minHeight: '100vh', pb: 10 }}>
       {/* 🚀 STICKY HEADER AREA */}
-      {/* 🧁 PAGE HEADER */}
-<Box
-  sx={{
-    bgcolor: '#ffffff',
-    borderRadius: '16px',
-    px: { xs: 2, md: 4 },
-    py: 3,
-    mb: 4,
-    border: '1px solid #E5E7EB'
-  }}
->
-  <Stack direction="row" spacing={2} alignItems="center">
-    {/* Back Button */}
-    <IconButton
-      onClick={() => navigate(-1)}
-      sx={{
-        bgcolor: '#F3F4F6',
-        '&:hover': { bgcolor: '#E5E7EB' }
-      }}
-    >
-      <ArrowBackIcon />
-    </IconButton>
-
-    {/* Title + Subtitle */}
-    <Box>
-      <Typography
-        sx={{
-          fontSize: '20px',
-          fontWeight: 900,
-          color: '#111827'
-        }}
-      >
-        Add Cake Package
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: '14px',
-          color: '#6B7280',
-          fontWeight: 600,
-          mt: 0.5
-        }}
-      >
-        Creating as: {currentVendor?.firstName || currentVendor?.name || 'Vendor'}
-      </Typography>
-    </Box>
-  </Stack>
-</Box>
-
       <Box>
         <Box sx={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}></Box>
       </Box>
@@ -2639,8 +2598,8 @@ const AddCakePackage = () => {
 
          
         </PremiumCard> */}
-
-         <Box
+         {/* ✅ FINAL ACTION BAR */}
+          <Box
             sx={{
               mt: 6,
               pt: 4,
@@ -2695,6 +2654,7 @@ const AddCakePackage = () => {
             </Button>
           </Box>
       </Box>
+      {/* 🔽 ADD RELATED ITEM MODAL HERE */}
       <Dialog open={openRelatedModal} onClose={() => setOpenRelatedModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2800,6 +2760,7 @@ const AddCakePackage = () => {
                             }
                           }}
                         >
+                          {/* IMAGE */}
                           <Box
                             sx={{
                               width: 60,
@@ -2827,6 +2788,7 @@ const AddCakePackage = () => {
                             />
                           </Box>
 
+                          {/* DETAILS */}
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                               noWrap
@@ -2851,6 +2813,7 @@ const AddCakePackage = () => {
                             </Typography>
                           </Box>
 
+                          {/* ACTION AREA */}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {item.price && <Typography sx={{ fontWeight: 900, color: PINK, mr: 1 }}>₹{item.price}</Typography>}
                             {isItemCategory ? (

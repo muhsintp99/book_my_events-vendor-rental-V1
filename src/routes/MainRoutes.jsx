@@ -186,6 +186,22 @@ const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Orname
 
 
 
+
+const AddboutiquePackage = Loadable(lazy(() => import('../views/Boutique/Addboutique.jsx')));
+const Boutiquelist = Loadable(lazy(() => import('../views/Boutique/Boutiquelist.jsx')));
+const Boutiqueupgrade = Loadable(lazy(() => import('../views/Boutique/Boutiqueupgrade.jsx')));
+const Boutiqueenquiry = Loadable(lazy(() => import('../views/Boutique/Boutiqueenquiries.jsx')));
+const Boutiqueenquirychat = Loadable(lazy(() => import('../views/Boutique/EnquiryChatPage.jsx')));
+const BoutiqueSchedules = Loadable(lazy(() => import('../views/Boutique/Schedulesboutique.jsx')));
+const Boutiquecategories = Loadable(lazy(() => import('../views/Boutique/Categories.jsx')));
+
+const Allboutique = Loadable(lazy(() => import('../views/Boutique/Allboutique.jsx')));
+const BoutiquePending = Loadable(lazy(() => import('../views/Boutique/Boutiquepending.jsx')));
+const BoutiqueConfirmed = Loadable(lazy(() => import('../views/Boutique/Boutiqueconfirmed.jsx')));
+const BoutiqueCompleted = Loadable(lazy(() => import('../views/Boutique/Boutiquecompleted.jsx')));
+const BoutiqueCancelled = Loadable(lazy(() => import('../views/Boutique/Boutiquecancelled.jsx')));
+
+
 const Allcake = Loadable(lazy(() => import('../views/cake/Allcake')));
 const CakePending = Loadable(lazy(() => import('../views/cake/Cakepending')));
 const CakeConfirmed = Loadable(lazy(() => import('../views/cake/Cakeconfirmed')));
@@ -355,6 +371,14 @@ const MainRoutes = {
             { path: 'ornamentsconfirmed', element: <OrnamentsConfirmed /> },
             { path: 'completedornaments', element: <OrnamentsCompleted /> },
             { path: 'cancelledornaments', element: <OrnamentsCancelled /> },
+
+
+               // boutique BOOKINGS///////////////
+            { path: 'allboutique', element: <Allboutique /> },
+            { path: 'pendingboutique', element: <BoutiquePending /> },
+            { path: 'boutiqueconfirmed', element: <BoutiqueConfirmed /> },
+            { path: 'completedboutique', element: <BoutiqueCompleted /> },
+            { path: 'cancelledboutique', element: <BoutiqueCancelled /> },
           ]
         },
 
@@ -468,6 +492,21 @@ const MainRoutes = {
             { path: 'Enqurychat', element: <Ornamentsenquirychat /> },
             { path: 'schedules', element: <OrnamentsSchedules /> },
             { path: 'categories', element: <Ornamentscategories /> },
+
+
+          ]
+        },
+        {
+          path: 'boutique',
+          children: [
+            { path: 'addpackage', element: <AddboutiquePackage /> },
+            { path: 'edit/:id', element: <AddboutiquePackage /> },
+            { path: 'packagelist', element: <Boutiquelist /> },
+            { path: 'upgrade', element: <Boutiqueupgrade /> },
+            { path: 'enquiry', element: <Boutiqueenquiry /> },
+            { path: 'Enqurychat', element: <Boutiqueenquirychat /> },
+            { path: 'schedules', element: <BoutiqueSchedules /> },
+            { path: 'categories', element: <Boutiquecategories /> },
 
 
           ]
