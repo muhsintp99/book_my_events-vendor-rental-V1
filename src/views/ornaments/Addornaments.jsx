@@ -25,7 +25,20 @@ import {
   CardContent,
   Checkbox,
   FormGroup,
-  FormControlLabel
+  FormControlLabel,
+  Divider,
+  Radio,
+  RadioGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 
 // MUI Icons
@@ -49,6 +62,8 @@ import EventIcon from '@mui/icons-material/Event';
 import PaletteIcon from '@mui/icons-material/Palette';
 import DiamondIcon from '@mui/icons-material/Diamond';
 import CategoryIcon from '@mui/icons-material/Category';
+import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import axios from 'axios';
 
@@ -104,6 +119,26 @@ const GradientButton = ({ children, ...props }) => (
   >
     {children}
   </Button>
+);
+
+const SubcategoryBadge = ({ label, color }) => (
+  <Box
+    sx={{
+      display: 'inline-flex',
+      px: 1.5,
+      py: 0.5,
+      borderRadius: '8px',
+      fontSize: '10px',
+      fontWeight: 800,
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      bgcolor: alpha(color, 0.1),
+      color: color,
+      border: `1px solid ${alpha(color, 0.2)}`
+    }}
+  >
+    {label}
+  </Box>
 );
 
 const OPTION_ICONS = {
@@ -307,6 +342,13 @@ const AddOrnaments = () => {
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${API_BASE}/${cleanPath}`;
+  };
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -346,12 +388,23 @@ const AddOrnaments = () => {
     selectedOccasions: [],
     selectedFeatures: [],
     suitableFor: [],
-    styleFeatures: ''
+    styleFeatures: '',
+    discountValue: '',
+    tags: []
   });
 
   const [termsSections, setTermsSections] = useState([{ heading: '', points: [''] }]);
   const [categories, setCategories] = useState([]);
   const [availableSubCategories, setAvailableSubCategories] = useState([]);
+
+  // Related Items State
+  const [relatedLinkBy, setRelatedLinkBy] = useState('product');
+  const [relatedItems, setRelatedItems] = useState([]);
+  const [selectedRelatedObjects, setSelectedRelatedObjects] = useState([]);
+  const [openRelatedModal, setOpenRelatedModal] = useState(false);
+  const [drilldownCategory, setDrilldownCategory] = useState(null);
+  const [relatedOptions, setRelatedOptions] = useState([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   // ========== OPTIONS ==========
   const unitOptions = ['Each', 'Set', 'Pair', 'Dozen', 'Gram', 'Kilogram'];
@@ -413,6 +466,87 @@ const AddOrnaments = () => {
         setFormData((prev) => ({ ...prev, rentalTotalPrice: rentalTotal.toFixed(2) }));
       }
     }
+  };
+
+  const fetchRelatedOptions = async () => {
+    try {
+      setLoadingRelated(true);
+      setDrilldownCategory(null);
+
+      const token = localStorage.getItem('token');
+      const providerId = currentVendor?._id || currentVendor?.id;
+
+      let url = '';
+
+      if (relatedLinkBy === 'product') {
+        if (!providerId) {
+          console.error('Provider ID missing');
+          return;
+        }
+        url = `${API_BASE}/api/ornaments?provider=${providerId}`;
+      } else {
+        // Fetch categories to allow drilldown/selection
+        url = `${API_BASE}/api/categories/parents/${ORNAMENTS_MODULE_ID}`;
+      }
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const options = res.data?.data || [];
+      setRelatedOptions(options);
+
+      // Cache info for already selected items
+      setSelectedRelatedObjects((prev) => {
+        const updated = [...prev];
+        options.forEach((opt) => {
+          const idx = updated.findIndex((x) => x._id === opt._id);
+          if (idx !== -1) updated[idx] = opt;
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to load related items', err);
+      setRelatedOptions([]);
+    } finally {
+      setLoadingRelated(false);
+    }
+  };
+
+  const handleCategoryClick = async (cat) => {
+    try {
+      setLoadingRelated(true);
+      setDrilldownCategory(cat);
+      const token = localStorage.getItem('token');
+      // Fetch ornaments for this specific category
+      const res = await axios.get(`${API_BASE}/api/ornaments?category=${cat._id}&limit=100`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const items = res.data?.data || [];
+      setRelatedOptions(items);
+
+      // Cache info
+      setSelectedRelatedObjects((prev) => {
+        const updated = [...prev];
+        items.forEach((c) => {
+          const idx = updated.findIndex((x) => x._id === c._id);
+          if (idx !== -1) updated[idx] = c;
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to load ornaments for category', err);
+      setRelatedOptions([]);
+    } finally {
+      setLoadingRelated(false);
+    }
+  };
+
+  const handleBackToCategories = () => {
+    setDrilldownCategory(null);
+    fetchRelatedOptions();
   };
 
   const handleThumbnailUpload = (e) => {
@@ -495,66 +629,74 @@ const AddOrnaments = () => {
         const { data } = await axios.get(`${API_BASE}/api/ornaments/${id}`);
         const product = data.data || data;
 
-        // Update form data from API response
+        // Map backend response to state
         setFormData({
-          productName: product.productName || '',
+          productName: product.name || '',
           description: product.description || '',
-          category: product.category || '',
-          subcategory: product.subcategory || '',
+          category: product.category?._id || product.category || '',
+          subcategory: product.subCategory?._id || product.subCategory || '',
           unit: product.unit || '',
           weight: product.weight || '',
           material: product.material || '',
           thumbnailImage: product.thumbnail || null,
           galleryImages: [],
-          existingGallery: product.gallery?.map((img) => `${API_BASE}${img}`) || [],
-          availabilityMode: product.availabilityMode || 'All',
-          availableForPurchase: product.availableForPurchase !== false,
-          availableForRental: product.availableForRental || false,
-          unitPrice: product.unitPrice || '',
-          discountType: product.discountType || 'None',
-          tax: product.tax || '',
-          totalPrice: product.totalPrice || '',
-          pricePerDay: product.pricePerDay || '',
-          minimumDays: product.minimumDays || '',
-          lateCharges: product.lateCharges || '',
-          rentalTotalPrice: product.rentalTotalPrice || '',
-          advanceForBooking: product.advanceForBooking || '',
-          damagePolicy: product.damagePolicy || '',
-          stockQuantity: product.stockQuantity || '',
-          lowStockAlert: product.lowStockAlert || '',
-          freeShipping: product.freeShipping || false,
-          flatRateShipping: product.flatRateShipping || false,
-          shippingPrice: product.shippingPrice || '',
-          selectedOccasions: product.selectedOccasions || [],
-          selectedFeatures: product.selectedFeatures || [],
-          suitableFor: product.suitableFor || [],
-          styleFeatures: product.styleFeatures || ''
+          existingGallery: product.galleryImages || [],
+          availabilityMode: product.availabilityMode === 'all' ? 'All' :
+            (product.availabilityMode === 'rental' ? 'Available For Rental' : 'Available For Purchase'),
+          availableForPurchase: product.availabilityMode !== 'rental',
+          availableForRental: product.availabilityMode !== 'purchase',
+          unitPrice: product.buyPricing?.unitPrice || '',
+          discountType: product.buyPricing?.discountType === 'none' ? 'None' :
+            (product.buyPricing?.discountType === 'percentage' ? 'Percentage' : 'Fixed Amount'),
+          tax: product.buyPricing?.tax || '',
+          totalPrice: product.buyPricing?.totalPrice || '',
+          pricePerDay: product.rentalPricing?.pricePerDay || '',
+          minimumDays: product.rentalPricing?.minimumDays || '',
+          lateCharges: product.rentalPricing?.lateCharges || '',
+          rentalTotalPrice: product.rentalPricing?.totalPrice || '',
+          advanceForBooking: product.rentalPricing?.advanceForBooking || '',
+          damagePolicy: product.rentalPricing?.damagePolicy || '',
+          stockQuantity: product.stock?.quantity || '',
+          lowStockAlert: product.stock?.lowStockAlert || '',
+          freeShipping: product.shipping?.freeShipping || false,
+          flatRateShipping: product.shipping?.flatRateShipping || false,
+          shippingPrice: product.shipping?.shippingPrice || '',
+          selectedOccasions: product.occasions || [],
+          selectedFeatures: product.features?.basicFeatures?.map(f => {
+            const map = {
+              'dailyWear': 'Daily Wear',
+              'casualOutings': 'Casual Outings'
+            };
+            return map[f] || (typeof f === 'string' ? (f.charAt(0).toUpperCase() + f.slice(1)) : f);
+          }) || [],
+          suitableFor: product.features?.suitableFor?.map(s => typeof s === 'string' ? (s.charAt(0).toUpperCase() + s.slice(1)) : s) || [],
+          styleFeatures: product.features?.style?.[0] ?
+            (typeof product.features.style[0] === 'string' ? (product.features.style[0].charAt(0).toUpperCase() + product.features.style[0].slice(1)) : '') : '',
+          discountValue: product.buyPricing?.discountValue || '',
+          tags: product.tags || []
         });
 
-        // Fetch subcategories for existing category in edit mode
-        if (product.category) {
-          const categoryId = typeof product.category === 'object' ? product.category._id : product.category;
-          if (categoryId) {
-            axios.get(`${API_BASE}/api/categories/parents/${categoryId}/subcategories`)
-              .then(res => {
-                if (res.data && res.data.success) {
-                  setAvailableSubCategories(res.data.data);
-                }
-              })
-              .catch(err => console.error('Error loading subcategories in edit mode:', err));
-          }
+        if (product.termsAndConditions) {
+          setTermsSections(Array.isArray(product.termsAndConditions) ? product.termsAndConditions : [{ heading: '', points: [''] }]);
         }
 
-        if (product.termsAndConditions) {
-          if (Array.isArray(product.termsAndConditions)) {
-            setTermsSections(product.termsAndConditions.length > 0 ? product.termsAndConditions : [{ heading: '', points: [''] }]);
-          } else if (typeof product.termsAndConditions === 'string' && product.termsAndConditions) {
-            setTermsSections([{ heading: 'Terms & Conditions', points: [product.termsAndConditions] }]);
-          }
+        if (product.relatedItems?.items?.length) {
+          const ids = product.relatedItems.items.map(i => i._id || i);
+          setRelatedItems(ids);
+          setSelectedRelatedObjects(product.relatedItems.items.filter(i => typeof i === 'object'));
+          setRelatedLinkBy(product.relatedItems.linkBy || 'product');
         }
+
+        // Fetch subcategories
+        const catId = product.category?._id || product.category;
+        if (catId) {
+          const subRes = await axios.get(`${API_BASE}/api/categories/parents/${catId}/subcategories`);
+          if (subRes.data?.success) setAvailableSubCategories(subRes.data.data);
+        }
+
       } catch (err) {
+        console.error('Load Error:', err);
         setError('Failed to load product data');
-        console.error('Load product error:', err);
       } finally {
         setLoading(false);
       }
@@ -562,6 +704,12 @@ const AddOrnaments = () => {
 
     loadProduct();
   }, [isEditMode, id]);
+
+  useEffect(() => {
+    if (openRelatedModal) {
+      fetchRelatedOptions();
+    }
+  }, [openRelatedModal, relatedLinkBy]);
 
   // ========== VALIDATION ==========
   const validateForm = () => {
@@ -606,89 +754,124 @@ const AddOrnaments = () => {
 
     const formDataToSend = new FormData();
 
-    // Append all form data
-    Object.keys(formData).forEach((key) => {
-      if (key === 'thumbnailImage' && formData[key] instanceof File) {
-        formDataToSend.append('thumbnail', formData[key]);
-      } else if (key === 'galleryImages') {
-        formData[key].forEach((file) => {
-          if (file instanceof File) {
-            formDataToSend.append('gallery', file);
-          }
-        });
-      } else if (key === 'existingGallery') {
-        // Handle existing gallery images if needed
-      } else if (Array.isArray(formData[key])) {
-        formDataToSend.append(key, JSON.stringify(formData[key]));
-      } else {
-        formDataToSend.append(key, formData[key] || '');
+    // Map feature options to backend enum
+    const mapFeature = (f) => {
+      const map = {
+        'Wedding': 'wedding',
+        'Valentine': 'valentine',
+        'Festive': 'festive',
+        'Daily Wear': 'dailyWear',
+        'Casual Outings': 'casualOutings',
+        'Anniversary': 'anniversary',
+        'Engagement': 'engagement'
+      };
+      return map[f] || (typeof f === 'string' ? f.toLowerCase().replace(/\s+/g, '') : f);
+    };
+
+    // Availability Mode Mapping
+    let mode = 'purchase';
+    if (formData.availabilityMode === 'All') mode = 'all';
+    else if (formData.availabilityMode === 'Available For Rental') mode = 'rental';
+    else if (formData.availabilityMode === 'Available For Purchase') mode = 'purchase';
+
+    // 1. Basic Info
+    formDataToSend.append('name', formData.productName);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('category', formData.category);
+    formDataToSend.append('subCategory', formData.subcategory);
+    formDataToSend.append('unit', formData.unit);
+    formDataToSend.append('weight', formData.weight);
+    formDataToSend.append('material', formData.material);
+    formDataToSend.append('availabilityMode', mode);
+    formDataToSend.append('isActive', true);
+    formDataToSend.append('provider', vendorId);
+    formDataToSend.append('module', ORNAMENTS_MODULE_ID);
+
+    // 2. Images
+    if (formData.thumbnailImage instanceof File) {
+      formDataToSend.append('thumbnail', formData.thumbnailImage);
+    } else if (typeof formData.thumbnailImage === 'string') {
+      formDataToSend.append('thumbnail', formData.thumbnailImage);
+    }
+
+    formData.galleryImages.forEach((file) => {
+      if (file instanceof File) {
+        formDataToSend.append('galleryImages', file);
       }
     });
 
-    formDataToSend.append('termsAndConditions', JSON.stringify(termsSections));
+    // Send existing gallery images so backend knows what to keep
+    if (isEditMode) {
+      formDataToSend.append('existingGalleryImages', JSON.stringify(formData.existingGallery));
+    }
 
-    formDataToSend.append('vendorId', vendorId);
-    formDataToSend.append('module', ORNAMENTS_MODULE_ID);
+    // 3. Grouped Objects (JSON stringified for Multi-part)
+    formDataToSend.append('buyPricing', JSON.stringify({
+      unitPrice: formData.unitPrice,
+      discountType: formData.discountType.toLowerCase() === 'none' ? 'none' : (formData.discountType.toLowerCase() === 'percentage' ? 'percentage' : 'flat'),
+      discountValue: formData.discountValue || 0,
+      tax: formData.tax,
+      totalPrice: formData.totalPrice
+    }));
+
+    formDataToSend.append('rentalPricing', JSON.stringify({
+      pricePerDay: formData.pricePerDay,
+      minimumDays: formData.minimumDays,
+      lateCharges: formData.lateCharges,
+      totalPrice: formData.rentalTotalPrice,
+      advanceForBooking: formData.advanceForBooking,
+      damagePolicy: formData.damagePolicy
+    }));
+
+    formDataToSend.append('stock', JSON.stringify({
+      quantity: formData.stockQuantity,
+      lowStockAlert: formData.lowStockAlert
+    }));
+
+    formDataToSend.append('shipping', JSON.stringify({
+      freeShipping: formData.freeShipping,
+      flatRateShipping: formData.flatRateShipping,
+      shippingPrice: formData.shippingPrice
+    }));
+
+    formDataToSend.append('features', JSON.stringify({
+      basicFeatures: formData.selectedFeatures.map(mapFeature),
+      suitableFor: formData.suitableFor.map(s => s.toLowerCase()),
+      style: formData.styleFeatures ? [formData.styleFeatures.toLowerCase()] : []
+    }));
+
+    formDataToSend.append('tags', JSON.stringify(formData.tags));
+    formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
+    formDataToSend.append('termsAndConditions', JSON.stringify(termsSections));
+    formDataToSend.append('relatedItems', JSON.stringify({
+      linkBy: relatedLinkBy,
+      items: relatedItems
+    }));
 
     try {
       setSubmitting(true);
       setError('');
       setSuccessMessage('');
 
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
       if (isEditMode) {
-        await axios.put(`${API_BASE}/api/ornaments/${id}`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await axios.put(`${API_BASE}/api/ornaments/${id}`, formDataToSend, config);
         setSuccessMessage('Product updated successfully!');
       } else {
-        await axios.post(`${API_BASE}/api/ornaments`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        await axios.post(`${API_BASE}/api/ornaments`, formDataToSend, config);
         setSuccessMessage('Product created successfully!');
 
         // Reset form after successful creation
         setTimeout(() => {
-          setFormData({
-            productName: '',
-            description: '',
-            category: '',
-            subcategory: '',
-            unit: '',
-            weight: '',
-            material: '',
-            thumbnailImage: null,
-            galleryImages: [],
-            existingGallery: [],
-            availabilityMode: 'All',
-            availableForPurchase: true,
-            availableForRental: false,
-            unitPrice: '',
-            discountType: 'None',
-            tax: '',
-            totalPrice: '',
-            pricePerDay: '',
-            minimumDays: '',
-            lateCharges: '',
-            rentalTotalPrice: '',
-            advanceForBooking: '',
-            damagePolicy: '',
-            stockQuantity: '',
-            lowStockAlert: '',
-            freeShipping: false,
-            flatRateShipping: false,
-            shippingPrice: '',
-            selectedOccasions: [],
-            selectedFeatures: [],
-            suitableFor: [],
-            styleFeatures: ''
-          });
-          setTermsSections([{ heading: '', points: [''] }]);
-          setSuccessMessage('');
-        }, 2000);
+          navigate('/ornaments/list');
+        }, 1500);
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -1248,7 +1431,7 @@ const AddOrnaments = () => {
                       <img
                         src={
                           typeof formData.thumbnailImage === 'string'
-                            ? formData.thumbnailImage
+                            ? getImageUrl(formData.thumbnailImage)
                             : URL.createObjectURL(formData.thumbnailImage)
                         }
                         alt="Thumbnail"
@@ -1314,7 +1497,7 @@ const AddOrnaments = () => {
                   {formData.existingGallery.map((img, i) => (
                     <Box key={`ex-${i}`} sx={{ position: 'relative', width: 100, height: 100 }}>
                       <img
-                        src={img}
+                        src={getImageUrl(img)}
                         alt=""
                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px', border: '1px solid #E0E4EC' }}
                       />
@@ -1554,7 +1737,7 @@ const AddOrnaments = () => {
                       {/* Price & Discount Row */}
                       <Box sx={{ p: 3.5, background: 'linear-gradient(135deg, #FAFBFC 0%, #F5F3FF 100%)', borderBottom: '2px solid #E5E7EB' }}>
                         <Grid container spacing={3} alignItems="center">
-                          <Grid item xs={12} md={7}>
+                          <Grid item xs={12} md={4}>
                             <Box sx={{ position: 'relative' }}>
                               <Typography
                                 variant="caption"
@@ -1619,7 +1802,7 @@ const AddOrnaments = () => {
                               />
                             </Box>
                           </Grid>
-                          <Grid item xs={12} md={5}>
+                          <Grid item xs={12} md={4}>
                             <Box sx={{ position: 'relative' }}>
                               <Typography
                                 variant="caption"
@@ -1632,7 +1815,7 @@ const AddOrnaments = () => {
                                   letterSpacing: '0.5px'
                                 }}
                               >
-                                Discount
+                                Discount Type
                               </Typography>
                               <FormControl fullWidth>
                                 <Select
@@ -1663,6 +1846,54 @@ const AddOrnaments = () => {
                                   ))}
                                 </Select>
                               </FormControl>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Box sx={{ position: 'relative' }}>
+                              <Typography
+                                variant="caption"
+                                fontWeight={700}
+                                sx={{
+                                  mb: 1,
+                                  display: 'block',
+                                  color: THEME.primary,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                              >
+                                Discount Value
+                              </Typography>
+                              <TextField
+                                fullWidth
+                                placeholder="0"
+                                type="number"
+                                disabled={formData.discountType === 'None'}
+                                value={formData.discountValue}
+                                onChange={(e) => handleChange('discountValue', e.target.value)}
+                                InputProps={{
+                                  endAdornment: (
+                                    <InputAdornment position="end">
+                                      <Typography fontWeight={700} color="text.secondary">
+                                        {formData.discountType === 'Percentage' ? '%' : '$'}
+                                      </Typography>
+                                    </InputAdornment>
+                                  )
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    background: formData.discountType === 'None' ? '#F3F4F6' : 'white',
+                                    borderRadius: '14px',
+                                    fontWeight: 700,
+                                    border: '2px solid #E5E7EB',
+                                    '&:hover': {
+                                      borderColor: THEME.primary
+                                    }
+                                  },
+                                  '& .MuiOutlinedInput-input': {
+                                    py: 2
+                                  }
+                                }}
+                              />
                             </Box>
                           </Grid>
                         </Grid>
@@ -2483,6 +2714,101 @@ const AddOrnaments = () => {
 
             </Box>
           </Paper>
+          {/* 8. Related Items Section */}
+          <Paper
+            sx={{
+              borderRadius: '16px',
+              p: 4,
+              background: 'white',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            <SectionHeader icon={CategoryIcon} title="Frequently Bought Together" subtitle="Link related ornaments or categories" />
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#4A5568' }}>
+                LINKING METHOD
+              </Typography>
+              <RadioGroup
+                row
+                value={relatedLinkBy}
+                onChange={(e) => {
+                  setRelatedLinkBy(e.target.value);
+                  setRelatedItems([]);
+                  setSelectedRelatedObjects([]);
+                }}
+              >
+                <FormControlLabel
+                  value="product"
+                  control={<Radio color="primary" />}
+                  label={<Typography fontWeight={600}>Specific Products</Typography>}
+                />
+                <FormControlLabel
+                  value="category"
+                  control={<Radio color="primary" />}
+                  label={<Typography fontWeight={600}>Whole Categories</Typography>}
+                />
+              </RadioGroup>
+            </Box>
+
+            <Divider sx={{ mb: 4, borderStyle: 'dashed' }} />
+
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#4A5568' }}>
+                SELECTED {relatedLinkBy === 'product' ? 'ORNAMENTS' : 'CATEGORIES'}
+              </Typography>
+
+              <Grid container spacing={2}>
+                {selectedRelatedObjects.map((item) => (
+                  <Grid item key={item._id}>
+                    <Chip
+                      label={item.productName || item.name || item.title}
+                      onDelete={() => {
+                        setRelatedItems(prev => prev.filter(id => id !== item._id));
+                        setSelectedRelatedObjects(prev => prev.filter(obj => obj._id !== item._id));
+                      }}
+                      sx={{
+                        height: '45px',
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        bgcolor: alpha(THEME.primary, 0.08),
+                        color: THEME.primary,
+                        border: `1px solid ${alpha(THEME.primary, 0.2)}`,
+                        '& .MuiChip-deleteIcon': {
+                          color: THEME.primary,
+                          '&:hover': { color: THEME.secondary }
+                        }
+                      }}
+                    />
+                  </Grid>
+                ))}
+                <Grid item>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setOpenRelatedModal(true)}
+                    sx={{
+                      height: '45px',
+                      borderRadius: '12px',
+                      borderStyle: 'dashed',
+                      borderWidth: '2px',
+                      px: 3,
+                      fontWeight: 700,
+                      color: THEME.primary,
+                      borderColor: THEME.primary,
+                      '&:hover': {
+                        borderWidth: '2px',
+                        bgcolor: alpha(THEME.primary, 0.05)
+                      }
+                    }}
+                  >
+                    Add {relatedLinkBy === 'product' ? 'Ornament' : 'Category'}
+                  </Button>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
+
           {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>
             <Card
@@ -2624,6 +2950,258 @@ const AddOrnaments = () => {
           Need help? Contact support@bookmyevent.ae
         </Typography>
       </Box>
+      {/* RELATED ITEMS SELECTION DIALOG */}
+      <Dialog
+        open={openRelatedModal}
+        onClose={() => setOpenRelatedModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '28px',
+            p: 1,
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ p: 4 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Box>
+              <Typography variant="h5" fontWeight={900} sx={{ color: '#1B254B', letterSpacing: '-0.5px' }}>
+                Select {relatedLinkBy === 'product' ? 'Ornaments' : 'Categories'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                {drilldownCategory
+                  ? `Showing products in ${drilldownCategory.title}`
+                  : `Browse available ${relatedLinkBy}s to link`}
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={() => setOpenRelatedModal(false)}
+              sx={{
+                bgcolor: '#F4F7FE',
+                '&:hover': { bgcolor: alpha(THEME.primary, 0.1), color: THEME.primary }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ minHeight: '450px', p: 4, bgcolor: '#F8FAFC' }}>
+          {loadingRelated ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '300px', gap: 2 }}>
+              <CircularProgress size={40} thickness={4} />
+              <Typography fontWeight={600} color="text.secondary">Fetching details...</Typography>
+            </Box>
+          ) : (
+            <>
+              {drilldownCategory && (
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                  <Button
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBackToCategories}
+                    variant="outlined"
+                    sx={{
+                      borderRadius: '12px',
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      borderColor: '#E2E8F0',
+                      color: '#4A5568',
+                      '&:hover': { borderColor: THEME.primary, color: THEME.primary }
+                    }}
+                  >
+                    Back to Categories
+                  </Button>
+
+                  {relatedLinkBy === 'category' && (
+                    <Box
+                      sx={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        px: 3,
+                        bgcolor: alpha(THEME.primary, 0.05),
+                        borderRadius: '16px',
+                        border: `1px solid ${alpha(THEME.primary, 0.1)}`
+                      }}
+                    >
+                      <Typography fontWeight={800} color={THEME.primary}>
+                        Select Entire Category: {drilldownCategory.title}
+                      </Typography>
+                      <Checkbox
+                        checked={relatedItems.includes(drilldownCategory._id)}
+                        onChange={(e) => {
+                          const id = drilldownCategory._id;
+                          if (e.target.checked) {
+                            setRelatedItems(prev => [...prev, id]);
+                            setSelectedRelatedObjects(prev => [...prev, drilldownCategory]);
+                          } else {
+                            setRelatedItems(prev => prev.filter(x => x !== id));
+                            setSelectedRelatedObjects(prev => prev.filter(x => x._id !== id));
+                          }
+                        }}
+                        sx={{ color: THEME.primary, '&.Mui-checked': { color: THEME.primary } }}
+                      />
+                    </Box>
+                  )}
+                </Stack>
+              )}
+
+              {relatedOptions.length === 0 ? (
+                <Box sx={{ py: 10, textAlign: 'center' }}>
+                  <Typography variant="h6" fontWeight={700} color="text.secondary">
+                    No items found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Try different selection criteria
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={2.5}>
+                  {relatedOptions.map((option) => {
+                    const id = option._id;
+                    const isSelected = relatedItems.includes(id);
+                    const isCategoryItem = !option.productName && option.title;
+                    const canDrilldown = isCategoryItem && !drilldownCategory;
+
+                    return (
+                      <Grid item xs={12} sm={6} md={4} key={id}>
+                        <Card
+                          onClick={() => {
+                            if (canDrilldown) {
+                              handleCategoryClick(option);
+                            } else {
+                              if (isSelected) {
+                                setRelatedItems(prev => prev.filter(x => x !== id));
+                                setSelectedRelatedObjects(prev => prev.filter(obj => obj._id !== id));
+                              } else {
+                                setRelatedItems(prev => [...prev, id]);
+                                setSelectedRelatedObjects(prev => [...prev, option]);
+                              }
+                            }
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            borderRadius: '20px',
+                            border: isSelected ? `2px solid ${THEME.primary}` : '2.5px solid white',
+                            bgcolor: isSelected ? alpha(THEME.primary, 0.02) : 'white',
+                            boxShadow: isSelected ? `0 12px 24px ${alpha(THEME.primary, 0.1)}` : '0 4px 12px rgba(0,0,0,0.03)',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&:hover': {
+                              transform: isSelected ? 'none' : 'translateY(-6px)',
+                              boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
+                              borderColor: isSelected ? THEME.primary : alpha(THEME.primary, 0.3)
+                            }
+                          }}
+                        >
+                          <Box sx={{ position: 'relative', pt: '85%', bgcolor: '#f1f1f1' }}>
+                            <img
+                              src={
+                                option.thumbnail ||
+                                (option.image
+                                  ? (option.image.startsWith('http') ? option.image : `${API_BASE}${option.image}`)
+                                  : '/placeholder.jpg')
+                              }
+                              alt={option.productName || option.title || option.name}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                transition: '0.5s'
+                              }}
+                            />
+                            {isSelected && (
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 12,
+                                  right: 12,
+                                  bgcolor: THEME.primary,
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  p: 0.5,
+                                  display: 'flex',
+                                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                                  zIndex: 2
+                                }}
+                              >
+                                <CheckCircleIcon fontSize="small" />
+                              </Box>
+                            )}
+                            {canDrilldown && (
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                                  p: 1.5,
+                                  display: 'flex',
+                                  justifyContent: 'center',
+                                  opacity: 0.9
+                                }}
+                              >
+                                <Typography variant="caption" color="white" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  CLICK TO VIEW ITEMS <ArrowBackIcon sx={{ transform: 'rotate(180deg)', fontSize: 14 }} />
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                          <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                            <SubcategoryBadge
+                              label={isCategoryItem ? 'Category' : (option.category?.title || 'Ornament')}
+                              color={isCategoryItem ? THEME.secondary : THEME.primary}
+                            />
+                            <Typography fontWeight={800} sx={{ mt: 1, fontSize: '0.95rem', color: '#1B254B', lineHeight: 1.2 }}>
+                              {option.productName || option.title || option.name}
+                            </Typography>
+                            {!isCategoryItem && option.buyPricing && (
+                              <Typography variant="body1" sx={{ mt: 1, fontWeight: 900, color: THEME.primary }}>
+                                ₹{option.buyPricing.totalPrice || option.buyPricing.unitPrice}
+                              </Typography>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 4, bgcolor: '#ffffff', borderTop: '1px solid #E2E8F0' }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => setOpenRelatedModal(false)}
+            sx={{
+              borderRadius: '16px',
+              background: THEME.gradient,
+              py: 2,
+              fontWeight: 800,
+              fontSize: '1rem',
+              boxShadow: `0 12px 24px ${alpha(THEME.primary, 0.25)}`,
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 15px 30px ${alpha(THEME.primary, 0.35)}`,
+              }
+            }}
+          >
+            Confirm Selection ({relatedItems.length} selected)
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };

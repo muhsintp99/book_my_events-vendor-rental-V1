@@ -349,7 +349,7 @@ const MainRoutes = {
             { path: 'cancelledcake', element: <CakeCancelled /> },
             // { path: 'paymentfailedcake', element: <CPaymentFailed /> }
 
-             // ornaments BOOKINGS///////////////
+            // ornaments BOOKINGS///////////////
             { path: 'allornaments', element: <Allornaments /> },
             { path: 'pendingornaments', element: <OrnamentsPending /> },
             { path: 'ornamentsconfirmed', element: <OrnamentsConfirmed /> },
@@ -450,17 +450,18 @@ const MainRoutes = {
             { path: 'Enqurychat', element: <Cakeenquirychat /> },
             { path: 'schedules', element: <CakeSchedules /> },
             { path: 'categories', element: <Cakecategories /> },
-            { path: 'Addons', element: <Cakeaddons/> }
+            { path: 'Addons', element: <Cakeaddons /> }
 
 
           ]
         },
 
 
-         {
+        {
           path: 'ornaments',
           children: [
-            { path: 'addpackage', element: <AddornamentsPackage/> },
+            { path: 'addpackage', element: <AddornamentsPackage /> },
+            { path: 'edit/:id', element: <AddornamentsPackage /> },
             { path: 'packagelist', element: <Ornamentslist /> },
             { path: 'upgrade', element: <Ornamentsupgrade /> },
             { path: 'enquiry', element: <Ornamentsenquiry /> },
