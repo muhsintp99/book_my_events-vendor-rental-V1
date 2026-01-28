@@ -870,7 +870,7 @@ const AddOrnaments = () => {
 
         // Reset form after successful creation
         setTimeout(() => {
-          navigate('/ornaments/list');
+          navigate('/ornaments/packagelist');
         }, 1500);
       }
     } catch (err) {
