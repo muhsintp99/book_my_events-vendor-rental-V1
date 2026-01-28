@@ -66,6 +66,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import axios from 'axios';
+import { PhotoCamera, Delete } from '@mui/icons-material';
 
 // ------------------------------
 // Theme & Colors
@@ -87,7 +88,7 @@ const THEME = {
 // API Config
 // ------------------------------
 const API_BASE = 'https://api.bookmyevent.ae';
-const ORNAMENTS_MODULE_ID = '68e5fdf0eb7faab6e94b4f6f';
+const BOUTIQUE_MODULE_ID = '68e5fd7b8164d482d281c37f';
 
 // ------------------------------
 // Styled Components
@@ -339,6 +340,9 @@ const AddOrnaments = () => {
   const [error, setError] = useState('');
   const [currentVendor, setCurrentVendor] = useState(null);
 
+  // ========== VARIATIONS STATE ==========
+  const [variations, setVariations] = useState([]);
+
   // ========== FORM STATE ==========
   const [formData, setFormData] = useState({
     productName: '',
@@ -499,6 +503,98 @@ const AddOrnaments = () => {
     }
   };
 
+  // ========== VARIATION HANDLERS ==========
+
+  // const handleAddAttribute = () => {
+  //   setAttributes([...attributes, { name: '', values: [] }]);
+  // };
+
+  // const handleRemoveAttribute = (index) => {
+  //   const newAttrs = [...attributes];
+  //   newAttrs.splice(index, 1);
+  //   setAttributes(newAttrs);
+  //   generateVariations(newAttrs);
+  // };
+
+  // const handleAttributeNameChange = (index, value) => {
+  //   const newAttrs = [...attributes];
+  //   newAttrs[index].name = value;
+  //   setAttributes(newAttrs);
+  // };
+
+  // const handleAddAttributeValue = (index, value) => {
+  //   if (!value.trim()) return;
+  //   const newAttrs = [...attributes];
+  //   if (!newAttrs[index].values.includes(value.trim())) {
+  //     newAttrs[index].values.push(value.trim());
+  //     setAttributes(newAttrs);
+  //     generateVariations(newAttrs);
+  //   }
+  // };
+
+  // const handleRemoveAttributeValue = (index, valueIndex) => {
+  //   const newAttrs = [...attributes];
+  //   newAttrs[index].values.splice(valueIndex, 1);
+  //   setAttributes(newAttrs);
+  //   generateVariations(newAttrs);
+  // };
+
+  // const generateVariations = (attrs) => {
+  //   // Only generate if we have valid attributes with values
+  //   const validAttrs = attrs.filter(a => a.name && a.values.length > 0);
+  //   if (validAttrs.length === 0) {
+  //     setVariations([]);
+  //     return;
+  //   }
+
+  //   // Generate combinations
+  //   const combinations = validAttrs.reduce((acc, curr) => {
+  //     if (acc.length === 0) return curr.values.map(v => [v]);
+  //     return acc.flatMap(a => curr.values.map(v => [...a, v]));
+  //   }, []);
+
+  //   // Create variation objects, preserving existing data if possible
+  //   const newVariations = combinations.map(combo => {
+  //     const name = combo.join(' - ');
+
+  //     // Try to find existing variation to preserve price/stock/image
+  //     const existing = variations.find(v => {
+  //       // simple check by name or attribute strings
+  //       return v.name === name || JSON.stringify(v.attributeValues) === JSON.stringify(combo);
+  //     });
+
+  //     if (existing) {
+  //       return {
+  //         ...existing,
+  //         name,
+  //         attributeValues: combo
+  //       };
+  //     }
+
+  //     return {
+  //       name,
+  //       price: formData.buyPricing?.unitPrice || 0,
+  //       stockQuantity: 1,
+  //       image: null,
+  //       attributeValues: combo
+  //     };
+  //   });
+
+  //   setVariations(newVariations);
+  // };
+
+  const handleVariationChange = (index, field, value) => {
+    const newVars = [...variations];
+    newVars[index][field] = value;
+    setVariations(newVars);
+  };
+
+  const handleVariationImageUpload = (index, file) => {
+    const newVars = [...variations];
+    newVars[index].image = file;
+    setVariations(newVars);
+  };
+
   const fetchRelatedOptions = async () => {
     try {
       setLoadingRelated(true);
@@ -514,10 +610,10 @@ const AddOrnaments = () => {
           console.error('Provider ID missing');
           return;
         }
-        url = `${API_BASE}/api/ornaments?provider=${providerId}`;
+        url = `${API_BASE}/api/boutiques?provider=${providerId}`;
       } else {
         // Fetch categories to allow drilldown/selection
-        url = `${API_BASE}/api/categories/parents/${ORNAMENTS_MODULE_ID}`;
+        url = `${API_BASE}/api/categories/parents/${BOUTIQUE_MODULE_ID}`;
       }
 
       const res = await axios.get(url, {
@@ -551,8 +647,8 @@ const AddOrnaments = () => {
       setLoadingRelated(true);
       setDrilldownCategory(cat);
       const token = localStorage.getItem('token');
-      // Fetch ornaments for this specific category
-      const res = await axios.get(`${API_BASE}/api/ornaments?category=${cat._id}&limit=100`, {
+      // Fetch boutiques for this specific category
+      const res = await axios.get(`${API_BASE}/api/boutiques?category=${cat._id}&limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const items = res.data?.data || [];
@@ -635,16 +731,32 @@ const AddOrnaments = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/api/categories/parents/${ORNAMENTS_MODULE_ID}`);
+        const response = await axios.get(`${API_BASE}/api/categories/parents/${BOUTIQUE_MODULE_ID}`);
         if (response.data && response.data.success) {
           setCategories(response.data.data);
         }
       } catch (err) {
-        console.error('Error fetching ornament categories:', err);
+        console.error('Error fetching boutique categories:', err);
       }
     };
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    const newVariations = formData.sizes.map((size) => {
+      const existing = variations.find((v) => v.size === size);
+      return (
+        existing || {
+          size,
+          price: formData.unitPrice || '',
+          stockQuantity: '',
+          image: null
+        }
+      );
+    });
+
+    setVariations(newVariations);
+  }, [formData.sizes]);
 
   // Removed redundant useEffect that synchronized subcategories from categories list
 
@@ -657,7 +769,7 @@ const AddOrnaments = () => {
 
     const loadProduct = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/api/ornaments/${id}`);
+        const { data } = await axios.get(`${API_BASE}/api/boutiques/${id}`);
         const product = data.data || data;
 
         // Map backend response to state
@@ -717,8 +829,23 @@ const AddOrnaments = () => {
               : ''
             : '',
           discountValue: product.buyPricing?.discountValue || '',
+          discountValue: product.buyPricing?.discountValue || '',
           tags: product.tags || []
         });
+
+        // Load Variations
+        if (product.attributes && Array.isArray(product.attributes)) {
+          setAttributes(product.attributes);
+        }
+        if (product.variations && Array.isArray(product.variations)) {
+          setVariations(
+            product.variations.map((v) => ({
+              ...v,
+              // Ensure image is handled correctly if it's a string URL
+              image: v.image || null
+            }))
+          );
+        }
 
         if (product.termsAndConditions) {
           setTermsSections(Array.isArray(product.termsAndConditions) ? product.termsAndConditions : [{ heading: '', points: [''] }]);
@@ -828,12 +955,38 @@ const AddOrnaments = () => {
     formDataToSend.append('availabilityMode', mode);
     formDataToSend.append('isActive', true);
     formDataToSend.append('provider', vendorId);
-    formDataToSend.append('module', ORNAMENTS_MODULE_ID);
+    formDataToSend.append('module', BOUTIQUE_MODULE_ID);
 
     // 2. Images
     if (formData.thumbnailImage instanceof File) {
       formDataToSend.append('thumbnail', formData.thumbnailImage);
     } else if (typeof formData.thumbnailImage === 'string') {
+      formDataToSend.append('thumbnail', formData.thumbnailImage);
+
+      if (variations.length > 0) {
+        // Separate images from data
+        const variationsData = variations.map((v, index) => ({
+          size: v.size,
+          price: Number(v.price),
+          stockQuantity: Number(v.stockQuantity),
+          image: v.image instanceof File ? `VAR_FILE_${index}` : v.image
+        }));
+
+        formDataToSend.append('variations', JSON.stringify(variationsData));
+
+        // Append files
+        variations.forEach((v, index) => {
+          if (v.image instanceof File) {
+            // We must ensure the backend can map this file to the variation.
+            // If the backend expects 'variationImages' array, we just append.
+            // If the order matches the VAR_FILE_{index}, it works.
+            formDataToSend.append(`variationImages`, v.image);
+          }
+        });
+      }
+
+      // 4. Other Arrays
+
       formDataToSend.append('thumbnail', formData.thumbnailImage);
     }
 
@@ -928,15 +1081,15 @@ const AddOrnaments = () => {
       };
 
       if (isEditMode) {
-        await axios.put(`${API_BASE}/api/ornaments/${id}`, formDataToSend, config);
+        await axios.put(`${API_BASE}/api/boutiques/${id}`, formDataToSend, config);
         setSuccessMessage('Product updated successfully!');
       } else {
-        await axios.post(`${API_BASE}/api/ornaments`, formDataToSend, config);
+        await axios.post(`${API_BASE}/api/boutiques`, formDataToSend, config);
         setSuccessMessage('Product created successfully!');
 
         // Reset form after successful creation
         setTimeout(() => {
-          navigate('/ornaments/packagelist');
+          navigate('/boutique/packagelist');
         }, 1500);
       }
     } catch (err) {
@@ -1372,52 +1525,49 @@ const AddOrnaments = () => {
                   />
                 </Grid>
 
-               <Grid item xs={12} md={4}>
-  <FormControl fullWidth>
-    <Select
-      multiple
-      fullWidth
-      value={formData.sizes}
-      onChange={(e) => handleChange('sizes', e.target.value)}
-      displayEmpty
-      renderValue={(selected) =>
-        selected.length ? selected.join(', ') : 'Select Size'
-      }
-      sx={{
-        width: '100%',
-        borderRadius: '14px',
-        backgroundColor: 'white',
-        transition: 'all 0.3s ease',
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth>
+                    <Select
+                      multiple
+                      fullWidth
+                      value={formData.sizes}
+                      onChange={(e) => handleChange('sizes', e.target.value)}
+                      displayEmpty
+                      renderValue={(selected) => (selected.length ? selected.join(', ') : 'Select Size')}
+                      sx={{
+                        width: '100%',
+                        borderRadius: '14px',
+                        backgroundColor: 'white',
+                        transition: 'all 0.3s ease',
 
-        '& .MuiSelect-select': {
-          padding: '16px 14px',   // SAME AS CATEGORY
-          display: 'flex',
-          alignItems: 'center',
-          color: selected => selected.length ? '#111' : '#9CA3AF'
-        },
+                        '& .MuiSelect-select': {
+                          padding: '16px 14px', // SAME AS CATEGORY
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: (selected) => (selected.length ? '#111' : '#9CA3AF')
+                        },
 
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(0, 0, 0, 0.12)'
-        },
-        '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#667eea'
-        },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#667eea',
-          borderWidth: '2px'
-        }
-      }}
-    >
-      {sizeOptions.map((size) => (
-        <MenuItem key={size} value={size}>
-          <Checkbox checked={formData.sizes.includes(size)} />
-          <Typography fontWeight={600}>{size}</Typography>
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-</Grid>
-
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.12)'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: '2px'
+                        }
+                      }}
+                    >
+                      {sizeOptions.map((size) => (
+                        <MenuItem key={size} value={size}>
+                          <Checkbox checked={formData.sizes.includes(size)} />
+                          <Typography fontWeight={600}>{size}</Typography>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
 
               {/* Description */}
@@ -1447,6 +1597,94 @@ const AddOrnaments = () => {
                 }}
               />
             </Stack>
+          </Paper>
+
+
+          {/* ================= VARIATIONS SECTION ================= */}
+          <Paper
+            sx={{
+              borderRadius: '24px',
+              p: 4,
+              background: 'white',
+              boxShadow: '0 12px 48px rgba(0,0,0,0.1)',
+              border: '1px solid #E5E7EB',
+              mb: 4
+            }}
+          >
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" fontWeight={800} sx={{ color: '#1B254B' }}>
+                Product Variations
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Add attributes like Size, Color to generate price and stock variations
+              </Typography>
+            </Box>
+
+            {/* Variations Table */}
+            {variations.length > 0 && (
+              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '16px', border: '1px solid #E5E7EB' }}>
+                <Table>
+                  <TableHead sx={{ bgcolor: '#F8F9FA' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Variation</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Price</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Stock</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Image</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {variations.map((v, i) => (
+                      <TableRow key={i}>
+                        <TableCell sx={{ fontWeight: 700 }}>{v.size}</TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={v.price}
+                            onChange={(e) => handleVariationChange(i, 'price', e.target.value)}
+                            InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                            sx={{ width: 120 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={v.stockQuantity}
+                            onChange={(e) => handleVariationChange(i, 'stockQuantity', e.target.value)}
+                            sx={{ width: 100 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <IconButton
+                              component="label"
+                              sx={{
+                                bgcolor: alpha(THEME.primary, 0.1),
+                                color: THEME.primary,
+                                '&:hover': { bgcolor: THEME.primary, color: 'white' }
+                              }}
+                            >
+                              <PhotoCamera fontSize="small" />
+                              <input type="file" hidden onChange={(e) => handleVariationImageUpload(i, e.target.files[0])} />
+                            </IconButton>
+                            {v.image && (
+                              <Box sx={{ width: 40, height: 40, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee' }}>
+                                <img
+                                  src={v.image instanceof File ? URL.createObjectURL(v.image) : getImageUrl(v.image)}
+                                  alt=""
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              </Box>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
           {/* 2. Media Collection Section */}
           <Paper
@@ -2855,6 +3093,8 @@ const AddOrnaments = () => {
               </Grid>
             </Box>
           </Paper>
+
+          
 
           {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>
