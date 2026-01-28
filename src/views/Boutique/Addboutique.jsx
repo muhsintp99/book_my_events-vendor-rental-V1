@@ -415,31 +415,31 @@ const AddBoutique = () => {
   ];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
   const colorOptions = ['Red', 'Blue', 'Green', 'Black', 'White', 'Pink', 'Purple', 'Gold', 'Silver', 'Beige', 'Navy', 'Maroon', 'Teal', 'Lavender', 'Peach', 'Rose Gold'];
-const materialOptions = [
-  'Cotton',
-  'Silk',
-  'Polyester',
-  'Linen',
-  'Wool',
-  'Blend',
-  'Satin',
-  'Chiffon',
-  'Georgette',
-  'Crepe',
-  'Velvet',
-  'Organza',
-  'Denim',
-  'Leather',
-  'Suede',
-  'Rayon',
-  'Viscose',
-  'Muslin',
-  'Jersey',
-  'Lycra',
-  'Spandex',
-  'Net',
-  'Tulle'
-];
+  const materialOptions = [
+    'Cotton',
+    'Silk',
+    'Polyester',
+    'Linen',
+    'Wool',
+    'Blend',
+    'Satin',
+    'Chiffon',
+    'Georgette',
+    'Crepe',
+    'Velvet',
+    'Organza',
+    'Denim',
+    'Leather',
+    'Suede',
+    'Rayon',
+    'Viscose',
+    'Muslin',
+    'Jersey',
+    'Lycra',
+    'Spandex',
+    'Net',
+    'Tulle'
+  ];
   // ========== HANDLERS ==========
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -1314,7 +1314,7 @@ const materialOptions = [
               {/* Category, Subcategory, Unit in a responsive grid */}
               <Grid container spacing={2.5}>
                 {/* Category */}
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
                     <InputLabel
                       shrink={formData.category !== '' || undefined}
@@ -1389,7 +1389,7 @@ const materialOptions = [
                 </Grid>
 
                 {/* Subcategory */}
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
                     <InputLabel
                       shrink={formData.subcategory !== '' || undefined}
@@ -1471,18 +1471,15 @@ const materialOptions = [
                 <Grid item xs={12} md={4}>
                   <FormControl fullWidth>
                     <InputLabel
-                      id="material-label"
+                      shrink={formData.material !== '' || undefined}
                       sx={{
-                        '&.Mui-focused': { color: '#667eea' }
+                        '&.Mui-focused': { color: '#667eea' },
+                        backgroundColor: 'white',
+                        px: 1
                       }}
-                    >
-                      Fabric / Material *
-                    </InputLabel>
+                    ></InputLabel>
                     <Select
-                      labelId="material-label"
-                      id="material-select"
                       value={formData.material}
-                      label="Fabric / Material *"
                       onChange={(e) => handleChange('material', e.target.value)}
                       displayEmpty
                       MenuProps={{
@@ -1495,14 +1492,10 @@ const materialOptions = [
                               borderRadius: '8px',
                               mx: 1,
                               my: 0.5,
-                              '&:hover': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.08)'
-                              },
+                              '&:hover': { backgroundColor: 'rgba(102, 126, 234, 0.08)' },
                               '&.Mui-selected': {
                                 backgroundColor: 'rgba(102, 126, 234, 0.15)',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(102, 126, 234, 0.2)'
-                                }
+                                '&:hover': { backgroundColor: 'rgba(102, 126, 234, 0.2)' }
                               }
                             }
                           }
@@ -1512,55 +1505,20 @@ const materialOptions = [
                         borderRadius: '14px',
                         backgroundColor: 'white',
                         transition: 'all 0.3s ease',
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover': {
-                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                          },
-                          '&.Mui-focused': {
-                            boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                          }
-                        },
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px'
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.12)'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: '2px'
-                        }
+                        '& .MuiSelect-select': { padding: '16px 14px' },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
                       }}
                     >
                       <MenuItem value="">
                         <em>Select Fabric / Material</em>
                       </MenuItem>
-                      <MenuItem value="Cotton">Cotton</MenuItem>
-                      <MenuItem value="Silk">Silk</MenuItem>
-                      <MenuItem value="Polyester">Polyester</MenuItem>
-                      <MenuItem value="Linen">Linen</MenuItem>
-                      <MenuItem value="Wool">Wool</MenuItem>
-                      <MenuItem value="Blend">Blend</MenuItem>
-                      <MenuItem value="Satin">Satin</MenuItem>
-                      <MenuItem value="Chiffon">Chiffon</MenuItem>
-                      <MenuItem value="Georgette">Georgette</MenuItem>
-                      <MenuItem value="Crepe">Crepe</MenuItem>
-                      <MenuItem value="Velvet">Velvet</MenuItem>
-                      <MenuItem value="Organza">Organza</MenuItem>
-                      <MenuItem value="Denim">Denim</MenuItem>
-                      <MenuItem value="Leather">Leather</MenuItem>
-                      <MenuItem value="Suede">Suede</MenuItem>
-                      <MenuItem value="Rayon">Rayon</MenuItem>
-                      <MenuItem value="Viscose">Viscose</MenuItem>
-                      <MenuItem value="Muslin">Muslin</MenuItem>
-                      <MenuItem value="Jersey">Jersey</MenuItem>
-                      <MenuItem value="Lycra">Lycra</MenuItem>
-                      <MenuItem value="Spandex">Spandex</MenuItem>
-                      <MenuItem value="Net">Net</MenuItem>
-                      <MenuItem value="Tulle">Tulle</MenuItem>
+                      {materialOptions.map((mat) => (
+                        <MenuItem key={mat} value={mat}>
+                          {mat}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
