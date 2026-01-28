@@ -46,7 +46,8 @@ const boutiquemanagement = {
           type: 'item',
           url: '/boutique/packagelist',
           icon: icons.IconPackage
-        }
+        },
+       
       ]
     },
 

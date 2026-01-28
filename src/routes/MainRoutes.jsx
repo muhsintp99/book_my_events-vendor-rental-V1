@@ -189,6 +189,10 @@ const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Orname
 
 const AddboutiquePackage = Loadable(lazy(() => import('../views/Boutique/Addboutique.jsx')));
 const Boutiquelist = Loadable(lazy(() => import('../views/Boutique/Boutiquelist.jsx')));
+const Attributes = Loadable(lazy(() => import('../views/Boutique/Attributes.jsx')));
+
+
+
 const Boutiqueupgrade = Loadable(lazy(() => import('../views/Boutique/Boutiqueupgrade.jsx')));
 const Boutiqueenquiry = Loadable(lazy(() => import('../views/Boutique/Boutiqueenquiries.jsx')));
 const Boutiqueenquirychat = Loadable(lazy(() => import('../views/Boutique/EnquiryChatPage.jsx')));
@@ -502,6 +506,8 @@ const MainRoutes = {
             { path: 'addpackage', element: <AddboutiquePackage /> },
             { path: 'edit/:id', element: <AddboutiquePackage /> },
             { path: 'packagelist', element: <Boutiquelist /> },
+            { path: 'attributes', element: <Attributes /> },
+
             { path: 'upgrade', element: <Boutiqueupgrade /> },
             { path: 'enquiry', element: <Boutiqueenquiry /> },
             { path: 'Enqurychat', element: <Boutiqueenquirychat /> },
