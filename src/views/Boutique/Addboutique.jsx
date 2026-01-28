@@ -415,7 +415,31 @@ const AddBoutique = () => {
   ];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
   const colorOptions = ['Red', 'Blue', 'Green', 'Black', 'White', 'Pink', 'Purple', 'Gold', 'Silver', 'Beige', 'Navy', 'Maroon', 'Teal', 'Lavender', 'Peach', 'Rose Gold'];
-
+const materialOptions = [
+  'Cotton',
+  'Silk',
+  'Polyester',
+  'Linen',
+  'Wool',
+  'Blend',
+  'Satin',
+  'Chiffon',
+  'Georgette',
+  'Crepe',
+  'Velvet',
+  'Organza',
+  'Denim',
+  'Leather',
+  'Suede',
+  'Rayon',
+  'Viscose',
+  'Muslin',
+  'Jersey',
+  'Lycra',
+  'Spandex',
+  'Net',
+  'Tulle'
+];
   // ========== HANDLERS ==========
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -1443,25 +1467,102 @@ const AddBoutique = () => {
                 {/* Unit */}
                 {/* Unit and Weight fields removed as requested */}
 
-                {/* Material */}
+                {/* Material Dropdown */}
                 <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Fabric / Material"
-                    placeholder="e.g. Silk, Cotton, Velvet, Chiffon"
-                    value={formData.material}
-                    onChange={(e) => handleChange('material', e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
+                  <FormControl fullWidth>
+                    <InputLabel
+                      id="material-label"
+                      sx={{
+                        '&.Mui-focused': { color: '#667eea' }
+                      }}
+                    >
+                      Fabric / Material *
+                    </InputLabel>
+                    <Select
+                      labelId="material-label"
+                      id="material-select"
+                      value={formData.material}
+                      label="Fabric / Material *"
+                      onChange={(e) => handleChange('material', e.target.value)}
+                      displayEmpty
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 300,
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                            '& .MuiMenuItem-root': {
+                              borderRadius: '8px',
+                              mx: 1,
+                              my: 0.5,
+                              '&:hover': {
+                                backgroundColor: 'rgba(102, 126, 234, 0.08)'
+                              },
+                              '&.Mui-selected': {
+                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(102, 126, 234, 0.2)'
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }}
+                      sx={{
                         borderRadius: '14px',
                         backgroundColor: 'white',
                         transition: 'all 0.3s ease',
-                        '&:hover': { boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)' },
-                        '&.Mui-focused': { boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)' }
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': { color: '#667eea' }
-                    }}
-                  />
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover': {
+                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
+                          },
+                          '&.Mui-focused': {
+                            boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
+                          }
+                        },
+                        '& .MuiSelect-select': {
+                          padding: '16px 14px'
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.12)'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: '2px'
+                        }
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select Fabric / Material</em>
+                      </MenuItem>
+                      <MenuItem value="Cotton">Cotton</MenuItem>
+                      <MenuItem value="Silk">Silk</MenuItem>
+                      <MenuItem value="Polyester">Polyester</MenuItem>
+                      <MenuItem value="Linen">Linen</MenuItem>
+                      <MenuItem value="Wool">Wool</MenuItem>
+                      <MenuItem value="Blend">Blend</MenuItem>
+                      <MenuItem value="Satin">Satin</MenuItem>
+                      <MenuItem value="Chiffon">Chiffon</MenuItem>
+                      <MenuItem value="Georgette">Georgette</MenuItem>
+                      <MenuItem value="Crepe">Crepe</MenuItem>
+                      <MenuItem value="Velvet">Velvet</MenuItem>
+                      <MenuItem value="Organza">Organza</MenuItem>
+                      <MenuItem value="Denim">Denim</MenuItem>
+                      <MenuItem value="Leather">Leather</MenuItem>
+                      <MenuItem value="Suede">Suede</MenuItem>
+                      <MenuItem value="Rayon">Rayon</MenuItem>
+                      <MenuItem value="Viscose">Viscose</MenuItem>
+                      <MenuItem value="Muslin">Muslin</MenuItem>
+                      <MenuItem value="Jersey">Jersey</MenuItem>
+                      <MenuItem value="Lycra">Lycra</MenuItem>
+                      <MenuItem value="Spandex">Spandex</MenuItem>
+                      <MenuItem value="Net">Net</MenuItem>
+                      <MenuItem value="Tulle">Tulle</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
 
                 {/* Sizes Selection */}
