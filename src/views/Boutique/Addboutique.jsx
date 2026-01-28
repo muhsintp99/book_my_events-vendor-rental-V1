@@ -172,20 +172,9 @@ const OPTION_ICONS = {
   Designer: DiamondIcon
 };
 
-
-const FeatureCard = ({
-  number,
-  title,
-  options,
-  values = [],
-  value = '',
-  onChange,
-  single = false,
-  icon: Icon
-}) => (
+const FeatureCard = ({ number, title, options, values = [], value = '', onChange, single = false, icon: Icon }) => (
   <Card
     sx={{
-
       p: 4,
       height: '100%',
       borderRadius: '24px',
@@ -238,11 +227,7 @@ const FeatureCard = ({
                 if (single) {
                   onChange(isSelected ? '' : opt);
                 } else {
-                  onChange(
-                    isSelected
-                      ? values.filter((v) => v !== opt)
-                      : [...values, opt]
-                  );
+                  onChange(isSelected ? values.filter((v) => v !== opt) : [...values, opt]);
                 }
               }}
               sx={{
@@ -251,9 +236,7 @@ const FeatureCard = ({
                 borderRadius: '14px',
                 border: '1px solid',
                 borderColor: isSelected ? THEME.primary : '#E5E7EB',
-                background: isSelected
-                  ? THEME.gradientLight
-                  : '#FFFFFF',
+                background: isSelected ? THEME.gradientLight : '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -270,9 +253,7 @@ const FeatureCard = ({
                     width: 36,
                     height: 36,
                     borderRadius: '10px',
-                    bgcolor: isSelected
-                      ? alpha(THEME.primary, 0.18)
-                      : '#F3F4F6',
+                    bgcolor: isSelected ? alpha(THEME.primary, 0.18) : '#F3F4F6',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -288,14 +269,10 @@ const FeatureCard = ({
                   )}
                 </Box>
 
-                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                  {opt}
-                </Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{opt}</Typography>
               </Stack>
 
-              {isSelected && (
-                <CheckCircleIcon sx={{ fontSize: 18, color: THEME.primary }} />
-              )}
+              {isSelected && <CheckCircleIcon sx={{ fontSize: 18, color: THEME.primary }} />}
             </Box>
           </Grid>
         );
@@ -369,7 +346,7 @@ const AddOrnaments = () => {
     category: '',
     subcategory: '',
     unit: '',
-    weight: '',
+    sizes: [],
     material: '',
     thumbnailImage: null,
     galleryImages: [],
@@ -417,43 +394,90 @@ const AddOrnaments = () => {
   const unitOptions = ['Each', 'Set', 'Pair', 'Dozen', 'Gram', 'Kilogram'];
   const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
   const discountOptions = ['Percentage', 'Fixed Amount', 'None'];
-  const occasionOptions = ['Wedding', 'Valentine', 'Festive', 'Daily Wear', 'Casual Outings', 'Anniversary', 'Engagement', 'Birthday', 'Party Wear', 'Office Wear'];
-  const featureOptions = ['Wedding', 'Valentine', 'Festive', 'Daily Wear', 'Casual Outings', 'Anniversary', 'Engagement', 'Party Wear', 'Office Wear', 'Ethnic Wear'];
+  const occasionOptions = [
+    'Wedding',
+    'Valentine',
+    'Festive',
+    'Daily Wear',
+    'Casual Outings',
+    'Anniversary',
+    'Engagement',
+    'Birthday',
+    'Party Wear',
+    'Office Wear'
+  ];
+  const featureOptions = [
+    'Wedding',
+    'Valentine',
+    'Festive',
+    'Daily Wear',
+    'Casual Outings',
+    'Anniversary',
+    'Engagement',
+    'Party Wear',
+    'Office Wear',
+    'Ethnic Wear'
+  ];
   const suitableForOptions = ['Men', 'Women', 'Kids', 'Bride', 'Groom', 'Unisex'];
   const styleOptions = ['Traditional', 'Western', 'Indo-Western', 'Modern', 'Classic', 'Bridal', 'Designer'];
+  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
 
   // ========== HANDLERS ==========
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Auto-calculate total price when unitPrice or tax changes
-    if (field === 'unitPrice' || field === 'tax') {
-      const unitPrice = field === 'unitPrice' ? value : formData.unitPrice;
-      const tax = field === 'tax' ? value : formData.tax;
+    if (field === 'unitPrice' || field === 'tax' || field === 'discountType' || field === 'discountValue') {
+      const unitPrice = field === 'unitPrice' ? Number(value) : Number(formData.unitPrice);
 
-      if (unitPrice && tax) {
-        const taxAmount = (parseFloat(unitPrice) * parseFloat(tax)) / 100;
-        setFormData((prev) => ({ ...prev, totalPrice: (parseFloat(unitPrice) + taxAmount).toFixed(2) }));
-      } else if (unitPrice) {
-        setFormData((prev) => ({ ...prev, totalPrice: unitPrice }));
+      const tax = field === 'tax' ? Number(value) : Number(formData.tax);
+
+      const discountType = field === 'discountType' ? value : formData.discountType;
+
+      const discountValue = field === 'discountValue' ? Number(value) : Number(formData.discountValue);
+
+      if (!unitPrice || unitPrice <= 0) {
+        setFormData((prev) => ({ ...prev, totalPrice: '' }));
+        return;
       }
+
+      // 🔻 Calculate discount
+      let discountAmount = 0;
+      if (discountType === 'Percentage') {
+        discountAmount = (unitPrice * discountValue) / 100;
+      } else if (discountType === 'Fixed Amount') {
+        discountAmount = discountValue;
+      }
+
+      // Prevent negative price
+      const priceAfterDiscount = Math.max(unitPrice - discountAmount, 0);
+
+      // 🧾 GST
+      const taxAmount = tax ? (priceAfterDiscount * tax) / 100 : 0;
+
+      const total = priceAfterDiscount + taxAmount;
+
+      setFormData((prev) => ({
+        ...prev,
+        totalPrice: total.toFixed(2)
+      }));
     }
 
     // Update subcategories list when category changes (Vehicle Method)
     if (field === 'category') {
       const categoryId = value; // Value will be the category _id
-      setFormData(prev => ({ ...prev, category: categoryId, subcategory: '' }));
+      setFormData((prev) => ({ ...prev, category: categoryId, subcategory: '' }));
 
       if (categoryId) {
-        axios.get(`${API_BASE}/api/categories/parents/${categoryId}/subcategories`)
-          .then(res => {
+        axios
+          .get(`${API_BASE}/api/categories/parents/${categoryId}/subcategories`)
+          .then((res) => {
             if (res.data && res.data.success) {
               setAvailableSubCategories(res.data.data);
             } else {
               setAvailableSubCategories([]);
             }
           })
-          .catch(err => {
+          .catch((err) => {
             console.error('Error fetching subcategories:', err);
             setAvailableSubCategories([]);
           });
@@ -643,18 +667,26 @@ const AddOrnaments = () => {
           category: product.category?._id || product.category || '',
           subcategory: product.subCategory?._id || product.subCategory || '',
           unit: product.unit || '',
-          weight: product.weight || '',
+          sizes: product.sizes || [],
           material: product.material || '',
           thumbnailImage: product.thumbnail || null,
           galleryImages: [],
           existingGallery: product.galleryImages || [],
-          availabilityMode: product.availabilityMode === 'all' ? 'All' :
-            (product.availabilityMode === 'rental' ? 'Available For Rental' : 'Available For Purchase'),
+          availabilityMode:
+            product.availabilityMode === 'all'
+              ? 'All'
+              : product.availabilityMode === 'rental'
+                ? 'Available For Rental'
+                : 'Available For Purchase',
           availableForPurchase: product.availabilityMode !== 'rental',
           availableForRental: product.availabilityMode !== 'purchase',
           unitPrice: product.buyPricing?.unitPrice || '',
-          discountType: product.buyPricing?.discountType === 'none' ? 'None' :
-            (product.buyPricing?.discountType === 'percentage' ? 'Percentage' : 'Fixed Amount'),
+          discountType:
+            product.buyPricing?.discountType === 'none'
+              ? 'None'
+              : product.buyPricing?.discountType === 'percentage'
+                ? 'Percentage'
+                : 'Fixed Amount',
           tax: product.buyPricing?.tax || '',
           totalPrice: product.buyPricing?.totalPrice || '',
           pricePerDay: product.rentalPricing?.pricePerDay || '',
@@ -669,16 +701,21 @@ const AddOrnaments = () => {
           flatRateShipping: product.shipping?.flatRateShipping || false,
           shippingPrice: product.shipping?.shippingPrice || '',
           selectedOccasions: product.occasions || [],
-          selectedFeatures: product.features?.basicFeatures?.map(f => {
-            const map = {
-              'dailyWear': 'Daily Wear',
-              'casualOutings': 'Casual Outings'
-            };
-            return map[f] || (typeof f === 'string' ? (f.charAt(0).toUpperCase() + f.slice(1)) : f);
-          }) || [],
-          suitableFor: product.features?.suitableFor?.map(s => typeof s === 'string' ? (s.charAt(0).toUpperCase() + s.slice(1)) : s) || [],
-          styleFeatures: product.features?.style?.[0] ?
-            (typeof product.features.style[0] === 'string' ? (product.features.style[0].charAt(0).toUpperCase() + product.features.style[0].slice(1)) : '') : '',
+          selectedFeatures:
+            product.features?.basicFeatures?.map((f) => {
+              const map = {
+                dailyWear: 'Daily Wear',
+                casualOutings: 'Casual Outings'
+              };
+              return map[f] || (typeof f === 'string' ? f.charAt(0).toUpperCase() + f.slice(1) : f);
+            }) || [],
+          suitableFor:
+            product.features?.suitableFor?.map((s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s)) || [],
+          styleFeatures: product.features?.style?.[0]
+            ? typeof product.features.style[0] === 'string'
+              ? product.features.style[0].charAt(0).toUpperCase() + product.features.style[0].slice(1)
+              : ''
+            : '',
           discountValue: product.buyPricing?.discountValue || '',
           tags: product.tags || []
         });
@@ -688,9 +725,9 @@ const AddOrnaments = () => {
         }
 
         if (product.relatedItems?.items?.length) {
-          const ids = product.relatedItems.items.map(i => i._id || i);
+          const ids = product.relatedItems.items.map((i) => i._id || i);
           setRelatedItems(ids);
-          setSelectedRelatedObjects(product.relatedItems.items.filter(i => typeof i === 'object'));
+          setSelectedRelatedObjects(product.relatedItems.items.filter((i) => typeof i === 'object'));
           setRelatedLinkBy(product.relatedItems.linkBy || 'product');
         }
 
@@ -700,7 +737,6 @@ const AddOrnaments = () => {
           const subRes = await axios.get(`${API_BASE}/api/categories/parents/${catId}/subcategories`);
           if (subRes.data?.success) setAvailableSubCategories(subRes.data.data);
         }
-
       } catch (err) {
         console.error('Load Error:', err);
         setError('Failed to load product data');
@@ -764,13 +800,13 @@ const AddOrnaments = () => {
     // Map feature options to backend enum
     const mapFeature = (f) => {
       const map = {
-        'Wedding': 'wedding',
-        'Valentine': 'valentine',
-        'Festive': 'festive',
+        Wedding: 'wedding',
+        Valentine: 'valentine',
+        Festive: 'festive',
         'Daily Wear': 'dailyWear',
         'Casual Outings': 'casualOutings',
-        'Anniversary': 'anniversary',
-        'Engagement': 'engagement'
+        Anniversary: 'anniversary',
+        Engagement: 'engagement'
       };
       return map[f] || (typeof f === 'string' ? f.toLowerCase().replace(/\s+/g, '') : f);
     };
@@ -787,7 +823,7 @@ const AddOrnaments = () => {
     formDataToSend.append('category', formData.category);
     formDataToSend.append('subCategory', formData.subcategory);
     formDataToSend.append('unit', formData.unit);
-    formDataToSend.append('weight', formData.weight);
+    formDataToSend.append('sizes', JSON.stringify(formData.sizes));
     formDataToSend.append('material', formData.material);
     formDataToSend.append('availabilityMode', mode);
     formDataToSend.append('isActive', true);
@@ -813,47 +849,70 @@ const AddOrnaments = () => {
     }
 
     // 3. Grouped Objects (JSON stringified for Multi-part)
-    formDataToSend.append('buyPricing', JSON.stringify({
-      unitPrice: formData.unitPrice,
-      discountType: formData.discountType.toLowerCase() === 'none' ? 'none' : (formData.discountType.toLowerCase() === 'percentage' ? 'percentage' : 'flat'),
-      discountValue: formData.discountValue || 0,
-      tax: formData.tax,
-      totalPrice: formData.totalPrice
-    }));
+    formDataToSend.append(
+      'buyPricing',
+      JSON.stringify({
+        unitPrice: formData.unitPrice,
+        discountType:
+          formData.discountType.toLowerCase() === 'none'
+            ? 'none'
+            : formData.discountType.toLowerCase() === 'percentage'
+              ? 'percentage'
+              : 'flat',
+        discountValue: formData.discountValue || 0,
+        tax: formData.tax,
+        totalPrice: formData.totalPrice
+      })
+    );
 
-    formDataToSend.append('rentalPricing', JSON.stringify({
-      pricePerDay: formData.pricePerDay,
-      minimumDays: formData.minimumDays,
-      lateCharges: formData.lateCharges,
-      totalPrice: formData.rentalTotalPrice,
-      advanceForBooking: formData.advanceForBooking,
-      damagePolicy: formData.damagePolicy
-    }));
+    formDataToSend.append(
+      'rentalPricing',
+      JSON.stringify({
+        pricePerDay: formData.pricePerDay,
+        minimumDays: formData.minimumDays,
+        lateCharges: formData.lateCharges,
+        totalPrice: formData.rentalTotalPrice,
+        advanceForBooking: formData.advanceForBooking,
+        damagePolicy: formData.damagePolicy
+      })
+    );
 
-    formDataToSend.append('stock', JSON.stringify({
-      quantity: formData.stockQuantity,
-      lowStockAlert: formData.lowStockAlert
-    }));
+    formDataToSend.append(
+      'stock',
+      JSON.stringify({
+        quantity: formData.stockQuantity,
+        lowStockAlert: formData.lowStockAlert
+      })
+    );
 
-    formDataToSend.append('shipping', JSON.stringify({
-      freeShipping: formData.freeShipping,
-      flatRateShipping: formData.flatRateShipping,
-      shippingPrice: formData.shippingPrice
-    }));
+    formDataToSend.append(
+      'shipping',
+      JSON.stringify({
+        freeShipping: formData.freeShipping,
+        flatRateShipping: formData.flatRateShipping,
+        shippingPrice: formData.shippingPrice
+      })
+    );
 
-    formDataToSend.append('features', JSON.stringify({
-      basicFeatures: formData.selectedFeatures.map(mapFeature),
-      suitableFor: formData.suitableFor.map(s => s.toLowerCase()),
-      style: formData.styleFeatures ? [formData.styleFeatures.toLowerCase()] : []
-    }));
+    formDataToSend.append(
+      'features',
+      JSON.stringify({
+        basicFeatures: formData.selectedFeatures.map(mapFeature),
+        suitableFor: formData.suitableFor.map((s) => s.toLowerCase()),
+        style: formData.styleFeatures ? [formData.styleFeatures.toLowerCase()] : []
+      })
+    );
 
     formDataToSend.append('tags', JSON.stringify(formData.tags));
     formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
     formDataToSend.append('termsAndConditions', JSON.stringify(termsSections));
-    formDataToSend.append('relatedItems', JSON.stringify({
-      linkBy: relatedLinkBy,
-      items: relatedItems
-    }));
+    formDataToSend.append(
+      'relatedItems',
+      JSON.stringify({
+        linkBy: relatedLinkBy,
+        items: relatedItems
+      })
+    );
 
     try {
       setSubmitting(true);
@@ -864,7 +923,7 @@ const AddOrnaments = () => {
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       };
 
@@ -1029,11 +1088,7 @@ const AddOrnaments = () => {
               border: '1px solid rgba(102, 126, 234, 0.1)'
             }}
           >
-            <SectionHeader
-              icon={CategoryIcon}
-              title="General Information"
-              subtitle="Provide essential details about your boutique item"
-            />
+            <SectionHeader icon={CategoryIcon} title="General Information" subtitle="Provide essential details about your boutique item" />
 
             <Stack spacing={3.5}>
               {/* Product Name */}
@@ -1074,8 +1129,7 @@ const AddOrnaments = () => {
                         backgroundColor: 'white',
                         px: 1
                       }}
-                    >
-                    </InputLabel>
+                    ></InputLabel>
                     <Select
                       value={formData.category}
                       onChange={(e) => handleChange('category', e.target.value)}
@@ -1150,8 +1204,7 @@ const AddOrnaments = () => {
                         backgroundColor: 'white',
                         px: 1
                       }}
-                    >
-                    </InputLabel>
+                    ></InputLabel>
                     <Select
                       value={formData.subcategory}
                       onChange={(e) => handleChange('subcategory', e.target.value)}
@@ -1227,9 +1280,7 @@ const AddOrnaments = () => {
                         backgroundColor: 'white',
                         px: 1
                       }}
-                    >
-
-                    </InputLabel>
+                    ></InputLabel>
                     <Select
                       value={formData.unit}
                       onChange={(e) => handleChange('unit', e.target.value)}
@@ -1295,7 +1346,7 @@ const AddOrnaments = () => {
                 </Grid>
 
                 {/* Material */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
                     label="Fabric / Material"
@@ -1321,52 +1372,52 @@ const AddOrnaments = () => {
                   />
                 </Grid>
 
-                {/* Weight */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Weight"
-                    type="number"
-                    placeholder="Enter weight"
-                    value={formData.weight}
-                    onChange={(e) => handleChange('weight', e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Box
-                            sx={{
-                              backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                              color: '#667eea',
-                              px: 1.5,
-                              py: 0.5,
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                              fontSize: '0.875rem'
-                            }}
-                          >
-                            Kg
-                          </Box>
-                        </InputAdornment>
-                      )
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                        }
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea'
-                      }
-                    }}
-                  />
-                </Grid>
+               <Grid item xs={12} md={4}>
+  <FormControl fullWidth>
+    <Select
+      multiple
+      fullWidth
+      value={formData.sizes}
+      onChange={(e) => handleChange('sizes', e.target.value)}
+      displayEmpty
+      renderValue={(selected) =>
+        selected.length ? selected.join(', ') : 'Select Size'
+      }
+      sx={{
+        width: '100%',
+        borderRadius: '14px',
+        backgroundColor: 'white',
+        transition: 'all 0.3s ease',
+
+        '& .MuiSelect-select': {
+          padding: '16px 14px',   // SAME AS CATEGORY
+          display: 'flex',
+          alignItems: 'center',
+          color: selected => selected.length ? '#111' : '#9CA3AF'
+        },
+
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: 'rgba(0, 0, 0, 0.12)'
+        },
+        '&:hover .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#667eea'
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderColor: '#667eea',
+          borderWidth: '2px'
+        }
+      }}
+    >
+      {sizeOptions.map((size) => (
+        <MenuItem key={size} value={size}>
+          <Checkbox checked={formData.sizes.includes(size)} />
+          <Typography fontWeight={600}>{size}</Typography>
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</Grid>
+
               </Grid>
 
               {/* Description */}
@@ -1742,7 +1793,9 @@ const AddOrnaments = () => {
                       }}
                     >
                       {/* Price & Discount Row */}
-                      <Box sx={{ p: 3.5, background: 'linear-gradient(135deg, #FAFBFC 0%, #F5F3FF 100%)', borderBottom: '2px solid #E5E7EB' }}>
+                      <Box
+                        sx={{ p: 3.5, background: 'linear-gradient(135deg, #FAFBFC 0%, #F5F3FF 100%)', borderBottom: '2px solid #E5E7EB' }}
+                      >
                         <Grid container spacing={3} alignItems="center">
                           <Grid item xs={12} md={4}>
                             <Box sx={{ position: 'relative' }}>
@@ -1781,7 +1834,7 @@ const AddOrnaments = () => {
                                         }}
                                       >
                                         <Typography fontWeight={800} color="white" fontSize="1.1rem">
-                                          $
+                                          ₹
                                         </Typography>
                                       </Box>
                                     </InputAdornment>
@@ -1998,7 +2051,7 @@ const AddOrnaments = () => {
                             }}
                           >
                             <Typography fontWeight={800} fontSize="1.5rem" color={THEME.primary}>
-                              ${formData.totalPrice || '0.00'}
+                              ₹{formData.totalPrice || '0.00'}
                             </Typography>
                           </Box>
                         </Stack>
@@ -2052,7 +2105,9 @@ const AddOrnaments = () => {
                       }}
                     >
                       {/* Daily Rate & Minimum Days */}
-                      <Box sx={{ p: 3.5, background: 'linear-gradient(135deg, #FFF5F7 0%, #FCE4EC 100%)', borderBottom: '2px solid #FCE4EC' }}>
+                      <Box
+                        sx={{ p: 3.5, background: 'linear-gradient(135deg, #FFF5F7 0%, #FCE4EC 100%)', borderBottom: '2px solid #FCE4EC' }}
+                      >
                         <Grid container spacing={3}>
                           <Grid item xs={12} md={6}>
                             <Box sx={{ position: 'relative' }}>
@@ -2091,7 +2146,7 @@ const AddOrnaments = () => {
                                         }}
                                       >
                                         <Typography fontWeight={800} color="white" fontSize="1.1rem">
-                                          $
+                                          ₹
                                         </Typography>
                                       </Box>
                                     </InputAdornment>
@@ -2212,7 +2267,7 @@ const AddOrnaments = () => {
                                   startAdornment: (
                                     <InputAdornment position="start">
                                       <Typography fontWeight={800} color={THEME.secondary} fontSize="1rem">
-                                        $
+                                        ₹
                                       </Typography>
                                     </InputAdornment>
                                   )
@@ -2266,7 +2321,7 @@ const AddOrnaments = () => {
                                   startAdornment: (
                                     <InputAdornment position="start">
                                       <Typography fontWeight={800} color={THEME.secondary} fontSize="1rem">
-                                        $
+                                        ₹
                                       </Typography>
                                     </InputAdornment>
                                   )
@@ -2586,7 +2641,6 @@ const AddOrnaments = () => {
 
             {/* COLUMNS */}
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-
               {/* COLUMN CARD STYLE */}
               {[
                 {
@@ -2632,21 +2686,14 @@ const AddOrnaments = () => {
                     }
                   }}
                 >
-                  <Typography
-                    fontWeight={700}
-                    mb={1.5}
-                    fontSize="0.95rem"
-                    color={section.color}
-                  >
+                  <Typography fontWeight={700} mb={1.5} fontSize="0.95rem" color={section.color}>
                     {section.title}
                   </Typography>
 
                   <FormGroup>
                     {section.options.map((item) => {
                       const Icon = OPTION_ICONS[item] || StyleIcon;
-                      const checked = section.multi
-                        ? section.value.includes(item)
-                        : section.value === item;
+                      const checked = section.multi ? section.value.includes(item) : section.value === item;
 
                       return (
                         <Box
@@ -2657,9 +2704,7 @@ const AddOrnaments = () => {
                             borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
-                            background: checked
-                              ? alpha(section.color, 0.12)
-                              : 'transparent',
+                            background: checked ? alpha(section.color, 0.12) : 'transparent',
                             '&:hover': {
                               background: alpha(section.color, 0.1),
                               transform: 'translateX(4px)'
@@ -2691,9 +2736,7 @@ const AddOrnaments = () => {
                                     width: 26,
                                     height: 26,
                                     borderRadius: '8px',
-                                    background: checked
-                                      ? section.color
-                                      : alpha(THEME.dark, 0.08),
+                                    background: checked ? section.color : alpha(THEME.dark, 0.08),
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center'
@@ -2706,9 +2749,7 @@ const AddOrnaments = () => {
                                     }}
                                   />
                                 </Box>
-                                <Typography fontSize="0.9rem">
-                                  {item}
-                                </Typography>
+                                <Typography fontSize="0.9rem">{item}</Typography>
                               </Stack>
                             }
                           />
@@ -2718,7 +2759,6 @@ const AddOrnaments = () => {
                   </FormGroup>
                 </Box>
               ))}
-
             </Box>
           </Paper>
           {/* 8. Related Items Section */}
@@ -2771,8 +2811,8 @@ const AddOrnaments = () => {
                     <Chip
                       label={item.productName || item.name || item.title}
                       onDelete={() => {
-                        setRelatedItems(prev => prev.filter(id => id !== item._id));
-                        setSelectedRelatedObjects(prev => prev.filter(obj => obj._id !== item._id));
+                        setRelatedItems((prev) => prev.filter((id) => id !== item._id));
+                        setSelectedRelatedObjects((prev) => prev.filter((obj) => obj._id !== item._id));
                       }}
                       sx={{
                         height: '45px',
@@ -2946,8 +2986,6 @@ const AddOrnaments = () => {
           >
             {submitting ? <CircularProgress size={24} color="inherit" /> : isEditMode ? 'Update Product' : 'Publish Product'}
           </GradientButton>
-
-
         </Stack>
       </Box>
 
@@ -2978,9 +3016,7 @@ const AddOrnaments = () => {
                 Select {relatedLinkBy === 'product' ? 'Boutique Items' : 'Categories'}
               </Typography>
               <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                {drilldownCategory
-                  ? `Showing products in ${drilldownCategory.title}`
-                  : `Browse available ${relatedLinkBy}s to link`}
+                {drilldownCategory ? `Showing products in ${drilldownCategory.title}` : `Browse available ${relatedLinkBy}s to link`}
               </Typography>
             </Box>
             <IconButton
@@ -2999,7 +3035,9 @@ const AddOrnaments = () => {
           {loadingRelated ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '300px', gap: 2 }}>
               <CircularProgress size={40} thickness={4} />
-              <Typography fontWeight={600} color="text.secondary">Fetching details...</Typography>
+              <Typography fontWeight={600} color="text.secondary">
+                Fetching details...
+              </Typography>
             </Box>
           ) : (
             <>
@@ -3043,11 +3081,11 @@ const AddOrnaments = () => {
                         onChange={(e) => {
                           const id = drilldownCategory._id;
                           if (e.target.checked) {
-                            setRelatedItems(prev => [...prev, id]);
-                            setSelectedRelatedObjects(prev => [...prev, drilldownCategory]);
+                            setRelatedItems((prev) => [...prev, id]);
+                            setSelectedRelatedObjects((prev) => [...prev, drilldownCategory]);
                           } else {
-                            setRelatedItems(prev => prev.filter(x => x !== id));
-                            setSelectedRelatedObjects(prev => prev.filter(x => x._id !== id));
+                            setRelatedItems((prev) => prev.filter((x) => x !== id));
+                            setSelectedRelatedObjects((prev) => prev.filter((x) => x._id !== id));
                           }
                         }}
                         sx={{ color: THEME.primary, '&.Mui-checked': { color: THEME.primary } }}
@@ -3082,11 +3120,11 @@ const AddOrnaments = () => {
                               handleCategoryClick(option);
                             } else {
                               if (isSelected) {
-                                setRelatedItems(prev => prev.filter(x => x !== id));
-                                setSelectedRelatedObjects(prev => prev.filter(obj => obj._id !== id));
+                                setRelatedItems((prev) => prev.filter((x) => x !== id));
+                                setSelectedRelatedObjects((prev) => prev.filter((obj) => obj._id !== id));
                               } else {
-                                setRelatedItems(prev => [...prev, id]);
-                                setSelectedRelatedObjects(prev => [...prev, option]);
+                                setRelatedItems((prev) => [...prev, id]);
+                                setSelectedRelatedObjects((prev) => [...prev, option]);
                               }
                             }
                           }}
@@ -3111,7 +3149,9 @@ const AddOrnaments = () => {
                               src={
                                 option.thumbnail ||
                                 (option.image
-                                  ? (option.image.startsWith('http') ? option.image : `${API_BASE}${option.image}`)
+                                  ? option.image.startsWith('http')
+                                    ? option.image
+                                    : `${API_BASE}${option.image}`
                                   : '/placeholder.jpg')
                               }
                               alt={option.productName || option.title || option.name}
@@ -3157,7 +3197,12 @@ const AddOrnaments = () => {
                                   opacity: 0.9
                                 }}
                               >
-                                <Typography variant="caption" color="white" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="white"
+                                  fontWeight={700}
+                                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                >
                                   CLICK TO VIEW ITEMS <ArrowBackIcon sx={{ transform: 'rotate(180deg)', fontSize: 14 }} />
                                 </Typography>
                               </Box>
@@ -3165,7 +3210,7 @@ const AddOrnaments = () => {
                           </Box>
                           <CardContent sx={{ p: 2, textAlign: 'center' }}>
                             <SubcategoryBadge
-                              label={isCategoryItem ? 'Category' : (option.category?.title || 'Ornament')}
+                              label={isCategoryItem ? 'Category' : option.category?.title || 'Ornament'}
                               color={isCategoryItem ? THEME.secondary : THEME.primary}
                             />
                             <Typography fontWeight={800} sx={{ mt: 1, fontSize: '0.95rem', color: '#1B254B', lineHeight: 1.2 }}>
@@ -3200,7 +3245,7 @@ const AddOrnaments = () => {
               boxShadow: `0 12px 24px ${alpha(THEME.primary, 0.25)}`,
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: `0 15px 30px ${alpha(THEME.primary, 0.35)}`,
+                boxShadow: `0 15px 30px ${alpha(THEME.primary, 0.35)}`
               }
             }}
           >
@@ -3208,7 +3253,6 @@ const AddOrnaments = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
     </Box>
   );
 };
