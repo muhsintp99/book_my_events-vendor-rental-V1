@@ -12,8 +12,8 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Badge from '@mui/material/Badge';
 import Switch from '@mui/material/Switch';
-import { TextField, Button, Card, CardContent, InputAdornment, IconButton, AppBar, Toolbar, Snackbar, Alert } from '@mui/material';
-import { ArrowBack, Phone, Language, Business, Store, Email, Web } from '@mui/icons-material';
+import { TextField, Button, Card, CardContent, InputAdornment, IconButton, AppBar, Toolbar, Snackbar, Alert, Stepper, Step, StepLabel, LinearProgress } from '@mui/material';
+import { ArrowBack, Phone, Language, Business, Store, Email, Web, Image as ImageIcon, NavigateNext, NavigateBefore, Done } from '@mui/icons-material';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
@@ -50,6 +50,9 @@ export default function ProfileSection() {
   const [vendorType, setVendorType] = useState('');
   const [profile, setProfile] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -141,10 +144,15 @@ export default function ProfileSection() {
           whatsapp: socialLinks.whatsapp || (currentUser.socialMedia && currentUser.socialMedia.whatsapp) || '',
           telegram: socialLinks.telegram || (currentUser.socialMedia && currentUser.socialMedia.telegram) || '',
           other: socialLinks.other || (currentUser.socialMedia && currentUser.socialMedia.other) || '',
-          bioTitle: '',
-          bioSubtitle: '',
-          bioDescription: ''
+          bioTitle: prof.bioTitle || '',
+          bioSubtitle: prof.bioSubtitle || '',
+          bioDescription: prof.bioDescription || '',
+          coverImage: null
         });
+
+        if (prof.coverImage) {
+          setCoverPreview(`https://api.bookmyevent.ae${prof.coverImage}`);
+        }
       }
 
       // Fetch vendor profile separately to get the logo and bio
@@ -171,6 +179,10 @@ export default function ProfileSection() {
               bioDescription: vendorData.bio.description || ''
             }));
           }
+
+          if (vendorData.coverImage) {
+            setCoverPreview(`https://api.bookmyevent.ae${vendorData.coverImage}`);
+          }
         }
       } catch (vendorError) {
         console.error('Failed to fetch vendor logo:', vendorError);
@@ -190,6 +202,23 @@ export default function ProfileSection() {
     }
   };
 
+  const handleCoverImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setCoverPreview(previewUrl);
+      setFormData((prev) => ({ ...prev, coverImage: file }));
+    }
+  };
+
+  const handleNext = () => {
+    setActiveStep((prevStep) => prevStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevStep) => prevStep - 1);
+  };
+
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
   };
@@ -198,11 +227,13 @@ export default function ProfileSection() {
 
   const handleSave = async () => {
     try {
+      setIsSubmitting(true);
       const token = localStorage.getItem('token');
       if (!token) {
         setToastMessage('Please login again');
         setToastSeverity('error');
         setShowToast(true);
+        setIsSubmitting(false);
         return;
       }
       const socialLinksObj = {
@@ -218,6 +249,7 @@ export default function ProfileSection() {
         telegram: formData.telegram || '',
         other: formData.other || ''
       };
+
       const updatePayload = new FormData();
       updatePayload.append('vendorName', formData.vendorName);
       updatePayload.append('mobileNumber', formData.phone);
@@ -232,24 +264,35 @@ export default function ProfileSection() {
       if (formData.profilePhoto instanceof File) {
         updatePayload.append('profilePhoto', formData.profilePhoto);
       }
-      updatePayload.append('role', role || 'vendor'); // Fallback to 'vendor' if role is missing
+
+      if (formData.coverImage instanceof File) {
+        updatePayload.append('coverImage', formData.coverImage);
+      }
+
+      updatePayload.append('role', role || 'vendor');
       const userIdToUpdate = user?._id || user?.id;
       if (!userIdToUpdate) throw new Error('User ID not found');
+
       await axios.put(`${PROFILE_API}/${userIdToUpdate}`, updatePayload, {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
+
       setToastMessage('Profile updated successfully!');
       setToastSeverity('success');
       setShowToast(true);
       SetIsedit(false);
+      setActiveStep(0);
       fetchProfile();
     } catch (error) {
       console.error('Update failed:', error);
       setToastMessage(error.response?.data?.message || 'Failed to update profile.');
       setToastSeverity('error');
       setShowToast(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -329,10 +372,10 @@ export default function ProfileSection() {
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              borderColor: 'transparent',
-              transform: 'translateY(-1px)'
-            }
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            borderColor: 'transparent',
+            transform: 'translateY(-1px)'
+          }
           : {}
       }}
       onClick={onClick}
@@ -674,20 +717,22 @@ export default function ProfileSection() {
                     shadow={theme.shadows[16]}
                     sx={{
                       maxWidth: '850px',
+                      width: '100%',
                       maxHeight: '92vh',
                       overflowY: 'auto',
                       borderRadius: 4,
+                      bgcolor: '#f8f9fa',
                       '&::-webkit-scrollbar': { width: 6 },
                       '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.1)', borderRadius: 3 }
                     }}
                   >
-                    <Box sx={{ flexGrow: 1, bgcolor: '#ffffff' }}>
+                    <Box sx={{ flexGrow: 1 }}>
                       {/* Header */}
                       <AppBar
                         position="sticky"
                         elevation={0}
                         sx={{
-                          bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          bgcolor: 'rgba(255, 255, 255, 0.95)',
                           backdropFilter: 'blur(12px)',
                           borderBottom: '1px solid',
                           borderColor: 'divider',
@@ -695,561 +740,310 @@ export default function ProfileSection() {
                           zIndex: 10
                         }}
                       >
-                        <Toolbar sx={{ px: { xs: 2, sm: 4 }, minHeight: 70 }}>
-                          <IconButton edge="start" onClick={() => SetIsedit(false)} sx={{ mr: 2, bgcolor: 'action.hover' }}>
-                            <ArrowBack sx={{ fontSize: 20 }} />
-                          </IconButton>
-                          <Typography variant="h4" sx={{ flexGrow: 1, fontWeight: 700, color: 'text.primary', letterSpacing: '-0.01em' }}>
-                            Edit Profile
-                          </Typography>
-                          <Button
-                            variant="contained"
-                            onClick={handleSave}
-                            disableElevation
-                            sx={{
-                              bgcolor: '#E15B65',
-                              borderRadius: 2.5,
-                              px: 4,
-                              py: 1,
-                              textTransform: 'none',
-                              fontWeight: 600,
-                              fontSize: '0.95rem',
-                              boxShadow: '0 4px 12px rgba(225, 91, 101, 0.25)',
-                              '&:hover': {
-                                bgcolor: '#c94a53',
-                                boxShadow: '0 6px 16px rgba(225, 91, 101, 0.35)'
-                              }
-                            }}
-                          >
-                            Save Changes
-                          </Button>
+                        <Toolbar sx={{ px: { xs: 2, sm: 4 }, minHeight: 80, display: 'flex', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton edge="start" onClick={() => SetIsedit(false)} sx={{ mr: 2, bgcolor: 'action.hover' }}>
+                              <ArrowBack sx={{ fontSize: 20 }} />
+                            </IconButton>
+                            <Box>
+                              <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                                Edit Profile
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                                Update your business identity and presence
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', gap: 1.5 }}>
+                            <Button
+                              variant="outlined"
+                              onClick={() => SetIsedit(false)}
+                              sx={{
+                                borderRadius: 2.5,
+                                px: 3,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                borderColor: 'divider',
+                                color: 'text.primary'
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="contained"
+                              onClick={handleSave}
+                              disabled={isSubmitting}
+                              startIcon={isSubmitting ? null : <Done />}
+                              sx={{
+                                bgcolor: '#E15B65',
+                                borderRadius: 2.5,
+                                px: 4,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                boxShadow: '0 4px 12px rgba(225, 91, 101, 0.25)',
+                                '&:hover': { bgcolor: '#c94a53' }
+                              }}
+                            >
+                              {isSubmitting ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                          </Box>
                         </Toolbar>
                       </AppBar>
 
-                      <Box sx={{ p: { xs: 3, sm: 5 } }}>
-                        {/* Profile Header Card */}
-                        <Card
-                          elevation={0}
-                          sx={{
-                            borderRadius: 4,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            mb: 5,
-                            overflow: 'visible',
-                            background: '#fff'
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              height: 140,
-                              background: 'linear-gradient(135deg, #E15B65 0%, #ff8e53 100%)',
-                              borderTopLeftRadius: 16,
-                              borderTopRightRadius: 16,
-                              opacity: 0.9
-                            }}
-                          />
-                          <CardContent sx={{ pt: 0, pb: 4, '&:last-child': { pb: 4 } }}>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: -7, mb: 1 }}>
-                              <Box sx={{ position: 'relative' }}>
-                                <Avatar
-                                  src={profilePreview || User1}
-                                  sx={{
-                                    width: 130,
-                                    height: 130,
-                                    border: '6px solid white',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                    bgcolor: '#fff',
-                                    color: '#E15B65',
-                                    fontSize: 52,
-                                    fontWeight: 700
-                                  }}
+                      <Box sx={{ px: { xs: 2.5, sm: 4 }, py: 4 }}>
+                        {/* Section 1: Visual Identity */}
+                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, overflow: 'visible', bgcolor: '#fff' }}>
+                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <ImageIcon sx={{ color: '#E15B65' }} />
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Visual Identity</Typography>
+                          </Box>
+                          <Box sx={{ p: 3 }}>
+                            <Box sx={{ position: 'relative', mb: 10 }}>
+                              <Box
+                                sx={{
+                                  height: 200,
+                                  borderRadius: 3,
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  bgcolor: 'rgba(0,0,0,0.04)',
+                                  border: '1px dashed',
+                                  borderColor: 'divider',
+                                  backgroundImage: coverPreview ? `url(${coverPreview})` : 'none',
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              >
+                                {!coverPreview && (
+                                  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', opacity: 0.5 }}>
+                                    <ImageIcon sx={{ fontSize: 40, mb: 1 }} />
+                                    <Typography variant="subtitle2">No Cover Image</Typography>
+                                  </Box>
+                                )}
+                                <Box sx={{ position: 'absolute', bottom: 12, right: 12 }}>
+                                  <input accept="image/*" style={{ display: 'none' }} id="cover-photo-upload" type="file" onChange={handleCoverImageUpload} />
+                                  <label htmlFor="cover-photo-upload">
+                                    <Button
+                                      component="span"
+                                      variant="contained"
+                                      size="small"
+                                      startIcon={<PhotoCamera />}
+                                      sx={{
+                                        bgcolor: 'rgba(255,255,255,0.95)',
+                                        color: 'text.primary',
+                                        backdropFilter: 'blur(8px)',
+                                        borderRadius: 2,
+                                        fontWeight: 600,
+                                        textTransform: 'none',
+                                        '&:hover': { bgcolor: '#fff' }
+                                      }}
+                                    >
+                                      Edit Cover
+                                    </Button>
+                                  </label>
+                                </Box>
+                              </Box>
+
+                              <Box sx={{ position: 'absolute', bottom: -45, left: 24 }}>
+                                <Badge
+                                  overlap="circular"
+                                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                  badgeContent={
+                                    <>
+                                      <input accept="image/*" style={{ display: 'none' }} id="profile-photo-upload" type="file" onChange={handleProfileImageUpload} />
+                                      <label htmlFor="profile-photo-upload">
+                                        <IconButton
+                                          component="span"
+                                          sx={{
+                                            bgcolor: '#E15B65',
+                                            color: 'white',
+                                            border: '3px solid white',
+                                            boxShadow: '0 4px 10px rgba(225, 91, 101, 0.3)',
+                                            width: 36,
+                                            height: 36,
+                                            '&:hover': { bgcolor: '#c94a53' }
+                                          }}
+                                        >
+                                          <PhotoCamera sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                      </label>
+                                    </>
+                                  }
                                 >
-                                  {!profilePreview && (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
-                                </Avatar>
-                                <input
-                                  accept="image/*"
-                                  style={{ display: 'none' }}
-                                  id="profile-photo-upload"
-                                  type="file"
-                                  onChange={handleProfileImageUpload}
-                                />
-                                <label htmlFor="profile-photo-upload">
-                                  <IconButton
-                                    component="span"
+                                  <Avatar
+                                    src={profilePreview || User1}
                                     sx={{
-                                      position: 'absolute',
-                                      bottom: 5,
-                                      right: 5,
-                                      bgcolor: '#E15B65',
-                                      color: 'white',
+                                      width: 100,
+                                      height: 100,
                                       border: '4px solid white',
-                                      boxShadow: '0 4px 12px rgba(225, 91, 101, 0.3)',
-                                      '&:hover': { bgcolor: '#c94a53', transform: 'scale(1.05)' },
-                                      width: 44,
-                                      height: 44,
-                                      transition: 'all 0.2s ease-in-out'
+                                      boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
+                                      bgcolor: '#f0f0f0',
+                                      fontSize: 40,
+                                      fontWeight: 700,
+                                      color: '#E15B65'
                                     }}
                                   >
-                                    <PhotoCamera sx={{ fontSize: 20 }} />
-                                  </IconButton>
-                                </label>
-                              </Box>
-                              <Box sx={{ mt: 2.5, textAlign: 'center' }}>
-                                <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, color: 'text.primary', letterSpacing: '-0.02em' }}>
-                                  {formData.vendorName || user?.name || 'Vendor Name'}
-                                </Typography>
-                                <Typography
-                                  variant="subtitle1"
-                                  color="text.secondary"
-                                  sx={{ fontWeight: 500, letterSpacing: '0.01em', textTransform: 'uppercase', fontSize: '0.75rem' }}
-                                >
-                                  {vendorType ? vendorType : role ? role : 'Vendor'}
-                                </Typography>
+                                    {!profilePreview && (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
+                                  </Avatar>
+                                </Badge>
                               </Box>
                             </Box>
-                          </CardContent>
+                          </Box>
                         </Card>
 
-                        <Box sx={{ mb: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box
-                              sx={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 2.5,
-                                bgcolor: 'rgba(225, 91, 101, 0.08)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(225, 91, 101, 0.15)'
-                              }}
-                            >
-                              <Store sx={{ color: '#E15B65', fontSize: 22 }} />
-                            </Box>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                              Basic Information
-                            </Typography>
+                        {/* Section 2: Business Information */}
+                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
+                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Store sx={{ color: '#E15B65' }} />
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Business Information</Typography>
                           </Box>
-                          <Grid container spacing={3.5}>
-                            <Grid item xs={12}>
-                              <TextField
-                                fullWidth
-                                label="Vendor Name"
-                                value={formData.vendorName || ''}
-                                onChange={handleInputChange('vendorName')}
-                                placeholder="Enter your vendor name"
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <Store sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
+                          <Box sx={{ p: 3 }}>
+                            <Grid container spacing={3}>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Vendor/Business Name"
+                                  value={formData.vendorName || ''}
+                                  onChange={handleInputChange('vendorName')}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Email Address"
+                                  value={formData.email || ''}
+                                  disabled
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f8f9fa' } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Phone Number"
+                                  value={formData.phone || ''}
+                                  onChange={handleInputChange('phone')}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Website URL"
+                                  value={formData.website || ''}
+                                  onChange={handleInputChange('website')}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Business Address"
+                                  value={formData.businessAddress || ''}
+                                  onChange={handleInputChange('businessAddress')}
+                                  multiline
+                                  rows={3}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
                             </Grid>
-                            <Grid item xs={12}>
-                              <TextField
-                                fullWidth
-                                label="Email Address"
-                                value={formData.email || ''}
-                                placeholder="Your email address"
-                                slotProps={{
-                                  input: { readOnly: true }
-                                }}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <Email sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    bgcolor: 'rgba(0,0,0,0.02)',
-                                    '& fieldset': { borderColor: 'divider' },
-                                    '& input': { color: 'text.secondary' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Phone Number"
-                                value={formData.phone || ''}
-                                onChange={handleInputChange('phone')}
-                                placeholder="Enter phone number"
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <Phone sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Website"
-                                value={formData.website || ''}
-                                onChange={handleSocialLinkChange('website')}
-                                placeholder="https://yourwebsite.com"
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <Web sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12}>
-                              <TextField
-                                fullWidth
-                                label="Business Address"
-                                value={formData.businessAddress || ''}
-                                onChange={handleInputChange('businessAddress')}
-                                placeholder="Enter your complete business address"
-                                multiline
-                                rows={3}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}>
-                                      <Business sx={{ color: '#334155', fontSize: 20, opacity: 0.7 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                          </Grid>
-                        </Box>
-
-                        {/* Bio Information Section */}
-                        <Box sx={{ mb: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box
-                              sx={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 2.5,
-                                bgcolor: 'rgba(225, 91, 101, 0.08)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(225, 91, 101, 0.15)'
-                              }}
-                            >
-                              <Business sx={{ color: '#E15B65', fontSize: 22 }} />
-                            </Box>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                              Bio Information
-                            </Typography>
                           </Box>
-                          <Grid container spacing={3.5}>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Bio Title"
-                                value={formData.bioTitle || ''}
-                                onChange={handleInputChange('bioTitle')}
-                                placeholder="Enter bio title (e.g. Professional Photographer)"
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Bio Subtitle"
-                                value={formData.bioSubtitle || ''}
-                                onChange={handleInputChange('bioSubtitle')}
-                                placeholder="Enter bio subtitle"
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12}>
-                              <TextField
-                                fullWidth
-                                label="Bio Description"
-                                value={formData.bioDescription || ''}
-                                onChange={handleInputChange('bioDescription')}
-                                placeholder="Tell your customers about yourself and your experience..."
-                                multiline
-                                rows={4}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E15B65' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                          </Grid>
-                        </Box>
+                        </Card>
 
-                        {/* Social Media Section */}
-                        <Box sx={{ mb: 4 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box
-                              sx={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 2.5,
-                                bgcolor: 'rgba(225, 91, 101, 0.08)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid rgba(225, 91, 101, 0.15)'
-                              }}
-                            >
-                              <Language sx={{ color: '#E15B65', fontSize: 22 }} />
-                            </Box>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                              Social Media & Links
-                            </Typography>
+                        {/* Section 3: Bio & Story */}
+                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
+                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Business sx={{ color: '#E15B65' }} />
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Bio & Story</Typography>
                           </Box>
-                          <Grid container spacing={3}>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Instagram"
-                                placeholder="https://instagram.com/..."
-                                value={formData.instagram || ''}
-                                onChange={handleSocialLinkChange('instagram')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <InstagramIcon sx={{ color: '#E1306C', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#E1306C' }
-                                  }
-                                }}
-                              />
+                          <Box sx={{ p: 3 }}>
+                            <Grid container spacing={3}>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Professional Title"
+                                  value={formData.bioTitle || ''}
+                                  onChange={handleInputChange('bioTitle')}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  fullWidth
+                                  label="Bio Subtitle"
+                                  value={formData.bioSubtitle || ''}
+                                  onChange={handleInputChange('bioSubtitle')}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  fullWidth
+                                  label="Detailed Description"
+                                  value={formData.bioDescription || ''}
+                                  onChange={handleInputChange('bioDescription')}
+                                  multiline
+                                  rows={5}
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                />
+                              </Grid>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Facebook"
-                                placeholder="https://facebook.com/..."
-                                value={formData.facebook || ''}
-                                onChange={handleSocialLinkChange('facebook')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <FacebookIcon sx={{ color: '#1877F2', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#1877F2' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Twitter / X"
-                                placeholder="https://twitter.com/..."
-                                value={formData.twitter || ''}
-                                onChange={handleSocialLinkChange('twitter')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <TwitterIcon sx={{ color: '#1DA1F2', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#1DA1F2' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="LinkedIn"
-                                placeholder="https://linkedin.com/..."
-                                value={formData.linkedin || ''}
-                                onChange={handleSocialLinkChange('linkedin')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <LinkedInIcon sx={{ color: '#0A66C2', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#0A66C2' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="WhatsApp Business"
-                                placeholder="+91 XXXXXXXXXX"
-                                value={formData.whatsapp || ''}
-                                onChange={handleInputChange('whatsapp')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <WhatsAppIcon sx={{ color: '#25D366', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#25D366' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Telegram"
-                                placeholder="Telegram username"
-                                value={formData.telegram || ''}
-                                onChange={handleInputChange('telegram')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <TelegramIcon sx={{ color: '#0088cc', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#0088cc' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="YouTube"
-                                placeholder="https://youtube.com/..."
-                                value={formData.youtube || ''}
-                                onChange={handleSocialLinkChange('youtube')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <YouTubeIcon sx={{ color: '#FF0000', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#FF0000' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Pinterest"
-                                placeholder="https://pinterest.com/..."
-                                value={formData.pinterest || ''}
-                                onChange={handleSocialLinkChange('pinterest')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <PinterestIcon sx={{ color: '#BD081C', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#BD081C' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                fullWidth
-                                label="Other"
-                                placeholder="Other links..."
-                                value={formData.other || ''}
-                                onChange={handleSocialLinkChange('other')}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      <Language sx={{ color: '#64748b', fontSize: 20 }} />
-                                    </InputAdornment>
-                                  )
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2.5,
-                                    '&:hover fieldset': { borderColor: '#64748b' }
-                                  }
-                                }}
-                              />
-                            </Grid>
-                          </Grid>
-                        </Box>
+                          </Box>
+                        </Card>
 
-                        {/* Footer Info */}
-                        <Box sx={{ textAlign: 'center', py: 2, opacity: 0.6 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </Typography>
+                        {/* Section 4: Social Presence */}
+                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
+                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Language sx={{ color: '#E15B65' }} />
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Social Presence</Typography>
+                          </Box>
+                          <Box sx={{ p: 3 }}>
+                            <Grid container spacing={2.5}>
+                              {[
+                                { id: 'instagram', label: 'Instagram', icon: <InstagramIcon sx={{ color: '#E1306C' }} /> },
+                                { id: 'facebook', label: 'Facebook', icon: <FacebookIcon sx={{ color: '#1877F2' }} /> },
+                                { id: 'whatsapp', label: 'WhatsApp', icon: <WhatsAppIcon sx={{ color: '#25D366' }} /> },
+                                { id: 'linkedin', label: 'LinkedIn', icon: <LinkedInIcon sx={{ color: '#0A66C2' }} /> },
+                                { id: 'twitter', label: 'Twitter / X', icon: <TwitterIcon sx={{ color: '#000' }} /> },
+                                { id: 'youtube', label: 'YouTube', icon: <YouTubeIcon sx={{ color: '#FF0000' }} /> }
+                              ].map((social) => (
+                                <Grid item xs={12} sm={6} key={social.id}>
+                                  <TextField
+                                    fullWidth
+                                    label={social.label}
+                                    value={formData[social.id] || ''}
+                                    onChange={handleInputChange(social.id)}
+                                    InputProps={{ startAdornment: <InputAdornment position="start">{social.icon}</InputAdornment> }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                  />
+                                </Grid>
+                              ))}
+                            </Grid>
+                          </Box>
+                        </Card>
+
+                        {/* Save Trigger Footer */}
+                        <Box sx={{ textAlign: 'center', pb: 2, pt: 2 }}>
+                          <Button
+                            variant="contained"
+                            size="large"
+                            onClick={handleSave}
+                            disabled={isSubmitting}
+                            sx={{
+                              bgcolor: '#E15B65',
+                              borderRadius: 3,
+                              px: 8,
+                              py: 1.5,
+                              fontSize: '1.1rem',
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              boxShadow: '0 8px 24px rgba(225, 91, 101, 0.3)',
+                              '&:hover': { bgcolor: '#c94a53', boxShadow: '0 12px 30px rgba(225, 91, 101, 0.4)' }
+                            }}
+                          >
+                            {isSubmitting ? 'Saving Changes...' : 'Save All Changes'}
+                          </Button>
                         </Box>
                       </Box>
                     </Box>
