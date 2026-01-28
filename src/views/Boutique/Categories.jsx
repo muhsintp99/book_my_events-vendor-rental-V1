@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
-const ORNAMENTS_MODULE_ID = '68e5fdf0eb7faab6e94b4f6f';
+const BOUTIQUE_MODULE_ID = '68e5fd7b8164d482d281c37f';
 
 const OrnamentsCategory = () => {
   const theme = useTheme();
@@ -62,7 +62,7 @@ const OrnamentsCategory = () => {
         }
 
         // Fetch parent categories
-        const parentResponse = await fetch(`${API_BASE_URL}/api/categories/parents/${ORNAMENTS_MODULE_ID}`, {
+        const parentResponse = await fetch(`${API_BASE_URL}/api/categories/parents/${BOUTIQUE_MODULE_ID}`, {
           headers: {
             Accept: 'application/json',
             Authorization: `Bearer ${token}`,
@@ -222,7 +222,7 @@ const OrnamentsCategory = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
-              Ornament Categories
+              Boutique  Categories
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Parent categories and their subcategories
