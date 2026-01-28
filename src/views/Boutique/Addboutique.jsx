@@ -64,6 +64,7 @@ import DiamondIcon from '@mui/icons-material/Diamond';
 import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
+import InfoIcon from '@mui/icons-material/Info';
 
 import axios from 'axios';
 import { PhotoCamera, Delete } from '@mui/icons-material';
@@ -322,7 +323,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, color = THEME.primary }) =
 // ------------------------------
 // Main Component
 // ------------------------------
-const AddOrnaments = () => {
+const AddBoutique = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
@@ -349,8 +350,7 @@ const AddOrnaments = () => {
     description: '',
     category: '',
     subcategory: '',
-    unit: '',
-    sizes: [],
+    availableSizes: [],
     material: '',
     thumbnailImage: null,
     galleryImages: [],
@@ -374,11 +374,15 @@ const AddOrnaments = () => {
     flatRateShipping: false,
     shippingPrice: '',
     selectedOccasions: [],
-    selectedFeatures: [],
-    suitableFor: [],
-    styleFeatures: '',
-    discountValue: '',
-    tags: []
+    tags: [],
+    careInstructions: '',
+    sizeGuideImage: null,
+    existingSizeGuideImage: '',
+    availableColors: [],
+    returnPolicy: '',
+    cancellationPolicy: '',
+    isTopPick: false,
+    isActive: true
   });
 
   const [termsSections, setTermsSections] = useState([{ heading: '', points: [''] }]);
@@ -395,7 +399,6 @@ const AddOrnaments = () => {
   const [loadingRelated, setLoadingRelated] = useState(false);
 
   // ========== OPTIONS ==========
-  const unitOptions = ['Each', 'Set', 'Pair', 'Dozen', 'Gram', 'Kilogram'];
   const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
   const discountOptions = ['Percentage', 'Fixed Amount', 'None'];
   const occasionOptions = [
@@ -410,21 +413,8 @@ const AddOrnaments = () => {
     'Party Wear',
     'Office Wear'
   ];
-  const featureOptions = [
-    'Wedding',
-    'Valentine',
-    'Festive',
-    'Daily Wear',
-    'Casual Outings',
-    'Anniversary',
-    'Engagement',
-    'Party Wear',
-    'Office Wear',
-    'Ethnic Wear'
-  ];
-  const suitableForOptions = ['Men', 'Women', 'Kids', 'Bride', 'Groom', 'Unisex'];
-  const styleOptions = ['Traditional', 'Western', 'Indo-Western', 'Modern', 'Classic', 'Bridal', 'Designer'];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
+  const colorOptions = ['Red', 'Blue', 'Green', 'Black', 'White', 'Pink', 'Purple', 'Gold', 'Silver', 'Beige', 'Navy', 'Maroon', 'Teal', 'Lavender', 'Peach', 'Rose Gold'];
 
   // ========== HANDLERS ==========
   const handleChange = (field, value) => {
@@ -743,20 +733,61 @@ const AddOrnaments = () => {
   }, []);
 
   useEffect(() => {
-    const newVariations = formData.sizes.map((size) => {
-      const existing = variations.find((v) => v.size === size);
-      return (
-        existing || {
-          size,
-          price: formData.unitPrice || '',
-          stockQuantity: '',
-          image: null
-        }
-      );
-    });
+    // Generate variations based on combinations of sizes and colors
+    let newVariations = [];
+
+    const sizes = formData.availableSizes || [];
+    const colors = formData.availableColors || [];
+
+    if (sizes.length > 0 && colors.length > 0) {
+      // Both selected: cross product
+      sizes.forEach((size) => {
+        colors.forEach((color) => {
+          const name = `${color} - ${size}`;
+          const existing = variations.find((v) => v.name === name || (v.attributeValues?.includes(size) && v.attributeValues?.includes(color)));
+          newVariations.push(
+            existing || {
+              name,
+              attributeValues: [color, size],
+              price: formData.unitPrice || '',
+              stockQuantity: '',
+              image: null
+            }
+          );
+        });
+      });
+    } else if (sizes.length > 0) {
+      // Only sizes
+      newVariations = sizes.map((size) => {
+        const existing = variations.find((v) => v.name === size || (v.attributeValues?.length === 1 && v.attributeValues[0] === size));
+        return (
+          existing || {
+            name: size,
+            attributeValues: [size],
+            price: formData.unitPrice || '',
+            stockQuantity: '',
+            image: null
+          }
+        );
+      });
+    } else if (colors.length > 0) {
+      // Only colors
+      newVariations = colors.map((color) => {
+        const existing = variations.find((v) => v.name === color || (v.attributeValues?.length === 1 && v.attributeValues[0] === color));
+        return (
+          existing || {
+            name: color,
+            attributeValues: [color],
+            price: formData.unitPrice || '',
+            stockQuantity: '',
+            image: null
+          }
+        );
+      });
+    }
 
     setVariations(newVariations);
-  }, [formData.sizes]);
+  }, [formData.availableSizes, formData.availableColors, formData.unitPrice]);
 
   // Removed redundant useEffect that synchronized subcategories from categories list
 
@@ -778,8 +809,7 @@ const AddOrnaments = () => {
           description: product.description || '',
           category: product.category?._id || product.category || '',
           subcategory: product.subCategory?._id || product.subCategory || '',
-          unit: product.unit || '',
-          sizes: product.sizes || [],
+          availableSizes: product.availableSizes || [],
           material: product.material || '',
           thumbnailImage: product.thumbnail || null,
           galleryImages: [],
@@ -799,6 +829,7 @@ const AddOrnaments = () => {
               : product.buyPricing?.discountType === 'percentage'
                 ? 'Percentage'
                 : 'Fixed Amount',
+          discountValue: product.buyPricing?.discountValue || '',
           tax: product.buyPricing?.tax || '',
           totalPrice: product.buyPricing?.totalPrice || '',
           pricePerDay: product.rentalPricing?.pricePerDay || '',
@@ -809,53 +840,52 @@ const AddOrnaments = () => {
           damagePolicy: product.rentalPricing?.damagePolicy || '',
           stockQuantity: product.stock?.quantity || '',
           lowStockAlert: product.stock?.lowStockAlert || '',
-          freeShipping: product.shipping?.freeShipping || false,
-          flatRateShipping: product.shipping?.flatRateShipping || false,
-          shippingPrice: product.shipping?.shippingPrice || '',
+          freeShipping: product.shipping?.free || false,
+          flatRateShipping: product.shipping?.flatRate || false,
+          shippingPrice: product.shipping?.price || '',
           selectedOccasions: product.occasions || [],
-          selectedFeatures:
-            product.features?.basicFeatures?.map((f) => {
-              const map = {
-                dailyWear: 'Daily Wear',
-                casualOutings: 'Casual Outings'
-              };
-              return map[f] || (typeof f === 'string' ? f.charAt(0).toUpperCase() + f.slice(1) : f);
-            }) || [],
-          suitableFor:
-            product.features?.suitableFor?.map((s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s)) || [],
-          styleFeatures: product.features?.style?.[0]
-            ? typeof product.features.style[0] === 'string'
-              ? product.features.style[0].charAt(0).toUpperCase() + product.features.style[0].slice(1)
-              : ''
-            : '',
-          discountValue: product.buyPricing?.discountValue || '',
-          discountValue: product.buyPricing?.discountValue || '',
-          tags: product.tags || []
+          selectedFeatures: product.features?.basicFeatures || [],
+          suitableFor: product.features?.suitableFor || [],
+          styleFeatures: product.features?.style?.[0] || '',
+          tags: product.tags || [],
+          careInstructions: product.careInstructions || '',
+          existingSizeGuideImage: product.sizeGuideImage || '',
+          availableColors: product.availableColors || [],
+          returnPolicy: product.returnPolicy || '',
+          cancellationPolicy: product.cancellationPolicy || '',
+          isTopPick: product.isTopPick || false,
+          isActive: product.isActive !== undefined ? product.isActive : true
         });
 
-        // Load Variations
-        if (product.attributes && Array.isArray(product.attributes)) {
-          setAttributes(product.attributes);
-        }
-        if (product.variations && Array.isArray(product.variations)) {
+        if (product.variations?.length) {
           setVariations(
             product.variations.map((v) => ({
-              ...v,
-              // Ensure image is handled correctly if it's a string URL
-              image: v.image || null
+              name: v.name,
+              attributeValues: v.attributeValues || [],
+              price: v.price,
+              stockQuantity: v.stockQuantity,
+              image: v.image
             }))
           );
         }
 
-        if (product.termsAndConditions) {
-          setTermsSections(Array.isArray(product.termsAndConditions) ? product.termsAndConditions : [{ heading: '', points: [''] }]);
+        if (product.relatedItems) {
+          setRelatedLinkBy(product.relatedItems.linkBy || 'product');
+          setRelatedItems(product.relatedItems.items?.map((i) => i._id || i) || []);
+          setSelectedRelatedObjects(product.relatedItems.items || []);
         }
 
-        if (product.relatedItems?.items?.length) {
-          const ids = product.relatedItems.items.map((i) => i._id || i);
-          setRelatedItems(ids);
-          setSelectedRelatedObjects(product.relatedItems.items.filter((i) => typeof i === 'object'));
-          setRelatedLinkBy(product.relatedItems.linkBy || 'product');
+        if (product.termsAndConditions) {
+          try {
+            setTermsSections(
+              typeof product.termsAndConditions === 'string'
+                ? JSON.parse(product.termsAndConditions)
+                : product.termsAndConditions
+            );
+          } catch (e) {
+            console.error('Error parsing terms:', e);
+            setTermsSections([{ heading: '', points: [''] }]);
+          }
         }
 
         // Fetch subcategories
@@ -924,20 +954,6 @@ const AddOrnaments = () => {
 
     const formDataToSend = new FormData();
 
-    // Map feature options to backend enum
-    const mapFeature = (f) => {
-      const map = {
-        Wedding: 'wedding',
-        Valentine: 'valentine',
-        Festive: 'festive',
-        'Daily Wear': 'dailyWear',
-        'Casual Outings': 'casualOutings',
-        Anniversary: 'anniversary',
-        Engagement: 'engagement'
-      };
-      return map[f] || (typeof f === 'string' ? f.toLowerCase().replace(/\s+/g, '') : f);
-    };
-
     // Availability Mode Mapping
     let mode = 'purchase';
     if (formData.availabilityMode === 'All') mode = 'all';
@@ -949,13 +965,22 @@ const AddOrnaments = () => {
     formDataToSend.append('description', formData.description);
     formDataToSend.append('category', formData.category);
     formDataToSend.append('subCategory', formData.subcategory);
-    formDataToSend.append('unit', formData.unit);
-    formDataToSend.append('sizes', JSON.stringify(formData.sizes));
+    formDataToSend.append('availableSizes', JSON.stringify(formData.availableSizes));
+    formDataToSend.append('availableColors', JSON.stringify(formData.availableColors));
     formDataToSend.append('material', formData.material);
     formDataToSend.append('availabilityMode', mode);
-    formDataToSend.append('isActive', true);
+    formDataToSend.append('isActive', formData.isActive);
+    formDataToSend.append('isTopPick', formData.isTopPick);
+    formDataToSend.append('returnPolicy', formData.returnPolicy);
+    formDataToSend.append('cancellationPolicy', formData.cancellationPolicy);
     formDataToSend.append('provider', vendorId);
     formDataToSend.append('module', BOUTIQUE_MODULE_ID);
+
+    // Attributes for variations (needed by some backends to track schema)
+    const attributes = [];
+    if (formData.availableSizes.length > 0) attributes.push({ name: 'Size', values: formData.availableSizes });
+    if (formData.availableColors.length > 0) attributes.push({ name: 'Color', values: formData.availableColors });
+    formDataToSend.append('attributes', JSON.stringify(attributes));
 
     // 2. Images
     if (formData.thumbnailImage instanceof File) {
@@ -966,7 +991,8 @@ const AddOrnaments = () => {
       if (variations.length > 0) {
         // Separate images from data
         const variationsData = variations.map((v, index) => ({
-          size: v.size,
+          name: v.name,
+          attributeValues: v.attributeValues,
           price: Number(v.price),
           stockQuantity: Number(v.stockQuantity),
           image: v.image instanceof File ? `VAR_FILE_${index}` : v.image
@@ -1041,18 +1067,9 @@ const AddOrnaments = () => {
     formDataToSend.append(
       'shipping',
       JSON.stringify({
-        freeShipping: formData.freeShipping,
-        flatRateShipping: formData.flatRateShipping,
-        shippingPrice: formData.shippingPrice
-      })
-    );
-
-    formDataToSend.append(
-      'features',
-      JSON.stringify({
-        basicFeatures: formData.selectedFeatures.map(mapFeature),
-        suitableFor: formData.suitableFor.map((s) => s.toLowerCase()),
-        style: formData.styleFeatures ? [formData.styleFeatures.toLowerCase()] : []
+        free: formData.freeShipping,
+        flatRate: formData.flatRateShipping,
+        price: formData.shippingPrice
       })
     );
 
@@ -1424,79 +1441,7 @@ const AddOrnaments = () => {
                 </Grid>
 
                 {/* Unit */}
-                <Grid item xs={12} md={4}>
-                  <FormControl fullWidth>
-                    <InputLabel
-                      shrink={formData.unit !== '' || undefined}
-                      sx={{
-                        '&.Mui-focused': { color: '#667eea' },
-                        backgroundColor: 'white',
-                        px: 1
-                      }}
-                    ></InputLabel>
-                    <Select
-                      value={formData.unit}
-                      onChange={(e) => handleChange('unit', e.target.value)}
-                      displayEmpty
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 300,
-                            borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            '& .MuiMenuItem-root': {
-                              borderRadius: '8px',
-                              mx: 1,
-                              my: 0.5,
-                              '&:hover': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.08)'
-                              },
-                              '&.Mui-selected': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(102, 126, 234, 0.2)'
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                        },
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px'
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.12)'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: '2px'
-                        }
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>Select Unit</em>
-                      </MenuItem>
-                      {unitOptions.map((unit) => (
-                        <MenuItem key={unit} value={unit}>
-                          {unit}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                {/* Unit and Weight fields removed as requested */}
 
                 {/* Material */}
                 <Grid item xs={12} md={4}>
@@ -1511,27 +1456,22 @@ const AddOrnaments = () => {
                         borderRadius: '14px',
                         backgroundColor: 'white',
                         transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                        }
+                        '&:hover': { boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)' },
+                        '&.Mui-focused': { boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)' }
                       },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea'
-                      }
+                      '& .MuiInputLabel-root.Mui-focused': { color: '#667eea' }
                     }}
                   />
                 </Grid>
 
+                {/* Sizes Selection */}
                 <Grid item xs={12} md={4}>
                   <FormControl fullWidth>
                     <Select
                       multiple
                       fullWidth
-                      value={formData.sizes}
-                      onChange={(e) => handleChange('sizes', e.target.value)}
+                      value={formData.availableSizes}
+                      onChange={(e) => handleChange('availableSizes', e.target.value)}
                       displayEmpty
                       renderValue={(selected) => (selected.length ? selected.join(', ') : 'Select Size')}
                       sx={{
@@ -1539,30 +1479,57 @@ const AddOrnaments = () => {
                         borderRadius: '14px',
                         backgroundColor: 'white',
                         transition: 'all 0.3s ease',
-
                         '& .MuiSelect-select': {
-                          padding: '16px 14px', // SAME AS CATEGORY
+                          padding: '16px 14px',
                           display: 'flex',
                           alignItems: 'center',
                           color: (selected) => (selected.length ? '#111' : '#9CA3AF')
                         },
-
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.12)'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: '2px'
-                        }
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
                       }}
                     >
                       {sizeOptions.map((size) => (
                         <MenuItem key={size} value={size}>
-                          <Checkbox checked={formData.sizes.includes(size)} />
+                          <Checkbox checked={formData.availableSizes?.includes(size)} />
                           <Typography fontWeight={600}>{size}</Typography>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Colors Selection */}
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth>
+                    <Select
+                      multiple
+                      fullWidth
+                      value={formData.availableColors}
+                      onChange={(e) => handleChange('availableColors', e.target.value)}
+                      displayEmpty
+                      renderValue={(selected) => (selected.length ? selected.join(', ') : 'Select Color')}
+                      sx={{
+                        width: '100%',
+                        borderRadius: '14px',
+                        backgroundColor: 'white',
+                        transition: 'all 0.3s ease',
+                        '& .MuiSelect-select': {
+                          padding: '16px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: (selected) => (selected.length ? '#111' : '#9CA3AF')
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
+                      }}
+                    >
+                      {colorOptions.map((color) => (
+                        <MenuItem key={color} value={color}>
+                          <Checkbox checked={formData.availableColors?.includes(color)} />
+                          <Typography fontWeight={600}>{color}</Typography>
                         </MenuItem>
                       ))}
                     </Select>
@@ -1579,6 +1546,33 @@ const AddOrnaments = () => {
                 placeholder="Describe the boutique item's quality, craftsmanship, design details, fabric, and unique features..."
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '14px',
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
+                    }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#667eea'
+                  }
+                }}
+              />
+
+              {/* Care Instructions */}
+              <TextField
+                fullWidth
+                label="Care Instructions"
+                multiline
+                rows={2}
+                placeholder="e.g. Dry clean only, Hand wash separately..."
+                value={formData.careInstructions}
+                onChange={(e) => handleChange('careInstructions', e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '14px',
@@ -1635,7 +1629,7 @@ const AddOrnaments = () => {
                   <TableBody>
                     {variations.map((v, i) => (
                       <TableRow key={i}>
-                        <TableCell sx={{ fontWeight: 700 }}>{v.size}</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{v.name}</TableCell>
                         <TableCell>
                           <TextField
                             size="small"
@@ -1830,6 +1824,61 @@ const AddOrnaments = () => {
                       </IconButton>
                     </Box>
                   ))}
+                </Box>
+              </Box>
+
+              {/* Size Guide Image */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#4D5E80', fontWeight: 600 }}>
+                  Size Guide Image
+                </Typography>
+                <Box
+                  onClick={() => document.getElementById('sizeguide-input').click()}
+                  sx={{
+                    border: '2px dashed #CBD5E0',
+                    borderRadius: '16px',
+                    p: 3,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    minHeight: 120,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    bgcolor: '#F8FAFC',
+                    transition: '0.2s',
+                    '&:hover': { borderColor: THEME.primary, bgcolor: '#F5F0F7' }
+                  }}
+                >
+                  <input id="sizeguide-input" type="file" hidden accept="image/*" onChange={(e) => handleChange('sizeGuideImage', e.target.files[0])} />
+                  {formData.sizeGuideImage || formData.existingSizeGuideImage ? (
+                    <Box sx={{ width: '100%', height: '100%', maxWidth: 200 }}>
+                      <img
+                        src={
+                          formData.sizeGuideImage instanceof File
+                            ? URL.createObjectURL(formData.sizeGuideImage)
+                            : getImageUrl(formData.existingSizeGuideImage || formData.sizeGuideImage)
+                        }
+                        alt="Size Guide"
+                        style={{ width: '100%', height: 'auto', maxHeight: 100, objectFit: 'contain', borderRadius: '8px' }}
+                      />
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleChange('sizeGuideImage', null);
+                          handleChange('existingSizeGuideImage', '');
+                        }}
+                        sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.9)' }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    <Stack spacing={1} alignItems="center">
+                      <CloudUploadIcon sx={{ fontSize: 32, color: '#A3AED0' }} />
+                      <Typography variant="caption" fontWeight="600">Upload Size Guide</Typography>
+                    </Stack>
+                  )}
                 </Box>
               </Box>
             </Stack>
@@ -2845,159 +2894,83 @@ const AddOrnaments = () => {
               }
             />
           </Paper>
-          {/* 7. Features & Attributes Section */}
+          {/* 7. Policies & Status Section */}
           <Paper
             sx={{
-              borderRadius: '18px',
-              p: 2.5,
+              borderRadius: '24px',
+              p: 4,
               background: 'white',
-              boxShadow: '0 6px 22px rgba(0,0,0,0.05)'
+              boxShadow: '0 12px 48px rgba(0,0,0,0.1)',
+              border: '1px solid #E5E7EB'
             }}
           >
-            {/* HEADER */}
-            <Box
-              sx={{
-                mb: 2,
-                p: 2,
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #F3E5F5, #EDE7F6)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <Box>
-                <Typography fontWeight={800} fontSize="1rem">
-                  Features & Attributes
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Customize the luxury and comfort options
-                </Typography>
-              </Box>
-              <PaletteIcon sx={{ fontSize: 34, opacity: 0.35 }} />
-            </Box>
+            <SectionHeader icon={InfoIcon} title="Policies & Status" subtitle="Manage return policies and item visibility" />
+            <Stack spacing={3}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Return Policy"
+                    multiline
+                    rows={3}
+                    placeholder="e.g. 7 days return policy, items must be in original condition..."
+                    value={formData.returnPolicy}
+                    onChange={(e) => handleChange('returnPolicy', e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '14px',
+                        backgroundColor: '#F9FAFB'
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Cancellation Policy"
+                    multiline
+                    rows={3}
+                    placeholder="e.g. Cancel within 24 hours for full refund..."
+                    value={formData.cancellationPolicy}
+                    onChange={(e) => handleChange('cancellationPolicy', e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '14px',
+                        backgroundColor: '#F9FAFB'
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
 
-            {/* COLUMNS */}
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              {/* COLUMN CARD STYLE */}
-              {[
-                {
-                  title: '✨ Features',
-                  color: THEME.primary,
-                  gradient: 'linear-gradient(135deg, #FFFFFF, #F8F5FF)',
-                  options: featureOptions,
-                  value: formData.selectedFeatures,
-                  keyName: 'selectedFeatures',
-                  multi: true
-                },
-                {
-                  title: '🎯 Suitable For',
-                  color: THEME.secondary,
-                  gradient: 'linear-gradient(135deg, #FFFFFF, #FFF5F8)',
-                  options: suitableForOptions,
-                  value: formData.suitableFor,
-                  keyName: 'suitableFor',
-                  multi: true
-                },
-                {
-                  title: '🎨 Style',
-                  color: THEME.info,
-                  gradient: 'linear-gradient(135deg, #FFFFFF, #F5F8FF)',
-                  options: styleOptions,
-                  value: formData.styleFeatures,
-                  keyName: 'styleFeatures',
-                  multi: false
-                }
-              ].map((section) => (
-                <Box
-                  key={section.title}
-                  sx={{
-                    flex: '1 1 260px',
-                    p: 2.5,
-                    borderRadius: '18px',
-                    background: section.gradient,
-                    border: `1.5px solid ${alpha(section.color, 0.25)}`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-6px)',
-                      boxShadow: `0 18px 36px ${alpha(section.color, 0.25)}`
-                    }
-                  }}
-                >
-                  <Typography fontWeight={700} mb={1.5} fontSize="0.95rem" color={section.color}>
-                    {section.title}
+              <Divider />
+
+              <Stack direction="row" spacing={4} alignItems="center">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography fontWeight={700}>Top Pick Status:</Typography>
+                  <Switch
+                    checked={formData.isTopPick}
+                    onChange={(e) => handleChange('isTopPick', e.target.checked)}
+                    color="primary"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    Show this item in 'Top Picks' section
                   </Typography>
-
-                  <FormGroup>
-                    {section.options.map((item) => {
-                      const Icon = OPTION_ICONS[item] || StyleIcon;
-                      const checked = section.multi ? section.value.includes(item) : section.value === item;
-
-                      return (
-                        <Box
-                          key={item}
-                          sx={{
-                            mb: 0.8,
-                            p: 1,
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            background: checked ? alpha(section.color, 0.12) : 'transparent',
-                            '&:hover': {
-                              background: alpha(section.color, 0.1),
-                              transform: 'translateX(4px)'
-                            }
-                          }}
-                        >
-                          <FormControlLabel
-                            sx={{ ml: 0 }}
-                            control={
-                              <Checkbox
-                                size="small"
-                                checked={checked}
-                                onChange={(e) =>
-                                  handleChange(
-                                    section.keyName,
-                                    section.multi
-                                      ? e.target.checked
-                                        ? [...section.value, item]
-                                        : section.value.filter((x) => x !== item)
-                                      : item
-                                  )
-                                }
-                              />
-                            }
-                            label={
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <Box
-                                  sx={{
-                                    width: 26,
-                                    height: 26,
-                                    borderRadius: '8px',
-                                    background: checked ? section.color : alpha(THEME.dark, 0.08),
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}
-                                >
-                                  <Icon
-                                    sx={{
-                                      fontSize: 16,
-                                      color: checked ? 'white' : section.color
-                                    }}
-                                  />
-                                </Box>
-                                <Typography fontSize="0.9rem">{item}</Typography>
-                              </Stack>
-                            }
-                          />
-                        </Box>
-                      );
-                    })}
-                  </FormGroup>
                 </Box>
-              ))}
-            </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography fontWeight={700}>Item Visibility:</Typography>
+                  <Switch
+                    checked={formData.isActive}
+                    onChange={(e) => handleChange('isActive', e.target.checked)}
+                    color="success"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {formData.isActive ? 'Item is live' : 'Item is hidden'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Stack>
           </Paper>
           {/* 8. Related Items Section */}
           <Paper
@@ -3094,7 +3067,7 @@ const AddOrnaments = () => {
             </Box>
           </Paper>
 
-          
+
 
           {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>
@@ -3497,4 +3470,4 @@ const AddOrnaments = () => {
   );
 };
 
-export default AddOrnaments;
+export default AddBoutique;

@@ -1,11 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+  AppBar,
+  Toolbar,
+  Typography,
   Box,
   Button,
+  Select,
+  MenuItem,
+  FormControl,
   TextField,
-  Card,
-  CardContent,
-  CardMedia,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   Switch,
   IconButton,
   Stack,
@@ -18,15 +28,11 @@ import {
   Snackbar,
   Avatar,
   InputAdornment,
+  Skeleton,
   Grid,
   Divider,
-  Typography,
-  Container,
-  Paper,
-  Fade,
-  Zoom,
   Tooltip,
-  useTheme,
+  CardMedia,
   alpha
 } from '@mui/material';
 import {
@@ -34,48 +40,46 @@ import {
   Edit,
   Delete,
   Search,
+  Refresh,
   Add,
+  Download,
   Close,
-  AttachMoney,
-  Palette,
-  Schedule,
-  Info,
-  Image as ImageIcon,
-  CheckCircle,
   Category,
+  Palette,
   Inventory as InventoryIcon,
   LocalOffer,
-  TrendingUp,
-  ShoppingCart,
-  EventAvailable,
-  Star,
-  Diamond
+  Label,
+  CheckCircle,
+  Cancel,
+  ExpandMore,
+  Verified,
+  Timer,
+  LocalShipping,
+  Storefront
 } from '@mui/icons-material';
 import { Alert } from '@mui/material';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'https://api.bookmyevent.ae/api/ornaments';
+const API_BASE_URL = 'https://api.bookmyevent.ae/api/boutiques';
+const THEME_COLOR = '#9C27B0';
+const SECONDARY_COLOR = '#E91E63';
 
-const THEME_COLOR = '#E15B65';
-const SECONDARY_COLOR = '#c14a54';
-const ACCENT_COLOR = '#FFD700'; // Gold for jewelry vibe
-
-export default function OrnamentsList() {
+export default function BoutiqueList() {
   const navigate = useNavigate();
-  const theme = useTheme();
 
-  const [ornamentsList, setOrnamentsList] = useState([]);
+  const [boutiqueList, setBoutiqueList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
-  const [searchQuery, setPendingSearch] = useState('');
+  const [filters, setFilters] = useState({ search: '', category: '' });
+  const [pendingSearch, setPendingSearch] = useState('');
   const [openView, setOpenView] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [selectedOrnament, setSelectedOrnament] = useState(null);
-  const [ornamentToDelete, setOrnamentToDelete] = useState(null);
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
+  const [boutiqueToDelete, setBoutiqueToDelete] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const token = localStorage.getItem('token');
-  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const userData = JSON.parse(localStorage.getItem('vendor') || localStorage.getItem('user') || '{}');
   const providerId = userData?._id;
 
   const getImageUrl = (path) => {
@@ -85,6 +89,26 @@ export default function OrnamentsList() {
     return `https://api.bookmyevent.ae/${cleanPath}`;
   };
 
+  const SectionTitle = ({ title, sx }) => (
+    <Typography
+      variant="overline"
+      sx={{
+        display: 'block',
+        color: THEME_COLOR,
+        fontWeight: 900,
+        fontSize: '12px',
+        letterSpacing: '1.5px',
+        mb: 2,
+        pb: 0.5,
+        borderBottom: `2px solid ${alpha(THEME_COLOR, 0.1)}`,
+        width: 'fit-content',
+        ...sx
+      }}
+    >
+      {title}
+    </Typography>
+  );
+
   const formatINR = (value) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -92,7 +116,42 @@ export default function OrnamentsList() {
       maximumFractionDigits: 0
     }).format(value || 0);
 
-  const fetchOrnaments = useCallback(async () => {
+  const ImageAvatar = ({ src, alt, title }) => {
+    const [error, setError] = useState(false);
+    const [imgLoading, setImgLoading] = useState(true);
+
+    if (!src || error) {
+      return (
+        <Avatar
+          variant="rounded"
+          sx={{ width: 70, height: 70, bgcolor: THEME_COLOR, fontSize: '1.8rem', fontWeight: 'bold', color: 'white' }}
+        >
+          {title?.[0]?.toUpperCase() || 'B'}
+        </Avatar>
+      );
+    }
+
+    return (
+      <Box sx={{ position: 'relative' }}>
+        {imgLoading && <Skeleton variant="rectangular" width={70} height={70} sx={{ borderRadius: 2 }} />}
+        <Avatar
+          variant="rounded"
+          src={src}
+          alt={alt}
+          sx={{ width: 70, height: 70, borderRadius: 2, display: imgLoading ? 'none' : 'block' }}
+          imgProps={{
+            onLoad: () => setImgLoading(false),
+            onError: () => {
+              setError(true);
+              setImgLoading(false);
+            }
+          }}
+        />
+      </Box>
+    );
+  };
+
+  const fetchBoutiques = useCallback(async () => {
     if (!providerId || !token) {
       setToast({ open: true, message: 'Please login again', severity: 'error' });
       setLoading(false);
@@ -103,9 +162,9 @@ export default function OrnamentsList() {
       const res = await fetch(`${API_BASE_URL}?provider=${providerId}`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
-      if (!res.ok) throw new Error('Failed to load ornaments');
+      if (!res.ok) throw new Error('Failed to load boutiques');
       const result = await res.json();
-      if (result.success) setOrnamentsList(result.data || []);
+      if (result.success) setBoutiqueList(result.data || []);
     } catch (err) {
       setToast({ open: true, message: err.message, severity: 'error' });
     } finally {
@@ -114,11 +173,16 @@ export default function OrnamentsList() {
   }, [providerId, token]);
 
   useEffect(() => {
-    fetchOrnaments();
-  }, [fetchOrnaments]);
+    fetchBoutiques();
+  }, [fetchBoutiques]);
 
-  const handleView = (ornament) => {
-    setSelectedOrnament(ornament);
+  useEffect(() => {
+    const timer = setTimeout(() => setFilters((prev) => ({ ...prev, search: pendingSearch })), 400);
+    return () => clearTimeout(timer);
+  }, [pendingSearch]);
+
+  const handleView = (boutique) => {
+    setSelectedBoutique(boutique);
     setSelectedImageIndex(0);
     setOpenView(true);
   };
@@ -131,8 +195,8 @@ export default function OrnamentsList() {
       });
       const data = await res.json();
       if (data.success) {
-        setOrnamentsList((prev) => prev.map((m) => (m._id === id ? { ...m, isActive: !current } : m)));
-        setToast({ open: true, message: 'Status updated successfully', severity: 'success' });
+        setBoutiqueList((prev) => prev.map((b) => (b._id === id ? { ...b, isActive: !current } : b)));
+        setToast({ open: true, message: 'Status updated', severity: 'success' });
       }
     } catch {
       setToast({ open: true, message: 'Failed to update status', severity: 'error' });
@@ -141,59 +205,74 @@ export default function OrnamentsList() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/${ornamentToDelete}`, {
+      const res = await fetch(`${API_BASE_URL}/${boutiqueToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setOrnamentsList((prev) => prev.filter((o) => o._id !== ornamentToDelete));
-        setToast({ open: true, message: 'Ornament deleted successfully', severity: 'success' });
+        setBoutiqueList((prev) => prev.filter((b) => b._id !== boutiqueToDelete));
+        setToast({ open: true, message: 'Boutique item deleted', severity: 'success' });
       }
     } catch {
       setToast({ open: true, message: 'Delete failed', severity: 'error' });
     } finally {
       setOpenConfirm(false);
-      setOrnamentToDelete(null);
+      setBoutiqueToDelete(null);
     }
   };
 
-  const filteredOrnaments = useMemo(() => {
-    return ornamentsList.filter((o) => {
-      const matchesSearch = !searchQuery ||
-        o.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.material?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+  const filteredBoutiques = useMemo(() => {
+    return boutiqueList.filter((b) => {
+      const matchesSearch = !filters.search || b.name?.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesCategory = !filters.category || b.category?._id === filters.category;
+      return matchesSearch && matchesCategory;
     });
-  }, [ornamentsList, searchQuery]);
+  }, [boutiqueList, filters]);
 
-  const DetailItem = ({ icon, label, value, chip, success, error }) => (
-    <Box sx={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 2,
-      py: 1.5,
-      borderBottom: '1px solid #f0f0f0',
-      '&:hover': { bgcolor: alpha(THEME_COLOR, 0.02) },
-      transition: '0.2s'
-    }}>
-      <Box sx={{ color: THEME_COLOR, mt: 0.5, display: 'flex' }}>{icon}</Box>
+  const categories = useMemo(() => {
+    const map = new Map();
+    boutiqueList.forEach((b) => {
+      if (b.category) map.set(b.category._id, b.category);
+    });
+    return Array.from(map.values());
+  }, [boutiqueList]);
+
+  const handleExport = () => {
+    const headers = ['No', 'Name', 'Category', 'Mode', 'Material', 'Purchase Price', 'Rental Price', 'Stock', 'Status'];
+    const rows = filteredBoutiques.map((b, i) => [
+      i + 1,
+      b.name || '',
+      b.category?.title || '',
+      b.availabilityMode || '',
+      b.material || '',
+      b.buyPricing?.totalPrice || 0,
+      b.rentalPricing?.pricePerDay || 0,
+      b.stock?.quantity || 0,
+      b.isActive ? 'Active' : 'Inactive'
+    ]);
+    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `boutique_items_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
+  const DetailItem = ({ icon, label, value, chip, success, error, bold, color }) => (
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, py: 1.5, borderBottom: '1px solid #f0f0f0' }}>
+      <Box sx={{ color: THEME_COLOR, mt: 0.5 }}>{icon}</Box>
       <Box sx={{ flex: 1 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {label}
         </Typography>
         {chip ? (
           <Box sx={{ mt: 0.5 }}>
-            <Chip
-              label={value}
-              size="small"
-              color={success ? 'success' : error ? 'error' : 'default'}
-              sx={{ fontWeight: 700 }}
-            />
+            <Chip label={value} size="small" color={success ? 'success' : error ? 'error' : 'default'} sx={{ fontWeight: 700 }} />
           </Box>
         ) : (
-          <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.3, color: '#2D3748' }}>
+          <Typography variant="body2" sx={{ fontWeight: bold ? 800 : 500, mt: 0.3, color: color || 'inherit' }}>
             {value || 'Not specified'}
           </Typography>
         )}
@@ -201,516 +280,587 @@ export default function OrnamentsList() {
     </Box>
   );
 
-  return (
-    <Box sx={{ bgcolor: '#F7FAFC', minHeight: '100vh', pb: 8 }}>
-      {/* Premium Gradient Header */}
-      <Box sx={{
-        background: `linear-gradient(135deg, ${THEME_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
-        color: 'white',
-        pt: 6,
-        pb: 12,
-        px: 4,
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: `0 10px 30px ${alpha(THEME_COLOR, 0.3)}`,
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: '-20%',
-          right: '-10%',
-          width: '300px',
-          height: '300px',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
-          borderRadius: '50%'
-        }
-      }}>
-        <Container maxWidth="xl">
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
-            <Box>
-              <Typography variant="h3" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-1.5px', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                💎 Royal Ornament Gallery
-              </Typography>
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                {[
-                  { label: 'Total Items', value: ornamentsList.length, color: 'rgba(255,255,255,0.2)' },
-                  { label: 'Active', value: ornamentsList.filter(o => o.isActive).length, color: 'rgba(76, 175, 80, 0.3)' },
-                  { label: 'Inactive', value: ornamentsList.filter(o => !o.isActive).length, color: 'rgba(255,255,255,0.1)' }
-                ].map((stat, i) => (
-                  <Paper key={i} elevation={0} sx={{
-                    bgcolor: stat.color,
-                    px: 3,
-                    py: 1,
-                    borderRadius: 3,
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900 }}>{stat.value}</Typography>
-                    <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>{stat.label}</Typography>
-                  </Paper>
-                ))}
-              </Stack>
-            </Box>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<Add sx={{ fontSize: 24 }} />}
-              onClick={() => navigate("/ornaments/addpackage")}
-              sx={{
-                bgcolor: 'white',
-                color: THEME_COLOR,
-                fontWeight: 800,
-                fontSize: '1.1rem',
-                px: 5,
-                py: 2,
-                borderRadius: '20px',
-                textTransform: 'none',
-                boxShadow: '0 15px 35px rgba(0,0,0,0.15)',
-                '&:hover': {
-                  bgcolor: '#F8F9FF',
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 20px 45px rgba(0,0,0,0.2)'
-                },
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              Add New Collection Item
-            </Button>
-          </Stack>
-        </Container>
+  const SpecBox = ({ icon, label, value }) => (
+    <Box sx={{
+      p: 2,
+      borderRadius: '20px',
+      bgcolor: '#fff',
+      border: '1px solid #f1f5f9',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 1,
+      height: '100%',
+      justifyContent: 'center',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+        borderColor: THEME_COLOR
+      }
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {icon}
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.5px' }}>
+          {label}
+        </Typography>
       </Box>
+      <Typography variant="body2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+        {value}
+      </Typography>
+    </Box>
+  );
 
-      <Container maxWidth="xl" sx={{ mt: -6, position: 'relative', zIndex: 10 }}>
-        {/* Floating Search Bar */}
-        <Paper elevation={10} sx={{
-          borderRadius: 4,
-          overflow: 'hidden',
-          p: 1,
-          bgcolor: 'white',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-          mb: 6
-        }}>
+  return (
+    <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', p: 3 }}>
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ px: '0 !important' }}>
+          <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 900, color: '#111827', letterSpacing: '-0.5px' }}>
+            Boutique Collection <Box component="span" sx={{ color: THEME_COLOR, fontSize: '18px' }}>({boutiqueList.length})</Box>
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              bgcolor: THEME_COLOR,
+              borderRadius: '12px',
+              px: 3,
+              py: 1,
+              fontWeight: 800,
+              boxShadow: `0 8px 20px ${alpha(THEME_COLOR, 0.2)}`,
+              '&:hover': { bgcolor: SECONDARY_COLOR, boxShadow: `0 10px 25px ${alpha(SECONDARY_COLOR, 0.3)}` }
+            }}
+            onClick={() => navigate('/boutique/addpackage')}
+          >
+            Add New Item
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Paper sx={{ p: 2, mt: 3, borderRadius: '16px', border: '1px solid #f0f0f0', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
           <TextField
-            fullWidth
-            variant="standard"
-            placeholder="Search by name, material, or luxury details..."
-            value={searchQuery}
+            size="small"
+            placeholder="Search boutique items..."
+            value={pendingSearch}
             onChange={(e) => setPendingSearch(e.target.value)}
             InputProps={{
-              disableUnderline: true,
               startAdornment: (
-                <InputAdornment position="start" sx={{ pl: 3 }}>
-                  <Search sx={{ color: THEME_COLOR, fontSize: 32 }} />
+                <InputAdornment position="start">
+                  <Search sx={{ color: '#94a3b8' }} />
                 </InputAdornment>
               ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end" sx={{ pr: 1 }}>
-                  <IconButton onClick={() => setPendingSearch('')} size="small">
-                    <Close />
-                  </IconButton>
-                </InputAdornment>
-              ),
-              sx: {
-                height: 80,
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                color: '#2d3748'
-              }
+              sx: { borderRadius: '10px', bgcolor: '#f8fafc' }
             }}
+            sx={{ width: { xs: '100%', sm: 300 } }}
           />
-        </Paper>
-
-        {/* Content Section */}
-        {loading ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 15 }}>
-            <CircularProgress size={80} thickness={4} sx={{ color: THEME_COLOR }} />
-            <Typography variant="h6" sx={{ mt: 3, fontWeight: 700, color: 'text.secondary' }}>Curating your collection...</Typography>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <Select
+              value={filters.category}
+              onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
+              displayEmpty
+              sx={{ borderRadius: '10px', bgcolor: '#f8fafc' }}
+            >
+              <MenuItem value="">All Categories</MenuItem>
+              {categories.map((c) => (
+                <MenuItem key={c._id} value={c._id}>
+                  {c.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Box sx={{ ml: 'auto', gap: 1, display: 'flex' }}>
+            <Button variant="outlined" startIcon={<Refresh />} onClick={fetchBoutiques} sx={{ borderRadius: '10px', fontWeight: 700 }}>
+              Refresh
+            </Button>
+            <Button variant="outlined" startIcon={<Download />} onClick={handleExport} sx={{ borderRadius: '10px', fontWeight: 700 }}>
+              Export CSV
+            </Button>
           </Box>
-        ) : filteredOrnaments.length === 0 ? (
-          <Fade in={true}>
-            <Paper sx={{
-              borderRadius: 6,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              textAlign: 'center',
-              py: 15,
-              px: 4,
-              border: '2px dashed #E2E8F0'
-            }}>
-              <Box sx={{ mb: 4 }}>
-                <Diamond sx={{ fontSize: 100, color: '#CBD5E0' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 900, color: '#2D3748', mb: 2 }}>
-                {ornamentsList.length === 0 ? "Begin Your Legacy" : "No Matches Found"}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 5, maxWidth: 500, mx: 'auto', fontSize: '1.1rem' }}>
-                {ornamentsList.length === 0
-                  ? "Craft your first masterpiece to display it in your professional showroom."
-                  : "We couldn't find any ornaments matching your search criteria. Try a different term."}
-              </Typography>
-              {ornamentsList.length === 0 && (
-                <Button
-                  variant="contained"
-                  onClick={() => navigate("/ornaments/addpackage")}
-                  sx={{
-                    bgcolor: THEME_COLOR,
-                    px: 6,
-                    py: 2,
-                    borderRadius: 4,
-                    fontWeight: 800,
-                    '&:hover': { bgcolor: SECONDARY_COLOR }
-                  }}
-                >
-                  Create First Ornament
-                </Button>
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ mt: 3, borderRadius: '16px', overflow: 'hidden', border: '1px solid #f0f0f0', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <TableContainer sx={{ maxHeight: '70vh' }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>Image</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>Product Name</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>Material</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 800, color: '#64748b' }}>Pricing</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#64748b' }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 800, color: '#64748b' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
+                    <CircularProgress sx={{ color: THEME_COLOR }} />
+                  </TableCell>
+                </TableRow>
               )}
-            </Paper>
-          </Fade>
-        ) : (
-          <Grid container spacing={4}>
-            {filteredOrnaments.map((ornament, index) => (
-              <Grid item xs={12} sm={6} md={6} lg={4} xl={4} key={ornament._id}>
-                <Zoom in={true} style={{ transitionDelay: `${index * 50}ms` }}>
-                  <Card sx={{
-                    height: '100%',
-                    borderRadius: 6,
-                    overflow: 'hidden',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    border: '1px solid #edf2f7',
-                    position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-15px)',
-                      boxShadow: `0 30px 60px ${alpha(THEME_COLOR, 0.15)}`,
-                      borderColor: THEME_COLOR,
-                      '& .card-image': { transform: 'scale(1.1)' },
-                      '& .actions-overlay': { opacity: 1 }
-                    }
-                  }}>
-                    {/* Image Area */}
-                    <Box sx={{ position: 'relative', paddingTop: '80%', background: '#F7FAFC', overflow: 'hidden' }}>
-                      {ornament.thumbnail ? (
-                        <CardMedia
-                          className="card-image"
-                          component="img"
-                          image={getImageUrl(ornament.thumbnail)}
-                          alt={ornament.name}
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            transition: 'transform 0.8s ease'
-                          }}
-                        />
-                      ) : (
-                        <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ImageIcon sx={{ fontSize: 80, color: '#E2E8F0' }} />
-                        </Box>
-                      )}
-
-                      {/* Premium Badges */}
-                      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 5 }}>
-                        <Chip
-                          label={ornament.isActive ? 'IN STOCK' : 'OUT OF STOCK'}
-                          size="small"
-                          sx={{
-                            bgcolor: ornament.isActive ? '#48BB78' : '#A0AEC0',
-                            color: 'white',
-                            fontWeight: 900,
-                            fontSize: '0.7rem',
-                            letterSpacing: 1,
-                            px: 1,
-                            borderRadius: 2
-                          }}
-                        />
-                      </Box>
-
-                      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 5 }}>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.9)',
-                            '&:hover': { bgcolor: 'white' },
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-                          }}
-                          onClick={() => handleToggleStatus(ornament._id, ornament.isActive)}
-                        >
-                          <Switch
-                            checked={ornament.isActive}
-                            size="small"
-                            color="success"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </IconButton>
-                      </Box>
-
-                      {/* Hover Actions Overlay */}
-                      <Box className="actions-overlay" sx={{
-                        position: 'absolute',
-                        top: 0, left: 0, width: '100%', height: '100%',
-                        bgcolor: alpha(THEME_COLOR, 0.4),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 2,
-                        opacity: 0,
-                        transition: '0.3s',
-                        backdropFilter: 'blur(3px)'
-                      }}>
-                        <Tooltip title="View Details">
-                          <Avatar sx={{ bgcolor: 'white', color: THEME_COLOR, cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => handleView(ornament)}>
-                            <Visibility />
-                          </Avatar>
-                        </Tooltip>
-                        <Tooltip title="Edit Ornament">
-                          <Avatar sx={{ bgcolor: 'white', color: '#2B6CB0', cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => navigate(`/ornaments/edit/${ornament._id}`)}>
-                            <Edit />
-                          </Avatar>
-                        </Tooltip>
-                        <Tooltip title="Delete Permanently">
-                          <Avatar sx={{ bgcolor: 'white', color: '#C53030', cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => { setOrnamentToDelete(ornament._id); setOpenConfirm(true); }}>
-                            <Delete />
-                          </Avatar>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-
-                    {/* Content Area */}
-                    <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h5" sx={{ fontWeight: 900, color: '#2D3748', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {ornament.name}
+              {!loading && filteredBoutiques.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Category sx={{ fontSize: 60, color: '#e2e8f0', mb: 2 }} />
+                      <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
+                        {boutiqueList.length === 0 ? 'No boutique items created yet' : 'No items match your search'}
                       </Typography>
-
-                      <Stack direction="row" spacing={1} sx={{ mb: 2.5 }}>
-                        <Chip
-                          icon={<Palette sx={{ fontSize: '14px !important' }} />}
-                          label={ornament.material || 'Premium Gold'}
-                          size="small"
-                          variant="outlined"
-                          sx={{ borderRadius: 2, fontWeight: 700, borderColor: '#E2E8F0', color: '#4A5568' }}
-                        />
-                        <Chip
-                          icon={<Category sx={{ fontSize: '14px !important' }} />}
-                          label={ornament.category?.title || 'Jewelry'}
-                          size="small"
-                          sx={{ borderRadius: 2, fontWeight: 700, bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }}
-                        />
-                      </Stack>
-
-                      <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
-
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#718096', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Purchase Value</Typography>
-                          <Typography variant="h4" sx={{ fontWeight: 900, color: THEME_COLOR }}>
-                            {formatINR(ornament.buyPricing?.totalPrice)}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography variant="caption" sx={{ color: '#718096', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Rental / Day</Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 800, color: '#48BB78' }}>
-                            {formatINR(ornament.rentalPricing?.pricePerDay)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-
-                    <Box sx={{ px: 3, pb: 2 }}>
                       <Button
-                        fullWidth
-                        variant="soft"
-                        onClick={() => handleView(ornament)}
-                        sx={{
-                          bgcolor: alpha(THEME_COLOR, 0.05),
-                          color: THEME_COLOR,
-                          fontWeight: 800,
-                          borderRadius: 3,
-                          py: 1,
-                          '&:hover': { bgcolor: alpha(THEME_COLOR, 0.1) }
-                        }}
+                        variant="contained"
+                        sx={{ mt: 2, bgcolor: THEME_COLOR, borderRadius: '10px' }}
+                        onClick={() => navigate('/boutique/addpackage')}
                       >
-                        Manage Details
+                        Create Your First Item
                       </Button>
                     </Box>
-                  </Card>
-                </Zoom>
-              </Grid>
-            ))}
-          </Grid>
-        )}
-      </Container>
+                  </TableCell>
+                </TableRow>
+              )}
+              {filteredBoutiques.map((b, i) => (
+                <TableRow key={b._id} hover>
+                  <TableCell sx={{ color: '#64748b', fontWeight: 600 }}>{i + 1}</TableCell>
+                  <TableCell>
+                    <ImageAvatar src={getImageUrl(b.thumbnail)} alt={b.name} title={b.name} />
+                  </TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 800, color: '#1e293b' }}>{b.name}</Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>ID: {b.boutiqueId || 'N/A'}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={b.category?.title || 'N/A'}
+                      size="small"
+                      sx={{ borderRadius: '8px', fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b' }}>{b.material || 'Standard'}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Box>
+                      {b.availabilityMode !== 'rental' && (
+                        <Box sx={{ mb: 0.5 }}>
+                          <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, mr: 1 }}>BUY:</Typography>
+                          <Typography component="span" sx={{ fontWeight: 900, color: THEME_COLOR }}>
+                            {formatINR(b.buyPricing?.totalPrice)}
+                          </Typography>
+                        </Box>
+                      )}
+                      {b.availabilityMode !== 'purchase' && (
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, mr: 1 }}>RENT:</Typography>
+                          <Typography component="span" sx={{ fontWeight: 900, color: '#10b981' }}>
+                            {formatINR(b.rentalPricing?.pricePerDay)}/day
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={b.isActive} onChange={() => handleToggleStatus(b._id, b.isActive)} color="success" />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <Tooltip title="View Details">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleView(b)}
+                          sx={{ bgcolor: alpha(THEME_COLOR, 0.05), color: THEME_COLOR, '&:hover': { bgcolor: alpha(THEME_COLOR, 0.1) } }}
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Item">
+                        <IconButton
+                          size="small"
+                          sx={{ bgcolor: '#f8fafc', color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}
+                          onClick={() => navigate(`/boutique/addpackage?id=${b._id}`)}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          sx={{ bgcolor: '#fef2f2', color: '#dc2626', '&:hover': { bgcolor: '#fee2e2' } }}
+                          onClick={() => {
+                            setBoutiqueToDelete(b._id);
+                            setOpenConfirm(true);
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-      {/* Styled View Details Modal */}
+      {/* View Details Modal - REDESIGNED LUXURY VIEW */}
       <Dialog
         open={openView}
         onClose={() => setOpenView(false)}
         maxWidth="lg"
         fullWidth
-        scroll="body"
+        scroll="paper"
         PaperProps={{
-          sx: { borderRadius: 6, overflow: 'hidden' }
+          sx: {
+            borderRadius: '32px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+            maxHeight: '90vh'
+          }
         }}
       >
-        <DialogTitle sx={{
-          background: `linear-gradient(135deg, ${THEME_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
-          color: 'white',
-          p: 4,
-          position: 'relative'
-        }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <DialogContent sx={{ p: 0, bgcolor: '#fff' }}>
+          {selectedBoutique && (
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 900 }}>{selectedOrnament?.name}</Typography>
-              <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 600 }}>{selectedOrnament?.ornamentId || 'SKU-PRIVATE-COLLECTION'}</Typography>
-            </Box>
-            <IconButton onClick={() => setOpenView(false)} sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}>
-              <Close />
-            </IconButton>
-          </Stack>
-        </DialogTitle>
+              {/* Close Button Floating */}
+              <IconButton
+                sx={{
+                  position: 'absolute',
+                  right: 24,
+                  top: 24,
+                  zIndex: 10,
+                  bgcolor: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  '&:hover': { bgcolor: '#fff', transform: 'rotate(90deg)' },
+                  transition: 'all 0.3s'
+                }}
+                onClick={() => setOpenView(false)}
+              >
+                <Close />
+              </IconButton>
 
-        <DialogContent sx={{ p: 0 }}>
-          {selectedOrnament && (
-            <Grid container>
-              {/* Left Column: Media Showcase */}
-              <Grid item xs={12} lg={6} sx={{ bgcolor: '#1A202C', p: 4 }}>
-                <Box sx={{ position: 'relative', mb: 3 }}>
-                  <Paper elevation={24} sx={{ borderRadius: 6, overflow: 'hidden', height: 450 }}>
-                    <img
-                      src={getImageUrl(selectedImageIndex === 0 ? selectedOrnament.thumbnail : selectedOrnament.galleryImages[selectedImageIndex - 1])}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
-                      alt="Product Showcase"
-                    />
-                  </Paper>
-                </Box>
-
-                <Stack direction="row" spacing={1.5} sx={{ overflowX: 'auto', pb: 1, '&::-webkit-scrollbar': { height: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 10 } }}>
-                  {/* Thumbnail Avatar */}
-                  <Avatar
-                    variant="rounded"
-                    src={getImageUrl(selectedOrnament.thumbnail)}
-                    onClick={() => setSelectedImageIndex(0)}
-                    sx={{
-                      width: 80, height: 80, cursor: 'pointer',
-                      border: selectedImageIndex === 0 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
-                      transition: '0.2s', '&:hover': { transform: 'scale(1.05)' }
-                    }}
-                  />
-                  {selectedOrnament.galleryImages?.map((img, i) => (
-                    <Avatar
-                      key={i}
-                      variant="rounded"
-                      src={getImageUrl(img)}
-                      onClick={() => setSelectedImageIndex(i + 1)}
+              <Grid container>
+                {/* LEFT SIDE: HERO GALLERY */}
+                <Grid item xs={12} md={5} lg={5} sx={{ position: 'relative', bgcolor: '#fbfbfb', borderRight: '1px solid #f1f5f9' }}>
+                  <Box sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box
                       sx={{
-                        width: 80, height: 80, cursor: 'pointer',
-                        border: selectedImageIndex === i + 1 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
-                        transition: '0.2s', '&:hover': { transform: 'scale(1.05)' }
+                        width: '100%',
+                        maxHeight: '450px',
+                        aspectRatio: '0.85/1',
+                        borderRadius: '28px',
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
+                        mb: 3,
+                        position: 'relative',
+                        bgcolor: '#fff'
                       }}
-                    />
-                  ))}
-                </Stack>
-              </Grid>
-
-              {/* Right Column: Specifications */}
-              <Grid item xs={12} lg={6} sx={{ p: 4, bgcolor: 'white' }}>
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Collection Details</Typography>
-                  <Grid container spacing={1}>
-                    <Grid item xs={6}><DetailItem icon={<Category />} label="Department" value={selectedOrnament.category?.title} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<Palette />} label="Primary Material" value={selectedOrnament.material} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<Info />} label="Weight Specs" value={`${selectedOrnament.weight || 0} ${selectedOrnament.unit || 'gms'}`} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<InventoryIcon />} label="Stock Available" value={selectedOrnament.stock?.quantity} /></Grid>
-                  </Grid>
-                </Box>
-
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Investment Value</Typography>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4, mb: 2, bgcolor: alpha(THEME_COLOR, 0.02) }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Box>
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>BUYOUT PRICE</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedOrnament.buyPricing?.totalPrice)}</Typography>
+                    >
+                      <CardMedia
+                        component="img"
+                        image={getImageUrl(selectedImageIndex === 0 ? selectedBoutique.thumbnail : selectedBoutique.galleryImages?.[selectedImageIndex - 1])}
+                        alt={selectedBoutique.name}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          transition: 'transform 0.5s ease',
+                          '&:hover': { transform: 'scale(1.05)' }
+                        }}
+                      />
+                      <Box sx={{ position: 'absolute', top: 20, left: 20, display: 'flex', gap: 1 }}>
+                        <Chip
+                          label={selectedBoutique.availabilityMode?.toUpperCase() || 'PURCHASE'}
+                          sx={{
+                            bgcolor: 'rgba(255,255,255,0.9)',
+                            backdropFilter: 'blur(10px)',
+                            fontWeight: 800,
+                            color: THEME_COLOR,
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                            border: 'none'
+                          }}
+                        />
+                        <Chip
+                          label={selectedBoutique.isActive ? 'LIVE' : 'HIDDEN'}
+                          sx={{
+                            bgcolor: selectedBoutique.isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            backdropFilter: 'blur(10px)',
+                            fontWeight: 800,
+                            color: selectedBoutique.isActive ? '#10b981' : '#ef4444',
+                            border: `1px solid ${selectedBoutique.isActive ? '#10b981' : '#ef4444'}`,
+                            fontSize: '10px'
+                          }}
+                        />
                       </Box>
-                      {selectedOrnament.buyPricing?.discountValue > 0 && (
-                        <Chip label={`- ${selectedOrnament.buyPricing.discountValue}${selectedOrnament.buyPricing.discountType === 'percentage' ? '%' : ' OFF'}`} color="error" sx={{ fontWeight: 900 }} />
+                    </Box>
+
+                    <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', py: 1, px: 0.5 }}>
+                      <Box
+                        onClick={() => setSelectedImageIndex(0)}
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          border: selectedImageIndex === 0 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
+                          boxShadow: selectedImageIndex === 0 ? `0 8px 16px ${alpha(THEME_COLOR, 0.2)}` : 'none',
+                          transition: 'all 0.2s',
+                          transform: selectedImageIndex === 0 ? 'translateY(-4px)' : 'none'
+                        }}
+                      >
+                        <img src={getImageUrl(selectedBoutique.thumbnail)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </Box>
+                      {selectedBoutique.galleryImages?.map((img, i) => (
+                        <Box
+                          key={i}
+                          onClick={() => setSelectedImageIndex(i + 1)}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '16px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            border: selectedImageIndex === i + 1 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
+                            boxShadow: selectedImageIndex === i + 1 ? `0 8px 16px ${alpha(THEME_COLOR, 0.2)}` : 'none',
+                            transition: 'all 0.2s',
+                            transform: selectedImageIndex === i + 1 ? 'translateY(-4px)' : 'none'
+                          }}
+                        >
+                          <img src={getImageUrl(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </Box>
+                      ))}
+                    </Stack>
+
+                    <Box sx={{ mt: 'auto', pt: 3 }}>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, letterSpacing: '1px' }}>
+                        STYLE TAGS
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1, mb: 2 }}>
+                        {selectedBoutique.tags?.map((tag, idx) => (
+                          <Chip key={idx} label={`#${tag}`} size="small" sx={{ bgcolor: '#f1f5f9', fontWeight: 600, color: '#475569' }} />
+                        ))}
+                      </Box>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, fontSize: '10px' }}>
+                        LAST UPDATED: {new Date(selectedBoutique.updatedAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* RIGHT SIDE: CONTENT OVERVIEW */}
+                <Grid item xs={12} md={7} lg={7}>
+                  <Box sx={{ p: { xs: 3, md: 4 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="overline" sx={{ color: THEME_COLOR, fontWeight: 900, fontSize: '12px', letterSpacing: '2px' }}>
+                        {selectedBoutique.category?.title} / {selectedBoutique.subCategory?.title || 'General'}
+                      </Typography>
+                      <Typography variant="h3" sx={{ fontWeight: 900, color: '#111827', mt: 1, fontSize: { xs: '28px', md: '36px' }, letterSpacing: '-1px' }}>
+                        {selectedBoutique.name}
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: '#64748b', mt: 2, lineHeight: 1.6, fontSize: '15px' }}>
+                        {selectedBoutique.description}
+                      </Typography>
+                    </Box>
+
+                    {/* KEY SPECS GRID */}
+                    <Grid container spacing={2} sx={{ mb: 4 }}>
+                      <Grid item xs={6} sm={4}>
+                        <SpecBox icon={<Palette sx={{ color: '#3b82f6' }} />} label="Material" value={selectedBoutique.material || 'Premium'} />
+                      </Grid>
+                      <Grid item xs={6} sm={4}>
+                        <SpecBox icon={<InventoryIcon sx={{ color: '#10b981' }} />} label="Stock" value={selectedBoutique.stock?.quantity || '0'} />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <SpecBox icon={<Label sx={{ color: '#f59e0b' }} />} label="SKU ID" value={selectedBoutique.boutiqueId?.split('-').pop() || 'BM-B'} />
+                      </Grid>
+                    </Grid>
+
+                    {/* PRICE CARDS */}
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+                      {selectedBoutique.availabilityMode !== 'rental' && (
+                        <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: '#111827', color: '#fff', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+                          <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 700, letterSpacing: '1px' }}>PURCHASE PRICE</Typography>
+                          <Typography variant="h4" sx={{ fontWeight: 900, color: '#fff', mt: 0.5 }}>{formatINR(selectedBoutique.buyPricing?.totalPrice)}</Typography>
+                          {selectedBoutique.buyPricing?.discountValue > 0 && (
+                            <Chip
+                              label={`${selectedBoutique.buyPricing.discountType === 'percentage' ? selectedBoutique.buyPricing.discountValue + '%' : formatINR(selectedBoutique.buyPricing.discountValue)} OFF`}
+                              size="small"
+                              sx={{ mt: 1, bgcolor: SECONDARY_COLOR, color: '#fff', fontWeight: 900, fontSize: '10px' }}
+                            />
+                          )}
+                        </Box>
+                      )}
+                      {selectedBoutique.availabilityMode !== 'purchase' && (
+                        <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: alpha(THEME_COLOR, 0.05), border: `2px solid ${THEME_COLOR}` }}>
+                          <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 700, letterSpacing: '1px' }}>RENTAL / DAY</Typography>
+                          <Typography variant="h4" sx={{ fontWeight: 900, color: '#111827', mt: 0.5 }}>{formatINR(selectedBoutique.rentalPricing?.pricePerDay)}</Typography>
+                          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#64748b', fontWeight: 600 }}>Min Booking: {selectedBoutique.rentalPricing?.minimumDays} Days</Typography>
+                        </Box>
                       )}
                     </Stack>
-                  </Paper>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4, bgcolor: '#F0FFF4' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Box>
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>DAILY RENTAL RATE</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>{formatINR(selectedOrnament.rentalPricing?.pricePerDay)}</Typography>
+
+                    {/* SUB-SECTIONS */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {/* SIZES */}
+                      {selectedBoutique.availableSizes?.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Storefront fontSize="small" sx={{ color: THEME_COLOR }} /> Available Sizes
+                          </Typography>
+                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {selectedBoutique.availableSizes.map((s, idx) => (
+                              <Chip key={idx} label={s} sx={{ fontWeight: 700, borderRadius: '10px', bgcolor: alpha(THEME_COLOR, 0.08), color: THEME_COLOR, border: `1px solid ${alpha(THEME_COLOR, 0.1)}` }} />
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {/* COLORS */}
+                      {selectedBoutique.availableColors?.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Palette fontSize="small" sx={{ color: THEME_COLOR }} /> Available Colors
+                          </Typography>
+                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {selectedBoutique.availableColors.map((c, idx) => (
+                              <Chip key={idx} label={c} sx={{ fontWeight: 700, borderRadius: '10px', bgcolor: alpha(THEME_COLOR, 0.08), color: THEME_COLOR, border: `1px solid ${alpha(THEME_COLOR, 0.1)}` }} />
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {/* VARIATIONS */}
+                      {selectedBoutique.variations?.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <InventoryIcon fontSize="small" sx={{ color: THEME_COLOR }} /> Product Variations
+                          </Typography>
+                          <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
+                            {selectedBoutique.variations.map((v, idx) => (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  p: 2,
+                                  borderRadius: '20px',
+                                  bgcolor: '#fff',
+                                  border: '1px solid #e2e8f0',
+                                  minWidth: '180px',
+                                  transition: 'all 0.3s',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  '&:hover': { borderColor: THEME_COLOR, transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }
+                                }}
+                              >
+                                {v.image && (
+                                  <Avatar
+                                    src={getImageUrl(v.image)}
+                                    variant="rounded"
+                                    sx={{ width: 45, height: 45, borderRadius: '12px', bgcolor: '#f1f5f9' }}
+                                  />
+                                )}
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {v.name}
+                                  </Typography>
+                                  <Typography sx={{ fontWeight: 900, fontSize: '16px', color: '#111827' }}>
+                                    {formatINR(v.price)}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {/* SHIPPING */}
+                      <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <Stack direction="row" spacing={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LocalShipping sx={{ color: selectedBoutique.shipping?.free ? '#10b981' : '#64748b' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {selectedBoutique.shipping?.free ? 'Free Shipping' : `Shipping: ${formatINR(selectedBoutique.shipping?.price)}`}
+                            </Typography>
+                          </Box>
+                        </Stack>
                       </Box>
-                      <Chip label={`Min ${selectedOrnament.rentalPricing?.minimumDays || 1} Days`} variant="outlined" sx={{ fontWeight: 700, borderColor: '#2F855A', color: '#2F855A' }} />
-                    </Stack>
-                  </Paper>
-                </Box>
 
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Story & Craftsmanship</Typography>
-                  <Typography variant="body1" sx={{ color: '#4A5568', lineHeight: 1.8 }}>
-                    {selectedOrnament.description || "A masterfully crafted piece from our exclusive collection, designed to be passed down through generations. Every detail reflects superior quality and timeless elegance."}
-                  </Typography>
-                </Box>
+                      {/* POLICIES */}
+                      <Grid container spacing={2}>
+                        {selectedBoutique.returnPolicy && (
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0369A1', mb: 1 }}>Return Policy</Typography>
+                              <Typography variant="caption" sx={{ color: '#0C4A6E', display: 'block' }}>{selectedBoutique.returnPolicy}</Typography>
+                            </Box>
+                          </Grid>
+                        )}
+                        {selectedBoutique.cancellationPolicy && (
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ p: 2, borderRadius: '16px', bgcolor: '#FFF1F2', border: '1px solid #FECDD3' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#BE123C', mb: 1 }}>Cancellation Policy</Typography>
+                              <Typography variant="caption" sx={{ color: '#881337', display: 'block' }}>{selectedBoutique.cancellationPolicy}</Typography>
+                            </Box>
+                          </Grid>
+                        )}
+                      </Grid>
 
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Occasions & Tags</Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {selectedOrnament.occasions?.map((occ, i) => (
-                      <Chip key={i} label={occ} size="small" sx={{ fontWeight: 700, px: 1 }} />
-                    ))}
-                    {selectedOrnament.features?.basicFeatures?.map((f, i) => (
-                      <Chip key={i} label={f} size="small" color="primary" sx={{ fontWeight: 700, px: 1 }} />
-                    ))}
-                  </Stack>
-                </Box>
+                      {/* CARE INSTRUCTIONS */}
+                      {selectedBoutique.careInstructions && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: '#1e293b' }}>Care Instructions</Typography>
+                          <Typography variant="body2" sx={{ p: 2, bgcolor: '#fff9c4', borderRadius: '12px', color: '#5d4037', fontWeight: 500, fontStyle: 'italic' }}>
+                            {selectedBoutique.careInstructions}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Box sx={{ mt: 'auto', pt: 4, display: 'flex', gap: 2 }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={() => navigate(`/boutique/addpackage?id=${selectedBoutique._id}`)}
+                        sx={{ bgcolor: THEME_COLOR, borderRadius: '14px', py: 1.5, fontWeight: 800, '&:hover': { bgcolor: SECONDARY_COLOR } }}
+                      >
+                        Edit Item
+                      </Button>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={() => setOpenView(false)}
+                        sx={{ borderRadius: '14px', py: 1.5, fontWeight: 800, borderColor: '#e2e8f0', color: '#64748b' }}
+                      >
+                        Close
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           )}
         </DialogContent>
-
-        <DialogActions sx={{ p: 4, bgcolor: '#F7FAFC' }}>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Edit />}
-            onClick={() => navigate(`/ornaments/edit/${selectedOrnament._id}`)}
-            sx={{ bgcolor: '#2B6CB0', px: 4, borderRadius: 3, fontWeight: 800 }}
-          >
-            Edit This Piece
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => setOpenView(false)}
-            sx={{ px: 4, borderRadius: 3, fontWeight: 800 }}
-          >
-            Close Viewer
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <Dialog
-        open={openConfirm}
-        onClose={() => setOpenConfirm(false)}
-        PaperProps={{ sx: { borderRadius: 6, p: 2 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 900, fontSize: '1.5rem', textAlign: 'center' }}>Permanently Remove?</DialogTitle>
-        <DialogContent sx={{ textAlign: 'center' }}>
-          <Avatar sx={{ width: 100, height: 100, bgcolor: alpha('#C53030', 0.1), color: '#C53030', mx: 'auto', mb: 3 }}>
-            <Delete sx={{ fontSize: 50 }} />
-          </Avatar>
-          <Typography variant="body1" sx={{ color: '#4A5568', fontSize: '1.1rem' }}>
-            This will permanently remove <b>this ornament</b> from your digital catalog. This action cannot be undone.
+      <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)} PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}>
+        <DialogTitle sx={{ fontWeight: 900, textAlign: 'center' }}>Remove Item?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ textAlign: 'center', color: '#64748b' }}>
+            Are you sure you want to delete this boutique item? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => setOpenConfirm(false)} variant="outlined" sx={{ borderRadius: 3, px: 3, fontWeight: 700 }}>Keep It</Button>
-          <Button onClick={handleDelete} variant="contained" sx={{ bgcolor: '#C53030', borderRadius: 3, px: 3, fontWeight: 700, '&:hover': { bgcolor: '#9B2C2C' } }}>Yes, Delete</Button>
+        <DialogActions sx={{ p: 3, justifyContent: 'center', gap: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} sx={{ fontWeight: 700, color: '#64748b' }}>Cancel</Button>
+          <Button onClick={handleDelete} variant="contained" sx={{ bgcolor: '#dc2626', borderRadius: '10px', fontWeight: 700, '&:hover': { bgcolor: '#b91c1c' } }}>
+            Delete Item
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -721,7 +871,7 @@ export default function OrnamentsList() {
         onClose={() => setToast({ ...toast, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: 4, fontWeight: 700, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: '12px', fontWeight: 700 }}>
           {toast.message}
         </Alert>
       </Snackbar>
