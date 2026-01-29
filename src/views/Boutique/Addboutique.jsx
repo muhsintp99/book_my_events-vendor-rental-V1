@@ -545,9 +545,7 @@ const PremiumSelect = ({
                     />
                   )}
                   <Typography sx={{ fontWeight: 500, flex: 1 }}>{optLabel}</Typography>
-                  {!multiple && value === optValue && (
-                    <CheckCircleIcon sx={{ fontSize: 18, color: color, ml: 'auto' }} />
-                  )}
+                  {!multiple && value === optValue && <CheckCircleIcon sx={{ fontSize: 18, color: color, ml: 'auto' }} />}
                 </Stack>
               </MenuItem>
             );
@@ -619,6 +617,11 @@ const AddBoutique = () => {
     freeShipping: false,
     flatRateShipping: false,
     shippingPrice: '',
+    takeaway: false,
+    takeawayAddress: '',
+    pickupLatitude: '',
+    pickupLongitude: '',
+
     selectedOccasions: [],
     tags: [],
     careInstructions: '',
@@ -634,6 +637,7 @@ const AddBoutique = () => {
   const [termsSections, setTermsSections] = useState([{ heading: '', points: [''] }]);
   const [categories, setCategories] = useState([]);
   const [availableSubCategories, setAvailableSubCategories] = useState([]);
+  const pickupInputRef = React.useRef(null);
 
   // Related Items State
   const [relatedLinkBy, setRelatedLinkBy] = useState('product');
@@ -643,6 +647,11 @@ const AddBoutique = () => {
   const [drilldownCategory, setDrilldownCategory] = useState(null);
   const [relatedOptions, setRelatedOptions] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+  const mapRef = React.useRef(null);
+  const markerRef = React.useRef(null);
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
 
   // ========== OPTIONS ==========
   const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
@@ -660,7 +669,24 @@ const AddBoutique = () => {
     'Office Wear'
   ];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
-  const colorOptions = ['Red', 'Blue', 'Green', 'Black', 'White', 'Pink', 'Purple', 'Gold', 'Silver', 'Beige', 'Navy', 'Maroon', 'Teal', 'Lavender', 'Peach', 'Rose Gold'];
+  const colorOptions = [
+    'Red',
+    'Blue',
+    'Green',
+    'Black',
+    'White',
+    'Pink',
+    'Purple',
+    'Gold',
+    'Silver',
+    'Beige',
+    'Navy',
+    'Maroon',
+    'Teal',
+    'Lavender',
+    'Peach',
+    'Rose Gold'
+  ];
   const materialOptions = [
     'Cotton',
     'Silk',
@@ -987,6 +1013,20 @@ const AddBoutique = () => {
     loadVendor();
   }, []);
 
+  useEffect(() => {
+    if (window.google?.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setMapsLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
   // Fetch Ornaments Categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -1014,7 +1054,9 @@ const AddBoutique = () => {
       sizes.forEach((size) => {
         colors.forEach((color) => {
           const name = `${color} - ${size}`;
-          const existing = variations.find((v) => v.name === name || (v.attributeValues?.includes(size) && v.attributeValues?.includes(color)));
+          const existing = variations.find(
+            (v) => v.name === name || (v.attributeValues?.includes(size) && v.attributeValues?.includes(color))
+          );
           newVariations.push(
             existing || {
               name,
@@ -1148,9 +1190,7 @@ const AddBoutique = () => {
         if (product.termsAndConditions) {
           try {
             setTermsSections(
-              typeof product.termsAndConditions === 'string'
-                ? JSON.parse(product.termsAndConditions)
-                : product.termsAndConditions
+              typeof product.termsAndConditions === 'string' ? JSON.parse(product.termsAndConditions) : product.termsAndConditions
             );
           } catch (e) {
             console.error('Error parsing terms:', e);
@@ -1207,6 +1247,80 @@ const AddBoutique = () => {
     return null;
   };
 
+  const initPickupMap = () => {
+    if (!window.google || !mapsLoaded) return;
+
+    const center = {
+      lat: Number(formData.pickupLatitude) || 11.6854, // Kozhikode default
+      lng: Number(formData.pickupLongitude) || 75.9115
+    };
+
+    const map = new window.google.maps.Map(document.getElementById('pickup-map'), {
+      center,
+      zoom: 14
+    });
+
+    const marker = new window.google.maps.Marker({
+      position: center,
+      map,
+      draggable: true
+    });
+
+    // 📍 Drag marker → update lat/lng
+    marker.addListener('dragend', (e) => {
+      setFormData((prev) => ({
+        ...prev,
+        pickupLatitude: e.latLng.lat().toString(),
+        pickupLongitude: e.latLng.lng().toString()
+      }));
+    });
+
+    // 🗺 Click map → move marker
+    map.addListener('click', (e) => {
+      marker.setPosition(e.latLng);
+      setFormData((prev) => ({
+        ...prev,
+        pickupLatitude: e.latLng.lat().toString(),
+        pickupLongitude: e.latLng.lng().toString()
+      }));
+    });
+
+    // 🔍 AUTOCOMPLETE (THIS WAS MISSING ❗)
+    if (pickupInputRef.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(pickupInputRef.current, {
+        componentRestrictions: { country: 'in' }, // 🇮🇳 INDIA
+        fields: ['formatted_address', 'geometry']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) return;
+
+        const loc = place.geometry.location;
+
+        map.setCenter(loc);
+        map.setZoom(16);
+        marker.setPosition(loc);
+
+        setFormData((prev) => ({
+          ...prev,
+          takeawayAddress: place.formatted_address,
+          pickupLatitude: loc.lat().toString(),
+          pickupLongitude: loc.lng().toString()
+        }));
+      });
+    }
+
+    mapRef.current = map;
+    markerRef.current = marker;
+  };
+
+  useEffect(() => {
+    if (mapsLoaded && formData.takeaway) {
+      setTimeout(initPickupMap, 300);
+    }
+  }, [mapsLoaded, formData.takeaway]);
+
   // ========== SUBMIT HANDLER ==========
   const handleSubmit = async () => {
     const validationError = validateForm();
@@ -1257,9 +1371,7 @@ const AddBoutique = () => {
       formDataToSend.append('thumbnail', formData.thumbnailImage);
     } else if (typeof formData.thumbnailImage === 'string') {
       // Ensure it's a single string value, not an array
-      const thumbnailValue = Array.isArray(formData.thumbnailImage) 
-        ? formData.thumbnailImage[0] 
-        : formData.thumbnailImage;
+      const thumbnailValue = Array.isArray(formData.thumbnailImage) ? formData.thumbnailImage[0] : formData.thumbnailImage;
       formDataToSend.append('thumbnail', thumbnailValue);
     }
 
@@ -1339,6 +1451,10 @@ const AddBoutique = () => {
       JSON.stringify({
         free: formData.freeShipping,
         flatRate: formData.flatRateShipping,
+        takeaway: formData.takeaway,
+        takeawayLocation: formData.takeawayAddress,
+        pickupLatitude: formData.pickupLatitude,
+        pickupLongitude: formData.pickupLongitude,
         price: formData.shippingPrice
       })
     );
@@ -1699,7 +1815,6 @@ const AddBoutique = () => {
             </Stack>
           </Paper>
 
-
           {/* ================= VARIATIONS SECTION ================= */}
           <Paper
             sx={{
@@ -1956,7 +2071,13 @@ const AddBoutique = () => {
                     '&:hover': { borderColor: THEME.primary, bgcolor: '#F5F0F7' }
                   }}
                 >
-                  <input id="sizeguide-input" type="file" hidden accept="image/*" onChange={(e) => handleChange('sizeGuideImage', e.target.files[0])} />
+                  <input
+                    id="sizeguide-input"
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => handleChange('sizeGuideImage', e.target.files[0])}
+                  />
                   {formData.sizeGuideImage || formData.existingSizeGuideImage ? (
                     <Box sx={{ width: '100%', height: '100%', maxWidth: 200 }}>
                       <img
@@ -1982,7 +2103,9 @@ const AddBoutique = () => {
                   ) : (
                     <Stack spacing={1} alignItems="center">
                       <CloudUploadIcon sx={{ fontSize: 32, color: '#A3AED0' }} />
-                      <Typography variant="caption" fontWeight="600">Upload Size Guide</Typography>
+                      <Typography variant="caption" fontWeight="600">
+                        Upload Size Guide
+                      </Typography>
                     </Stack>
                   )}
                 </Box>
@@ -2951,6 +3074,70 @@ const AddBoutique = () => {
                   }}
                 />
               )}
+
+              {/* Takeaway Toggle */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 2,
+                  bgcolor: '#F8FAFC',
+                  borderRadius: '12px'
+                }}
+              >
+                <Box>
+                  <Typography fontWeight={600}>Takeaway (Pickup)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Customers can pick up from location
+                  </Typography>
+                </Box>
+                <Switch checked={formData.takeaway} onChange={(e) => handleChange('takeaway', e.target.checked)} />
+              </Box>
+
+              {/* MAP + ADDRESS */}
+              {formData.takeaway && (
+                <Box sx={{ mt: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Pickup Address"
+                    inputRef={pickupInputRef}
+                    placeholder="Search pickup location"
+                    value={formData.takeawayAddress}
+                    onChange={(e) => handleChange('takeawayAddress', e.target.value)}
+                  />
+
+                  <Box
+                    id="pickup-map"
+                    sx={{
+                      width: '100%',
+                      height: 320,
+                      borderRadius: '12px',
+                      border: '1px solid #E5E7EB'
+                    }}
+                  />
+
+                  <Grid container spacing={2} sx={{ mt: 2 }}>
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Latitude" value={formData.pickupLatitude} InputProps={{ readOnly: true }} />
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Longitude" value={formData.pickupLongitude} InputProps={{ readOnly: true }} />
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        fullWidth
+                        label="Final Pickup Address"
+                        value={formData.takeawayAddress}
+                        InputProps={{ readOnly: true }}
+                        placeholder="Pin on map or search location"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
             </Stack>
           </Paper>
 
@@ -3054,11 +3241,7 @@ const AddBoutique = () => {
               <Stack direction="row" spacing={4} alignItems="center">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography fontWeight={700}>Top Pick Status:</Typography>
-                  <Switch
-                    checked={formData.isTopPick}
-                    onChange={(e) => handleChange('isTopPick', e.target.checked)}
-                    color="primary"
-                  />
+                  <Switch checked={formData.isTopPick} onChange={(e) => handleChange('isTopPick', e.target.checked)} color="primary" />
                   <Typography variant="caption" color="text.secondary">
                     Show this item in 'Top Picks' section
                   </Typography>
@@ -3066,11 +3249,7 @@ const AddBoutique = () => {
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography fontWeight={700}>Item Visibility:</Typography>
-                  <Switch
-                    checked={formData.isActive}
-                    onChange={(e) => handleChange('isActive', e.target.checked)}
-                    color="success"
-                  />
+                  <Switch checked={formData.isActive} onChange={(e) => handleChange('isActive', e.target.checked)} color="success" />
                   <Typography variant="caption" color="text.secondary">
                     {formData.isActive ? 'Item is live' : 'Item is hidden'}
                   </Typography>
@@ -3172,8 +3351,6 @@ const AddBoutique = () => {
               </Grid>
             </Box>
           </Paper>
-
-
 
           {/* ================= TERMS & CONDITIONS ================= */}
           <Box sx={{ mb: 4 }}>

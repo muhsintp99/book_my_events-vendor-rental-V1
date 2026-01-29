@@ -362,6 +362,10 @@ const AddOrnaments = () => {
     freeShipping: false,
     flatRateShipping: false,
     shippingPrice: '',
+    takeaway: false,
+    takeawayLocation: '',
+    pickupLat: '',
+    pickupLng: '',
     selectedOccasions: [],
     selectedFeatures: [],
     suitableFor: [],
@@ -369,6 +373,19 @@ const AddOrnaments = () => {
     discountValue: '',
     tags: []
   });
+
+  // ===== TAKEAWAY MAP =====
+  const mapRef = React.useRef(null);
+  const markerRef = React.useRef(null);
+  const searchInputRef = React.useRef(null);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+
+  const [pickupCoords, setPickupCoords] = useState({
+    lat: null,
+    lng: null
+  });
+  const [map, setMap] = useState(null);
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
 
   const [termsSections, setTermsSections] = useState([{ heading: '', points: [''] }]);
   const [categories, setCategories] = useState([]);
@@ -466,6 +483,95 @@ const AddOrnaments = () => {
         const rentalTotal = parseFloat(pricePerDay) * parseFloat(minimumDays);
         setFormData((prev) => ({ ...prev, rentalTotalPrice: rentalTotal.toFixed(2) }));
       }
+    }
+  };
+  const initPickupMap = () => {
+    if (!window.google || !mapRef.current) return;
+
+    const center = {
+      lat: pickupCoords.lat ?? 25.2048,
+      lng: pickupCoords.lng ?? 55.2708
+    };
+
+    const newMap = new window.google.maps.Map(mapRef.current, {
+      center,
+      zoom: 14,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+
+    // ✅ STORE MAP INSTANCE (THIS WAS MISSING)
+    setMap(newMap);
+
+    // ✅ FORCE RENDER (fixes blank map)
+    window.google.maps.event.trigger(newMap, 'resize');
+
+    // ✅ Restore marker (edit mode)
+    if (pickupCoords.lat && pickupCoords.lng) {
+      markerRef.current = new window.google.maps.Marker({
+        position: center,
+        map: newMap
+      });
+    }
+
+    // ✅ MAP CLICK
+    newMap.addListener('click', (e) => {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+
+      setPickupCoords({ lat, lng });
+
+      // ✅ UPDATE FORM DATA
+      handleChange('pickupLat', lat.toFixed(6));
+      handleChange('pickupLng', lng.toFixed(6));
+
+      if (markerRef.current) markerRef.current.setMap(null);
+
+      markerRef.current = new window.google.maps.Marker({
+        position: { lat, lng },
+        map: newMap
+      });
+
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results?.[0]) {
+          handleChange('takeawayLocation', results[0].formatted_address);
+        }
+      });
+    });
+
+    // ✅ AUTOCOMPLETE
+    if (searchInputRef.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+        fields: ['geometry', 'formatted_address']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry?.location) return;
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        setPickupCoords({ lat, lng });
+
+        // ✅ UPDATE FORM DATA
+        handleChange('pickupLat', lat.toFixed(6));
+        handleChange('pickupLng', lng.toFixed(6));
+
+        if (markerRef.current) markerRef.current.setMap(null);
+
+        markerRef.current = new window.google.maps.Marker({
+          position: { lat, lng },
+          map: newMap
+        });
+
+        newMap.setCenter({ lat, lng });
+        newMap.setZoom(16);
+
+        handleChange('takeawayLocation', place.formatted_address);
+      });
     }
   };
 
@@ -617,6 +723,35 @@ const AddOrnaments = () => {
   }, []);
 
   // Removed redundant useEffect that synchronized subcategories from categories list
+
+  // ✅ Load Google Maps script (ONCE)
+  useEffect(() => {
+    if (window.google?.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setMapsLoaded(true);
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
+
+  // ✅ Initialize map ONLY when needed
+  useEffect(() => {
+    if (mapsLoaded && formData.takeaway && mapRef.current && !map) {
+      initPickupMap();
+    }
+  }, [mapsLoaded, formData.takeaway]);
 
   useEffect(() => {
     // Load product data for edit mode
@@ -860,7 +995,12 @@ const AddOrnaments = () => {
       JSON.stringify({
         freeShipping: formData.freeShipping,
         flatRateShipping: formData.flatRateShipping,
-        shippingPrice: formData.shippingPrice
+        shippingPrice: formData.shippingPrice,
+        takeaway: formData.takeaway,
+        takeawayLocation: formData.takeawayLocation,
+        pickupLatitude: formData.pickupLat,
+pickupLongitude: formData.pickupLng
+
       })
     );
 
@@ -2514,19 +2654,87 @@ const AddOrnaments = () => {
               </Box>
 
               {formData.flatRateShipping && (
-                <TextField
-                  fullWidth
-                  label="Shipping Price"
-                  type="number"
-                  value={formData.shippingPrice}
-                  onChange={(e) => handleChange('shippingPrice', e.target.value)}
-                  InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '12px'
-                    }
-                  }}
-                />
+                <Box sx={{ mt: 1, pl: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="Shipping Price"
+                    type="number"
+                    value={formData.shippingPrice}
+                    onChange={(e) => handleChange('shippingPrice', e.target.value)}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#FFFFFF'
+                      }
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* TAKEAWAY / PICKUP */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 2,
+                  bgcolor: '#FFF5F8',
+                  borderRadius: '12px',
+                  border: `1.5px solid ${formData.takeaway ? THEME.secondary : '#E5E7EB'}`
+                }}
+              >
+                <Box>
+                  <Typography variant="body1" fontWeight="600" color={THEME.secondary}>
+                    Takeaway / Self Pickup
+                  </Typography>
+                  <Typography variant="caption" color="#64748B">
+                    Customer will collect from your location
+                  </Typography>
+                </Box>
+
+                <Switch checked={formData.takeaway} onChange={(e) => handleChange('takeaway', e.target.checked)} color="secondary" />
+              </Box>
+
+              {formData.takeaway && (
+                <Box sx={{ mt: 2 }}>
+                  <TextField fullWidth inputRef={searchInputRef} placeholder="Search pickup location" sx={{ mb: 2 }} />
+
+                  {mapsLoaded ? (
+                    <Box
+                      ref={mapRef}
+                      sx={{
+                        height: 360,
+                        borderRadius: '16px',
+                        border: '1px solid #E5E7EB'
+                      }}
+                    />
+                  ) : (
+                    <Typography variant="body2">Loading map...</Typography>
+                  )}
+
+                  <Grid container spacing={2} sx={{ mt: 2 }}>
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Latitude" value={formData.pickupLat || '0.000000'} InputProps={{ readOnly: true }} />
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <TextField fullWidth label="Longitude" value={formData.pickupLng || '0.000000'} InputProps={{ readOnly: true }} />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Final Pickup Address"
+                        placeholder="Pin on map or type full address here..."
+                        value={formData.takeawayLocation}
+                        onChange={(e) => handleChange('takeawayLocation', e.target.value)}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
               )}
             </Stack>
           </Paper>
