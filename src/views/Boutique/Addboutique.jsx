@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   Box,
@@ -567,7 +567,10 @@ const PremiumSelect = ({
 // Main Component
 // ------------------------------
 const AddBoutique = () => {
-  const { id } = useParams();
+  const { id: urlId } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+  const id = urlId || queryId; // Support both URL params and query params
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
@@ -1078,7 +1081,7 @@ const AddBoutique = () => {
           subcategory: product.subCategory?._id || product.subCategory || '',
           availableSizes: product.availableSizes || [],
           material: product.material || '',
-          thumbnailImage: product.thumbnail || null,
+          thumbnailImage: Array.isArray(product.thumbnail) ? product.thumbnail[0] : product.thumbnail || null,
           galleryImages: [],
           existingGallery: product.galleryImages || [],
           availabilityMode:
@@ -1253,34 +1256,34 @@ const AddBoutique = () => {
     if (formData.thumbnailImage instanceof File) {
       formDataToSend.append('thumbnail', formData.thumbnailImage);
     } else if (typeof formData.thumbnailImage === 'string') {
-      formDataToSend.append('thumbnail', formData.thumbnailImage);
+      // Ensure it's a single string value, not an array
+      const thumbnailValue = Array.isArray(formData.thumbnailImage) 
+        ? formData.thumbnailImage[0] 
+        : formData.thumbnailImage;
+      formDataToSend.append('thumbnail', thumbnailValue);
+    }
 
-      if (variations.length > 0) {
-        // Separate images from data
-        const variationsData = variations.map((v, index) => ({
-          name: v.name,
-          attributeValues: v.attributeValues,
-          price: Number(v.price),
-          stockQuantity: Number(v.stockQuantity),
-          image: v.image instanceof File ? `VAR_FILE_${index}` : v.image
-        }));
+    if (variations.length > 0) {
+      // Separate images from data
+      const variationsData = variations.map((v, index) => ({
+        name: v.name,
+        attributeValues: v.attributeValues,
+        price: Number(v.price),
+        stockQuantity: Number(v.stockQuantity),
+        image: v.image instanceof File ? `VAR_FILE_${index}` : v.image
+      }));
 
-        formDataToSend.append('variations', JSON.stringify(variationsData));
+      formDataToSend.append('variations', JSON.stringify(variationsData));
 
-        // Append files
-        variations.forEach((v, index) => {
-          if (v.image instanceof File) {
-            // We must ensure the backend can map this file to the variation.
-            // If the backend expects 'variationImages' array, we just append.
-            // If the order matches the VAR_FILE_{index}, it works.
-            formDataToSend.append(`variationImages`, v.image);
-          }
-        });
-      }
-
-      // 4. Other Arrays
-
-      formDataToSend.append('thumbnail', formData.thumbnailImage);
+      // Append files
+      variations.forEach((v, index) => {
+        if (v.image instanceof File) {
+          // We must ensure the backend can map this file to the variation.
+          // If the backend expects 'variationImages' array, we just append.
+          // If the order matches the VAR_FILE_{index}, it works.
+          formDataToSend.append(`variationImages`, v.image);
+        }
+      });
     }
 
     formData.galleryImages.forEach((file) => {

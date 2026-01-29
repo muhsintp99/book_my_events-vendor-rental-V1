@@ -479,7 +479,7 @@ export default function BoutiqueList() {
                         <IconButton
                           size="small"
                           sx={{ bgcolor: '#f8fafc', color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}
-                          onClick={() => navigate(`/boutique/addpackage?id=${b._id}`)}
+                          onClick={() => navigate(`/boutique/edit/${b._id}`)}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
