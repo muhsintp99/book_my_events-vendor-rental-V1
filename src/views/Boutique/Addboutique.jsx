@@ -320,6 +320,249 @@ const SectionHeader = ({ icon: Icon, title, subtitle, color = THEME.primary }) =
   </Box>
 );
 
+// Premium Dropdown Component
+const PremiumSelect = ({
+  value,
+  onChange,
+  options = [],
+  label = '',
+  placeholder = 'Select an option',
+  disabled = false,
+  icon: Icon = null,
+  color = THEME.primary,
+  helperText = '',
+  required = false,
+  fullWidth = true,
+  withSearch = true,
+  multiple = false
+}) => {
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredOptions = options.filter((opt) => {
+    const optLabel = opt.label || opt.title || opt.name || opt;
+    return optLabel.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  return (
+    <FormControl fullWidth={fullWidth} disabled={disabled}>
+      {label && (
+        <InputLabel
+          shrink={true}
+          sx={{
+            '&.Mui-focused': { color: color },
+            backgroundColor: 'white',
+            px: 1,
+            fontWeight: 600,
+            letterSpacing: '0.3px',
+            textTransform: 'uppercase',
+            fontSize: '0.75rem'
+          }}
+        >
+          {label} {required && <span style={{ color: '#F44336' }}>*</span>}
+        </InputLabel>
+      )}
+      <Select
+        multiple={multiple}
+        value={value}
+        onChange={onChange}
+        onOpen={() => setOpen(true)}
+        onClose={() => {
+          setOpen(false);
+          setSearchTerm('');
+        }}
+        displayEmpty
+        open={open}
+        disabled={disabled}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              maxHeight: 400,
+              borderRadius: '16px',
+              boxShadow: `0 20px 60px ${alpha(color, 0.3)}`,
+              backgroundColor: '#FFFFFF',
+              mt: 1,
+              '& .MuiMenuItem-root': {
+                borderRadius: '10px',
+                mx: 1,
+                my: 0.8,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: alpha(color, 0.12),
+                  transform: 'translateX(8px)',
+                  paddingLeft: '24px'
+                },
+                '&.Mui-selected': {
+                  backgroundColor: alpha(color, 0.15),
+                  fontWeight: 700,
+                  borderLeft: `3px solid ${color}`,
+                  paddingLeft: '21px',
+                  '&:hover': {
+                    backgroundColor: alpha(color, 0.22)
+                  }
+                }
+              }
+            }
+          }
+        }}
+        renderValue={(selected) => {
+          if (multiple) {
+            if (Array.isArray(selected) && selected.length === 0) {
+              return <span style={{ color: '#9CA3AF' }}>{placeholder}</span>;
+            }
+            if (Array.isArray(selected)) {
+              const labels = selected.map((val) => {
+                const option = options.find((opt) => opt.value === val);
+                return option?.label || val;
+              });
+              return labels.join(', ');
+            }
+            return '';
+          }
+          if (!selected) {
+            return <span style={{ color: '#9CA3AF' }}>{placeholder}</span>;
+          }
+          const selectedOption = options.find((opt) => opt.value === selected);
+          return selectedOption?.label || selected;
+        }}
+        sx={{
+          borderRadius: '16px',
+          backgroundColor: disabled ? '#F3F4F6' : 'white',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            boxShadow: disabled ? 'none' : `0 8px 24px ${alpha(color, 0.15)}`,
+            borderColor: color
+          },
+          '&.Mui-focused': {
+            boxShadow: `0 0 0 4px ${alpha(color, 0.12)}, 0 8px 24px ${alpha(color, 0.2)}`,
+            borderColor: color
+          },
+          '& .MuiSelect-select': {
+            py: 2,
+            px: 2,
+            fontWeight: 600,
+            fontSize: '0.95rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(0, 0, 0, 0.12)',
+            borderWidth: '2px',
+            transition: 'all 0.3s ease'
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: color
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: color,
+            borderWidth: '2px'
+          },
+          '& .MuiSvgIcon-root': {
+            transition: 'all 0.3s ease',
+            color: color
+          }
+        }}
+      >
+        {!multiple && (
+          <MenuItem value="" sx={{ display: 'none' }}>
+            <em>{placeholder}</em>
+          </MenuItem>
+        )}
+        {withSearch && (
+          <MenuItem
+            disabled
+            sx={{
+              backgroundColor: '#F8FAFC',
+              borderBottom: `2px solid ${alpha(color, 0.1)}`,
+              p: 0,
+              height: 'auto',
+              '&.Mui-disabled': {
+                opacity: 1
+              }
+            }}
+          >
+            <TextField
+              autoFocus
+              size="small"
+              placeholder="Search..."
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, color: color }} />
+                  </InputAdornment>
+                )
+              }}
+              sx={{
+                m: 1,
+                width: 'auto',
+                '& .MuiInputBase-input': {
+                  py: 1,
+                  px: 1,
+                  fontSize: '0.9rem',
+                  fontWeight: 500
+                }
+              }}
+            />
+          </MenuItem>
+        )}
+        {filteredOptions.length === 0 ? (
+          <MenuItem disabled sx={{ justifyContent: 'center', color: '#9CA3AF' }}>
+            No results found
+          </MenuItem>
+        ) : (
+          filteredOptions.map((option, idx) => {
+            const optLabel = option.label || option.title || option.name || option;
+            const optValue = option.value !== undefined ? option.value : option._id || option;
+
+            return (
+              <MenuItem key={`${optValue}-${idx}`} value={optValue}>
+                <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
+                  {Icon && (
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
+                        background: alpha(color, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Icon sx={{ fontSize: 16, color: color }} />
+                    </Box>
+                  )}
+                  {multiple && (
+                    <Checkbox
+                      checked={Array.isArray(value) && value.includes(optValue)}
+                      sx={{ color: color, '&.Mui-checked': { color: color } }}
+                    />
+                  )}
+                  <Typography sx={{ fontWeight: 500, flex: 1 }}>{optLabel}</Typography>
+                  {!multiple && value === optValue && (
+                    <CheckCircleIcon sx={{ fontSize: 18, color: color, ml: 'auto' }} />
+                  )}
+                </Stack>
+              </MenuItem>
+            );
+          })
+        )}
+      </Select>
+      {helperText && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+          {helperText}
+        </Typography>
+      )}
+    </FormControl>
+  );
+};
+
 // ------------------------------
 // Main Component
 // ------------------------------
@@ -1315,153 +1558,35 @@ const AddBoutique = () => {
               <Grid container spacing={2.5}>
                 {/* Category */}
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel
-                      shrink={formData.category !== '' || undefined}
-                      sx={{
-                        '&.Mui-focused': { color: '#667eea' },
-                        backgroundColor: 'white',
-                        px: 1
-                      }}
-                    ></InputLabel>
-                    <Select
-                      value={formData.category}
-                      onChange={(e) => handleChange('category', e.target.value)}
-                      displayEmpty
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 300,
-                            borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            '& .MuiMenuItem-root': {
-                              borderRadius: '8px',
-                              mx: 1,
-                              my: 0.5,
-                              '&:hover': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.08)'
-                              },
-                              '&.Mui-selected': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(102, 126, 234, 0.2)'
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                        },
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px'
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.12)'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: '2px'
-                        }
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>Select Category</em>
-                      </MenuItem>
-                      {categories.map((cat) => (
-                        <MenuItem key={cat._id} value={cat._id}>
-                          {cat.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <PremiumSelect
+                    fullWidth
+                    label="Category"
+                    placeholder="Select Category"
+                    value={formData.category}
+                    onChange={(e) => handleChange('category', e.target.value)}
+                    options={categories.map((cat) => ({ value: cat._id, label: cat.title }))}
+                    icon={CategoryIcon}
+                    color={THEME.primary}
+                    required
+                    withSearch
+                  />
                 </Grid>
 
                 {/* Subcategory */}
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel
-                      shrink={formData.subcategory !== '' || undefined}
-                      sx={{
-                        '&.Mui-focused': { color: '#667eea' },
-                        backgroundColor: 'white',
-                        px: 1
-                      }}
-                    ></InputLabel>
-                    <Select
-                      value={formData.subcategory}
-                      onChange={(e) => handleChange('subcategory', e.target.value)}
-                      disabled={!formData.category}
-                      displayEmpty
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 300,
-                            borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            '& .MuiMenuItem-root': {
-                              borderRadius: '8px',
-                              mx: 1,
-                              my: 0.5,
-                              '&:hover': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.08)'
-                              },
-                              '&.Mui-selected': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(102, 126, 234, 0.2)'
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover:not(.Mui-disabled)': {
-                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
-                        },
-                        '&.Mui-focused': {
-                          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)'
-                        },
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px'
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.12)'
-                        },
-                        '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: '2px'
-                        }
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>Select Subcategory</em>
-                      </MenuItem>
-                      {availableSubCategories.map((sub) => (
-                        <MenuItem key={sub._id} value={sub._id}>
-                          {sub.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <PremiumSelect
+                    fullWidth
+                    label="Subcategory"
+                    placeholder="Select Subcategory"
+                    value={formData.subcategory}
+                    onChange={(e) => handleChange('subcategory', e.target.value)}
+                    disabled={!formData.category}
+                    options={availableSubCategories.map((sub) => ({ value: sub._id, label: sub.title }))}
+                    icon={CategoryIcon}
+                    color={THEME.primary}
+                    withSearch
+                    helperText={!formData.category ? 'Select category first' : ''}
+                  />
                 </Grid>
 
                 {/* Unit */}
@@ -1469,130 +1594,49 @@ const AddBoutique = () => {
 
                 {/* Material Dropdown */}
                 <Grid item xs={12} md={4}>
-                  <FormControl fullWidth>
-                    <InputLabel
-                      shrink={formData.material !== '' || undefined}
-                      sx={{
-                        '&.Mui-focused': { color: '#667eea' },
-                        backgroundColor: 'white',
-                        px: 1
-                      }}
-                    ></InputLabel>
-                    <Select
-                      value={formData.material}
-                      onChange={(e) => handleChange('material', e.target.value)}
-                      displayEmpty
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 300,
-                            borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            '& .MuiMenuItem-root': {
-                              borderRadius: '8px',
-                              mx: 1,
-                              my: 0.5,
-                              '&:hover': { backgroundColor: 'rgba(102, 126, 234, 0.08)' },
-                              '&.Mui-selected': {
-                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
-                                '&:hover': { backgroundColor: 'rgba(102, 126, 234, 0.2)' }
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '& .MuiSelect-select': { padding: '16px 14px' },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>Select Fabric / Material</em>
-                      </MenuItem>
-                      {materialOptions.map((mat) => (
-                        <MenuItem key={mat} value={mat}>
-                          {mat}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <PremiumSelect
+                    fullWidth
+                    label="Fabric / Material"
+                    placeholder="Select Fabric"
+                    value={formData.material}
+                    onChange={(e) => handleChange('material', e.target.value)}
+                    options={materialOptions}
+                    icon={PaletteIcon}
+                    color={THEME.primary}
+                    withSearch
+                  />
                 </Grid>
 
                 {/* Sizes Selection */}
                 <Grid item xs={12} md={4}>
-                  <FormControl fullWidth>
-                    <Select
-                      multiple
-                      fullWidth
-                      value={formData.availableSizes}
-                      onChange={(e) => handleChange('availableSizes', e.target.value)}
-                      displayEmpty
-                      renderValue={(selected) => (selected.length ? selected.join(', ') : 'Select Size')}
-                      sx={{
-                        width: '100%',
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: (selected) => (selected.length ? '#111' : '#9CA3AF')
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
-                      }}
-                    >
-                      {sizeOptions.map((size) => (
-                        <MenuItem key={size} value={size}>
-                          <Checkbox checked={formData.availableSizes?.includes(size)} />
-                          <Typography fontWeight={600}>{size}</Typography>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <PremiumSelect
+                    fullWidth
+                    label="Available Sizes"
+                    placeholder="Select Sizes"
+                    value={formData.availableSizes || []}
+                    onChange={(e) => handleChange('availableSizes', e.target.value)}
+                    options={sizeOptions}
+                    icon={InventoryIcon}
+                    color={THEME.primary}
+                    multiple
+                    withSearch
+                  />
                 </Grid>
 
                 {/* Colors Selection */}
                 <Grid item xs={12} md={4}>
-                  <FormControl fullWidth>
-                    <Select
-                      multiple
-                      fullWidth
-                      value={formData.availableColors}
-                      onChange={(e) => handleChange('availableColors', e.target.value)}
-                      displayEmpty
-                      renderValue={(selected) => (selected.length ? selected.join(', ') : 'Select Color')}
-                      sx={{
-                        width: '100%',
-                        borderRadius: '14px',
-                        backgroundColor: 'white',
-                        transition: 'all 0.3s ease',
-                        '& .MuiSelect-select': {
-                          padding: '16px 14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: (selected) => (selected.length ? '#111' : '#9CA3AF')
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0, 0, 0, 0.12)' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea', borderWidth: '2px' }
-                      }}
-                    >
-                      {colorOptions.map((color) => (
-                        <MenuItem key={color} value={color}>
-                          <Checkbox checked={formData.availableColors?.includes(color)} />
-                          <Typography fontWeight={600}>{color}</Typography>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <PremiumSelect
+                    fullWidth
+                    label="Available Colors"
+                    placeholder="Select Colors"
+                    value={formData.availableColors || []}
+                    onChange={(e) => handleChange('availableColors', e.target.value)}
+                    options={colorOptions}
+                    icon={PaletteIcon}
+                    color={THEME.secondary}
+                    multiple
+                    withSearch
+                  />
                 </Grid>
               </Grid>
 
@@ -2766,7 +2810,7 @@ const AddBoutique = () => {
                             }}
                           >
                             <Typography fontWeight={800} fontSize="1.5rem" color={THEME.secondary}>
-                              ${formData.rentalTotalPrice || '0.00'}
+                              ₹{formData.rentalTotalPrice || '0.00'}
                             </Typography>
                           </Box>
                         </Stack>
