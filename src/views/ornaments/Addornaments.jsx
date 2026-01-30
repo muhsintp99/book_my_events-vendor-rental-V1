@@ -368,7 +368,7 @@ const AddOrnaments = () => {
     pickupLng: '',
     selectedOccasions: [],
     selectedFeatures: [],
-    suitableFor: [],
+    collections: [],
     styleFeatures: '',
     discountValue: '',
     tags: []
@@ -405,6 +405,7 @@ const AddOrnaments = () => {
   const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
   const discountOptions = ['Percentage', 'Fixed Amount', 'None'];
   const occasionOptions = ['Wedding', 'Valentine', 'Festive', 'Daily Wear', 'Casual Outings', 'Anniversary', 'Engagement', 'Birthday'];
+  const collectionOptions = ['For Men', 'For Women', 'For Bride', 'For Groom', 'For Kids'];
   const featureOptions = ['Wedding', 'Valentine', 'Festive', 'Daily Wear', 'Casual Outings', 'Anniversary', 'Engagement'];
   const suitableForOptions = ['Men', 'Women', 'Kids', 'Bride', 'Groom'];
   const styleOptions = ['Antique', 'Traditional', 'Navaratna', 'Bridal'];
@@ -814,8 +815,7 @@ const AddOrnaments = () => {
               };
               return map[f] || (typeof f === 'string' ? f.charAt(0).toUpperCase() + f.slice(1) : f);
             }) || [],
-          suitableFor:
-            product.features?.suitableFor?.map((s) => (typeof s === 'string' ? s.charAt(0).toUpperCase() + s.slice(1) : s)) || [],
+          collections: product.collections || [],
           styleFeatures: product.features?.style?.[0]
             ? typeof product.features.style[0] === 'string'
               ? product.features.style[0].charAt(0).toUpperCase() + product.features.style[0].slice(1)
@@ -999,7 +999,7 @@ const AddOrnaments = () => {
         takeaway: formData.takeaway,
         takeawayLocation: formData.takeawayLocation,
         pickupLatitude: formData.pickupLat,
-pickupLongitude: formData.pickupLng
+        pickupLongitude: formData.pickupLng
 
       })
     );
@@ -1008,12 +1008,22 @@ pickupLongitude: formData.pickupLng
       'features',
       JSON.stringify({
         basicFeatures: formData.selectedFeatures.map(mapFeature),
-        suitableFor: formData.suitableFor.map((s) => s.toLowerCase()),
+        suitableFor: formData.collections.map((c) => {
+          const map = {
+            'For Men': 'men',
+            'For Women': 'women',
+            'For Bride': 'bride',
+            'For Groom': 'groom',
+            'For Kids': 'kids'
+          };
+          return map[c] || c.toLowerCase();
+        }),
         style: formData.styleFeatures ? [formData.styleFeatures.toLowerCase()] : []
       })
     );
 
     formDataToSend.append('tags', JSON.stringify(formData.tags));
+    formDataToSend.append('collections', JSON.stringify(formData.collections));
     formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
     formDataToSend.append('termsAndConditions', JSON.stringify(termsSections));
     formDataToSend.append(
@@ -2831,12 +2841,12 @@ pickupLongitude: formData.pickupLng
                   multi: true
                 },
                 {
-                  title: '🎯 Suitable For',
-                  color: THEME.secondary,
-                  gradient: 'linear-gradient(135deg, #FFFFFF, #FFF5F8)',
-                  options: suitableForOptions,
-                  value: formData.suitableFor,
-                  keyName: 'suitableFor',
+                  title: '📚 Collections',
+                  color: THEME.warning,
+                  gradient: 'linear-gradient(135deg, #FFFFFF, #FFFBF5)',
+                  options: collectionOptions,
+                  value: formData.collections,
+                  keyName: 'collections',
                   multi: true
                 },
                 {

@@ -623,6 +623,7 @@ const AddBoutique = () => {
     pickupLongitude: '',
 
     selectedOccasions: [],
+    collections: [],
     tags: [],
     careInstructions: '',
     sizeGuideImage: null,
@@ -668,6 +669,7 @@ const AddBoutique = () => {
     'Party Wear',
     'Office Wear'
   ];
+  const collectionOptions = ['For Men', 'For Women', 'For Bride', 'For Groom'];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
   const colorOptions = [
     'Red',
@@ -1156,6 +1158,7 @@ const AddBoutique = () => {
           flatRateShipping: product.shipping?.flatRate || false,
           shippingPrice: product.shipping?.price || '',
           selectedOccasions: product.occasions || [],
+          collections: product.collections || [],
           selectedFeatures: product.features?.basicFeatures || [],
           suitableFor: product.features?.suitableFor || [],
           styleFeatures: product.features?.style?.[0] || '',
@@ -1461,6 +1464,7 @@ const AddBoutique = () => {
 
     formDataToSend.append('tags', JSON.stringify(formData.tags));
     formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
+    formDataToSend.append('collections', JSON.stringify(formData.collections));
     formDataToSend.append('termsAndConditions', JSON.stringify(termsSections));
     formDataToSend.append(
       'relatedItems',
@@ -3178,6 +3182,53 @@ const AddBoutique = () => {
                     sx={{
                       background: alpha(THEME.primary, 0.1),
                       color: THEME.primary,
+                      fontWeight: 500,
+                      borderRadius: '8px',
+                      height: 32
+                    }}
+                  />
+                ))
+              }
+            />
+          </Paper>
+
+          {/* 6.5. Collections Section */}
+          <Paper
+            sx={{
+              borderRadius: '16px',
+              p: 4,
+              background: 'white',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            <SectionHeader icon={CategoryIcon} title="Collections" subtitle="Categorize this item for specific customer groups" />
+            <Autocomplete
+              multiple
+              options={collectionOptions}
+              value={formData.collections}
+              onChange={(event, newValue) => handleChange('collections', newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Select collections (e.g., For Men, For Bride)"
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px'
+                    }
+                  }}
+                />
+              )}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    key={option}
+                    label={option}
+                    {...getTagProps({ index })}
+                    size="medium"
+                    sx={{
+                      background: alpha(THEME.secondary, 0.1),
+                      color: THEME.secondary,
                       fontWeight: 500,
                       borderRadius: '8px',
                       height: 32
