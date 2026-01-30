@@ -57,7 +57,7 @@ import {
   LocalShipping,
   Storefront,
   Forum,
-  Palette
+
 } from '@mui/icons-material';
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
