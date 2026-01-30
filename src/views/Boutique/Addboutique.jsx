@@ -629,6 +629,8 @@ const AddBoutique = () => {
     sizeGuideImage: null,
     existingSizeGuideImage: '',
     availableColors: [],
+    customColorInput: '',
+    allowBoutiqueChat: true,
     returnPolicy: '',
     cancellationPolicy: '',
     isTopPick: false,
@@ -881,6 +883,23 @@ const AddBoutique = () => {
     const newVars = [...variations];
     newVars[index].image = file;
     setVariations(newVars);
+  };
+
+  const handleAddCustomColor = () => {
+    const customColor = formData.customColorInput?.trim();
+    if (!customColor) return;
+
+    // Check if color already exists (case-insensitive)
+    const colorExists = formData.availableColors.some(
+      color => color.toLowerCase() === customColor.toLowerCase()
+    );
+
+    if (!colorExists) {
+      handleChange('availableColors', [...formData.availableColors, customColor]);
+    }
+
+    // Clear the input
+    handleChange('customColorInput', '');
   };
 
   const fetchRelatedOptions = async () => {
@@ -1360,6 +1379,7 @@ const AddBoutique = () => {
     formDataToSend.append('isTopPick', formData.isTopPick);
     formDataToSend.append('returnPolicy', formData.returnPolicy);
     formDataToSend.append('cancellationPolicy', formData.cancellationPolicy);
+    formDataToSend.append('allowBoutiqueChat', formData.allowBoutiqueChat);
     formDataToSend.append('provider', vendorId);
     formDataToSend.append('module', BOUTIQUE_MODULE_ID);
 
@@ -1760,6 +1780,73 @@ const AddBoutique = () => {
                     multiple
                     withSearch
                   />
+
+                  {/* Custom Color Input */}
+                  <Box sx={{ mt: 2 }}>
+                    <Stack direction="row" spacing={1}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Add Custom Color"
+                        placeholder="Enter color name"
+                        value={formData.customColorInput || ''}
+                        onChange={(e) => handleChange('customColorInput', e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomColor();
+                          }
+                        }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            backgroundColor: 'white'
+                          }
+                        }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={handleAddCustomColor}
+                        disabled={!formData.customColorInput?.trim()}
+                        sx={{
+                          borderRadius: '12px',
+                          background: THEME.gradient,
+                          minWidth: '80px',
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          '&:hover': {
+                            background: THEME.gradient,
+                            opacity: 0.9
+                          },
+                          '&:disabled': {
+                            background: '#E5E7EB',
+                            color: '#9CA3AF'
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </Stack>
+                  </Box>
+
+                  {/* Boutique Chat Toggle */}
+                  <Box sx={{ mt: 2, p: 1.5, borderRadius: '12px', bgcolor: alpha(THEME.info, 0.05), border: `1px dashed ${alpha(THEME.info, 0.3)}` }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.allowBoutiqueChat}
+                          onChange={(e) => handleChange('allowBoutiqueChat', e.target.checked)}
+                          color="info"
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: THEME.dark }}>Enable Boutique Chat Feature</Typography>
+                          <Typography variant="caption" color="text.secondary">Allows customers to chat with you directly from the official site</Typography>
+                        </Box>
+                      }
+                    />
+                  </Box>
                 </Grid>
               </Grid>
 

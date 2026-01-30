@@ -16,7 +16,8 @@ import {
   IconClock,
   IconCurrencyDollar,
   IconKey,
-  IconGraph
+  IconGraph,
+  IconMessage
 } from '@tabler/icons-react';
 
 // constants
@@ -37,7 +38,8 @@ const icons = {
   IconClock,
   IconCurrencyDollar,
   IconKey,
-  IconGraph
+  IconGraph,
+  IconMessage
 };
 
 // ==============================|| CAKE MANAGEMENT MENU ||============================== //
@@ -97,6 +99,14 @@ const boutiqueManagementMenu = {
           icon: icons.IconCreditCard
         }
       ]
+    },
+    {
+      id: 'boutique-chat-primary',
+      title: 'Chat',
+      type: 'item',
+      url: '/boutique/chat',
+      icon: icons.IconMessage,
+      breadcrumbs: false
     }
   ]
 };

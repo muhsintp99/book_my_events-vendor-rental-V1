@@ -47,7 +47,7 @@ const boutiquemanagement = {
           url: '/boutique/packagelist',
           icon: icons.IconPackage
         },
-       
+
       ]
     },
 

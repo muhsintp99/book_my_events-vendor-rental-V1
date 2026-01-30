@@ -190,6 +190,7 @@ const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Orname
 const AddboutiquePackage = Loadable(lazy(() => import('../views/Boutique/Addboutique.jsx')));
 const Boutiquelist = Loadable(lazy(() => import('../views/Boutique/Boutiquelist.jsx')));
 const Attributes = Loadable(lazy(() => import('../views/Boutique/Attributes.jsx')));
+const BoutiqueChat = Loadable(lazy(() => import('../views/Boutique/BoutiqueChat.jsx')));
 
 
 
@@ -377,7 +378,7 @@ const MainRoutes = {
             { path: 'cancelledornaments', element: <OrnamentsCancelled /> },
 
 
-               // boutique BOOKINGS///////////////
+            // boutique BOOKINGS///////////////
             { path: 'allboutique', element: <Allboutique /> },
             { path: 'pendingboutique', element: <BoutiquePending /> },
             { path: 'boutiqueconfirmed', element: <BoutiqueConfirmed /> },
@@ -511,6 +512,7 @@ const MainRoutes = {
             { path: 'upgrade', element: <Boutiqueupgrade /> },
             { path: 'enquiry', element: <Boutiqueenquiry /> },
             { path: 'Enqurychat', element: <Boutiqueenquirychat /> },
+            { path: 'chat', element: <BoutiqueChat /> },
             { path: 'schedules', element: <BoutiqueSchedules /> },
             { path: 'categories', element: <Boutiquecategories /> },
 

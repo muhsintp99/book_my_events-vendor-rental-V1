@@ -55,7 +55,9 @@ import {
   Verified,
   Timer,
   LocalShipping,
-  Storefront
+  Storefront,
+  Forum,
+  Palette
 } from '@mui/icons-material';
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -473,6 +475,15 @@ export default function BoutiqueList() {
                           sx={{ bgcolor: alpha(THEME_COLOR, 0.05), color: THEME_COLOR, '&:hover': { bgcolor: alpha(THEME_COLOR, 0.1) } }}
                         >
                           <Visibility fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Preview Premium Chat">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate('/boutique/chat', { state: { product: b } })}
+                          sx={{ bgcolor: alpha(THEME_COLOR, 0.05), color: THEME_COLOR, '&:hover': { bgcolor: alpha(THEME_COLOR, 0.1) } }}
+                        >
+                          <Forum fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit Item">
