@@ -1364,6 +1364,14 @@ const Createnew = () => {
         return;
       }
 
+      if (description.length > 500) {
+        setToastMessage('Description cannot exceed 500 characters.');
+        setToastSeverity('error');
+        setOpenToast(true);
+        setLoading(false);
+        return;
+      }
+
       // Validate token
       const token = localStorage.getItem('token');
       if (!token) {
@@ -1933,7 +1941,7 @@ const Createnew = () => {
                 />
                 <TextField
                   fullWidth
-                  label="Short Description"
+                  label={`Short Description (${description.length}/500)`}
                   variant="outlined"
                   multiline
                   rows={4}
@@ -1941,6 +1949,9 @@ const Createnew = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Type short description"
                   sx={{ mb: 2 }}
+                  inputProps={{ maxLength: 500 }}
+                  helperText={description.length >= 500 ? "Character limit reached (max 500)" : ""}
+                  error={description.length > 500}
                 />
               </CardContent>
             </Card>
