@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AppBar,
   Toolbar,
@@ -9,12 +9,6 @@ import {
   MenuItem,
   FormControl,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Switch,
   IconButton,
@@ -28,10 +22,44 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Grid,
+  Container,
+  Divider,
+  Fade,
+  Zoom,
+  Tooltip,
+  Card,
+  CardContent,
+  CardMedia,
+  Avatar,
+  useTheme,
+  alpha
 } from "@mui/material";
-import { Visibility, Edit, Delete, Search, Clear } from "@mui/icons-material";
+import {
+  Visibility,
+  Edit,
+  Delete,
+  Search,
+  Clear,
+  Add,
+  Refresh,
+  Commute,
+  CheckCircle,
+  Cancel,
+  Storefront,
+  ChevronRight,
+  LocationOn,
+  DirectionsCar,
+  EventSeat,
+  LocalGasStation,
+  Settings,
+  GetApp
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
+const THEME_COLOR = "#E15B65";
+const SECONDARY_COLOR = "#c14a54";
 
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
@@ -39,9 +67,7 @@ export default function Vehicles() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [openToast, setOpenToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastSeverity, setToastSeverity] = useState("success");
+  const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -60,12 +86,13 @@ export default function Vehicles() {
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
 
   const navigate = useNavigate();
+  const theme = useTheme();
+
   const API_BASE_URL = import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_URL || "https://api.bookmyevent.ae/api";
   const BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
-  console.log("Debug - API_BASE_URL:", API_BASE_URL);
-  console.log("Debug - BASE_URL:", BASE_URL);
   const moduleId = localStorage.getItem("moduleId");
-  const providerId = localStorage.getItem("providerId");
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const providerId = userData?._id;
 
   // Fetch options for filters
   const fetchOptions = async () => {
@@ -95,52 +122,74 @@ export default function Vehicles() {
     }
   };
 
-  // Helper function to get category title - handles single object or ID
+  const fetchVehicles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token || !providerId) {
+        setToast({ open: true, message: "Authentication required", severity: "error" });
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.get(
+        `${API_BASE_URL}/vehicles/provider/${providerId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data?.success) {
+        setVehicles(res.data.data || []);
+      } else {
+        setError(res.data.message || "Failed to fetch vehicles");
+      }
+    } catch (error) {
+      setError("Error loading vehicles");
+    } finally {
+      setLoading(false);
+    }
+  }, [providerId, API_BASE_URL]);
+
+  useEffect(() => {
+    fetchOptions();
+  }, [moduleId]);
+
+  useEffect(() => {
+    if (categories.length > 0 && brands.length > 0) {
+      fetchVehicles();
+    }
+  }, [categories, brands, fetchVehicles]);
+
+  // UI Helpers
   const getCategoryTitle = (categoryData) => {
     if (!categoryData) return "N/A";
-
-    // If it's an object with title
-    if (typeof categoryData === 'object' && categoryData.title) {
-      return categoryData.title;
-    }
-
-    // If it's a string ID
+    if (typeof categoryData === 'object' && categoryData.title) return categoryData.title;
     if (typeof categoryData === 'string') {
-      const category = categories.find(cat => cat._id === categoryData);
-      return category ? category.title : "N/A";
+      const cat = categories.find(c => c._id === categoryData);
+      return cat ? cat.title : "N/A";
     }
-
-    // Handle array for backward compatibility
     if (Array.isArray(categoryData) && categoryData.length > 0) {
       const first = categoryData[0];
       if (typeof first === 'object' && first.title) return first.title;
-      const found = categories.find(cat => cat._id === (first._id || first));
+      const found = categories.find(c => c._id === (first._id || first));
       return found ? found.title : "N/A";
     }
-
     return "N/A";
   };
 
-  // Helper function to get brand title by ID
   const getBrandTitle = (brandData) => {
     if (!brandData) return "N/A";
-
-    // If it's an object with title
-    if (typeof brandData === 'object' && brandData.title) {
-      return brandData.title;
-    }
-
-    // If it's a string ID
+    if (typeof brandData === 'object' && brandData.title) return brandData.title;
     if (typeof brandData === 'string') {
-      const brand = brands.find(b => b._id === brandData);
-      return brand ? brand.title : "N/A";
+      const b = brands.find(brand => brand._id === brandData);
+      return b ? b.title : "N/A";
     }
-
     return "N/A";
   };
 
   const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/100x100?text=No+Image";
+    if (!path) return null;
     if (path.startsWith("http")) return path;
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${BASE_URL}${cleanPath}`;
@@ -151,194 +200,49 @@ export default function Vehicles() {
     const urlObj = new URL(currentSrc);
     const path = urlObj.pathname;
 
-    // Advanced Fallback Logic
     if (path.includes("/uploads/") && !e.target.dataset.triedCapital) {
-      console.log("Retrying with capital 'Uploads':", currentSrc);
       e.target.src = currentSrc.replace("/uploads/", "/Uploads/");
       e.target.dataset.triedCapital = "true";
     }
-    else if (path.includes("/Uploads/") && !e.target.dataset.triedNoUploads) {
-      console.log("Retrying without 'Uploads/' prefix:", currentSrc);
-      e.target.src = currentSrc.replace("/Uploads/", "/");
-      e.target.dataset.triedNoUploads = "true";
-    }
-    else if (path.includes("/uploads/") && !e.target.dataset.triedNoUploads) {
-      console.log("Retrying without 'uploads/' prefix:", currentSrc);
-      e.target.src = currentSrc.replace("/uploads/", "/");
+    else if ((path.includes("/Uploads/") || path.includes("/uploads/")) && !e.target.dataset.triedNoUploads) {
+      e.target.src = currentSrc.replace(/\/uploads\//i, "/");
       e.target.dataset.triedNoUploads = "true";
     }
     else if (!path.startsWith("/api") && !e.target.dataset.triedApi) {
-      console.log("Retrying with '/api' prefix:", currentSrc);
-      // Construct /api/pathname
       const newPath = path.startsWith('/') ? `/api${path}` : `/api/${path}`;
       e.target.src = `${urlObj.origin}${newPath}`;
       e.target.dataset.triedApi = "true";
     }
     else {
-      console.error("All image fallbacks failed for:", currentSrc);
-      // Use a more generic placeholder but keep it nice
-      e.target.src = "https://placehold.co/600x400?text=No+Image+Found";
+      e.target.src = "https://placehold.co/600x400?text=No+Vehicle+Image";
     }
   };
-
-  const fetchVehicles = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      const providerId = userData?._id;
-
-      if (!token || !providerId) {
-        console.error("Provider ID or token missing");
-        setToastMessage("Provider authentication missing. Please log in again.");
-        setToastSeverity("error");
-        setOpenToast(true);
-        setLoading(false);
-        return;
-      }
-
-      const res = await axios.get(
-        `${API_BASE_URL}/vehicles/provider/${providerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.data?.success) {
-        console.log("Fetched vehicles:", res.data.data);
-        console.log("Available categories:", categories);
-        console.log("Available brands:", brands);
-
-        // Log the first vehicle to see its structure
-        console.log("All vehicles data:", res.data.data);
-        if (res.data.data && res.data.data.length > 0) {
-          console.log("First vehicle structure:", res.data.data[0]);
-          console.log("First vehicle category:", res.data.data[0].category);
-          console.log("First vehicle brand:", res.data.data[0].brand);
-          console.log("First vehicle featuredImage URL:", getImageUrl(res.data.data[0].featuredImage));
-        }
-
-        setVehicles(res.data.data || []);
-      } else {
-        console.error("Error fetching vehicles:", res.data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching vehicles:", error);
-      setToastMessage("Failed to load vehicles ");
-      setToastSeverity("error");
-      setOpenToast(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
-    if (categories.length > 0 && brands.length > 0) {
-      fetchVehicles();
-    }
-  }, [categories, brands]);
-
-
-
-
 
   const handleApplyFilters = () => {
-    setFilters({
-      ...pendingFilters,
-      search: localSearch,
-    });
-  };
-
-  const handleSearch = () => {
-    setFilters((prev) => ({ ...prev, search: localSearch }));
-  };
-
-  const handleClear = () => {
-    setLocalSearch("");
-    setFilters((prev) => ({ ...prev, search: "" }));
+    setFilters({ ...pendingFilters, search: localSearch });
   };
 
   const handleReset = () => {
     setLocalSearch("");
-    setPendingFilters({
-      category: "",
-      brand: "",
-      type: ""
-    });
-    setFilters({
-      search: "",
-      category: "",
-      brand: "",
-      type: ""
-    });
-  };
-
-  const confirmDelete = (vehicleId) => {
-    setVehicleToDelete(vehicleId);
-    setOpenDeleteDialog(true);
-  };
-
-  const handleExport = () => {
-    const headers = [
-      "Sl,Name,Plate,Category,Brand,Seating,Basic Price,Discount,Grand Total,Active",
-    ];
-    const rows = filteredVehicles.map((v, i) => {
-      const basicPrice = v.pricing?.basicPackage?.price || v.pricing?.hourly || v.pricing?.perDay || 0;
-      const grandTotal = v.pricing?.grandTotal || basicPrice;
-      const seating = v.capacityAndComfort?.seatingCapacity || v.seatingCapacity || "-";
-
-      return `${i + 1},${v.name || ""},${v.licensePlateNumber || ""},${getCategoryTitle(v.category)},${getBrandTitle(v.brand)},${seating},${basicPrice},${v.pricing?.discount?.value || 0}${v.pricing?.discount?.type === 'percentage' ? '%' : ''},${grandTotal},${v.isActive ? "Active" : "Inactive"}`;
-    });
-    const csv = headers.concat(rows).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "vehicles.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    setPendingFilters({ category: "", brand: "", type: "" });
+    setFilters({ search: "", category: "", brand: "", type: "" });
   };
 
   const handleStatusToggle = async (vehicleId, field, currentValue) => {
     try {
       const token = localStorage.getItem("token");
-
       const response = await axios.put(
         `${API_BASE_URL}/vehicles/${vehicleId}`,
         { [field]: !currentValue },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
-        setVehicles((prev) =>
-          prev.map((v) =>
-            v._id === vehicleId ? { ...v, [field]: !currentValue } : v
-          )
-        );
-        setToastMessage("Vehicle status updated successfully ");
-        setToastSeverity("success");
-      } else {
-        setToastMessage("Failed to update vehicle status ");
-        setToastSeverity("error");
+        setVehicles(prev => prev.map(v => v._id === vehicleId ? { ...v, [field]: !currentValue } : v));
+        setToast({ open: true, message: "Vehicle status updated", severity: "success" });
       }
     } catch (error) {
-      console.error("Error toggling status:", error);
-      setToastMessage(error.response?.data?.message || "Error updating vehicle");
-      setToastSeverity("error");
-    } finally {
-      setOpenToast(true);
+      setToast({ open: true, message: "Failed to update status", severity: "error" });
     }
   };
 
@@ -346,422 +250,423 @@ export default function Vehicles() {
     if (!vehicleToDelete) return;
     try {
       const token = localStorage.getItem("token");
-
       await axios.delete(`${API_BASE_URL}/vehicles/${vehicleToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setVehicles((prev) => prev.filter((v) => v._id !== vehicleToDelete));
-
-      setToastMessage("Vehicle deleted successfully");
-      setToastSeverity("success");
+      setVehicles(prev => prev.filter(v => v._id !== vehicleToDelete));
+      setToast({ open: true, message: "Vehicle deleted successfully", severity: "success" });
     } catch (error) {
-      setToastMessage(error.response?.data?.message || "Failed to delete vehicle");
-      setToastSeverity("error");
+      setToast({ open: true, message: "Failed to delete vehicle", severity: "error" });
     } finally {
-      setOpenToast(true);
       setOpenDeleteDialog(false);
       setVehicleToDelete(null);
     }
   };
 
-  const handleEdit = (vehicle) => {
-    navigate(`/vehicle-setup/leads/${vehicle._id}`, { state: { vehicle } });
-  };
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter((v) => {
+      let catId = v.category?._id || v.category;
+      if (Array.isArray(v.category) && v.category.length > 0) catId = v.category[0]._id || v.category[0];
+      const brandId = v.brand?._id || v.brand;
 
-  const filteredVehicles = vehicles.filter((v) => {
-    // Extract category ID - handle array format
-    let vehicleCategoryId = v.category?._id || v.category;
-    if (Array.isArray(v.category) && v.category.length > 0) {
-      vehicleCategoryId = v.category[0]._id || v.category[0];
-    }
-
-    const vehicleBrandId = v.brand?._id || v.brand;
-
-    return (
-      (filters.brand ? vehicleBrandId === filters.brand : true) &&
-      (filters.category ? vehicleCategoryId === filters.category : true) &&
-      (filters.type ? (v.type === filters.type || v.vehicleType === filters.type.toLowerCase() || v.bikeType === filters.type.toLowerCase()) : true) &&
-      (filters.search
-        ? (v.name || "").toLowerCase().includes(filters.search.toLowerCase()) ||
+      const matchesSearch = !filters.search ||
+        (v.name || "").toLowerCase().includes(filters.search.toLowerCase()) ||
         (v.licensePlateNumber || "").toLowerCase().includes(filters.search.toLowerCase()) ||
-        (v.model || "").toLowerCase().includes(filters.search.toLowerCase())
-        : true)
-    );
-  });
+        (v.model || "").toLowerCase().includes(filters.search.toLowerCase());
 
-  const handleCloseToast = (event, reason) => {
-    if (reason === "clickaway") return;
-    setOpenToast(false);
+      const matchesBrand = !filters.brand || brandId === filters.brand;
+      const matchesCategory = !filters.category || catId === filters.category;
+      const matchesType = !filters.type || (v.type === filters.type || v.vehicleType === filters.type.toLowerCase() || v.bikeType === filters.type.toLowerCase());
+
+      return matchesSearch && matchesBrand && matchesCategory && matchesType;
+    });
+  }, [vehicles, filters]);
+
+  const stats = useMemo(() => ({
+    total: vehicles.length,
+    active: vehicles.filter(v => v.isActive !== false).length,
+    inactive: vehicles.filter(v => v.isActive === false).length
+  }), [vehicles]);
+
+  const handleExport = () => {
+    const headers = ["Sl,Name,Plate,Category,Brand,Seating,Basic Price,Discount,Grand Total,Status"];
+    const rows = filteredVehicles.map((v, i) => {
+      const basicPrice = v.pricing?.basicPackage?.price || v.pricing?.hourly || v.pricing?.perDay || 0;
+      const grandTotal = v.pricing?.grandTotal || basicPrice;
+      const seating = v.capacityAndComfort?.seatingCapacity || v.seatingCapacity || "-";
+      return `${i + 1},${v.name || ""},${v.licensePlateNumber || ""},${getCategoryTitle(v.category)},${getBrandTitle(v.brand)},${seating},${basicPrice},${v.pricing?.discount?.value || 0}${v.pricing?.discount?.type === 'percentage' ? '%' : ''},${grandTotal},${v.isActive !== false ? "Active" : "Inactive"}`;
+    });
+    const csv = headers.concat(rows).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "vehicles.csv";
+    link.click();
   };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          bgcolor: "#fafafa",
-          minHeight: "100vh",
-          p: 2,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
-    <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh", p: 2 }}>
-      <AppBar position="static" color="default" elevation={0}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, color: "#333" }}>
-            VEHICLES
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError("")}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Filters Section */}
-      <Paper sx={{ p: 2, mt: 2, borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-        <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <Select
-              displayEmpty
-              value={pendingFilters.category}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, category: e.target.value })}
-              sx={{ borderRadius: "8px" }}
-            >
-              <MenuItem value="">All Categories</MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat._id} value={cat._id}>
-                  {cat.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <Select
-              displayEmpty
-              value={pendingFilters.brand}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, brand: e.target.value })}
-              sx={{ borderRadius: "8px" }}
-            >
-              <MenuItem value="">All Brands</MenuItem>
-              {brands.map((brand) => (
-                <MenuItem key={brand._id} value={brand._id}>
-                  {brand.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 200 }} size="small">
-            <Select
-              displayEmpty
-              value={pendingFilters.type}
-              onChange={(e) => setPendingFilters({ ...pendingFilters, type: e.target.value })}
-              sx={{ borderRadius: "8px" }}
-            >
-              <MenuItem value="">All Types</MenuItem>
-              <MenuItem value="Car">Car</MenuItem>
-              <MenuItem value="Bus">Bus</MenuItem>
-              <MenuItem value="Van">Van</MenuItem>
-              <MenuItem value="Bike">Bike</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Button
-            variant="contained"
-            onClick={handleApplyFilters}
-            sx={{
-              bgcolor: "#E15B65",
-              "&:hover": { bgcolor: "#d14b55" },
-              borderRadius: "8px",
-              px: 3
-            }}
-          >
-            Filter
-          </Button>
-
-          <Button
-            variant="outlined"
-            onClick={handleReset}
-            sx={{
-              color: "#666",
-              borderColor: "#ccc",
-              "&:hover": { borderColor: "#999", bgcolor: "#f5f5f5" },
-              borderRadius: "8px"
-            }}
-          >
-            Reset
-          </Button>
-        </Stack>
-      </Paper>
-
-      {/* Table */}
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2} mb={2}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Total Vehicles{" "}
-            <Chip label={filteredVehicles.length} color="success" size="small" sx={{ ml: 1 }} />
-          </Typography>
-
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            <TextField
-              size="small"
-              placeholder="Search by vehicle name"
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleSearch}
-                      size="small"
-                      disabled={!localSearch}
-                      sx={{ color: localSearch ? "inherit" : "action" }}
-                    >
-                      <Search fontSize="small" />
-                    </IconButton>
-                    {localSearch && (
-                      <IconButton onClick={handleClear} size="small">
-                        <Clear fontSize="small" />
-                      </IconButton>
-                    )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Button variant="outlined" color="#E15B65" sx={{ color: '#E15B65', borderRadius: "8px" }} onClick={handleExport}>
-              Export
-            </Button>
+    <Box sx={{ bgcolor: "#F7FAFC", minHeight: "100vh", pb: 8 }}>
+      {/* Premium Hero Header - Fully Responsive */}
+      <Box sx={{
+        background: `linear-gradient(135deg, ${THEME_COLOR} 0%, #a44c7a 100%)`,
+        color: "white",
+        pt: { xs: 4, md: 6 },
+        pb: { xs: 10, md: 12 },
+        px: { xs: 2, md: 4 },
+        position: "relative",
+        boxShadow: `0 10px 30px ${alpha(THEME_COLOR, 0.3)}`,
+      }}>
+        <Container maxWidth="xl">
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
+            <Box>
+              <Typography variant="h4" sx={{
+                fontWeight: 900,
+                mb: 1,
+                letterSpacing: '-1px',
+                color: "white",
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                fontSize: { xs: '1.75rem', md: '2.125rem' }
+              }}>
+                <Commute sx={{ fontSize: { xs: 30, md: 36 } }} /> Vehicle Management
+              </Typography>
+              <Stack direction="row" spacing={2} sx={{ mt: 2.5, flexWrap: 'wrap', gap: 2 }}>
+                {[
+                  { label: "Total Vehicles", value: stats.total, icon: <Storefront sx={{ fontSize: 20 }} /> },
+                  { label: "Active", value: stats.active, icon: <CheckCircle sx={{ fontSize: 20 }} /> },
+                  { label: "Inactive", value: stats.inactive, icon: <Cancel sx={{ fontSize: 20 }} /> }
+                ].map((stat, i) => (
+                  <Paper key={i} elevation={0} sx={{
+                    bgcolor: "rgba(255,255,255,0.12)",
+                    px: { xs: 2, md: 3 }, py: 1.5, borderRadius: 3,
+                    backdropFilter: "blur(8px)",
+                    color: "white",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    transition: 'all 0.3s ease',
+                    minWidth: { xs: '120px', md: '150px' }
+                  }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Box sx={{ color: "white", display: 'flex' }}>{stat.icon}</Box>
+                      <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1, color: "white" }}>{stat.value}</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.95, color: "white", textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.label}</Typography>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
             <Button
               variant="contained"
-              sx={{ bgcolor: "#E15B65" }}
+              size="large"
+              startIcon={<Add />}
               onClick={() => navigate("/vehicle-setup/leads")}
+              sx={{
+                bgcolor: "white",
+                color: THEME_COLOR,
+                fontWeight: 800,
+                px: { xs: 3, md: 5 }, py: 2,
+                borderRadius: "20px",
+                textTransform: "none",
+                fontSize: { xs: '0.9rem', md: '1rem' },
+                boxShadow: "0 15px 35px rgba(0,0,0,0.15)",
+                "&:hover": {
+                  bgcolor: "#f8f9ff",
+                  transform: "translateY(-5px)",
+                  boxShadow: "0 20px 45px rgba(0,0,0,0.2)"
+                },
+                transition: "all 0.3s",
+                width: { xs: '100%', md: 'auto' }
+              }}
             >
-              New Vehicle
+              Add New Vehicle
             </Button>
           </Stack>
-        </Stack>
+        </Container>
+      </Box>
 
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: "#f9fafb" }}>
-              <TableRow>
-                <TableCell>Sl</TableCell>
-                <TableCell>Vehicle Info</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Brand</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Trip Fare</TableCell>
-                <TableCell>Details</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
+      <Container maxWidth="xl" sx={{ mt: -6, position: "relative", zIndex: 1 }}>
+        {/* Floating Filter Bar - Responsive Grid */}
+        <Paper elevation={10} sx={{ borderRadius: 4, p: { xs: 2, md: 3 }, mb: 4, bgcolor: "white" }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} lg={4}>
+              <TextField
+                fullWidth
+                placeholder="Search by name, plate, model..."
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: THEME_COLOR }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: localSearch && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => { setLocalSearch(""); setFilters(prev => ({ ...prev, search: "" })); }}>
+                        <Clear fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: 3, bgcolor: "#f8fafc" }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4} lg={2}>
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={pendingFilters.category}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, category: e.target.value }))}
+                  displayEmpty
+                  sx={{ borderRadius: 3, bgcolor: "#f8fafc" }}
+                >
+                  <MenuItem value="">All Categories</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat._id} value={cat._id}>{cat.title}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4} lg={2}>
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={pendingFilters.brand}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, brand: e.target.value }))}
+                  displayEmpty
+                  sx={{ borderRadius: 3, bgcolor: "#f8fafc" }}
+                >
+                  <MenuItem value="">All Brands</MenuItem>
+                  {brands.map((brand) => (
+                    <MenuItem key={brand._id} value={brand._id}>{brand.title}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4} lg={2}>
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={pendingFilters.type}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, type: e.target.value }))}
+                  displayEmpty
+                  sx={{ borderRadius: 3, bgcolor: "#f8fafc" }}
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  {["Car", "Bus", "Van", "Bike"].map(type => (
+                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6} lg={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleApplyFilters}
+                sx={{ borderRadius: 3, py: 1.5, bgcolor: THEME_COLOR, "&:hover": { bgcolor: SECONDARY_COLOR } }}
+              >
+                Apply
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={6} lg={1}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleReset}
+                sx={{ borderRadius: 3, py: 1.5, color: "#666", borderColor: "#ccc" }}
+              >
+                Reset
+              </Button>
+            </Grid>
+          </Grid>
 
-            <TableBody>
-              {filteredVehicles.map((v, i) => {
-                const basePrice = v.pricing?.basicPackage?.price || v.pricing?.hourly || v.pricing?.perDay || v.pricing?.distanceWise;
-                const grandTotal = v.pricing?.grandTotal;
-                const seating = v.capacityAndComfort?.seatingCapacity || v.seatingCapacity;
-                const fuel = v.engineCharacteristics?.fuelType || v.fuelType;
-                const transmission = v.engineCharacteristics?.transmissionType?.value || v.engineCharacteristics?.transmissionType || v.transmissionType;
+          <Divider sx={{ my: 2, display: { xs: 'none', lg: 'block' } }} />
 
-                return (
-                  <TableRow key={v._id} sx={{ '&:hover': { bgcolor: '#fbfbfb' } }}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Box
+          <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: { xs: 2, lg: 0 } }}>
+            <Button startIcon={<GetApp />} size="small" onClick={handleExport} sx={{ color: THEME_COLOR }}>Export CSV</Button>
+            <Button startIcon={<Refresh />} size="small" onClick={fetchVehicles} sx={{ color: THEME_COLOR }}>Refresh List</Button>
+          </Stack>
+        </Paper>
+
+        {/* Vehicle Grid - Fully Responsive */}
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+            <CircularProgress size={60} thickness={4} sx={{ color: THEME_COLOR }} />
+          </Box>
+        ) : filteredVehicles.length === 0 ? (
+          <Fade in={true}>
+            <Paper sx={{ textAlign: "center", py: 10, borderRadius: 6, border: "2px dashed #e2e8f0" }}>
+              <Commute sx={{ fontSize: 80, color: "#cbd5e0", mb: 2 }} />
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "#4a5568" }}>No Vehicles Found</Typography>
+              <Typography variant="body1" color="text.secondary">Try adjusting your filters or add a new vehicle.</Typography>
+            </Paper>
+          </Fade>
+        ) : (
+          <Grid container spacing={{ xs: 2, md: 4 }}>
+            {filteredVehicles.map((vehicle, index) => {
+              const basePrice = vehicle.pricing?.basicPackage?.price || vehicle.pricing?.hourly || vehicle.pricing?.perDay || 0;
+              const grandTotal = vehicle.pricing?.grandTotal || basePrice;
+              const seating = vehicle.capacityAndComfort?.seatingCapacity || vehicle.seatingCapacity;
+              const fuel = vehicle.engineCharacteristics?.fuelType || vehicle.fuelType;
+              const transmission = vehicle.engineCharacteristics?.transmissionType?.value || vehicle.engineCharacteristics?.transmissionType || vehicle.transmissionType;
+
+              return (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={vehicle._id}>
+                  <Zoom in={true} style={{ transitionDelay: `${index * 50}ms` }}>
+                    <Card sx={{
+                      height: "100%",
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+                      transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                      "&:hover": {
+                        transform: "translateY(-10px)",
+                        boxShadow: `0 20px 40px ${alpha(THEME_COLOR, 0.1)}`,
+                        "& .media-overlay": { opacity: 1 }
+                      }
+                    }}>
+                      <Box sx={{ position: "relative", pt: "66%", bgcolor: "#f7fafc" }}>
+                        <CardMedia
                           component="img"
-                          src={getImageUrl(v.featuredImage)}
-                          sx={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: "8px",
-                            objectFit: "cover",
-                            border: "1px solid #eee"
-                          }}
-                          onLoad={(e) => console.log("Successfully loaded image:", e.target.src)}
+                          image={getImageUrl(vehicle.featuredImage)}
+                          alt={vehicle.name}
                           onError={handleImageError}
+                          sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
                         />
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: "#2563eb" }}>
-                            {v.name || "N/A"}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            Plate: {v.licensePlateNumber || "N/A"}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Model: {v.model || "N/A"}
-                          </Typography>
+
+                        {/* Action Overlay */}
+                        <Box className="media-overlay" sx={{
+                          position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                          bgcolor: alpha(THEME_COLOR, 0.4),
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          gap: 2, opacity: 0, transition: "0.3s", backdropFilter: "blur(4px)"
+                        }}>
+                          <Tooltip title="View Details">
+                            <Avatar sx={{ bgcolor: "white", color: THEME_COLOR, cursor: "pointer" }} onClick={() => navigate(`/vehicle-setup/listview/${vehicle._id}`)}>
+                              <Visibility />
+                            </Avatar>
+                          </Tooltip>
+                          <Tooltip title="Edit Vehicle">
+                            <Avatar sx={{ bgcolor: "white", color: "#2b6cb0", cursor: "pointer" }} onClick={() => navigate(`/vehicle-setup/leads/${vehicle._id}`, { state: { vehicle } })}>
+                              <Edit />
+                            </Avatar>
+                          </Tooltip>
+                          <Tooltip title="Delete Permanently">
+                            <Avatar sx={{ bgcolor: "white", color: "#c53030", cursor: "pointer" }} onClick={() => { setVehicleToDelete(vehicle._id); setOpenDeleteDialog(true); }}>
+                              <Delete />
+                            </Avatar>
+                          </Tooltip>
                         </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={getCategoryTitle(v.category)} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>{getBrandTitle(v.brand)}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {v.type || v.vehicleType || v.bikeType || "N/A"}
-                      </Typography>
-                    </TableCell>
 
-                    <TableCell>
-                      {grandTotal ? (
-                        <>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#E15B65" }}>
-                            ₹{grandTotal}
+                        <Box sx={{ position: "absolute", top: 15, left: 15 }}>
+                          <Chip
+                            label={vehicle.isActive !== false ? "ACTIVE" : "INACTIVE"}
+                            size="small"
+                            sx={{
+                              bgcolor: vehicle.isActive !== false ? "#48bb78" : "#a0aec0",
+                              color: "white",
+                              fontWeight: 900,
+                              borderRadius: 2
+                            }}
+                          />
+                        </Box>
+
+                        {vehicle.isNew && (
+                          <Box sx={{ position: "absolute", top: 15, right: 15 }}>
+                            <Chip label="NEW" size="small" sx={{ bgcolor: "#2b6cb0", color: "white", fontWeight: 900, borderRadius: 2 }} />
+                          </Box>
+                        )}
+                      </Box>
+
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {vehicle.name || "Unnamed Vehicle"}
+                        </Typography>
+
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary", bgcolor: "#f1f5f9", px: 1, py: 0.5, borderRadius: 1.5, fontWeight: 700 }}>
+                            {getBrandTitle(vehicle.brand)}
                           </Typography>
-                          {basePrice && basePrice !== grandTotal && (
-                            <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
-                              ₹{basePrice}
-                            </Typography>
-                          )}
-                        </>
-                      ) : basePrice ? (
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          ₹{basePrice}
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          No pricing
-                        </Typography>
-                      )}
-
-                      {v.pricing?.basicPackage?.includedHours && (
-                        <Typography variant="caption" display="block" color="text.secondary">
-                          {v.pricing.basicPackage.includedHours} Hrs / {v.pricing.basicPackage.includedKilometers} KM
-                        </Typography>
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          🪑 <strong>Seats:</strong> {seating || "N/A"}
-                        </Typography>
-                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          ⛽ <strong>Fuel:</strong> {fuel || "N/A"}
-                        </Typography>
-                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          ⚙️ <strong>Trans:</strong> {transmission || "N/A"}
-                        </Typography>
-                        <Stack direction="row" spacing={1}>
-                          {(v.engineCharacteristics?.airConditioning !== undefined || v.availability?.acAvailable !== undefined || v.airCondition !== undefined) && (
-                            <Chip
-                              label={(v.engineCharacteristics?.airConditioning || v.availability?.acAvailable || v.airCondition) ? "AC" : "Non-AC"}
-                              size="small"
-                              sx={{ height: 20, fontSize: '0.65rem' }}
-                            />
-                          )}
+                          <Typography variant="caption" sx={{ color: "text.secondary", bgcolor: "#f1f5f9", px: 1, py: 0.5, borderRadius: 1.5, fontWeight: 700 }}>
+                            {getCategoryTitle(vehicle.category)}
+                          </Typography>
                         </Stack>
-                      </Stack>
-                    </TableCell>
 
-                    <TableCell>
-                      <Stack spacing={1} alignItems="center">
-                        <Switch
-                          checked={v.isActive !== false}
-                          onChange={() => handleStatusToggle(v._id, "isActive", v.isActive !== false)}
-                          size="small"
-                          sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                              color: '#E15B65',
-                            },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                              backgroundColor: '#E15B65',
-                            },
-                          }}
-                        />
-                        {v.isNew && <Chip label="New" color="success" size="small" sx={{ height: 20, fontSize: '0.65rem' }} />}
-                      </Stack>
-                    </TableCell>
+                        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                          {[
+                            { icon: <DirectionsCar />, label: vehicle.model || "N/A" },
+                            { icon: <EventSeat />, label: `${seating || "-"} Seats` },
+                            { icon: <LocalGasStation />, label: fuel || "N/A" },
+                            { icon: <Settings />, label: transmission || "N/A" }
+                          ].map((item, i) => (
+                            <Grid item xs={6} key={i}>
+                              <Stack direction="row" alignItems="center" spacing={1}>
+                                <Box sx={{ color: THEME_COLOR, display: 'flex' }}>{React.cloneElement(item.icon, { sx: { fontSize: 16 } })}</Box>
+                                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>{item.label}</Typography>
+                              </Stack>
+                            </Grid>
+                          ))}
+                        </Grid>
 
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          sx={{ border: "1px solid #eee", color: "#2563eb", borderRadius: "8px", bgcolor: '#fff' }}
-                          onClick={() => navigate(`/vehicle-setup/listview/${v._id}`)}
-                        >
-                          <Visibility fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          sx={{ border: "1px solid #eee", color: "#065f46", borderRadius: "8px", bgcolor: '#fff' }}
-                          onClick={() => handleEdit(v)}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          sx={{ border: "1px solid #eee", color: "#dc2626", borderRadius: "8px", bgcolor: '#fff' }}
-                          onClick={() => confirmDelete(v._id)}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                        <Divider sx={{ borderStyle: "dashed", mb: 2 }} />
 
-              {filteredVehicles.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    {vehicles.length === 0
-                      ? "No vehicles found. Add your first vehicle!"
-                      : "No vehicles match the current filters"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: "block", lineHeight: 1 }}>STARTING AT</Typography>
+                            <Typography variant="h6" sx={{ color: THEME_COLOR, fontWeight: 900 }}>
+                              ₹{grandTotal}
+                            </Typography>
+                          </Box>
+                          <Button
+                            size="small"
+                            endIcon={<ChevronRight />}
+                            onClick={() => navigate(`/vehicle-setup/listview/${vehicle._id}`)}
+                            sx={{ textTransform: "none", fontWeight: 800, color: THEME_COLOR, borderRadius: 2 }}
+                          >
+                            Details
+                          </Button>
+                        </Box>
 
-      {/* Delete Dialog */}
-      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete this vehicle? This action cannot be undone.
-          </Typography>
+                        <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#f8fafc", p: 1, borderRadius: 2 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>AVAILABILITY</Typography>
+                          <Switch
+                            checked={vehicle.isActive !== false}
+                            onChange={() => handleStatusToggle(vehicle._id, "isActive", vehicle.isActive !== false)}
+                            size="small"
+                            color="success"
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Zoom>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+      </Container>
+
+      {/* Delete Confirmation */}
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)} PaperProps={{ sx: { borderRadius: 5, p: 1 } }}>
+        <DialogTitle sx={{ fontWeight: 900, textAlign: "center" }}>Delete Vehicle?</DialogTitle>
+        <DialogContent sx={{ textAlign: "center" }}>
+          <Typography color="text.secondary">Are you sure you want to delete this vehicle? This action cannot be undone.</Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={handleDelete} variant="contained" color="error">
-            Delete
-          </Button>
+        <DialogActions sx={{ justifyContent: "center", pb: 3, gap: 2 }}>
+          <Button onClick={() => setOpenDeleteDialog(false)} sx={{ borderRadius: 3, fontWeight: 700 }}>Cancel</Button>
+          <Button onClick={handleDelete} variant="contained" sx={{ bgcolor: "#c53030", borderRadius: 3, fontWeight: 700 }}>Delete</Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar
-        open={openToast}
-        autoHideDuration={3000}
-        onClose={handleCloseToast}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleCloseToast}
-          severity={toastSeverity}
-          sx={{
-            backgroundColor: toastSeverity === "success" ? "#1976d2" : "#d32f2f",
-            color: "white",
-          }}
-        >
-          {toastMessage}
+        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: 4, fontWeight: 700 }}>
+          {toast.message}
         </Alert>
       </Snackbar>
     </Box>
