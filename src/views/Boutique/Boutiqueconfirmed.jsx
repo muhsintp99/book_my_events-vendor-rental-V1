@@ -32,16 +32,23 @@ const getProviderId = () => {
   }
 };
 
-const MakeupConfirmed = () => {
+const renderTimeSlot = (timeSlot) => {
+  if (!timeSlot) return 'N/A';
+  if (typeof timeSlot === 'string') return timeSlot;
+  if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
+  if (typeof timeSlot === 'object') return timeSlot.label || timeSlot.time || 'N/A';
+  return 'N/A';
+};
+
+const BoutiqueConfirmed = () => {
   const [confirmedBookings, setConfirmedBookings] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
   const providerId = getProviderId();
 
   /* ---------------------------------------
-     Fetch CONFIRMED MAKEUP BOOKINGS ONLY
+     Fetch CONFIRMED BOUTIQUE BOOKINGS ONLY
   ---------------------------------------- */
   useEffect(() => {
     if (!providerId) {
@@ -57,65 +64,15 @@ const MakeupConfirmed = () => {
 
         const all = res.data?.data || [];
 
-        console.log('=== MAKEUP CONFIRMED BOOKINGS DEBUG ===');
-        console.log('Total bookings fetched:', all.length);
-        console.log('Provider ID:', providerId);
-
-        // Log sample booking structure
-        if (all.length > 0) {
-          console.log('Sample booking:', all[0]);
-        }
-
-        // Count by status and module
-        const statusCounts = {};
-        const moduleCounts = {};
-        all.forEach((b) => {
-          const status = String(b.status || 'undefined').toLowerCase();
-          const module = String(b.moduleType || 'undefined').toLowerCase();
-          statusCounts[status] = (statusCounts[status] || 0) + 1;
-          moduleCounts[module] = (moduleCounts[module] || 0) + 1;
-        });
-
-        console.log('Bookings by status:', statusCounts);
-        console.log('Bookings by module:', moduleCounts);
-
-        // ✅ STRICT FILTER: Only Accepted + Makeup bookings
+        // ✅ STRICT FILTER: Only Accepted + Boutique bookings
         const confirmed = all.filter((b) => {
-          const status = String(b.status || '')
-            .trim()
-            .toLowerCase();
-          const moduleType = String(b.moduleType || '')
-            .trim()
-            .toLowerCase();
+          const status = String(b.status || '').trim().toLowerCase();
+          const moduleType = String(b.moduleType || '').trim().toLowerCase();
 
-          // Check for various status variations
           const isAccepted = status === 'accepted' || status === 'confirmed' || status === 'approve' || status === 'approved';
+          const isBoutique = moduleType === 'boutique' || moduleType === 'boutique artist';
 
-          // Check for makeup module variations
-          const isMakeup = moduleType === 'makeup' || moduleType === 'makeup artist' || moduleType === 'makeupartist';
-
-          console.log(`Booking ${b._id}: status=${status}, module=${moduleType}, isAccepted=${isAccepted}, isMakeup=${isMakeup}`);
-
-          return isAccepted && isMakeup;
-        });
-
-        console.log('✅ Filtered confirmed makeup bookings:', confirmed.length);
-        console.log('Confirmed bookings:', confirmed);
-
-        // Set debug info
-        setDebugInfo({
-          total: all.length,
-          accepted: all.filter((b) => {
-            const s = String(b.status || '').toLowerCase();
-            return s === 'accepted' || s === 'confirmed' || s === 'approved';
-          }).length,
-          makeup: all.filter((b) => {
-            const mt = String(b.moduleType || '').toLowerCase();
-            return mt === 'makeup' || mt === 'makeup artist' || mt === 'makeupartist';
-          }).length,
-          confirmedMakeup: confirmed.length,
-          statusCounts,
-          moduleCounts
+          return isAccepted && isBoutique;
         });
 
         setConfirmedBookings(confirmed);
@@ -130,6 +87,7 @@ const MakeupConfirmed = () => {
 
     fetchConfirmed();
   }, [providerId]);
+
 
   /* ---------------------------------------
      Search Filter
@@ -176,7 +134,6 @@ const MakeupConfirmed = () => {
   const handleView = (booking, e) => {
     e.stopPropagation();
     console.log('View booking:', booking);
-    // Add your view logic here - maybe navigate to detail page or open modal
   };
 
   /* ---------------------------------------
@@ -185,7 +142,6 @@ const MakeupConfirmed = () => {
   const handleDownload = (booking, e) => {
     e.stopPropagation();
     console.log('Download invoice for:', booking._id);
-    // Add your download logic here
   };
 
   if (loading) {
@@ -207,10 +163,8 @@ const MakeupConfirmed = () => {
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom fontWeight={600}>
-        Confirmed Makeup Bookings
+        Confirmed Boutique Bookings
       </Typography>
-
-      
 
       <Paper sx={{ mt: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center" p={2}>
@@ -279,7 +233,7 @@ const MakeupConfirmed = () => {
 
                     <TableCell>
                       <Chip
-                        label={booking.moduleType || 'Makeup'}
+                        label={booking.moduleType || 'Boutique'}
                         size="small"
                         sx={{
                           bgcolor: '#fef3c7',
@@ -311,7 +265,7 @@ const MakeupConfirmed = () => {
                         {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-GB') : '-'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {booking.timeSlot || ''}
+                        {renderTimeSlot(booking.timeSlot)}
                       </Typography>
                     </TableCell>
 
@@ -353,10 +307,10 @@ const MakeupConfirmed = () => {
                   <TableCell colSpan={10} align="center">
                     <Box py={4}>
                       <Typography variant="h6" color="text.secondary" gutterBottom>
-                        {search ? 'No matching bookings found' : 'No Confirmed Makeup Bookings'}
+                        {search ? 'No matching bookings found' : 'No Confirmed Boutique Bookings'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {search ? 'Try adjusting your search criteria' : 'Confirmed makeup bookings will appear here'}
+                        {search ? 'Try adjusting your search criteria' : 'Confirmed boutique bookings will appear here'}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -389,4 +343,5 @@ const MakeupConfirmed = () => {
   );
 };
 
-export default MakeupConfirmed;
+export default BoutiqueConfirmed;
+

@@ -11,28 +11,33 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const MakeupCanceled = () => {
+/* ----------------------------------------------------
+   Helper: Safely extract providerId (Vendor _id)
+---------------------------------------------------- */
+const getProviderId = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    return user?._id || null;
+  } catch (err) {
+    console.error("Error parsing user:", err);
+    return null;
+  }
+};
+
+const BoutiqueCancelled = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [canceledBookings, setCanceledBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const providerId = getProviderId();
 
   // ✅ SAFE RENDER HELPERS
   const renderTimeSlot = (timeSlot) => {
     if (!timeSlot) return "N/A";
-
     if (typeof timeSlot === "string") return timeSlot;
-
-    if (Array.isArray(timeSlot)) return timeSlot.join(", ");
-
-    if (typeof timeSlot === "object") {
-      if (timeSlot.label) return timeSlot.label;
-      if (timeSlot.name) return timeSlot.name;
-
-      return Object.values(timeSlot)
-        .filter((v) => typeof v === "string")
-        .join(", ");
-    }
-
+    if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
+    if (typeof timeSlot === "object") return timeSlot.label || timeSlot.time || 'N/A';
     return "N/A";
   };
 
@@ -46,19 +51,24 @@ const MakeupCanceled = () => {
 
   // 🔥 FETCH CANCELED / REJECTED BOOKINGS
   useEffect(() => {
+    if (!providerId) return;
+
     const fetchCanceled = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(
-          "https://api.bookmyevent.ae/api/bookings"
+          `https://api.bookmyevent.ae/api/bookings/provider/${providerId}`
         );
 
-        const allBookings = res.data?.bookings || [];
+        const allBookings = res.data?.data || [];
 
-        const canceled = allBookings.filter(
-          (b) =>
-            b.status?.toLowerCase() === "rejected" ||
-            b.status?.toLowerCase() === "cancelled"
-        );
+        const canceled = allBookings.filter((b) => {
+          const status = String(b.status || '').toLowerCase();
+          const moduleType = String(b.moduleType || '').toLowerCase();
+          const isCancelled = status === 'rejected' || status === 'cancelled';
+          const isBoutique = moduleType === 'boutique' || moduleType === 'boutique artist';
+          return isCancelled && isBoutique;
+        });
 
         setCanceledBookings(canceled);
       } catch (err) {
@@ -69,7 +79,7 @@ const MakeupCanceled = () => {
     };
 
     fetchCanceled();
-  }, []);
+  }, [providerId]);
 
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -77,8 +87,8 @@ const MakeupCanceled = () => {
 
   return (
     <Box p={2}>
-      <Typography variant="h4" gutterBottom>
-        Canceled / Rejected Makeup Bookings
+      <Typography variant="h4" gutterBottom fontWeight={600}>
+        Canceled / Rejected Boutique Bookings
       </Typography>
 
       {loading ? (
@@ -195,4 +205,5 @@ const MakeupCanceled = () => {
   );
 };
 
-export default MakeupCanceled;
+export default BoutiqueCancelled;
+

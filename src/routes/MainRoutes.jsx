@@ -385,6 +385,7 @@ const MainRoutes = {
             { path: 'boutiqueconfirmed', element: <BoutiqueConfirmed /> },
             { path: 'completedboutique', element: <BoutiqueCompleted /> },
             { path: 'cancelledboutique', element: <BoutiqueCancelled /> },
+            { path: 'paymentfailedboutique', element: <Paymentfailedbookings /> }
           ]
         },
 

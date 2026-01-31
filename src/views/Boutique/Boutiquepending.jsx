@@ -26,6 +26,14 @@ const getProviderId = () => {
   }
 };
 
+const renderTimeSlot = (timeSlot) => {
+  if (!timeSlot) return 'N/A';
+  if (typeof timeSlot === 'string') return timeSlot;
+  if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
+  if (typeof timeSlot === 'object') return timeSlot.label || timeSlot.time || 'N/A';
+  return 'N/A';
+};
+
 const Pendingbookings = () => {
   const [pendingBookings, setPendingBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,10 +61,12 @@ const Pendingbookings = () => {
 
         const all = res.data?.data || [];
 
-        // 🚀 FIX: Only filter by booking.status
-        const pending = all.filter(
-          (b) => b.status?.toLowerCase() === "pending"
-        );
+        // 🚀 FIX: Only filter by status AND moduleType
+        const pending = all.filter((b) => {
+          const status = String(b.status || '').toLowerCase();
+          const moduleType = String(b.moduleType || '').toLowerCase();
+          return status === 'pending' && (moduleType === 'boutique' || moduleType === 'boutique artist');
+        });
 
         setPendingBookings(pending);
       } catch (error) {
@@ -121,7 +131,7 @@ const Pendingbookings = () => {
     <Box p={2} sx={{ background: "#f4f7fb", minHeight: "100vh" }}>
       <Box sx={{ maxWidth: "850px", margin: "0 auto" }}>
         <Typography variant="h4" fontWeight={600} mb={3}>
-          Pending Bookings
+          Boutique Pending Bookings
         </Typography>
 
         {/* Loading */}
@@ -130,7 +140,7 @@ const Pendingbookings = () => {
             <CircularProgress />
           </Box>
         ) : pendingBookings.length === 0 ? (
-          <Typography>No Pending Bookings Found</Typography>
+          <Typography>No Pending Boutique Bookings Found</Typography>
         ) : (
           pendingBookings.map((b) => (
             <Paper
@@ -163,11 +173,11 @@ const Pendingbookings = () => {
                   </Typography>
 
                   <Typography color="gray" fontSize={14}>
-                    {b.moduleType || "Event Booking"}
+                    {b.moduleType || "Boutique Booking"}
                   </Typography>
 
                   <Typography color="gray" fontSize={13}>
-                    {new Date(b.bookingDate).toDateString()}
+                    {renderTimeSlot(b.timeSlot)}
                   </Typography>
                 </Box>
 
@@ -243,3 +253,4 @@ const Detail = ({ label, value }) => (
 );
 
 export default Pendingbookings;
+
