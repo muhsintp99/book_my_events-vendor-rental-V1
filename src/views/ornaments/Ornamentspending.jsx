@@ -26,6 +26,14 @@ const getProviderId = () => {
   }
 };
 
+const renderTimeSlot = (timeSlot) => {
+  if (!timeSlot) return 'N/A';
+  if (typeof timeSlot === 'string') return timeSlot;
+  if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
+  if (typeof timeSlot === 'object') return timeSlot.label || timeSlot.time || 'N/A';
+  return 'N/A';
+};
+
 const Pendingbookings = () => {
   const [pendingBookings, setPendingBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,10 +61,12 @@ const Pendingbookings = () => {
 
         const all = res.data?.data || [];
 
-        // 🚀 FIX: Only filter by booking.status
-        const pending = all.filter(
-          (b) => b.status?.toLowerCase() === "pending"
-        );
+        // 🚀 FIX: Only filter by booking.status AND moduleType
+        const pending = all.filter((b) => {
+          const status = String(b.status || '').toLowerCase();
+          const moduleType = String(b.moduleType || '').toLowerCase();
+          return status === 'pending' && (moduleType === 'ornament' || moduleType === 'ornaments');
+        });
 
         setPendingBookings(pending);
       } catch (error) {
@@ -167,7 +177,7 @@ const Pendingbookings = () => {
                   </Typography>
 
                   <Typography color="gray" fontSize={13}>
-                    {new Date(b.bookingDate).toDateString()}
+                    {renderTimeSlot(b.timeSlot)}
                   </Typography>
                 </Box>
 

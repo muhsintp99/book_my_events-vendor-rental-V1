@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const MakeupCanceled = () => {
+const OrnamentsCancelled = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [canceledBookings, setCanceledBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,11 +54,13 @@ const MakeupCanceled = () => {
 
         const allBookings = res.data?.bookings || [];
 
-        const canceled = allBookings.filter(
-          (b) =>
-            b.status?.toLowerCase() === "rejected" ||
-            b.status?.toLowerCase() === "cancelled"
-        );
+        const canceled = allBookings.filter((b) => {
+          const status = String(b.status || '').toLowerCase();
+          const moduleType = String(b.moduleType || '').toLowerCase();
+          const isCancelled = status === 'rejected' || status === 'cancelled' || status === 'rejected';
+          const isOrnament = moduleType === 'ornament' || moduleType === 'ornaments';
+          return isCancelled && isOrnament;
+        });
 
         setCanceledBookings(canceled);
       } catch (err) {
@@ -78,7 +80,7 @@ const MakeupCanceled = () => {
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
-        Canceled / Rejected Makeup Bookings
+        Canceled / Rejected Ornaments Bookings
       </Typography>
 
       {loading ? (
@@ -195,4 +197,4 @@ const MakeupCanceled = () => {
   );
 };
 
-export default MakeupCanceled;
+export default OrnamentsCancelled;

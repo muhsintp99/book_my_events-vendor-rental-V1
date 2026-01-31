@@ -181,7 +181,7 @@ const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categ
 const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
 const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
-const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamnetscompleted.jsx')));
+const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamentscompleted.jsx')));
 const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Ornamentscancelled.jsx')));
 
 
@@ -376,6 +376,7 @@ const MainRoutes = {
             { path: 'ornamentsconfirmed', element: <OrnamentsConfirmed /> },
             { path: 'completedornaments', element: <OrnamentsCompleted /> },
             { path: 'cancelledornaments', element: <OrnamentsCancelled /> },
+            { path: 'paymentfailedornaments', element: <Paymentfailedbookings /> },
 
 
             // boutique BOOKINGS///////////////
