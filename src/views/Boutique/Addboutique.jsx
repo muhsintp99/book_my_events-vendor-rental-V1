@@ -617,6 +617,8 @@ const AddBoutique = () => {
     freeShipping: false,
     flatRateShipping: false,
     shippingPrice: '',
+minShippingDays: '', // 👈 ADD
+
     takeaway: false,
     takeawayAddress: '',
     pickupLatitude: '',
@@ -1470,17 +1472,19 @@ const AddBoutique = () => {
     );
 
     formDataToSend.append(
-      'shipping',
-      JSON.stringify({
-        free: formData.freeShipping,
-        flatRate: formData.flatRateShipping,
-        takeaway: formData.takeaway,
-        takeawayLocation: formData.takeawayAddress,
-        pickupLatitude: formData.pickupLatitude,
-        pickupLongitude: formData.pickupLongitude,
-        price: formData.shippingPrice
-      })
-    );
+  'shipping',
+  JSON.stringify({
+    free: formData.freeShipping,
+    flatRate: formData.flatRateShipping,
+    minShippingDays: formData.minShippingDays, // ✅ ADD THIS
+    takeaway: formData.takeaway,
+    takeawayLocation: formData.takeawayAddress,
+    pickupLatitude: formData.pickupLatitude,
+    pickupLongitude: formData.pickupLongitude,
+    price: formData.shippingPrice
+  })
+);
+
 
     formDataToSend.append('tags', JSON.stringify(formData.tags));
     formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
@@ -3165,6 +3169,60 @@ const AddBoutique = () => {
                   }}
                 />
               )}
+
+  {/* MINIMUM SHIPPING DAYS – SEPARATE COLORED BOX */}
+  <Box
+    sx={{
+      mt: 2,
+      p: 2,
+      borderRadius: '14px',
+      background: 'linear-gradient(135deg, #F0F9FF, #E0F2FE)',
+      border: '1.5px solid #38BDF8',
+      boxShadow: '0 6px 20px rgba(56, 189, 248, 0.15)'
+    }}
+  >
+    <Box sx={{ mb: 1 }}>
+      <Typography fontWeight={700} color="#0369A1">
+        Minimum Shipping Days
+      </Typography>
+      <Typography variant="caption" color="#475569">
+        Minimum number of days required to dispatch the product
+      </Typography>
+    </Box>
+  
+    <TextField
+      fullWidth
+      type="number"
+      placeholder="e.g. 3"
+      value={formData.minimumShippingDays}
+      onChange={(e) => handleChange('minimumShippingDays', e.target.value)}
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <Box
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '8px',
+                background: '#38BDF8',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.75rem'
+              }}
+            >
+              DAYS
+            </Box>
+          </InputAdornment>
+        )
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '12px',
+          backgroundColor: 'white'
+        }
+      }}
+    />
+  </Box>
 
               {/* Takeaway Toggle */}
               <Box
