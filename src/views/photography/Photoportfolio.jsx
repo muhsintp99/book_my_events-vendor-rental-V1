@@ -21,6 +21,7 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { CloudUpload, Delete, Close, Collections, VideoLibrary } from '@mui/icons-material';
 
@@ -43,6 +44,13 @@ export default function PortfolioManagement() {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [tags, setTags] = useState('');
+  // EDIT MODE
+  const [editId, setEditId] = useState(null);
+  const isEditMode = Boolean(editId);
+
+  // EXISTING MEDIA (EDIT MODE)
+  const [existingThumbnail, setExistingThumbnail] = useState(null);
+  const [existingGallery, setExistingGallery] = useState([]);
 
   // images
   const [thumbnail, setThumbnail] = useState(null);
@@ -92,60 +100,85 @@ export default function PortfolioManagement() {
 
   /* ================= ADD ================= */
   const addPortfolio = async () => {
-  if (!isPremium) return alert('Upgrade plan required');
-  if (!title.trim()) return alert('Title required');
+    if (!isPremium) return alert('Upgrade plan required');
+    if (!title.trim()) return alert('Title required');
 
-  // ✅ ADD THIS BLOCK HERE
-  if (addTab === 1) {
-    if (!videoFiles.length && !videoLink) {
-      return alert('Please upload a video or add a video link');
+    // ✅ ADD THIS BLOCK HERE
+    if (addTab === 1) {
+      if (!videoFiles.length && !videoLink) {
+        return alert('Please upload a video or add a video link');
+      }
+
+      if (!videoThumbnail) {
+        return alert('Video thumbnail is required');
+      }
     }
 
-    if (!videoThumbnail) {
-      return alert('Video thumbnail is required');
+    const fd = new FormData();
+    fd.append('providerId', providerId);
+    fd.append('module', moduleId);
+    fd.append('workTitle', title);
+    fd.append('description', desc);
+    fd.append('tags', tags);
+
+    if (addTab === 0) {
+      if (!thumbnail) return alert('Thumbnail required');
+      fd.append('thumbnail', thumbnail);
+      gallery.forEach((g) => fd.append('images', g));
+    } else {
+      videoFiles.forEach((v) => fd.append('videos', v));
+      if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
+      if (videoThumbnail) fd.append('videoThumbnail', videoThumbnail);
     }
-  }
 
-  const fd = new FormData();
-  fd.append('providerId', providerId);
-  fd.append('module', moduleId);
-  fd.append('workTitle', title);
-  fd.append('description', desc);
-  fd.append('tags', tags);
+    setLoading(true);
+    await api.post('/api/portfolio', fd);
+    setLoading(false);
 
-  if (addTab === 0) {
-    if (!thumbnail) return alert('Thumbnail required');
-    fd.append('thumbnail', thumbnail);
-    gallery.forEach((g) => fd.append('images', g));
-  } else {
-    videoFiles.forEach((v) => fd.append('videos', v));
-    if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
-    if (videoThumbnail) fd.append('videoThumbnail', videoThumbnail);
-  }
+    // reset
+    setTitle('');
+    setDesc('');
+    setTags('');
+    setThumbnail(null);
+    setGallery([]);
+    setVideoFiles([]);
+    setVideoLink('');
+    setVideoThumbnail(null);
 
-  setLoading(true);
-  await api.post('/api/portfolio', fd);
-  setLoading(false);
-
-  // reset
-  setTitle('');
-  setDesc('');
-  setTags('');
-  setThumbnail(null);
-  setGallery([]);
-  setVideoFiles([]);
-  setVideoLink('');
-  setVideoThumbnail(null);
-
-  fetchPortfolio();
-};
-
+    fetchPortfolio();
+  };
 
   /* ================= DELETE ================= */
   const remove = async (id) => {
     if (!window.confirm('Delete portfolio?')) return;
     await api.delete(`/api/portfolio/${id}`);
     fetchPortfolio();
+  };
+  const handleEdit = (p) => {
+    setEditId(p._id);
+    setTitle(p.workTitle || '');
+    setDesc(p.description || '');
+    setTags(p.tags || '');
+
+    const imageMedia = p.media?.find((m) => m.type === 'image');
+    const videoMedia = p.media?.find((m) => m.type === 'video' || m.type === 'videoLink');
+
+    if (imageMedia) {
+      setAddTab(0);
+      setExistingThumbnail(imageMedia.thumbnail || null);
+      setExistingGallery(imageMedia.gallery || []);
+      setThumbnail(null);
+      setGallery([]);
+    }
+
+    if (videoMedia) {
+      setAddTab(1);
+      setVideoFiles([]);
+      setVideoLink(videoMedia.videoLinks?.[0] || '');
+      setVideoThumbnail(null);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   /* ================= FILTER ================= */
@@ -186,32 +219,100 @@ export default function PortfolioManagement() {
           />
           <TextField fullWidth label="Tags" value={tags} onChange={(e) => setTags(e.target.value)} sx={{ mb: 4 }} />
 
-          {/* IMAGE TAB */}
-          {addTab === 0 && (
-            <>
-              <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
-                <CloudUpload sx={{ mr: 1 }} /> Upload Thumbnail
-                <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
-              </Button>
+         {/* IMAGE TAB */}
+{addTab === 0 && (
+  <>
+    {/* UPLOAD THUMBNAIL BUTTON */}
+    <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
+      <CloudUpload sx={{ mr: 1 }} /> Upload Thumbnail
+      <input
+        hidden
+        type="file"
+        accept="image/*"
+        onChange={(e) => setThumbnail(e.target.files[0])}
+      />
+    </Button>
 
-              {thumbnail && (
-                <Box sx={{ mb: 3 }}>
-                  <img src={URL.createObjectURL(thumbnail)} style={{ width: 180, height: 180, borderRadius: 12 }} />
-                </Box>
-              )}
+    {/* EXISTING THUMBNAIL (EDIT MODE) */}
+    {existingThumbnail && !thumbnail && (
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="caption">Current Thumbnail</Typography>
+        <img
+          src={`${API_BASE}/${existingThumbnail}`}
+          style={{
+            width: 180,
+            height: 180,
+            borderRadius: 12,
+            display: 'block',
+            marginTop: 8
+          }}
+        />
+      </Box>
+    )}
 
-              <Button component="label" variant="outlined" sx={{ mb: 2 }}>
-                <Collections sx={{ mr: 1 }} /> Upload Gallery Images
-                <input hidden multiple type="file" accept="image/*" onChange={(e) => setGallery([...e.target.files])} />
-              </Button>
+    {/* NEW THUMBNAIL PREVIEW */}
+    {thumbnail && (
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="caption">New Thumbnail</Typography>
+        <img
+          src={URL.createObjectURL(thumbnail)}
+          style={{
+            width: 180,
+            height: 180,
+            borderRadius: 12,
+            display: 'block',
+            marginTop: 8
+          }}
+        />
+      </Box>
+    )}
 
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
-                {gallery.map((g, i) => (
-                  <img key={i} src={URL.createObjectURL(g)} style={{ width: 100, height: 100, borderRadius: 10 }} />
-                ))}
-              </Box>
-            </>
-          )}
+    {/* UPLOAD GALLERY BUTTON */}
+    <Button component="label" variant="outlined" sx={{ mb: 2 }}>
+      <Collections sx={{ mr: 1 }} /> Upload Gallery Images
+      <input
+        hidden
+        multiple
+        type="file"
+        accept="image/*"
+        onChange={(e) => setGallery([...e.target.files])}
+      />
+    </Button>
+
+    {/* EXISTING + NEW GALLERY PREVIEW */}
+    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
+      {/* EXISTING GALLERY */}
+      {existingGallery.map((img, i) => (
+        <img
+          key={`existing-${i}`}
+          src={`${API_BASE}/${img}`}
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 10,
+            objectFit: 'cover'
+          }}
+        />
+      ))}
+
+      {/* NEW UPLOADS */}
+      {gallery.map((g, i) => (
+        <img
+          key={`new-${i}`}
+          src={URL.createObjectURL(g)}
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 10,
+            border: '2px solid #4caf50',
+            objectFit: 'cover'
+          }}
+        />
+      ))}
+    </Box>
+  </>
+)}
+
 
           {/* VIDEO TAB ✅ FIXED */}
           {/* VIDEO TAB */}
@@ -380,9 +481,15 @@ export default function PortfolioManagement() {
                   </TableCell>
 
                   <TableCell align="right">
-                    <IconButton color="error" onClick={() => remove(p._id)}>
-                      <Delete />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <IconButton size="small" color="primary" onClick={() => handleEdit(p)}>
+                        <EditIcon />
+                      </IconButton>
+
+                      <IconButton size="small" color="error" onClick={() => remove(p._id)}>
+                        <Delete />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               );

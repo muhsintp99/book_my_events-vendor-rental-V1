@@ -19,8 +19,9 @@ import {
   Dialog,
   Divider,
   Tabs,
-  Tab
+  Tab,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { CloudUpload, Delete, Close, Collections, VideoLibrary } from '@mui/icons-material';
 
@@ -43,6 +44,12 @@ export default function PortfolioManagement() {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [tags, setTags] = useState('');
+// EDIT MODE
+const [editId, setEditId] = useState(null);
+const isEditMode = Boolean(editId);
+// EXISTING MEDIA (EDIT MODE)
+const [existingThumbnail, setExistingThumbnail] = useState(null);
+const [existingGallery, setExistingGallery] = useState([]);
 
   // images
   const [thumbnail, setThumbnail] = useState(null);
@@ -106,6 +113,7 @@ export default function PortfolioManagement() {
     }
   }
 
+
   const fd = new FormData();
   fd.append('providerId', providerId);
   fd.append('module', moduleId);
@@ -124,7 +132,11 @@ export default function PortfolioManagement() {
   }
 
   setLoading(true);
+if (isEditMode) {
+  await api.put(`/api/portfolio/${editId}`, fd);
+} else {
   await api.post('/api/portfolio', fd);
+}
   setLoading(false);
 
   // reset
@@ -138,6 +150,11 @@ export default function PortfolioManagement() {
   setVideoThumbnail(null);
 
   fetchPortfolio();
+   setEditId(null);
+  setAddTab(0);
+  setExistingThumbnail(null);
+setExistingGallery([]);
+
 };
 
 
@@ -148,6 +165,37 @@ export default function PortfolioManagement() {
     fetchPortfolio();
   };
 
+  const handleEdit = (p) => {
+  setEditId(p._id);
+  setTitle(p.workTitle || '');
+  setDesc(p.description || '');
+  setTags(p.tags || '');
+
+  const imageMedia = p.media?.find((m) => m.type === 'image');
+  const videoMedia = p.media?.find(
+    (m) => m.type === 'video' || m.type === 'videoLink'
+  );
+
+  if (imageMedia) {
+  setAddTab(0);
+
+  setExistingThumbnail(imageMedia.thumbnail || null);
+  setExistingGallery(imageMedia.gallery || []);
+
+  setThumbnail(null); // for replacement
+  setGallery([]);     // for new uploads
+}
+
+
+  if (videoMedia) {
+    setAddTab(1);
+    setVideoFiles([]);
+    setVideoLink(videoMedia.videoLinks?.[0] || '');
+    setVideoThumbnail(null);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
   /* ================= FILTER ================= */
   const filteredPortfolio =
     listTab === 0
@@ -165,9 +213,10 @@ export default function PortfolioManagement() {
       {/* ================= ADD ================= */}
       <Card sx={{ mb: 5, borderRadius: 3, width: '100%' }}>
         <CardContent>
-          <Typography variant="h5" fontWeight={700} mb={2}>
-            Add Portfolio Work
-          </Typography>
+         <Typography variant="h5" fontWeight={700} mb={2}>
+  {isEditMode ? 'Edit Portfolio Work' : 'Add Portfolio Work'}
+</Typography>
+
 
           <Tabs value={addTab} onChange={(_, v) => setAddTab(v)} sx={{ mb: 3 }}>
             <Tab label="Images" />
@@ -194,11 +243,28 @@ export default function PortfolioManagement() {
                 <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
               </Button>
 
-              {thumbnail && (
-                <Box sx={{ mb: 3 }}>
-                  <img src={URL.createObjectURL(thumbnail)} style={{ width: 180, height: 180, borderRadius: 12 }} />
-                </Box>
-              )}
+            {/* EXISTING THUMBNAIL (EDIT MODE) */}
+{existingThumbnail && !thumbnail && (
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="caption">Current Thumbnail</Typography>
+    <img
+      src={`${API_BASE}/${existingThumbnail}`}
+      style={{ width: 180, height: 180, borderRadius: 12 }}
+    />
+  </Box>
+)}
+
+{/* NEW THUMBNAIL PREVIEW */}
+{thumbnail && (
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="caption">New Thumbnail</Typography>
+    <img
+      src={URL.createObjectURL(thumbnail)}
+      style={{ width: 180, height: 180, borderRadius: 12 }}
+    />
+  </Box>
+)}
+
 
               <Button component="label" variant="outlined" sx={{ mb: 2 }}>
                 <Collections sx={{ mr: 1 }} /> Upload Gallery Images
@@ -206,10 +272,35 @@ export default function PortfolioManagement() {
               </Button>
 
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
-                {gallery.map((g, i) => (
-                  <img key={i} src={URL.createObjectURL(g)} style={{ width: 100, height: 100, borderRadius: 10 }} />
-                ))}
-              </Box>
+  {/* EXISTING GALLERY */}
+  {existingGallery.map((img, i) => (
+    <img
+      key={`existing-${i}`}
+      src={`${API_BASE}/${img}`}
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        objectFit: 'cover'
+      }}
+    />
+  ))}
+
+  {/* NEW UPLOADS */}
+  {gallery.map((g, i) => (
+    <img
+      key={`new-${i}`}
+      src={URL.createObjectURL(g)}
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        border: '2px solid #4caf50'
+      }}
+    />
+  ))}
+</Box>
+
             </>
           )}
 
@@ -269,8 +360,9 @@ export default function PortfolioManagement() {
           )}
 
           <Button fullWidth variant="contained" sx={{ bgcolor: RED, py: 1.4 }} onClick={addPortfolio}>
-            Add Portfolio
-          </Button>
+  {isEditMode ? 'Update Portfolio' : 'Add Portfolio'}
+</Button>
+
         </CardContent>
       </Card>
       {/* ================= LIST ================= */}
@@ -379,11 +471,27 @@ export default function PortfolioManagement() {
                       : (videoMedia?.videos?.length || 0) + (videoMedia?.videoLinks?.length || 0)}
                   </TableCell>
 
-                  <TableCell align="right">
-                    <IconButton color="error" onClick={() => remove(p._id)}>
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
+<TableCell align="right">
+  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+    <IconButton
+      size="small"
+      color="primary"
+      onClick={() => handleEdit(p)}
+    >
+      <EditIcon />
+    </IconButton>
+
+    <IconButton
+      size="small"
+      color="error"
+      onClick={() => remove(p._id)}
+    >
+      <Delete />
+    </IconButton>
+  </Box>
+</TableCell>
+
+
                 </TableRow>
               );
             })}
