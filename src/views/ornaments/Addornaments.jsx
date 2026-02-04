@@ -356,6 +356,7 @@ const AddOrnaments = () => {
     lateCharges: '',
     rentalTotalPrice: '',
     advanceForBooking: '',
+    securityDeposit: '',
     damagePolicy: '',
     stockQuantity: '',
     lowStockAlert: '',
@@ -810,6 +811,7 @@ const AddOrnaments = () => {
           lateCharges: product.rentalPricing?.lateCharges || '',
           rentalTotalPrice: product.rentalPricing?.totalPrice || '',
           advanceForBooking: product.rentalPricing?.advanceForBooking || '',
+          securityDeposit: product.rentalPricing?.securityDeposit || '',
           damagePolicy: product.rentalPricing?.damagePolicy || '',
           stockQuantity: product.stock?.quantity || '',
           lowStockAlert: product.stock?.lowStockAlert || '',
@@ -990,6 +992,7 @@ const AddOrnaments = () => {
         lateCharges: formData.lateCharges,
         totalPrice: formData.rentalTotalPrice,
         advanceForBooking: formData.advanceForBooking,
+        securityDeposit: formData.securityDeposit,
         damagePolicy: formData.damagePolicy
       })
     );
@@ -2375,7 +2378,7 @@ const AddOrnaments = () => {
                       {/* Additional Charges */}
                       <Box sx={{ p: 3.5, background: 'white', borderBottom: '2px solid #FCE4EC' }}>
                         <Grid container spacing={3}>
-                          <Grid item xs={12} md={4}>
+                          <Grid item xs={12} md={6}>
                             <Box sx={{ position: 'relative' }}>
                               <Typography
                                 variant="caption"
@@ -2429,7 +2432,7 @@ const AddOrnaments = () => {
                               />
                             </Box>
                           </Grid>
-                          <Grid item xs={12} md={4}>
+                          <Grid item xs={12} md={6}>
                             <Box sx={{ position: 'relative' }}>
                               <Typography
                                 variant="caption"
@@ -2483,7 +2486,7 @@ const AddOrnaments = () => {
                               />
                             </Box>
                           </Grid>
-                          <Grid item xs={12} md={4}>
+                          <Grid item xs={12} md={6}>
                             <Box sx={{ position: 'relative' }}>
                               <Typography
                                 variant="caption"
@@ -2503,6 +2506,61 @@ const AddOrnaments = () => {
                                 placeholder="Enter policy details"
                                 value={formData.damagePolicy}
                                 onChange={(e) => handleChange('damagePolicy', e.target.value)}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    background: '#FAFBFC',
+                                    borderRadius: '14px',
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                    border: '2px solid #F5F5F5',
+                                    '&:hover': {
+                                      borderColor: THEME.secondary,
+                                      background: 'white'
+                                    },
+                                    '&.Mui-focused': {
+                                      borderColor: THEME.secondary,
+                                      background: 'white',
+                                      boxShadow: `0 0 0 3px ${alpha(THEME.secondary, 0.1)}`
+                                    }
+                                  },
+                                  '& .MuiOutlinedInput-input': {
+                                    py: 1.8
+                                  }
+                                }}
+                              />
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ position: 'relative' }}>
+                              <Typography
+                                variant="caption"
+                                fontWeight={700}
+                                sx={{
+                                  mb: 1,
+                                  display: 'block',
+                                  color: THEME.secondary,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                              >
+                                Security Deposit
+                              </Typography>
+                              <TextField
+                                fullWidth
+                                placeholder="0.00"
+                                type="number"
+                                value={formData.securityDeposit}
+                                onChange={(e) => handleChange('securityDeposit', e.target.value)}
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Typography fontWeight={800} color={THEME.secondary} fontSize="1rem">
+                                        ₹
+                                      </Typography>
+                                    </InputAdornment>
+                                  )
+                                }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
                                     background: '#FAFBFC',
