@@ -599,7 +599,7 @@ const AddBoutique = () => {
     thumbnailImage: null,
     galleryImages: [],
     existingGallery: [],
-    availabilityMode: 'All',
+    availabilityMode: 'Available For Purchase',
     availableForPurchase: true,
     availableForRental: false,
     unitPrice: '',
@@ -660,7 +660,7 @@ const AddBoutique = () => {
   const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
 
   // ========== OPTIONS ==========
-  const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
+  const availabilityOptions = ['Available For Purchase', 'Available For Rental'];
   const discountOptions = ['Percentage', 'Fixed Amount', 'None'];
   const occasionOptions = [
     'Wedding',
@@ -1158,13 +1158,11 @@ const AddBoutique = () => {
           galleryImages: [],
           existingGallery: product.galleryImages || [],
           availabilityMode:
-            product.availabilityMode === 'all'
-              ? 'All'
-              : product.availabilityMode === 'rental'
-                ? 'Available For Rental'
-                : 'Available For Purchase',
-          availableForPurchase: product.availabilityMode !== 'rental',
-          availableForRental: product.availabilityMode !== 'purchase',
+            product.availabilityMode === 'rental'
+              ? 'Available For Rental'
+              : 'Available For Purchase',
+          availableForPurchase: product.availabilityMode === 'purchase',
+          availableForRental: product.availabilityMode === 'rental',
           unitPrice: product.buyPricing?.unitPrice || '',
           discountType:
             product.buyPricing?.discountType === 'none'
@@ -1266,7 +1264,7 @@ const AddBoutique = () => {
     if (!formData.category) {
       return 'Please select a category';
     }
-    if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) {
+    if (formData.availableForPurchase && (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0)) {
       return 'Valid unit price is required';
     }
     if (!formData.description.trim()) {
@@ -1277,6 +1275,9 @@ const AddBoutique = () => {
     }
     if (formData.availableForRental && (!formData.minimumDays || parseInt(formData.minimumDays) <= 0)) {
       return 'Minimum rental days is required';
+    }
+    if (!formData.availableForPurchase && !formData.availableForRental) {
+      return 'Please select at least one availability option (Purchase or Rental)';
     }
     return null;
   };
@@ -1373,10 +1374,7 @@ const AddBoutique = () => {
     const formDataToSend = new FormData();
 
     // Availability Mode Mapping
-    let mode = 'purchase';
-    if (formData.availableForPurchase && formData.availableForRental) mode = 'all';
-    else if (formData.availableForRental) mode = 'rental';
-    else if (formData.availableForPurchase) mode = 'purchase';
+    let mode = formData.availableForRental ? 'rental' : 'purchase';
 
     // 1. Basic Info
     formDataToSend.append('name', formData.productName);

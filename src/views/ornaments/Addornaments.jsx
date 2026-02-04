@@ -344,7 +344,7 @@ const AddOrnaments = () => {
     thumbnailImage: null,
     galleryImages: [],
     existingGallery: [],
-    availabilityMode: 'All',
+    availabilityMode: 'Available For Purchase',
     availableForPurchase: true,
     availableForRental: false,
     unitPrice: '',
@@ -404,7 +404,7 @@ const AddOrnaments = () => {
 
   // ========== OPTIONS ==========
   const unitOptions = ['Each', 'Set', 'Pair', 'Dozen', 'Gram', 'Kilogram'];
-  const availabilityOptions = ['All', 'Available For Purchase', 'Available For Rental'];
+  const availabilityOptions = ['Available For Purchase', 'Available For Rental'];
   const discountOptions = ['Percentage', 'Fixed Amount', 'None'];
   const occasionOptions = ['Wedding', 'Valentine', 'Festive', 'Daily Wear', 'Casual Outings', 'Anniversary', 'Engagement', 'Birthday'];
   const collectionOptions = ['For Men', 'For Women', 'For Bride', 'For Groom', 'For Kids'];
@@ -790,13 +790,11 @@ const AddOrnaments = () => {
           galleryImages: [],
           existingGallery: product.galleryImages || [],
           availabilityMode:
-            product.availabilityMode === 'all'
-              ? 'All'
-              : product.availabilityMode === 'rental'
-                ? 'Available For Rental'
-                : 'Available For Purchase',
-          availableForPurchase: product.availabilityMode !== 'rental',
-          availableForRental: product.availabilityMode !== 'purchase',
+            product.availabilityMode === 'rental'
+              ? 'Available For Rental'
+              : 'Available For Purchase',
+          availableForPurchase: product.availabilityMode === 'purchase',
+          availableForRental: product.availabilityMode === 'rental',
           unitPrice: product.buyPricing?.unitPrice || '',
           discountType:
             product.buyPricing?.discountType === 'none'
@@ -884,7 +882,7 @@ const AddOrnaments = () => {
     if (!formData.category) {
       return 'Please select a category';
     }
-    if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) {
+    if (formData.availableForPurchase && (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0)) {
       return 'Valid unit price is required';
     }
     if (!formData.description.trim()) {
@@ -895,6 +893,9 @@ const AddOrnaments = () => {
     }
     if (formData.availableForRental && (!formData.minimumDays || parseInt(formData.minimumDays) <= 0)) {
       return 'Minimum rental days is required';
+    }
+    if (!formData.availableForPurchase && !formData.availableForRental) {
+      return 'Please select at least one availability option (Purchase or Rental)';
     }
     return null;
   };
@@ -931,10 +932,7 @@ const AddOrnaments = () => {
     };
 
     // Availability Mode Mapping
-    let mode = 'purchase';
-    if (formData.availableForPurchase && formData.availableForRental) mode = 'all';
-    else if (formData.availableForRental) mode = 'rental';
-    else if (formData.availableForPurchase) mode = 'purchase';
+    let mode = formData.availableForRental ? 'rental' : 'purchase';
 
     // 1. Basic Info
     formDataToSend.append('name', formData.productName);
