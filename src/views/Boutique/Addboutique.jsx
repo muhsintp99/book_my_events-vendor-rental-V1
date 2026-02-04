@@ -617,7 +617,7 @@ const AddBoutique = () => {
     freeShipping: false,
     flatRateShipping: false,
     shippingPrice: '',
-minShippingDays: '', // 👈 ADD
+    minShippingDays: '', // 👈 ADD
 
     takeaway: false,
     takeawayAddress: '',
@@ -720,7 +720,16 @@ minShippingDays: '', // 👈 ADD
   ];
   // ========== HANDLERS ==========
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      if (field === 'availableForPurchase' && value === true) {
+        newData.availableForRental = false;
+      }
+      if (field === 'availableForRental' && value === true) {
+        newData.availableForPurchase = false;
+      }
+      return newData;
+    });
 
     if (field === 'unitPrice' || field === 'tax' || field === 'discountType' || field === 'discountValue') {
       const unitPrice = field === 'unitPrice' ? Number(value) : Number(formData.unitPrice);
@@ -892,9 +901,7 @@ minShippingDays: '', // 👈 ADD
     if (!customColor) return;
 
     // Check if color already exists (case-insensitive)
-    const colorExists = formData.availableColors.some(
-      color => color.toLowerCase() === customColor.toLowerCase()
-    );
+    const colorExists = formData.availableColors.some((color) => color.toLowerCase() === customColor.toLowerCase());
 
     if (!colorExists) {
       handleChange('availableColors', [...formData.availableColors, customColor]);
@@ -1364,9 +1371,9 @@ minShippingDays: '', // 👈 ADD
 
     // Availability Mode Mapping
     let mode = 'purchase';
-    if (formData.availabilityMode === 'All') mode = 'all';
-    else if (formData.availabilityMode === 'Available For Rental') mode = 'rental';
-    else if (formData.availabilityMode === 'Available For Purchase') mode = 'purchase';
+    if (formData.availableForPurchase && formData.availableForRental) mode = 'all';
+    else if (formData.availableForRental) mode = 'rental';
+    else if (formData.availableForPurchase) mode = 'purchase';
 
     // 1. Basic Info
     formDataToSend.append('name', formData.productName);
@@ -1472,19 +1479,18 @@ minShippingDays: '', // 👈 ADD
     );
 
     formDataToSend.append(
-  'shipping',
-  JSON.stringify({
-    free: formData.freeShipping,
-    flatRate: formData.flatRateShipping,
-    minShippingDays: formData.minShippingDays, // ✅ ADD THIS
-    takeaway: formData.takeaway,
-    takeawayLocation: formData.takeawayAddress,
-    pickupLatitude: formData.pickupLatitude,
-    pickupLongitude: formData.pickupLongitude,
-    price: formData.shippingPrice
-  })
-);
-
+      'shipping',
+      JSON.stringify({
+        free: formData.freeShipping,
+        flatRate: formData.flatRateShipping,
+        minShippingDays: formData.minShippingDays, // ✅ ADD THIS
+        takeaway: formData.takeaway,
+        takeawayLocation: formData.takeawayAddress,
+        pickupLatitude: formData.pickupLatitude,
+        pickupLongitude: formData.pickupLongitude,
+        price: formData.shippingPrice
+      })
+    );
 
     formDataToSend.append('tags', JSON.stringify(formData.tags));
     formDataToSend.append('occasions', JSON.stringify(formData.selectedOccasions));
@@ -1831,25 +1837,6 @@ minShippingDays: '', // 👈 ADD
                         Add
                       </Button>
                     </Stack>
-                  </Box>
-
-                  {/* Boutique Chat Toggle */}
-                  <Box sx={{ mt: 2, p: 1.5, borderRadius: '12px', bgcolor: alpha(THEME.info, 0.05), border: `1px dashed ${alpha(THEME.info, 0.3)}` }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={formData.allowBoutiqueChat}
-                          onChange={(e) => handleChange('allowBoutiqueChat', e.target.checked)}
-                          color="info"
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ color: THEME.dark }}>Enable Boutique Chat Feature</Typography>
-                          <Typography variant="caption" color="text.secondary">Allows customers to chat with you directly from the official site</Typography>
-                        </Box>
-                      }
-                    />
                   </Box>
                 </Grid>
               </Grid>
@@ -3170,59 +3157,59 @@ minShippingDays: '', // 👈 ADD
                 />
               )}
 
-  {/* MINIMUM SHIPPING DAYS – SEPARATE COLORED BOX */}
-  <Box
-    sx={{
-      mt: 2,
-      p: 2,
-      borderRadius: '14px',
-      background: 'linear-gradient(135deg, #F0F9FF, #E0F2FE)',
-      border: '1.5px solid #38BDF8',
-      boxShadow: '0 6px 20px rgba(56, 189, 248, 0.15)'
-    }}
-  >
-    <Box sx={{ mb: 1 }}>
-      <Typography fontWeight={700} color="#0369A1">
-        Minimum Shipping Days
-      </Typography>
-      <Typography variant="caption" color="#475569">
-        Minimum number of days required to dispatch the product
-      </Typography>
-    </Box>
-  
-    <TextField
-      fullWidth
-      type="number"
-      placeholder="e.g. 3"
-      value={formData.minimumShippingDays}
-      onChange={(e) => handleChange('minimumShippingDays', e.target.value)}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <Box
-              sx={{
-                px: 1.5,
-                py: 0.5,
-                borderRadius: '8px',
-                background: '#38BDF8',
-                color: 'white',
-                fontWeight: 700,
-                fontSize: '0.75rem'
-              }}
-            >
-              DAYS
-            </Box>
-          </InputAdornment>
-        )
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          borderRadius: '12px',
-          backgroundColor: 'white'
-        }
-      }}
-    />
-  </Box>
+              {/* MINIMUM SHIPPING DAYS – SEPARATE COLORED BOX */}
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #F0F9FF, #E0F2FE)',
+                  border: '1.5px solid #38BDF8',
+                  boxShadow: '0 6px 20px rgba(56, 189, 248, 0.15)'
+                }}
+              >
+                <Box sx={{ mb: 1 }}>
+                  <Typography fontWeight={700} color="#0369A1">
+                    Minimum Shipping Days
+                  </Typography>
+                  <Typography variant="caption" color="#475569">
+                    Minimum number of days required to dispatch the product
+                  </Typography>
+                </Box>
+
+                <TextField
+                  fullWidth
+                  type="number"
+                  placeholder="e.g. 3"
+                  value={formData.minimumShippingDays}
+                  onChange={(e) => handleChange('minimumShippingDays', e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Box
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: '8px',
+                            background: '#38BDF8',
+                            color: 'white',
+                            fontWeight: 700,
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          DAYS
+                        </Box>
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      backgroundColor: 'white'
+                    }
+                  }}
+                />
+              </Box>
 
               {/* Takeaway Toggle */}
               <Box
@@ -3394,63 +3381,43 @@ minShippingDays: '', // 👈 ADD
             }}
           >
             <SectionHeader icon={InfoIcon} title="Policies & Status" subtitle="Manage return policies and item visibility" />
+
             <Stack spacing={3}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Return Policy"
-                    multiline
-                    rows={3}
-                    placeholder="e.g. 7 days return policy, items must be in original condition..."
-                    value={formData.returnPolicy}
-                    onChange={(e) => handleChange('returnPolicy', e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '14px',
-                        backgroundColor: '#F9FAFB'
-                      }
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Cancellation Policy"
-                    multiline
-                    rows={3}
-                    placeholder="e.g. Cancel within 24 hours for full refund..."
-                    value={formData.cancellationPolicy}
-                    onChange={(e) => handleChange('cancellationPolicy', e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '14px',
-                        backgroundColor: '#F9FAFB'
-                      }
-                    }}
-                  />
-                </Grid>
-              </Grid>
+              {/* Return Policy */}
+              <TextField
+                fullWidth
+                label="Return Policy"
+                multiline
+                rows={3}
+                placeholder="e.g. 7 days return policy, items must be in original condition..."
+                value={formData.returnPolicy}
+                onChange={(e) => handleChange('returnPolicy', e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '14px',
+                    backgroundColor: '#F9FAFB'
+                  }
+                }}
+              />
+
+              {/* Cancellation Policy */}
+              <TextField
+                fullWidth
+                label="Cancellation Policy"
+                multiline
+                rows={3}
+                placeholder="e.g. Cancel within 24 hours for full refund..."
+                value={formData.cancellationPolicy}
+                onChange={(e) => handleChange('cancellationPolicy', e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '14px',
+                    backgroundColor: '#F9FAFB'
+                  }
+                }}
+              />
 
               <Divider />
-
-              <Stack direction="row" spacing={4} alignItems="center">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography fontWeight={700}>Top Pick Status:</Typography>
-                  <Switch checked={formData.isTopPick} onChange={(e) => handleChange('isTopPick', e.target.checked)} color="primary" />
-                  <Typography variant="caption" color="text.secondary">
-                    Show this item in 'Top Picks' section
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography fontWeight={700}>Item Visibility:</Typography>
-                  <Switch checked={formData.isActive} onChange={(e) => handleChange('isActive', e.target.checked)} color="success" />
-                  <Typography variant="caption" color="text.secondary">
-                    {formData.isActive ? 'Item is live' : 'Item is hidden'}
-                  </Typography>
-                </Box>
-              </Stack>
             </Stack>
           </Paper>
           {/* 8. Related Items Section */}
