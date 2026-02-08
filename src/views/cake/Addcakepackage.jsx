@@ -860,49 +860,10 @@ const AddCakePackage = () => {
     setSelectedAddons((prev) => {
       const exists = prev.find((item) => item.addonId === addonId);
       if (exists) {
-        // Deselect addon completely
         return prev.filter((item) => item.addonId !== addonId);
       } else {
-        // Select addon (default to all/empty variants which implies all in backend)
         return [...prev, { addonId, selectedItems: [] }];
       }
-    });
-  };
-
-  const handleVariantToggle = (addonId, variantId) => {
-    setSelectedAddons((prev) => {
-      const existingAddon = prev.find((item) => item.addonId === addonId);
-
-      if (!existingAddon) {
-        // Addon not selected yet -> Select it properly with this SPECIFIC variant
-        return [...prev, { addonId, selectedItems: [variantId] }];
-      }
-
-      // Addon is already selected
-      let newSelectedItems;
-      const currentItems = existingAddon.selectedItems || [];
-
-      if (currentItems.length === 0) {
-        // Currently "All" are selected (implied). User clicked one, so switch to "Specific" mode.
-        // If we switch to specific, we assume they want ONLY the one they clicked?
-        // OR they want to toggle the one they clicked OFF (meaning: All EXCEPT this one)?
-        // Usually, clicking an item in "All" mode implies selecting JUST that item.
-        newSelectedItems = [variantId];
-      } else {
-        // Already in specific mode
-        if (currentItems.includes(variantId)) {
-          newSelectedItems = currentItems.filter((id) => id !== variantId);
-        } else {
-          newSelectedItems = [...currentItems, variantId];
-        }
-      }
-
-      // If deselecting the last item, do we revert to "All" or remove addon?
-      // Let's keep it consistent: If list becomes empty, it means "All" again. change logic if user prefers "None"
-      // User request "i want elect the pricing fields".
-      // Let's assume empty array = All.
-
-      return prev.map((item) => (item.addonId === addonId ? { ...item, selectedItems: newSelectedItems } : item));
     });
   };
 
@@ -1996,140 +1957,141 @@ const AddCakePackage = () => {
               </Typography>
             </Box>
           ) : (
-            <Grid container spacing={4}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}>
               {availableAddons.map((addon) => {
-                const selection = selectedAddons.find((s) => s.addonId === addon._id);
-                const isAddonActive = !!selection;
-                const selectedVariants = selection?.selectedItems || [];
-                const isAllSelected = isAddonActive && selectedVariants.length === 0;
+                const isSelected = selectedAddons.some((s) => s.addonId === addon._id);
 
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={addon._id}>
-                    <FeatureGroupBox
-                      sx={{
-                        height: '100%',
-                        borderRadius: '24px',
-                        p: 3,
-                        background: isAddonActive ? `linear-gradient(135deg, ${alpha(PINK, 0.05)}, #ffffff)` : '#FFFFFF', // Lighter background
-                        boxShadow: isAddonActive ? `0 8px 24px ${alpha(PINK, 0.25)}` : '0 12px 32px rgba(17,24,39,0.06)',
-                        border: isAddonActive ? `1.5px solid ${PINK}` : '1px solid #F1F5F9',
-                        position: 'relative',
-                        transition: 'all 0.25s ease',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: `0 10px 26px ${alpha(PINK, 0.18)}`
+                  <Box
+                    key={addon._id}
+                    onClick={() => handleAddonToggle(addon._id)}
+                    sx={{
+                      width: '330px',
+                      flexShrink: 0,
+                      position: 'relative',
+                      borderRadius: '24px',
+                      cursor: 'pointer',
+                      bgcolor: isSelected ? alpha(PINK, 0.04) : '#ffffff',
+                      border: '2px solid',
+                      borderColor: isSelected ? PINK : '#F1F5F9',
+                      boxShadow: isSelected ? `0 12px 28px ${alpha(PINK, 0.15)}` : '0 8px 24px rgba(17,24,39,0.04)',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      '&:hover': {
+                        transform: 'translateY(-10px)',
+                        borderColor: isSelected ? PINK : alpha(PINK, 0.4),
+                        boxShadow: isSelected ? `0 25px 50px ${alpha(PINK, 0.25)}` : '0 20px 45px rgba(17,24,39,0.1)',
+                        '& .addon-img': {
+                          transform: 'scale(1.1)'
                         }
-                      }}
-                    >
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                        <Typography sx={{ fontWeight: 900, fontSize: '16px', color: isAddonActive ? '#111827' : '#374151' }}>
-                          {addon.title}
-                        </Typography>
-                        <Checkbox
-                          checked={isAddonActive}
-                          onClick={() => handleAddonToggle(addon._id)}
-                          disableRipple
-                          sx={{
-                            p: 0,
-                            color: '#CBD5E1',
-                            '&.Mui-checked': { color: PINK }
-                          }}
-                        />
-                      </Stack>
-
-                      <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', mb: 2 }}>
-                        {addon.description && addon.description.substring(0, 50)}
-                        {addon.description && addon.description.length > 50 ? '...' : ''}
-                      </Typography>
-
-                      {/* Price List Variants */}
-                      {addon.priceList && addon.priceList.length > 0 && (
-                        <Stack spacing={1} sx={{ mb: 3 }}>
-                          {addon.priceList.map((variant) => {
-                            const isVariantSelected = isAllSelected || selectedVariants.includes(variant._id);
-                            return (
-                              <Box
-                                key={variant._id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleVariantToggle(addon._id, variant._id);
-                                }}
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  p: 1.5,
-                                  borderRadius: '12px',
-                                  cursor: 'pointer',
-                                  bgcolor: isVariantSelected ? alpha(PINK, 0.1) : '#FFFFFF',
-                                  border: '1px solid',
-                                  borderColor: isVariantSelected ? PINK : '#E5E7EB',
-                                  transition: 'all 0.2s',
-                                  '&:hover': {
-                                    borderColor: PINK,
-                                    bgcolor: alpha(PINK, 0.05)
-                                  }
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Checkbox
-                                    size="small"
-                                    checked={isVariantSelected}
-                                    disableRipple
-                                    sx={{
-                                      p: 0,
-                                      color: '#CBD5E1',
-                                      '&.Mui-checked': { color: PINK }
-                                    }}
-                                  />
-                                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#374151', fontSize: '13px' }}>
-                                    {variant.name}
-                                  </Typography>
-                                </Box>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    fontWeight: 800,
-                                    color: isVariantSelected ? '#FFF' : PINK,
-                                    bgcolor: isVariantSelected ? PINK : '#FFF',
-                                    px: 1.5,
-                                    py: 0.5,
-                                    borderRadius: '8px',
-                                    border: `1px solid ${PINK}`
-                                  }}
-                                >
-                                  ₹{variant.price}
-                                </Typography>
-                              </Box>
-                            );
-                          })}
-                        </Stack>
-                      )}
-
+                      }
+                    }}
+                  >
+                    {/* Selection Indicator Badge */}
+                    {isSelected && (
                       <Box
                         sx={{
+                          position: 'absolute',
+                          top: 14,
+                          right: 14,
                           width: 32,
                           height: 32,
-                          borderRadius: '50%',
+                          bgcolor: PINK,
+                          borderRadius: '12px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: isAddonActive ? alpha(PINK, 0.15) : '#F9FAFB',
-                          color: isAddonActive ? PINK : '#9CA3AF',
-                          mt: 'auto' // push to bottom if flex column
+                          color: 'white',
+                          zIndex: 2,
+                          boxShadow: `0 8px 16px ${alpha(PINK, 0.4)}`,
+                          animation: 'scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                         }}
                       >
-                        {addon.icon ? (
-                          <img src={addon.icon} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                        ) : (
-                          <StarIcon sx={{ fontSize: 18 }} />
-                        )}
+                        <StarIcon sx={{ fontSize: 18 }} />
                       </Box>
-                    </FeatureGroupBox>
-                  </Grid>
+                    )}
+
+                    {/* Image Area */}
+                    <Box sx={{ width: '100%', height: 180, bgcolor: '#F9FAFB', overflow: 'hidden', position: 'relative' }}>
+                      {addon.image ? (
+                        <img
+                          src={addon.image}
+                          alt={addon.title}
+                          className="addon-img"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                          }}
+                        />
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#CBD5E1' }}>
+                          <CakeIcon sx={{ fontSize: 48 }} />
+                        </Box>
+                      )}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: isSelected ? alpha(PINK, 0.1) : 'transparent',
+                          transition: '0.3s'
+                        }}
+                      />
+                    </Box>
+
+                    {/* Content Area */}
+                    <Box sx={{ p: 2.5, textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: '15px',
+                          color: isSelected ? PINK : '#111827',
+                          mb: 1,
+                          lineHeight: 1.3,
+                          letterSpacing: '-0.01em',
+                          minHeight: '40px',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {addon.title}
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 900,
+                            color: isSelected ? PINK : '#6B7280',
+                            fontSize: '18px',
+                            letterSpacing: '-0.02em',
+                            position: 'relative',
+                            '&::after': isSelected ? {
+                              content: '""',
+                              position: 'absolute',
+                              bottom: -2,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: '20px',
+                              height: '2px',
+                              bgcolor: PINK,
+                              borderRadius: '2px'
+                            } : {}
+                          }}
+                        >
+                          ₹{addon.price}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           )}
         </PremiumCard>
 
@@ -2396,7 +2358,9 @@ const AddCakePackage = () => {
           </Box>
         </PremiumCard>
 
-        {/* <PremiumCard sx={{ mb: 8 }}>
+        {/* 🤝 SECTION 7: FREQUENTLY BOUGHT TOGETHER */}
+        <PremiumCard sx={{ mb: 8 }}>
+          {/* Header */}
           <Box sx={{ mb: 4 }}>
             <Typography
               sx={{
@@ -2422,6 +2386,7 @@ const AddCakePackage = () => {
             </Typography>
           </Box>
 
+          {/* Selection Type */}
           <Box
             sx={{
               p: 3,
@@ -2440,8 +2405,8 @@ const AddCakePackage = () => {
               value={relatedLinkBy}
               onChange={(e) => {
                 setRelatedLinkBy(e.target.value);
-                setRelatedItems([]); 
-                setRelatedOptions([]); 
+                setRelatedItems([]); // reset selection
+                setRelatedOptions([]); // reset data
               }}
             >
               <FormControlLabel
@@ -2460,7 +2425,7 @@ const AddCakePackage = () => {
 
           <Box
             onClick={() => {
-              fetchRelatedOptions(); 
+              fetchRelatedOptions(); // ✅ FETCH DATA
               setOpenRelatedModal(true);
             }}
             sx={{
@@ -2596,9 +2561,7 @@ const AddCakePackage = () => {
             </Box>
           )}
 
-         
-        </PremiumCard> */}
-         {/* ✅ FINAL ACTION BAR */}
+          {/* ✅ FINAL ACTION BAR */}
           <Box
             sx={{
               mt: 6,
@@ -2653,6 +2616,7 @@ const AddCakePackage = () => {
               {submitting ? <CircularProgress size={24} color="inherit" /> : 'Publish Package'}
             </Button>
           </Box>
+        </PremiumCard>
       </Box>
       {/* 🔽 ADD RELATED ITEM MODAL HERE */}
       <Dialog open={openRelatedModal} onClose={() => setOpenRelatedModal(false)} maxWidth="sm" fullWidth>
