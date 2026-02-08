@@ -29,7 +29,6 @@ import {
   CurrencyRupee,
   LocalOffer,
   Title as TitleIcon,
-  Description,
   Image,
   AddCircle,
   RemoveCircle
@@ -154,9 +153,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 const SaveButton = styled(StyledButton, {
   shouldForwardProp: (prop) => prop !== '$isEditing'
 })(({ theme, $isEditing }) => ({
-  background: $isEditing
-    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+  background: $isEditing ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
   color: '#fff',
   border: 'none',
   minWidth: 260,
@@ -164,9 +161,7 @@ const SaveButton = styled(StyledButton, {
   padding: theme.spacing(2, 6),
   boxShadow: '0 10px 20px rgba(30, 60, 114, 0.2)',
   '&:hover': {
-    background: $isEditing
-      ? 'linear-gradient(135deg, #5a6fd6 0%, #6a4491 100%)'
-      : 'linear-gradient(135deg, #2a5298 0%, #1e3c72 100%)',
+    background: $isEditing ? 'linear-gradient(135deg, #5a6fd6 0%, #6a4491 100%)' : 'linear-gradient(135deg, #2a5298 0%, #1e3c72 100%)',
     boxShadow: '0 15px 30px rgba(30, 60, 114, 0.3)',
     transform: 'translateY(-3px)'
   },
@@ -177,15 +172,15 @@ const SaveButton = styled(StyledButton, {
 }));
 
 const CakeAddonsAdmin = () => {
-  const [addons, setAddons] = useState([{ id: 1, name: '', price: '' }]);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState(null);
-  const [iconFile, setIconFile] = useState(null);
+  const [price, setPrice] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [saved, setSaved] = useState(false);
   const [existingAddons, setExistingAddons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [providerId, setProviderId] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
@@ -219,88 +214,58 @@ const CakeAddonsAdmin = () => {
     }
   }, [providerId]);
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const fetchAddons = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`https://api.bookmyevent.ae/api/cake-addons/provider/${providerId}`);
-      console.log('API Response for Addons:', res.data);
+
       if (res.data.success) {
         setExistingAddons(res.data.data || []);
       } else {
         setExistingAddons([]);
       }
     } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Failed to fetch existing addons');
-      setExistingAddons([]);
+      console.error(err);
+      setError('Failed to fetch addons');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddRow = () => {
-    setAddons([...addons, { id: Date.now(), name: '', price: '' }]);
-  };
-
-  const handleRemoveRow = (id) => {
-    if (addons.length > 1) {
-      setAddons(addons.filter((addon) => addon.id !== id));
-    }
-  };
-
-  const handleChange = (id, field, value) => {
-    setAddons(addons.map((addon) => (addon.id === id ? { ...addon, [field]: value } : addon)));
-  };
-
-  const handleIconUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIconFile(file);
-      setIcon(URL.createObjectURL(file));
-    }
-  };
-
   const handleSave = async () => {
-    if (!title) {
-      setError('Title is required');
-      return;
-    }
-    if (!providerId) {
-      setError('Provider ID not found. Please login again.');
+    if (!title || !price || !imageFile) {
+      setError('Title, price and image are required');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
+
       const formData = new FormData();
       formData.append('title', title);
-      formData.append('description', description);
+      formData.append('price', price);
       formData.append('provider', providerId);
+      formData.append('image', imageFile);
 
-      const priceList = addons.map(a => ({ name: a.name, price: parseFloat(a.price) || 0 }));
-      formData.append('priceList', JSON.stringify(priceList));
-
-      if (iconFile) {
-        formData.append('icon', iconFile);
-      }
-
-      let res;
-      if (editingId) {
-        res = await axios.put(`https://api.bookmyevent.ae/api/cake-addons/${editingId}`, formData);
-      } else {
-        res = await axios.post('https://api.bookmyevent.ae/api/cake-addons', formData);
-      }
+      const res = editingId
+        ? await axios.put(`https://api.bookmyevent.ae/api/cake-addons/${editingId}`, formData)
+        : await axios.post('https://api.bookmyevent.ae/api/cake-addons', formData);
 
       if (res.data.success) {
-        setSaved(true);
-        handleReset();
         fetchAddons();
-        setTimeout(() => setSaved(false), 3000);
+        handleReset();
       }
     } catch (err) {
-      console.error('Save error:', err);
-      setError(err.response?.data?.message || 'Failed to save addon');
+      setError(err.response?.data?.message || 'Save failed');
     } finally {
       setLoading(false);
     }
@@ -309,10 +274,10 @@ const CakeAddonsAdmin = () => {
   const handleEdit = (addon) => {
     setEditingId(addon._id);
     setTitle(addon.title);
-    setDescription(addon.description || '');
-    setIcon(addon.icon);
-    setIconFile(null);
-    setAddons(addon.priceList.map((p, idx) => ({ id: idx, name: p.name, price: p.price.toString() })));
+    setPrice(addon.price);
+    setImagePreview(addon.image);
+    setImageFile(null);
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -335,20 +300,15 @@ const CakeAddonsAdmin = () => {
   const handleReset = () => {
     setEditingId(null);
     setTitle('');
-    setDescription('');
-    setIcon(null);
-    setIconFile(null);
-    setAddons([{ id: 1, name: '', price: '' }]);
+    setPrice('');
+    setImageFile(null);
+    setImagePreview(null);
+    setError(null);
   };
 
-  const calculateTotal = () => {
-    return addons
-      .reduce((sum, addon) => {
-        const price = parseFloat(addon.price) || 0;
-        return sum + price;
-      }, 0)
-      .toFixed(2);
-  };
+
+
+
 
   return (
     <Container maxWidth="lg" sx={{ pt: 2, pb: 3 }}>
@@ -368,7 +328,7 @@ const CakeAddonsAdmin = () => {
               </Typography>
             </Box>
           </Box>
-          <Chip label={`${addons.length} add-on${addons.length !== 1 ? 's' : ''}`} color="primary" variant="outlined" sx={{ mt: 1 }} />
+          <Chip label={`${existingAddons.length} add-on${existingAddons.length !== 1 ? 's' : ''}`} color="primary" variant="outlined" sx={{ mt: 1 }} />
         </Box>
 
         {/* Alerts */}
@@ -402,7 +362,7 @@ const CakeAddonsAdmin = () => {
                   <TextField
                     fullWidth
                     label="Add-ons Title"
-                    placeholder="Premium Frosting & Decoration Options"
+                    placeholder="e.g. Sparkler Candle"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     InputProps={{
@@ -412,125 +372,29 @@ const CakeAddonsAdmin = () => {
                         </InputAdornment>
                       )
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                    }}
                   />
 
                   <TextField
                     fullWidth
-                    multiline
-                    rows={3}
-                    label="Description"
-                    placeholder="Describe what makes these add-ons special..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    label="Price"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Description fontSize="small" />
+                          <CurrencyRupee />
                         </InputAdornment>
                       )
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                    }}
                   />
+
+
                 </Stack>
               </CardContent>
             </Card>
 
-            {/* Add-ons Pricing */}
-            <Card sx={{ mb: 4, borderRadius: 3 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CurrencyRupee color="primary" sx={{ mr: 2 }} />
-                    <Typography variant="h6" fontWeight={600}>
-                      Add-ons Pricing
-                    </Typography>
-                  </Box>
-                  <Chip label={`Total: ₹${calculateTotal()}`} color="primary" icon={<CurrencyRupee />} variant="filled" />
-                </Box>
-
-                <Stack spacing={2}>
-                  {addons.map((addon, index) => (
-                    <PriceCard key={addon.id}>
-                      <CardContent>
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid size={{ xs: 12, sm: 5 }}>
-                            <TextField
-                              fullWidth
-                              label="Add-on Name"
-                              placeholder="Chocolate Ganache Drizzle"
-                              value={addon.name}
-                              onChange={(e) => handleChange(addon.id, 'name', e.target.value)}
-                              size="small"
-                              sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 1 }
-                              }}
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 8, sm: 5 }}>
-                            <TextField
-                              fullWidth
-                              label="Price"
-                              placeholder="9.99"
-                              value={addon.price}
-                              onChange={(e) => handleChange(addon.id, 'price', e.target.value)}
-                              size="small"
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <CurrencyRupee fontSize="small" />
-                                  </InputAdornment>
-                                )
-                              }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 1 }
-                              }}
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 4, sm: 2 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                              <IconButton
-                                color="error"
-                                onClick={() => handleRemoveRow(addon.id)}
-                                disabled={addons.length === 1}
-                                size="small"
-                              >
-                                <RemoveCircle />
-                              </IconButton>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </PriceCard>
-                  ))}
-                </Stack>
-
-                <StyledButton
-                  startIcon={<AddCircle />}
-                  onClick={handleAddRow}
-                  variant="outlined"
-                  color="primary"
-                  fullWidth
-                  sx={{ mt: 3 }}
-                  disabled={loading}
-                >
-                  Add New Add-on Row
-                </StyledButton>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Right Column - Image & Preview */}
-          <Grid size={{ xs: 12, md: 4 }}>
             {/* Image Upload */}
-            {/* Icon Upload */}
-            <Card xs={12} sx={{ mb: 4, borderRadius: 3 }}>
+            <Card sx={{ mb: 4, borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <Image color="primary" sx={{ mr: 2 }} />
@@ -539,28 +403,35 @@ const CakeAddonsAdmin = () => {
                   </Typography>
                 </Box>
 
-                <UploadBox onClick={() => document.getElementById('icon-upload')?.click()}>
-                  <input id="icon-upload" hidden type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} />
+                <UploadBox onClick={() => document.getElementById('image-upload').click()}>
+                  <input id="image-upload" hidden type="file" accept="image/*" onChange={handleImageUpload} />
 
-                  {icon ? (
-                    <Stack spacing={2} alignItems="center">
-                      <Avatar src={icon} sx={{ width: 80, height: 80, bgcolor: 'grey.100' }} />
-                      <Button variant="outlined" startIcon={<CloudUpload />} size="small">
-                        Change Icon
-                      </Button>
-                    </Stack>
+                  {imagePreview ? (
+                    <Avatar
+                      src={imagePreview}
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: 3,
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                      }}
+                    />
                   ) : (
-                    <Stack spacing={1.5} alignItems="center">
-                      <AddCircle sx={{ fontSize: 56, color: 'text.secondary' }} />
-                      <Typography variant="body1">Upload an add-on icon</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        SVG or PNG (icon style)
-                      </Typography>
-                    </Stack>
+                    <Box sx={{ py: 2 }}>
+                      <CloudUpload sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                      <Typography color="text.secondary">Upload Add-on Image</Typography>
+                    </Box>
                   )}
                 </UploadBox>
               </CardContent>
             </Card>
+
+
+          </Grid>
+
+          {/* Right Column - Image & Preview */}
+          <Grid size={{ xs: 12, md: 4 }}>
+
 
             {/* Preview Card */}
             <Card sx={{ borderRadius: 3, border: '2px solid', borderColor: 'primary.light' }}>
@@ -576,38 +447,13 @@ const CakeAddonsAdmin = () => {
                   <Typography variant="body1">{title || 'Your add-ons title will appear here'}</Typography>
                 </Box>
 
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Add-ons List
-                  </Typography>
-                  <Stack spacing={1}>
-                    {addons.map((addon, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          p: 1,
-                          borderRadius: 1,
-                          bgcolor: 'grey.50'
-                        }}
-                      >
-                        <Typography variant="body2">{addon.name || 'Add-on name'}</Typography>
-                        <Typography variant="body2" fontWeight={600}>
-                          {addon.price ? `₹${addon.price}` : '₹0.00'}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-
                 <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Typography variant="body1" fontWeight={600}>
-                      Total
+                      Price
                     </Typography>
                     <Typography variant="body1" fontWeight={700} color="primary">
-                      ₹{calculateTotal()}
+                      ₹{price || '0.00'}
                     </Typography>
                   </Box>
                 </Box>
@@ -635,7 +481,7 @@ const CakeAddonsAdmin = () => {
           <Box sx={{ display: 'flex', gap: 2 }}>
             <StyledButton
               variant="outlined"
-              color={editingId ? "error" : "inherit"}
+              color={editingId ? 'error' : 'inherit'}
               onClick={handleReset}
               disabled={loading}
               startIcon={editingId ? <RemoveCircle /> : <AddCircle />}
@@ -651,7 +497,7 @@ const CakeAddonsAdmin = () => {
               fullWidth={false}
               sx={{ minWidth: 200 }}
             >
-              {loading ? 'Processing...' : (editingId ? 'Update Add-ons' : 'Save Add-ons')}
+              {loading ? 'Processing...' : editingId ? 'Update Add-ons' : 'Save Add-ons'}
             </SaveButton>
           </Box>
         </Box>
@@ -687,18 +533,41 @@ const CakeAddonsAdmin = () => {
               existingAddons.map((item, index) => (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item._id || `addon-${index}`}>
                   <PremiumCard>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 2
+                      }}
+                    >
                       <GlassIcon>
-                        {item.icon ? (
-                          <Box component="img" src={item.icon} alt={item.title} sx={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                        {item.image ? (
+                          <Box
+                            component="img"
+                            src={item.image}
+                            alt={item.title}
+                            sx={{
+                              width: '80%',
+                              height: '80%',
+                              objectFit: 'contain'
+                            }}
+                          />
                         ) : (
-                          <LocalOffer sx={{ color: 'primary.light', fontSize: 32 }} />
+                          <LocalOffer
+                            sx={{
+                              color: 'primary.light',
+                              fontSize: 32
+                            }}
+                          />
                         )}
                       </GlassIcon>
+
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <ActionButton size="small" onClick={() => handleEdit(item)}>
                           <Edit fontSize="small" />
                         </ActionButton>
+
                         <ActionButton size="small" variant="delete" onClick={() => handleDelete(item._id)}>
                           <Delete fontSize="small" />
                         </ActionButton>
@@ -709,55 +578,33 @@ const CakeAddonsAdmin = () => {
                       {item.title}
                     </Typography>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        mb: 3,
-                        lineHeight: 1.7,
-                        minHeight: '5.1em',
-                        maxHeight: '5.1em',
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      {item.description || 'Professional addon collection for bespoke event cakes.'}
-                    </Typography>
 
                     <Box sx={{ mt: 'auto' }}>
                       <Divider sx={{ mb: 2, borderColor: alpha('#000', 0.04) }} />
-                      <Stack spacing={1.2}>
-                        {item.priceList && item.priceList.map((p, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              p: 1.5,
-                              borderRadius: 2,
-                              bgcolor: alpha('#FF9A9E', 0.04),
-                              border: '1px solid',
-                              borderColor: alpha('#FF9A9E', 0.1),
-                              transition: 'all 0.2s ease',
-                              '&:hover': {
-                                transform: 'translateX(5px)',
-                                bgcolor: alpha('#FF9A9E', 0.08)
-                              }
-                            }}
-                          >
-                            <Typography variant="body2" fontWeight={700} sx={{ color: '#2d3748' }}>
-                              {p.name}
-                            </Typography>
-                            <Typography variant="body2" fontWeight={800} color="primary.main">
-                              ₹{p.price}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Stack>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: alpha('#FF9A9E', 0.04),
+                          border: '1px solid',
+                          borderColor: alpha('#FF9A9E', 0.1),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'translateX(5px)',
+                            bgcolor: alpha('#FF9A9E', 0.08)
+                          }
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight={700} sx={{ color: '#2d3748' }}>
+                          Price
+                        </Typography>
+                        <Typography variant="body2" fontWeight={800} color="primary.main">
+                          ₹{item.price}
+                        </Typography>
+                      </Box>
                     </Box>
                   </PremiumCard>
                 </Grid>
