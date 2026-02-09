@@ -464,10 +464,10 @@ const AddPhotographyPackage = () => {
             />
             <TextField 
               fullWidth 
-              label="Advance Booking Amount (%)" 
+              label="Advance Booking Amount" 
               value={advanceBookingAmount} 
               onChange={e => setAdvanceBookingAmount(e.target.value)} 
-              placeholder="e.g. 50%"
+              placeholder="e.g. 15000"
             />
           </Stack>
 
