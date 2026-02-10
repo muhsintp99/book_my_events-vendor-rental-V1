@@ -180,22 +180,22 @@
 // const CreateAuditorium = () => {
 //   const { id } = useParams();
 //   const location = useLocation();
-  // useEffect(() => {
-  //   const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
-  //   const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
-  //   if (!alreadyRefreshed) {
-  //     sessionStorage.setItem(refreshedKey, 'true');
-  //     setTimeout(() => {
-  //       window.location.reload();
-  //     }, 150);
-  //   } else {
-  //     Object.keys(sessionStorage)
-  //       .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
-  //       .forEach((key) => {
-  //         if (key !== refreshedKey) sessionStorage.removeItem(key);
-  //       });
-  //   }
-  // }, [id]);
+// useEffect(() => {
+//   const refreshedKey = id ? `venue-refreshed-${id}` : 'venue-create-refreshed';
+//   const alreadyRefreshed = sessionStorage.getItem(refreshedKey);
+//   if (!alreadyRefreshed) {
+//     sessionStorage.setItem(refreshedKey, 'true');
+//     setTimeout(() => {
+//       window.location.reload();
+//     }, 150);
+//   } else {
+//     Object.keys(sessionStorage)
+//       .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
+//       .forEach((key) => {
+//         if (key !== refreshedKey) sessionStorage.removeItem(key);
+//       });
+//   }
+// }, [id]);
 //   const navigate = useNavigate();
 //   const theme = useTheme();
 //   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -1760,7 +1760,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent, CardMedia, IconButton, Stack, Radio, FormControlLabel, Select, MenuItem, FormControl, InputLabel, Switch, Snackbar, Alert, CircularProgress, Checkbox, Dialog, DialogContent, DialogActions, RadioGroup, Chip } from '@mui/material';
-import { Visibility, Edit } from '@mui/icons-material';
+import { Visibility, Edit, Delete, Add } from '@mui/icons-material';
 import {
   CloudUpload as CloudUploadIcon,
   ArrowBack as ArrowBackIcon,
@@ -1947,7 +1947,7 @@ const CreateAuditorium = () => {
       sessionStorage.setItem(refreshedKey, 'true');
       setTimeout(() => {
         window.location.reload();
-      }, );
+      },);
     } else {
       Object.keys(sessionStorage)
         .filter((key) => key.startsWith('venue-refreshed-') || key === 'venue-create-refreshed')
@@ -1957,13 +1957,13 @@ const CreateAuditorium = () => {
     }
   }, [id]);
   useEffect(() => {
-  if (id) {
-    const fromPackageSelection = sessionStorage.getItem('from-package-selection');
-    if (!fromPackageSelection) {
-      fetchVenue(id);
+    if (id) {
+      const fromPackageSelection = sessionStorage.getItem('from-package-selection');
+      if (!fromPackageSelection) {
+        fetchVenue(id);
+      }
     }
-  }
-}, [id]);
+  }, [id]);
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -1975,30 +1975,30 @@ const CreateAuditorium = () => {
   const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState(id ? 'edit' : 'create');
   const [formData, setFormData] = useState({
-    venueName: '',description: '',
-    venueAddress: '',categories: '',
+    venueName: '', description: '',
+    venueAddress: '', categories: '',
     latitude: '', longitude: '',
-    openingHours: '',closingHours: '', holidayScheduling: '',
-    parkingAvailability: false,parkingCapacity: '',
+    openingHours: '', closingHours: '', holidayScheduling: '',
+    parkingAvailability: false, parkingCapacity: '',
     foodCateringAvailability: false,
     stageLightingAudio: false, wheelchairAccessibility: false,
     securityArrangements: false, wifiAvailability: false,
-    acAvailable: false,nonAcAvailable: false,nonAcDiscount: '',acType: 'Not Specified',
-    washroomsInfo: '',dressingRooms: '',   venueType: '',
-    discount: '',advanceDeposit: '',  cancellationPolicy: '',
-    extraCharges: '',seatingArrangement: '',
-    maxGuestsSeated: '',maxGuestsStanding: '',
-    multipleHalls: false,nearbyTransport: '',
-    accessibilityInfo: '',elderlyAccessibility: false,
-    searchTags: '',selectedPackageIds: [],
+    acAvailable: false, nonAcAvailable: false, nonAcDiscount: '', acType: 'Not Specified',
+    washroomsInfo: '', dressingRooms: '', venueType: '',
+    discount: '', advanceDeposit: '', cancellationPolicy: '',
+    extraCharges: '', seatingArrangement: '',
+    maxGuestsSeated: '', maxGuestsStanding: '',
+    multipleHalls: false, nearbyTransport: '',
+    accessibilityInfo: '', elderlyAccessibility: false,
+    searchTags: '', selectedPackageIds: [],
   });
   const [categories, setCategories] = useState([]);
   const [fetchedPackages, setFetchedPackages] = useState([]);
   const [selectedPackages, setSelectedPackages] = useState([]);
-  const [files, setFiles] = useState({ thumbnail: null, auditoriumImage: null, floorPlan: null, documents: null });
+  const [files, setFiles] = useState({ thumbnail: null, auditoriumImages: [], floorPlan: null, documents: null });
   const [existingImages, setExistingImages] = useState({
     thumbnail: '',
-    auditoriumImage: '',
+    auditoriumImages: [],
     floorPlan: '',
     documents: '',
   });
@@ -2036,27 +2036,27 @@ const CreateAuditorium = () => {
     }
   }, [id]);
   useEffect(() => {
-  const savedFormData = sessionStorage.getItem('tempFormData');
-  if (savedFormData) {
-    setFormData((prev) => ({
-      ...JSON.parse(savedFormData),
-      selectedPackageIds: location.state?.selectedPackages?.map(p => p._id) || prev.selectedPackageIds,
-      foodCateringAvailability: location.state?.selectedPackages?.length > 0 || prev.foodCateringAvailability,
-    }));
-    sessionStorage.removeItem('tempFormData'); // Clean up after restoring
-  }
+    const savedFormData = sessionStorage.getItem('tempFormData');
+    if (savedFormData) {
+      setFormData((prev) => ({
+        ...JSON.parse(savedFormData),
+        selectedPackageIds: location.state?.selectedPackages?.map(p => p._id) || prev.selectedPackageIds,
+        foodCateringAvailability: location.state?.selectedPackages?.length > 0 || prev.foodCateringAvailability,
+      }));
+      sessionStorage.removeItem('tempFormData'); // Clean up after restoring
+    }
 
-  const state = location.state;
-  if (state?.selectedPackages && state.selectedPackages.length > 0) {
-    setSelectedPackages(state.selectedPackages);
-    setFormData((prev) => ({
-      ...prev,
-      selectedPackageIds: state.selectedPackages.map(p => p._id),
-      foodCateringAvailability: true,
-    }));
-    window.history.replaceState({}, document.title); // Clear state after processing
-  }
-}, [location.state]);
+    const state = location.state;
+    if (state?.selectedPackages && state.selectedPackages.length > 0) {
+      setSelectedPackages(state.selectedPackages);
+      setFormData((prev) => ({
+        ...prev,
+        selectedPackageIds: state.selectedPackages.map(p => p._id),
+        foodCateringAvailability: true,
+      }));
+      window.history.replaceState({}, document.title); // Clear state after processing
+    }
+  }, [location.state]);
   useEffect(() => {
     if (id && fetchedPackages.length > 0 && formData.selectedPackageIds.length > 0) {
       setSelectedPackages(fetchedPackages.filter(p => formData.selectedPackageIds.includes(p._id)));
@@ -2233,16 +2233,38 @@ const CreateAuditorium = () => {
     }));
   };
   const handleFileChange = (key) => (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFiles((prev) => ({ ...prev, [key]: file }));
+    const newFiles = Array.from(event.target.files);
+    if (newFiles.length > 0) {
+      if (key === 'auditoriumImages') {
+        setFiles((prev) => ({ ...prev, [key]: [...prev[key], ...newFiles] }));
+      } else {
+        setFiles((prev) => ({ ...prev, [key]: newFiles[0] }));
+      }
     }
   };
   const handleDrop = (key) => (event) => {
     event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setFiles((prev) => ({ ...prev, [key]: file }));
+    const newFiles = Array.from(event.dataTransfer.files);
+    if (newFiles.length > 0) {
+      if (key === 'auditoriumImages') {
+        setFiles((prev) => ({ ...prev, [key]: [...prev[key], ...newFiles] }));
+      } else {
+        setFiles((prev) => ({ ...prev, [key]: newFiles[0] }));
+      }
+    }
+  };
+
+  const handleRemoveFile = (key, index, isExisting = false) => {
+    if (isExisting) {
+      setExistingImages((prev) => ({
+        ...prev,
+        [key]: prev[key].filter((_, i) => i !== index),
+      }));
+    } else {
+      setFiles((prev) => ({
+        ...prev,
+        [key]: prev[key].filter((_, i) => i !== index),
+      }));
     }
   };
   //timeslot
@@ -2262,26 +2284,26 @@ const CreateAuditorium = () => {
   const handleReset = () => {
     setFormData({
       venueName: '', description: '', venueAddress: '',
-      categories: '',latitude: '',longitude: '',
-      openingHours: '',closingHours: '',
+      categories: '', latitude: '', longitude: '',
+      openingHours: '', closingHours: '',
       holidayScheduling: '',
       parkingAvailability: false, parkingCapacity: '',
       foodCateringAvailability: false,
       stageLightingAudio: false, wheelchairAccessibility: false,
       securityArrangements: false, wifiAvailability: false,
-      acAvailable: false,nonAcAvailable: false,acType: 'Not Specified',
-      washroomsInfo: '',dressingRooms: '', venueType: '',discount: '',
-      advanceDeposit: '',cancellationPolicy: '',
-      extraCharges: '',seatingArrangement: '',
+      acAvailable: false, nonAcAvailable: false, acType: 'Not Specified',
+      washroomsInfo: '', dressingRooms: '', venueType: '', discount: '',
+      advanceDeposit: '', cancellationPolicy: '',
+      extraCharges: '', seatingArrangement: '',
       maxGuestsSeated: '', maxGuestsStanding: '',
       multipleHalls: false, nearbyTransport: '',
       accessibilityInfo: '', elderlyAccessibility: false,
-      searchTags: '',selectedPackageIds: [],
+      searchTags: '', selectedPackageIds: [],
     });
     setSelectedPackages([]);
     setTimeSlots(resetTimeSlots);
-    setFiles({ thumbnail: null, auditoriumImage: null, floorPlan: null, documents: null });
-    setExistingImages({ thumbnail: '', auditoriumImage: '', floorPlan: '', documents: '' });
+    setFiles({ thumbnail: null, auditoriumImages: [], floorPlan: null, documents: null });
+    setExistingImages({ thumbnail: '', auditoriumImages: [], floorPlan: '', documents: '' });
     setViewMode('create');
     if (markerRef.current) {
       markerRef.current.setMap(null);
@@ -2301,10 +2323,10 @@ const CreateAuditorium = () => {
     if (!formData.venueType) errors.push('Venue type is required');
     if (viewMode === 'create') {
       if (!files.thumbnail) errors.push('Thumbnail image is required');
-      if (!files.auditoriumImage) errors.push('Auditorium image is required');
+      if (files.auditoriumImages.length === 0) errors.push('Auditorium image is required');
     } else {
       if (!files.thumbnail && !existingImages.thumbnail) errors.push('Thumbnail image is required');
-      if (!files.auditoriumImage && !existingImages.auditoriumImage) errors.push('Auditorium image is required');
+      if (files.auditoriumImages.length === 0 && existingImages.auditoriumImages.length === 0) errors.push('Auditorium image is required');
     }
     const hasPricing = Object.values(timeSlots).some(day =>
       (day.morning.enabled && day.morning.price.trim()) || (day.evening.enabled && day.evening.price.trim())
@@ -2380,11 +2402,11 @@ const CreateAuditorium = () => {
       }
       let discountValue = '';
       let nonAcDiscountValue = '';
-      
+
       if (result.data.discount) {
         try {
-          const discountObj = typeof result.data.discount === 'string' 
-            ? JSON.parse(result.data.discount) 
+          const discountObj = typeof result.data.discount === 'string'
+            ? JSON.parse(result.data.discount)
             : result.data.discount;
           discountValue = discountObj.packageDiscount?.toString() || '';
           nonAcDiscountValue = discountObj.nonAc?.toString() || '';
@@ -2429,15 +2451,27 @@ const CreateAuditorium = () => {
         searchTags: Array.isArray(result.data.searchTags)
           ? result.data.searchTags.join(', ')
           : result.data.searchTags || '',
-          selectedPackageIds: Array.isArray(result.data.packages)   
+        selectedPackageIds: Array.isArray(result.data.packages)
           ? result.data.packages.map(pkg => typeof pkg === 'string' ? pkg : pkg._id)
-          : [],      });
+          : [],
+      });
       console.log("hello", formData?.categories);
       setTimeSlots(transformToTimeSlots(result.data.pricingSchedule) || defaultTimeSlots);
+      const allImages = result.data.images || [];
+      let audImages = [];
+      let fp = '';
+
+      if (allImages.length > 1) {
+        audImages = allImages.slice(0, -1);
+        fp = allImages[allImages.length - 1];
+      } else if (allImages.length === 1) {
+        audImages = [allImages[0]];
+      }
+
       setExistingImages({
         thumbnail: result.data.thumbnail || '',
-        auditoriumImage: result.data.images?.[0] || '',
-        floorPlan: result.data.images?.[1] || '',
+        auditoriumImages: audImages,
+        floorPlan: fp,
         documents: result.data.documents || '',
       });
       setViewMode('edit');
@@ -2499,181 +2533,196 @@ const CreateAuditorium = () => {
   };
 
   const validateDiscount = (value) => {
-  const num = parseFloat(value) || 0;
-  if (num < 0) return 0;
-  if (num > 100) {
-    setToast({
-      open: true,
-      message: 'Discount capped at 100%.',
-      severity: 'warning',
-    });
-    return 100;  
-  }
-  return num;
-};
+    const num = parseFloat(value) || 0;
+    if (num < 0) return 0;
+    if (num > 100) {
+      setToast({
+        open: true,
+        message: 'Discount capped at 100%.',
+        severity: 'warning',
+      });
+      return 100;
+    }
+    return num;
+  };
 
-const validateFixedDiscount = (value) => {
-  const num = parseFloat(value) || 0;
-  if (num < 0) {
-    setToast({
-      open: true,
-      message: 'Fixed discount must be a positive number.',
-      severity: 'warning',
-    });
-    return 0;
-  }
-  return num;
-};
+  const validateFixedDiscount = (value) => {
+    const num = parseFloat(value) || 0;
+    if (num < 0) {
+      setToast({
+        open: true,
+        message: 'Fixed discount must be a positive number.',
+        severity: 'warning',
+      });
+      return 0;
+    }
+    return num;
+  };
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  setLoading(true);
-  setToast({ open: false, message: '', severity: 'success' });
-  const token = localStorage.getItem('token');
-  if (!token) {
-    setToast({
-      open: true,
-      message: 'No authentication token found. Please log in.',
-      severity: 'error',
-    });
-    setLoading(false);
-    return;
-  }
-  const validationErrors = validateForm();
-  if (validationErrors.length > 0) {
-    setToast({
-      open: true,
-      message: validationErrors.join(', '),
-      severity: 'error',
-    });
-    setLoading(false);
-    return;
-  }
-  try {
-    let venueId = id;
-    
-    const data = new FormData();
-    const booleanFields = [
-      'parkingAvailability',
-      'foodCateringAvailability',
-      'stageLightingAudio',
-      'wheelchairAccessibility',
-      'securityArrangements',
-      'wifiAvailability',
-      'acAvailable',
-      'nonAcAvailable',
-      'multipleHalls',
-      'elderlyAccessibility',
-    ];
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setToast({ open: false, message: '', severity: 'success' });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setToast({
+        open: true,
+        message: 'No authentication token found. Please log in.',
+        severity: 'error',
+      });
+      setLoading(false);
+      return;
+    }
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setToast({
+        open: true,
+        message: validationErrors.join(', '),
+        severity: 'error',
+      });
+      setLoading(false);
+      return;
+    }
+    try {
+      let venueId = id;
 
-    let discountObj = {
-      packageDiscount: validateDiscount(formData.discount),  
-      nonAc: formData.nonAcAvailable ? validateFixedDiscount(formData.nonAcDiscount) : 0  
-    };
+      const data = new FormData();
+      const booleanFields = [
+        'parkingAvailability',
+        'foodCateringAvailability',
+        'stageLightingAudio',
+        'wheelchairAccessibility',
+        'securityArrangements',
+        'wifiAvailability',
+        'acAvailable',
+        'nonAcAvailable',
+        'multipleHalls',
+        'elderlyAccessibility',
+      ];
 
-    const payload = {
-      ...formData,
-      shortDescription: formData.description || '',
-      holidaySchedule: formData.holidayScheduling || '',
-      categories: formData.categories || '',
-      accessibilityInfo: formData.accessibilityInfo || '',
-      discount: JSON.stringify(discountObj),  
-    };
-    delete payload.description;
-    delete payload.holidayScheduling;
-    delete payload.venueType;
-    delete payload.selectedPackageIds;
-    delete payload.nonAcDiscount;  
-    Object.entries(payload).forEach(([key, value]) => {
-      if (key === 'searchTags' && value) {
-        const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
-        tagsArray.forEach(tag => data.append(key, tag));
-      } else if (booleanFields.includes(key)) {
-        data.append(key, value.toString());
+      let discountObj = {
+        packageDiscount: validateDiscount(formData.discount),
+        nonAc: formData.nonAcAvailable ? validateFixedDiscount(formData.nonAcDiscount) : 0
+      };
+
+      const payload = {
+        ...formData,
+        shortDescription: formData.description || '',
+        holidaySchedule: formData.holidayScheduling || '',
+        categories: formData.categories || '',
+        accessibilityInfo: formData.accessibilityInfo || '',
+        discount: JSON.stringify(discountObj),
+      };
+      delete payload.description;
+      delete payload.holidayScheduling;
+      delete payload.venueType;
+      delete payload.selectedPackageIds;
+      delete payload.nonAcDiscount;
+      Object.entries(payload).forEach(([key, value]) => {
+        if (key === 'searchTags' && value) {
+          const tagsArray = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+          tagsArray.forEach(tag => data.append(key, tag));
+        } else if (booleanFields.includes(key)) {
+          data.append(key, value.toString());
+        } else {
+          data.append(key, value || '');
+        }
+      });
+
+      data.append('venueType', formData.venueType || '');
+      const pricingSchedule = transformToArray(timeSlots, formData.venueType);
+      data.append('pricingSchedule', JSON.stringify(pricingSchedule));
+
+      if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0) {
+        data.append('packages', JSON.stringify(formData.selectedPackageIds));
+      }
+
+      if (files.thumbnail) {
+        data.append('thumbnail', files.thumbnail);
+      }
+
+      // Append existing and new auditorium images
+      if (existingImages.auditoriumImages && existingImages.auditoriumImages.length > 0) {
+        existingImages.auditoriumImages.forEach(path => data.append('images', path));
+      }
+      if (files.auditoriumImages && files.auditoriumImages.length > 0) {
+        files.auditoriumImages.forEach(file => data.append('images', file));
+      }
+
+      // Append floor plan (new file or existing path)
+      if (files.floorPlan) {
+        data.append('images', files.floorPlan);
+      } else if (existingImages.floorPlan) {
+        data.append('images', existingImages.floorPlan);
+      }
+
+      let venueRes;
+      if (viewMode === 'create') {
+        venueRes = await fetch(`${API_BASE_URL}/venues/`, {
+          method: 'POST',
+          body: data,
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        data.append(key, value || '');
+        venueRes = await fetch(`${API_BASE_URL}/venues/${id}`, {
+          method: 'PUT',
+          body: data,
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
-    });
 
-    data.append('venueType', formData.venueType || '');
-    const pricingSchedule = transformToArray(timeSlots, formData.venueType);
-    data.append('pricingSchedule', JSON.stringify(pricingSchedule));
-
-    if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0) {
-      data.append('packages', JSON.stringify(formData.selectedPackageIds));
-    }
-
-    if (files.thumbnail) data.append('thumbnail', files.thumbnail);
-    if (files.auditoriumImage) data.append('images', files.auditoriumImage);
-    if (files.floorPlan) data.append('images', files.floorPlan);
-
-    let venueRes;
-    if (viewMode === 'create') {
-      venueRes = await fetch(`${API_BASE_URL}/venues/`, {
-        method: 'POST',
-        body: data,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } else {
-      venueRes = await fetch(`${API_BASE_URL}/venues/${id}`, {
-        method: 'PUT',
-        body: data,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    }
-
-    const venueResult = await venueRes.json();
-    if (!venueRes.ok || !venueResult.success) {
-      throw new Error(venueResult.message || 'Failed to create/update venue');
-    }
-
-    venueId = venueResult.data?._id || venueResult._id;
-    console.log('✅ Venue created/updated with discount:', discountObj);  // Debug: Check clamped values
-
-    // ---------- LINK PACKAGE (unchanged) ----------
-    if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0 && viewMode === 'edit') {
-      const linkRes = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ packages: formData.selectedPackageIds }),
-      });
-      const linkResult = await linkRes.json();
-      if (!linkRes.ok) {
-        console.error('Failed to link package to venue:', linkResult.message);
+      const venueResult = await venueRes.json();
+      if (!venueRes.ok || !venueResult.success) {
+        throw new Error(venueResult.message || 'Failed to create/update venue');
       }
-    }
 
-    // ---------- SUCCESS ----------
-    setToast({
-      open: true,
-      message:
-        viewMode === 'edit'
-          ? 'Venue updated successfully'
-          : 'Venue created successfully',
-      severity: 'success',
-    });
-    if (viewMode === 'edit') {
-      setTimeout(() => navigate('/venue-setup/lists'), 2000);
-    } else {
-      handleReset();
+      venueId = venueResult.data?._id || venueResult._id;
+      console.log('✅ Venue created/updated with discount:', discountObj);  // Debug: Check clamped values
+
+      // ---------- LINK PACKAGE (unchanged) ----------
+      if (formData.selectedPackageIds && formData.selectedPackageIds.length > 0 && viewMode === 'edit') {
+        const linkRes = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ packages: formData.selectedPackageIds }),
+        });
+        const linkResult = await linkRes.json();
+        if (!linkRes.ok) {
+          console.error('Failed to link package to venue:', linkResult.message);
+        }
+      }
+
+      // ---------- SUCCESS ----------
+      setToast({
+        open: true,
+        message:
+          viewMode === 'edit'
+            ? 'Venue updated successfully'
+            : 'Venue created successfully',
+        severity: 'success',
+      });
+      if (viewMode === 'edit') {
+        setTimeout(() => navigate('/venue-setup/lists'), 2000);
+      } else {
+        handleReset();
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setToast({
+        open: true,
+        message: error.message.includes('expired')
+          ? 'Session expired. Please log in again.'
+          : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
+        severity: 'error',
+      });
+      if (error.message.includes('expired')) navigate('/login');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error submitting form:', error);
-    setToast({
-      open: true,
-      message: error.message.includes('expired')
-        ? 'Session expired. Please log in again.'
-        : `Error ${viewMode === 'edit' ? 'updating' : 'creating'} venue: ${error.message}`,
-      severity: 'error',
-    });
-    if (error.message.includes('expired')) navigate('/login');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   const handleCloseToast = (event, reason) => {
     if (reason === 'clickaway') return;
     setToast({ open: false, message: '', severity: 'success' });
@@ -2704,7 +2753,7 @@ const handleSubmit = async (event) => {
                   fullWidth
                   label="Venue Name*" name="venueName"
                   value={formData.venueName}
-                  onChange={handleInputChange}  placeholder="Type venue name"
+                  onChange={handleInputChange} placeholder="Type venue name"
                   sx={{ mb: 2, ...inputSx }} required />
                 <TextField
                   fullWidth
@@ -2712,7 +2761,7 @@ const handleSubmit = async (event) => {
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Describe your auditorium"
-                  multiline rows={4}  sx={{ mb: 2, ...inputSx }} />
+                  multiline rows={4} sx={{ mb: 2, ...inputSx }} />
                 <FormControl fullWidth variant="outlined" required sx={{ mb: 2, ...inputSx }}>
                   <InputLabel id="category-label">Category*</InputLabel>
                   <Select
@@ -2729,7 +2778,7 @@ const handleSubmit = async (event) => {
                 </FormControl>
                 <TextField
                   fullWidth label="Search Location"
-                  inputRef={searchInputRef}  variant="outlined"
+                  inputRef={searchInputRef} variant="outlined"
                   placeholder="Enter a location" sx={{ mb: 2, ...inputSx }} />
                 {mapsLoaded && GOOGLE_MAPS_API_KEY ? (
                   <>
@@ -2741,7 +2790,8 @@ const handleSubmit = async (event) => {
                       sx={{
                         height: 300, width: '100%',
                         borderRadius: theme.shape.borderRadius,
-                        border: `1px solid ${theme.palette.grey[300]}`,  mb: 2,  }} />
+                        border: `1px solid ${theme.palette.grey[300]}`, mb: 2,
+                      }} />
                   </>
                 ) : (
                   <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[300]}`, borderRadius: theme.shape.borderRadius, mb: 2 }}>
@@ -2767,7 +2817,7 @@ const handleSubmit = async (event) => {
                 <TextField
                   fullWidth
                   label="Venue Address*" name="venueAddress"
-                  value={formData.venueAddress}  onChange={handleInputChange}
+                  value={formData.venueAddress} onChange={handleInputChange}
                   placeholder="Enter complete address"
                   multiline rows={2}
                   sx={{ mb: 2, ...inputSx }} required />
@@ -2809,19 +2859,20 @@ const handleSubmit = async (event) => {
                       label="Food & Catering Availability" />
                     {formData.foodCateringAvailability && (
                       <>
-                  <Box
-  sx={{
-    backgroundColor: '#fce4ec',
-    border: '1px solid #f8bbd9', borderRadius: 1,p: 2, mt: 1,
-    cursor: 'pointer',
-    '&:hover': { backgroundColor: '#f8bbd9' }
-  }}
-  onClick={() => {
-    sessionStorage.setItem('tempFormData', JSON.stringify(formData)); // Save current form data
-    navigate('/venue-setup/foodmenu', {
-      state: { selectingForVenue: true, preSelected: selectedPackages }
-    }); }}>
- <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box
+                          sx={{
+                            backgroundColor: '#fce4ec',
+                            border: '1px solid #f8bbd9', borderRadius: 1, p: 2, mt: 1,
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f8bbd9' }
+                          }}
+                          onClick={() => {
+                            sessionStorage.setItem('tempFormData', JSON.stringify(formData)); // Save current form data
+                            navigate('/venue-setup/foodmenu', {
+                              state: { selectingForVenue: true, preSelected: selectedPackages }
+                            });
+                          }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography variant="h5" color="#E15B65">🍴</Typography>
                               <Typography variant="subtitle1" color="#E15B65">Menu Selection</Typography>
@@ -2829,22 +2880,23 @@ const handleSubmit = async (event) => {
                             {selectedPackages.length > 0 && <Chip label={selectedPackages.length} color="primary" size="small" />}
                           </Box>
                         </Box>
-                       {selectedPackages.length > 0 && (
+                        {selectedPackages.length > 0 && (
                           <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                             {selectedPackages.map((pkg) => {
-                              
-                              const imageUrl = pkg.thumbnail 
-                                ? `https://api.bookmyevent.ae/${pkg.thumbnail}` 
+
+                              const imageUrl = pkg.thumbnail
+                                ? `https://api.bookmyevent.ae/${pkg.thumbnail}`
                                 : '/placeholder.jpg';
-                                                            
+
                               return (
                                 <Card key={pkg._id} sx={{ width: 150, height: 160 }}>
                                   <CardMedia
                                     component="img" height="120"
-                                    image={imageUrl}alt={pkg.title}  sx={{ objectFit: 'cover' }}
-                                    onError={(e) => { 
+                                    image={imageUrl} alt={pkg.title} sx={{ objectFit: 'cover' }}
+                                    onError={(e) => {
                                       console.error('Image failed to load:', imageUrl);
-                                      e.target.src = '/placeholder.jpg';    }} />
+                                      e.target.src = '/placeholder.jpg';
+                                    }} />
                                   <CardContent sx={{ p: 1 }}>
                                     <Typography variant="body2" noWrap sx={{ fontSize: '0.75rem' }}>
                                       {pkg.title}
@@ -2900,28 +2952,28 @@ const handleSubmit = async (event) => {
                       control={<Switch name="wifiAvailability" checked={formData.wifiAvailability} onChange={handleInputChange} />}
                       label="Wi-Fi Availability" />
                     <FormControlLabel
-  control={<Switch name="nonAcAvailable" checked={formData.nonAcAvailable} onChange={handleInputChange} />}
-  label="Non AC Available" />
-{formData.nonAcAvailable && (
-  <Box sx={{ backgroundColor: '#fce4ec', border: '1px solid #f8bbd9', borderRadius: 1, p: 2, mt: 1 }}>
-    <Typography variant="subtitle1" gutterBottom sx={{ color: '#c2185b', fontWeight: 600 }}>
-      Non-AC Discount Pricing
-    </Typography>
-    <TextField
-      fullWidth
-      label="Fixed Discount Amount (₹)" name="nonAcDiscount"
-      value={formData.nonAcDiscount} onChange={handleInputChange}
-      placeholder="e.g., 500, 1000, 2000"  type="number"
-      inputProps={{ min: 0 }} sx={{ mb: 2, ...inputSx }}/>
-    <Typography variant="body2" color="text.secondary">
-      Note: You can set either percentage or fixed amount as discount for Non-AC bookings
-    </Typography>
-  </Box>
-)}
+                      control={<Switch name="nonAcAvailable" checked={formData.nonAcAvailable} onChange={handleInputChange} />}
+                      label="Non AC Available" />
+                    {formData.nonAcAvailable && (
+                      <Box sx={{ backgroundColor: '#fce4ec', border: '1px solid #f8bbd9', borderRadius: 1, p: 2, mt: 1 }}>
+                        <Typography variant="subtitle1" gutterBottom sx={{ color: '#c2185b', fontWeight: 600 }}>
+                          Non-AC Discount Pricing
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          label="Fixed Discount Amount (₹)" name="nonAcDiscount"
+                          value={formData.nonAcDiscount} onChange={handleInputChange}
+                          placeholder="e.g., 500, 1000, 2000" type="number"
+                          inputProps={{ min: 0 }} sx={{ mb: 2, ...inputSx }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Note: You can set either percentage or fixed amount as discount for Non-AC bookings
+                        </Typography>
+                      </Box>
+                    )}
                     <TextField
                       fullWidth
                       label="Washrooms/Restrooms Info" name="washroomsInfo"
-                      value={formData.washroomsInfo}  onChange={handleInputChange}
+                      value={formData.washroomsInfo} onChange={handleInputChange}
                       placeholder="Details about washrooms"
                       sx={inputSx} />
                   </Stack>
@@ -2937,14 +2989,14 @@ const handleSubmit = async (event) => {
                   Choose the main image that represents your venue.
                 </Typography>
                 <UploadDropArea
-                  onDragOver={handleDragOver}  onDrop={handleDrop('thumbnail')}
+                  onDragOver={handleDragOver} onDrop={handleDrop('thumbnail')}
                   onClick={() => document.getElementById('thumbnail-upload').click()}>
                   {files.thumbnail ? (
                     <Box>
                       <img
                         src={URL.createObjectURL(files.thumbnail)}
                         alt="Thumbnail preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}  />
+                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} />
                       <Typography variant="body2" color="text.secondary">{files.thumbnail.name}</Typography>
                     </Box>
                   ) : existingImages.thumbnail ? (
@@ -2964,7 +3016,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"  id="thumbnail-upload"  hidden
+                    type="file" id="thumbnail-upload" hidden
                     accept="image/jpeg,image/png,image/jpg"
                     onChange={handleFileChange('thumbnail')} />
                 </UploadDropArea>
@@ -2978,37 +3030,61 @@ const handleSubmit = async (event) => {
                 </Typography>
                 <UploadDropArea
                   onDragOver={handleDragOver}
-                  onDrop={handleDrop('auditoriumImage')}
-                  onClick={() => document.getElementById('auditorium-image-upload').click()} >
-                  {files.auditoriumImage ? (
-                    <Box>
-                      <img
-                        src={URL.createObjectURL(files.auditoriumImage)}
-                        alt="Auditorium image preview"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }}
-                      />
-                      <Typography variant="body2" color="text.secondary">{files.auditoriumImage.name}</Typography>
-                    </Box>
-                  ) : existingImages.auditoriumImage ? (
-                    <Box>
-                      <img
-                        src={getImageSrc(existingImages.auditoriumImage)}
-                        alt="Existing auditorium image"
-                        style={{ maxWidth: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: theme.spacing(1) }} />
-                      <Typography variant="body2" color="text.secondary">Existing auditorium image. Upload to replace.</Typography>
+                  onDrop={handleDrop('auditoriumImages')}
+                  onClick={(e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    document.getElementById('auditorium-image-upload').click();
+                  }}
+                  sx={{ cursor: 'pointer', p: 2, minHeight: 120 }}>
+                  <input
+                    type="file"
+                    id="auditorium-image-upload" hidden
+                    multiple
+                    accept="image/jpeg,image/png,image/jpg"
+                    onChange={handleFileChange('auditoriumImages')} />
+                  {(files.auditoriumImages.length > 0 || existingImages.auditoriumImages.length > 0) ? (
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', width: '100%', justifyContent: 'center' }}>
+                      {existingImages.auditoriumImages.map((img, index) => (
+                        <Box key={`existing-${index}`} sx={{ position: 'relative', width: 80, height: 80 }}>
+                          <img
+                            src={getImageSrc(img)}
+                            alt="Existing"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
+                          <IconButton
+                            className="delete-btn"
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFile('auditoriumImages', index, true); }}
+                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: '#fff' } }}>
+                            <Delete color="error" fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                      {files.auditoriumImages.map((file, index) => (
+                        <Box key={`new-${index}`} sx={{ position: 'relative', width: 80, height: 80 }}>
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt="New preview"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
+                          <IconButton
+                            className="delete-btn"
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFile('auditoriumImages', index, false); }}
+                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: '#fff' } }}>
+                            <Delete color="error" fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                      <Box sx={{ width: 80, height: 80, border: '2px dashed #ccc', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>
+                        <Add color="inherit" />
+                      </Box>
                     </Box>
                   ) : (
                     <Box>
                       <CloudUploadIcon sx={{ fontSize: 40, color: theme.palette.grey[400], mb: 1 }} />
-                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload</Typography>
+                      <Typography variant="body2" color="#E15B65" sx={{ mb: 0.5, fontWeight: 'medium' }}>Click to upload multiple images</Typography>
                       <Typography variant="body2" color="#f59299ff">Or drag and drop</Typography>
                     </Box>
                   )}
-                  <input
-                    type="file"
-                    id="auditorium-image-upload" hidden
-                    accept="image/jpeg,image/png,image/jpg"
-                    onChange={handleFileChange('auditoriumImage')} />
                 </UploadDropArea>
               </CardContent>
             </Card>
@@ -3034,9 +3110,10 @@ const handleSubmit = async (event) => {
                           checked={formData.venueType === 'per_person'}
                           sx={{
                             color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
-                            '&.Mui-checked': { color: formData.venueType === 'per_person' ? '#fff' : '#E15B65' }  }} />}
+                            '&.Mui-checked': { color: formData.venueType === 'per_person' ? '#fff' : '#E15B65' }
+                          }} />}
                       sx={{
-                        borderRadius: 2,  textTransform: 'none',  px: 3,
+                        borderRadius: 2, textTransform: 'none', px: 3,
                         color: formData.venueType === 'per_person' ? '#fff' : '#E15B65',
                         backgroundColor: formData.venueType === 'per_person' ? '#E15B65' : 'transparent',
                         borderColor: '#E15B65',
@@ -3055,7 +3132,8 @@ const handleSubmit = async (event) => {
                           checked={formData.venueType === 'per_hour'}
                           sx={{
                             color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65',
-                            '&.Mui-checked': { color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65' } }} />}
+                            '&.Mui-checked': { color: formData.venueType === 'per_hour' ? '#fff' : '#E15B65' }
+                          }} />}
                       sx={{
                         borderRadius: 2,
                         textTransform: 'none',
@@ -3065,7 +3143,9 @@ const handleSubmit = async (event) => {
                         borderColor: '#E15B65',
                         '&:hover': {
                           backgroundColor: formData.venueType === 'per_hour' ? '#c94a57' : 'rgba(225,91,101,0.08)',
-                          borderColor: '#E15B65'}  }}>
+                          borderColor: '#E15B65'
+                        }
+                      }}>
                       Per Hour
                     </Button>
                     <Button
@@ -3086,7 +3166,8 @@ const handleSubmit = async (event) => {
                   {formData.venueType && (
                     <Box sx={{
                       border: `1px solid ${theme.palette.grey[300]}`,
-                      borderRadius: 1, overflow: 'hidden'}}>
+                      borderRadius: 1, overflow: 'hidden'
+                    }}>
 
                       <Box sx={{
                         display: 'grid', gridTemplateColumns: '150px 1fr 1fr',
@@ -3101,13 +3182,15 @@ const handleSubmit = async (event) => {
                         <Box key={day}>
                           {/* Morning Slot Row */}
                           <Box sx={{
-                            display: 'grid',   gridTemplateColumns: '150px 1fr 1fr',
-                            borderBottom: `1px solid ${theme.palette.grey[300]}` }}>
+                            display: 'grid', gridTemplateColumns: '150px 1fr 1fr',
+                            borderBottom: `1px solid ${theme.palette.grey[300]}`
+                          }}>
                             {/* Day Column */}
                             <Box sx={{
-                              p: 2,  borderRight: `1px solid ${theme.palette.grey[300]}`,
+                              p: 2, borderRight: `1px solid ${theme.palette.grey[300]}`,
                               display: 'flex', alignItems: 'flex-start',
-                              textTransform: 'capitalize', fontWeight: 500,  }}>
+                              textTransform: 'capitalize', fontWeight: 500,
+                            }}>
                               {day.charAt(0).toUpperCase() + day.slice(1)}
                             </Box>
                             {/* Morning Slot */}
@@ -3118,8 +3201,8 @@ const handleSubmit = async (event) => {
                             }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                 <Checkbox
-                                  size="small"  checked={timeSlots[day].morning.enabled}
-                                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'enabled', e.target.checked)}  sx={{ p: 0 }} />
+                                  size="small" checked={timeSlots[day].morning.enabled}
+                                  onChange={(e) => handleTimeSlotChange(day, 'morning', 'enabled', e.target.checked)} sx={{ p: 0 }} />
                                 <Typography variant="body2">Morning Slot</Typography>
                               </Box>
                               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -3127,12 +3210,12 @@ const handleSubmit = async (event) => {
                                   size="small"
                                   value={timeSlots[day].morning.startTime}
                                   onChange={(e) => handleTimeSlotChange(day, 'morning', 'startTime', e.target.value)}
-                                  disabled={!timeSlots[day].morning.enabled}  sx={{ width: '80px', ...inputSx }}
+                                  disabled={!timeSlots[day].morning.enabled} sx={{ width: '80px', ...inputSx }}
                                   inputProps={{ style: { textAlign: 'center' } }} />
                                 <Select
-                                  size="small"  value={timeSlots[day].morning.startPeriod}
+                                  size="small" value={timeSlots[day].morning.startPeriod}
                                   onChange={(e) => handleTimeSlotChange(day, 'morning', 'startPeriod', e.target.value)}
-                                  disabled={!timeSlots[day].morning.enabled}  sx={{ width: '70px' }}>
+                                  disabled={!timeSlots[day].morning.enabled} sx={{ width: '70px' }}>
                                   <MenuItem value="Am">Am</MenuItem>
                                   <MenuItem value="Pm">Pm</MenuItem>
                                 </Select>
@@ -3155,26 +3238,28 @@ const handleSubmit = async (event) => {
                             </Box>
                             {/* Morning Pricing */}
                             <Box sx={{
-                              p: 2,  borderBottom: `1px solid ${theme.palette.grey[300]}`  }}>
+                              p: 2, borderBottom: `1px solid ${theme.palette.grey[300]}`
+                            }}>
                               <TextField
-                                fullWidth  size="small"
+                                fullWidth size="small"
                                 value={timeSlots[day].morning.price}
                                 onChange={(e) => handleTimeSlotChange(day, 'morning', 'price', e.target.value)}
                                 disabled={!timeSlots[day].morning.enabled}
                                 placeholder="Enter price" type="number"
-                                inputProps={{ step: '0.01', min: '0' }}  sx={inputSx} />
+                                inputProps={{ step: '0.01', min: '0' }} sx={inputSx} />
                             </Box>
                           </Box>
                           {/* Evening Slot Row */}
                           <Box sx={{
-                            display: 'grid',  gridTemplateColumns: '150px 1fr 1fr',
+                            display: 'grid', gridTemplateColumns: '150px 1fr 1fr',
                             borderBottom: `1px solid ${theme.palette.grey[300]}`
                           }}>
                             {/* Day Column */}
                             <Box sx={{
-                              p: 2,  borderRight: `1px solid ${theme.palette.grey[300]}`,
-                              display: 'flex',  alignItems: 'flex-start',
-                              textTransform: 'capitalize',  fontWeight: 500, }}>
+                              p: 2, borderRight: `1px solid ${theme.palette.grey[300]}`,
+                              display: 'flex', alignItems: 'flex-start',
+                              textTransform: 'capitalize', fontWeight: 500,
+                            }}>
                               {day.charAt(0).toUpperCase() + day.slice(1)}
                             </Box>
                             {/* Evening Slot */}
@@ -3229,11 +3314,11 @@ const handleSubmit = async (event) => {
                             {/* Evening Pricing */}
                             <Box sx={{ p: 2 }}>
                               <TextField
-                                fullWidth  size="small"   value={timeSlots[day].evening.price}
+                                fullWidth size="small" value={timeSlots[day].evening.price}
                                 onChange={(e) => handleTimeSlotChange(day, 'evening', 'price', e.target.value)}
                                 disabled={!timeSlots[day].evening.enabled}
-                                placeholder="Enter price"  type="number"
-                                inputProps={{ step: '0.01', min: '0' }}  sx={inputSx}
+                                placeholder="Enter price" type="number"
+                                inputProps={{ step: '0.01', min: '0' }} sx={inputSx}
                               />
                             </Box>
                           </Box>
@@ -3248,33 +3333,33 @@ const handleSubmit = async (event) => {
                   </Typography>
                   <TextField
                     fullWidth
-                    label="Discount (%)"  name="discount"
+                    label="Discount (%)" name="discount"
                     value={formData.discount} onChange={handleInputChange}
-                    placeholder="Ex: 10"  type="number"
-                    inputProps={{ min: 0, max: 100 }}  sx={inputSx} />
+                    placeholder="Ex: 10" type="number"
+                    inputProps={{ min: 0, max: 100 }} sx={inputSx} />
                 </Box>
-               <TextField
-  fullWidth
-  label="Advance Payment / Deposit (₹)"
-  name="advanceDeposit"
-  value={formData.advanceDeposit}
-  onChange={handleInputChange}
-  placeholder="Enter advance amount"
-  type="number"
-  inputProps={{ min: 0 }}   // ✅ No max, any amount allowed
-  sx={{ mb: 2, ...inputSx }}
-/>
+                <TextField
+                  fullWidth
+                  label="Advance Payment / Deposit (₹)"
+                  name="advanceDeposit"
+                  value={formData.advanceDeposit}
+                  onChange={handleInputChange}
+                  placeholder="Enter advance amount"
+                  type="number"
+                  inputProps={{ min: 0 }}   // ✅ No max, any amount allowed
+                  sx={{ mb: 2, ...inputSx }}
+                />
 
                 <TextField
                   fullWidth
-                  label="Cancellation Policy"  name="cancellationPolicy"
+                  label="Cancellation Policy" name="cancellationPolicy"
                   value={formData.cancellationPolicy}
                   onChange={handleInputChange}
                   placeholder="e.g., Free cancellation 48 hours before"
                   multiline rows={2} sx={{ mb: 2, ...inputSx }} />
                 <TextField
                   fullWidth
-                  label="Extra Charges (e.g., Cleaning fee)"  name="extraCharges"
+                  label="Extra Charges (e.g., Cleaning fee)" name="extraCharges"
                   value={formData.extraCharges} onChange={handleInputChange}
                   placeholder="Describe extra charges"
                   multiline rows={2} sx={inputSx} />
@@ -3301,15 +3386,15 @@ const handleSubmit = async (event) => {
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                   <TextField
                     fullWidth
-                    label="Max Guest Count (Seated)*"  name="maxGuestsSeated"
+                    label="Max Guest Count (Seated)*" name="maxGuestsSeated"
                     value={formData.maxGuestsSeated}
-                    onChange={handleInputChange}  placeholder="e.g., 200"
-                    type="number"  required sx={inputSx} />
+                    onChange={handleInputChange} placeholder="e.g., 200"
+                    type="number" required sx={inputSx} />
                   <TextField
                     fullWidth label="Max Guest Count (Standing)" name="maxGuestsStanding"
                     value={formData.maxGuestsStanding}
                     onChange={handleInputChange}
-                    placeholder="e.g., 300"  type="number" sx={inputSx} />
+                    placeholder="e.g., 300" type="number" sx={inputSx} />
                 </Box>
                 <UploadDropArea
                   onDragOver={handleDragOver}
@@ -3343,7 +3428,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"  id="floor-plan-upload"  hidden
+                    type="file" id="floor-plan-upload" hidden
                     accept="image/*,application/pdf"
                     onChange={handleFileChange('floorPlan')} />
                 </UploadDropArea>
@@ -3403,7 +3488,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   ) : existingImages.documents ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {existingImages.documents.split('/').pop()} 
+                      {existingImages.documents.split('/').pop()}
                       <IconButton
                         size="small"
                         onClick={() => {
@@ -3422,7 +3507,7 @@ const handleSubmit = async (event) => {
                     </Box>
                   )}
                   <input
-                    type="file"  id="documents-upload"  hidden
+                    type="file" id="documents-upload" hidden
                     accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={handleFileChange('documents')} />
                 </UploadDropArea>
