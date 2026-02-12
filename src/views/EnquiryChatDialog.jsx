@@ -15,7 +15,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import { useLocation, useNavigate } from "react-router-dom";
 import { socket } from "../socket";
-import axios from "axios";
 
 const VenueEnquiryChatPage = () => {
   const location = useLocation();
@@ -39,32 +38,13 @@ const VenueEnquiryChatPage = () => {
     }
   }, [enquiry?._id, navigate]);
 
-  /* ==============================
-     FETCH CHAT HISTORY
-  ============================== */
-  useEffect(() => {
-    if (!enquiry?._id) return;
 
-    const fetchMessages = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(
-          `https://api.bookmyevent.ae/api/enquiries/${enquiry._id}/messages`
-        );
-        setMessages(res.data?.data || []);
-      } catch (err) {
-        console.error("Failed to fetch messages:", err);
-        setMessages([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
-  }, [enquiry?._id]);
 
   /* ==============================
      SOCKET CONNECT
+  ============================== */
+  /* ==============================
+     SOCKET SETUP
   ============================== */
   useEffect(() => {
     if (!enquiry?._id || !vendorId) return;
@@ -78,22 +58,26 @@ const VenueEnquiryChatPage = () => {
       vendorId,
     });
 
-    const handleReceive = (data) => {
+    socket.on("message_history", (history) => {
+      setMessages(history || []);
+      setLoading(false);
+    });
+
+    socket.on("receive_message", (data) => {
       setMessages((prev) => {
         const exists = prev.some(
           (msg) =>
-            msg.timestamp === data.timestamp &&
-            msg.senderId === data.senderId
+            (msg._id && msg._id === data._id) ||
+            (msg.timestamp === data.timestamp && msg.senderId === data.senderId)
         );
         if (exists) return prev;
         return [...prev, data];
       });
-    };
-
-    socket.on("receive_message", handleReceive);
+    });
 
     return () => {
-      socket.off("receive_message", handleReceive);
+      socket.off("message_history");
+      socket.off("receive_message");
     };
   }, [enquiry?._id, vendorId]);
 
@@ -110,17 +94,43 @@ const VenueEnquiryChatPage = () => {
   const handleSend = () => {
     if (!message.trim() || !enquiry?._id) return;
 
+    const currentMsg = message;
+    setMessage(""); // Clear input
+
+    // Extract IDs if they are objects (populated)
+    const rid = enquiry.userId?._id || enquiry.userId;
+    const sid = user?._id;
+
     const payload = {
       enquiryId: enquiry._id,
-      senderId: vendorId,
-      senderName: user?.businessName || user?.name || "Vendor",
+      senderId: sid,
+      receiverId: rid,
+      senderName: user.businessName || user.name || "Vendor",
       senderRole: "vendor",
-      text: message,
+      text: currentMsg,
       timestamp: new Date().toISOString(),
+      time: new Date().toLocaleTimeString(),
     };
 
-    socket.emit("send_message", payload);
-    setMessage("");
+    console.log("📤 Sending message from Vendor:", payload);
+
+    // Optimistic update
+    setMessages((prev) => [...prev, {
+      ...payload,
+      message: currentMsg, // Ensure both text/message are present
+      _id: "temp-" + Date.now() // Temporary ID for dedup
+    }]);
+
+    // Emit through socket
+    if (socket && socket.connected) {
+      socket.emit("send_message", payload);
+    }
+  };
+
+  const isMe = (senderId) => {
+    const sid = String(senderId?._id || senderId);
+    const vid = String(vendorId?._id || vendorId);
+    return sid === vid;
   };
 
   if (!enquiry?._id) {
@@ -134,28 +144,8 @@ const VenueEnquiryChatPage = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#f0f2f5",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        p: 3,
-      }}
-    >
-      <Paper
-        elevation={8}
-        sx={{
-          width: "100%",
-          maxWidth: 450,
-          height: "80vh",
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: 3,
-          overflow: "hidden",
-        }}
-      >
+    <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
+      <Paper elevation={0} sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", borderRadius: 0, overflow: "hidden" }}>
         {/* HEADER */}
         <Box
           sx={{
@@ -226,13 +216,13 @@ const VenueEnquiryChatPage = () => {
             </Box>
           ) : (
             messages.map((msg, i) => {
-              const isMe = msg.senderId === vendorId;
+              const fromMe = isMe(msg.senderId);
 
               return (
                 <Box
-                  key={i}
+                  key={msg._id || i}
                   display="flex"
-                  justifyContent={isMe ? "flex-end" : "flex-start"}
+                  justifyContent={fromMe ? "flex-end" : "flex-start"}
                   mb={1}
                 >
                   <Box
@@ -241,12 +231,12 @@ const VenueEnquiryChatPage = () => {
                       py: 1.2,
                       maxWidth: "75%",
                       borderRadius: "18px",
-                      bgcolor: isMe ? "#DCF8C6" : "#fff",
+                      bgcolor: fromMe ? "#DCF8C6" : "#fff",
                       boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
                     }}
                   >
                     <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
-                      {msg.text}
+                      {msg.text || msg.message}
                     </Typography>
 
                     <Typography
@@ -259,7 +249,7 @@ const VenueEnquiryChatPage = () => {
                         fontSize: "0.7rem",
                       }}
                     >
-                      {new Date(msg.timestamp).toLocaleTimeString()}
+                      {msg.time || new Date(msg.timestamp || msg.createdAt).toLocaleTimeString()}
                     </Typography>
                   </Box>
                 </Box>
