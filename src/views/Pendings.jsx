@@ -8,11 +8,13 @@ import {
   Collapse,
   Stack,
   Divider,
+  Chip,
+  Grid,
 } from "@mui/material";
 import axios from "axios";
 
 /* ----------------------------------------------------
-   Helper: Safely extract providerId (Vendor _id)
+   Helper: Safely extract providerId
 ---------------------------------------------------- */
 const getProviderId = () => {
   try {
@@ -32,16 +34,10 @@ const Pendingbookings = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [providerId, setProviderId] = useState(null);
 
-  /* ------------------------------------------
-     Load Vendor ID
-  --------------------------------------------*/
   useEffect(() => {
     setProviderId(getProviderId());
   }, []);
 
-  /* ------------------------------------------
-     Fetch Pending Bookings
-  --------------------------------------------*/
   useEffect(() => {
     if (!providerId) return;
 
@@ -52,8 +48,6 @@ const Pendingbookings = () => {
         );
 
         const all = res.data?.data || [];
-
-        // 🚀 FIX: Only filter by booking.status
         const pending = all.filter(
           (b) => b.status?.toLowerCase() === "pending"
         );
@@ -69,62 +63,50 @@ const Pendingbookings = () => {
     fetchPending();
   }, [providerId]);
 
-  /* ------------------------------------------
-     Expand / Collapse Booking
-  --------------------------------------------*/
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  /* ------------------------------------------
-     Confirm Booking
-  --------------------------------------------*/
   const handleConfirm = async (id, e) => {
     e.stopPropagation();
-
     try {
       await axios.patch(
         `https://api.bookmyevent.ae/api/bookings/${id}/accept`
       );
-
-      // Remove from list immediately
       setPendingBookings((prev) => prev.filter((b) => b._id !== id));
-
       alert("Booking Confirmed ✔️");
     } catch (err) {
-      console.error("Confirm error:", err);
       alert("Failed to confirm booking");
     }
   };
 
-  /* ------------------------------------------
-     Reject Booking
-  --------------------------------------------*/
   const handleReject = async (id, e) => {
     e.stopPropagation();
-
     try {
       await axios.patch(
         `https://api.bookmyevent.ae/api/bookings/${id}/reject`
       );
-
       setPendingBookings((prev) => prev.filter((b) => b._id !== id));
-
       alert("Booking Rejected ❌");
     } catch (err) {
-      console.error("Reject error:", err);
       alert("Failed to reject booking");
     }
   };
 
   return (
-    <Box p={2} sx={{ background: "#f4f7fb", minHeight: "100vh" }}>
-      <Box sx={{ maxWidth: "850px", margin: "0 auto" }}>
-        <Typography variant="h4" fontWeight={600} mb={3}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)",
+        py: 5,
+      }}
+    >
+      <Box sx={{ maxWidth: "950px", margin: "0 auto", px: 2 }}>
+        <Typography variant="h4" fontWeight={700} mb={4}>
           Pending Bookings
         </Typography>
 
-        {/* Loading */}
         {loading ? (
           <Box display="flex" justifyContent="center" mt={4}>
             <CircularProgress />
@@ -135,95 +117,184 @@ const Pendingbookings = () => {
           pendingBookings.map((b) => (
             <Paper
               key={b._id}
-              elevation={2}
+              elevation={0}
               sx={{
-                p: 2.5,
-                mt: 2,
-                borderRadius: "16px",
+                mt: 3,
+                p: 3,
+                borderRadius: "20px",
+                background: "#ffffffcc",
+                backdropFilter: "blur(12px)",
+                border: "1px solid #e5e7eb",
                 cursor: "pointer",
-                transition: "0.2s",
-                background: "#fff",
+                transition: "all 0.3s ease",
                 "&:hover": {
-                  boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
-                  transform: "translateY(-2px)",
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
                 },
               }}
               onClick={() => toggleExpand(b._id)}
             >
-              {/* Summary Row */}
+              {/* SUMMARY */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
                 alignItems="center"
               >
                 <Box>
-                  <Typography fontWeight={700} fontSize={16}>
-                    Booking ID:{" "}
-                    <span style={{ color: "#1976d2" }}>#{b._id.slice(-6)}</span>
+                  <Typography fontWeight={700} fontSize={17}>
+                    #{b._id.slice(-6)}
                   </Typography>
 
-                  <Typography color="gray" fontSize={14}>
-                    {b.moduleType || "Event Booking"}
+                  <Typography fontSize={14} color="text.secondary">
+                    {b.venueId?.venueName ||
+                      b.packageId?.title ||
+                      b.makeupId?.name ||
+                      b.photographyId?.name ||
+                      "Event Booking"}
                   </Typography>
 
-                  <Typography color="gray" fontSize={13}>
+                  <Typography fontSize={13} color="text.secondary">
                     {new Date(b.bookingDate).toDateString()}
                   </Typography>
                 </Box>
 
-                <Typography fontWeight={700} sx={{ color: "#16a34a" }}>
-                  ₹{b.finalPrice}
-                </Typography>
+                <Stack alignItems="flex-end">
+                  <Typography
+                    fontWeight={700}
+                    fontSize={18}
+                    sx={{ color: "#16a34a" }}
+                  >
+                    ₹{b.finalPrice}
+                  </Typography>
+
+                  <Chip
+                    label="Pending"
+                    sx={{
+                      mt: 1,
+                      background: "#fef3c7",
+                      color: "#92400e",
+                      fontWeight: 600,
+                    }}
+                  />
+                </Stack>
               </Stack>
 
-              {/* Expanded Details */}
+              {/* EXPANDED DETAILS */}
               <Collapse in={expandedId === b._id}>
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 3 }} />
 
                 <Box
                   sx={{
-                    background: "#f9fafb",
-                    p: 2,
-                    borderRadius: "12px",
+                    background: "#f8fafc",
+                    p: 3,
+                    borderRadius: "16px",
                     border: "1px solid #e5e7eb",
                   }}
                 >
-                  <Detail label="Customer" value={b.fullName} />
-                  <Detail label="Guests" value={b.numberOfGuests} />
-                  <Detail label="Email" value={b.emailAddress} />
-                  <Detail label="Phone" value={b.contactNumber} />
-                  <Detail label="Booking Type" value={b.bookingType} />
+                  {/* GRID DETAILS */}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Detail label="Full Booking ID" value={b._id} />
+                      <Detail
+                        label="Created At"
+                        value={new Date(b.createdAt).toLocaleString()}
+                      />
+                      <Detail
+                        label="Booking Date"
+                        value={new Date(b.bookingDate).toDateString()}
+                      />
+                      <Detail label="Status" value={b.status} />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Detail label="Customer Name" value={b.fullName} />
+                      <Detail label="Email" value={b.emailAddress} />
+                      <Detail label="Phone" value={b.contactNumber} />
+                      <Detail
+                        label="Guests"
+                        value={b.numberOfGuests}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography fontWeight={700} mb={1}>
+                    Payment Details
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Detail
+                        label="Base Price"
+                        value={`₹${b.basePrice || 0}`}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Detail
+                        label="Advance Paid"
+                        value={`₹${b.advanceAmount || 0}`}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Detail
+                        label="Final Price"
+                        value={`₹${b.finalPrice}`}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Detail
+                        label="Payment Status"
+                        value={b.paymentStatus || "Pending"}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* ACTIONS */}
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    justifyContent="center"
+                    mt={3}
+                  >
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        width: 140,
+                        borderRadius: "30px",
+                        fontWeight: 600,
+                        borderColor: "#ef4444",
+                        color: "#ef4444",
+                        "&:hover": {
+                          background: "#fee2e2",
+                        },
+                      }}
+                      onClick={(e) => handleReject(b._id, e)}
+                    >
+                      Reject
+                    </Button>
+
+                    <Button
+                      variant="contained"
+                      sx={{
+                        width: 140,
+                        borderRadius: "30px",
+                        fontWeight: 600,
+                        background:
+                          "linear-gradient(135deg,#22c55e,#16a34a)",
+                        boxShadow:
+                          "0 8px 20px rgba(22,163,74,0.3)",
+                        "&:hover": {
+                          background:
+                            "linear-gradient(135deg,#16a34a,#15803d)",
+                        },
+                      }}
+                      onClick={(e) => handleConfirm(b._id, e)}
+                    >
+                      Confirm
+                    </Button>
+                  </Stack>
                 </Box>
-
-                {/* Actions */}
-                <Stack direction="row" spacing={2} mt={2} justifyContent="center">
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      width: "130px",
-                      borderRadius: "30px",
-                      color: "#e11d48",
-                      borderColor: "#e11d48",
-                      "&:hover": { background: "#ffe4e6" },
-                    }}
-                    onClick={(e) => handleReject(b._id, e)}
-                  >
-                    Reject
-                  </Button>
-
-                  <Button
-                    variant="contained"
-                    sx={{
-                      width: "130px",
-                      borderRadius: "30px",
-                      bgcolor: "#16a34a",
-                      "&:hover": { bgcolor: "#15803d" },
-                    }}
-                    onClick={(e) => handleConfirm(b._id, e)}
-                  >
-                    Confirm
-                  </Button>
-                </Stack>
               </Collapse>
             </Paper>
           ))
@@ -233,12 +304,10 @@ const Pendingbookings = () => {
   );
 };
 
-/* ------------------------------------------
-   Reusable Detail Component
---------------------------------------------*/
+/* DETAIL COMPONENT */
 const Detail = ({ label, value }) => (
-  <Typography fontSize={14} sx={{ mb: 0.5 }}>
-    <strong>{label}:</strong> {value}
+  <Typography fontSize={14} sx={{ mb: 1 }}>
+    <strong>{label}:</strong> {value || "N/A"}
   </Typography>
 );
 

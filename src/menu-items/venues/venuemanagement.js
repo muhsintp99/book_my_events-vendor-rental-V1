@@ -79,6 +79,14 @@ const venuemanagement = {
       url: '/venue/upgrade',
       icon: icons.IconRocket, // 🚀 Upgrade
       breadcrumbs: false
+    },
+        {
+      id: 'venue-ENQUIRIES',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/venue/enquiries',
+      icon: icons.IconRocket, // 🚀 Upgrade
+      breadcrumbs: false
     }
   ]
 };

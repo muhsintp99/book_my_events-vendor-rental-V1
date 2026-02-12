@@ -36,6 +36,12 @@ const VenueCategory = Loadable(lazy(() => import('views/VenueCategory')));
 const FoodMenu = Loadable(lazy(() => import('views/FoodMenu')));
 const VenueListView = Loadable(lazy(() => import('views/VenueListView')));
 const Upgradevenue = Loadable(lazy(() => import('../views/audiupgrade')));
+const Enquiriesvenue = Loadable(lazy(() => import('../views/Venueenquiries')));
+const VenueEnquiryChat = Loadable(
+  lazy(() => import('../views/EnquiryChatPage'))
+);
+
+
 // const Enquiryvenue = Loadable(lazy(() => import('../views/Enquiries')));
 
 // reports
@@ -417,7 +423,13 @@ const MainRoutes = {
           children: [
             { path: 'categories', element: <VenueCategory /> },
             { path: 'schedules', element: <Schedules /> },
-            { path: 'upgrade', element: <Upgradevenue /> }
+            { path: 'upgrade', element: <Upgradevenue /> },
+            { path: 'enquiries', element: <Enquiriesvenue /> },
+{ path: 'enquirychat', element: <VenueEnquiryChat /> },
+
+
+
+
           ]
         },
         {
@@ -450,7 +462,6 @@ const MainRoutes = {
             { path: 'portfolio', element: <Portfolio /> },
             { path: 'upgrade', element: <Makeupupgrade /> },
             { path: 'Enqury', element: <Makeupenquiry /> },
-            { path: 'Enqurychat', element: <Enquirychat /> },
             { path: 'schedules', element: <MakeupSchedules /> }
           ]
         },

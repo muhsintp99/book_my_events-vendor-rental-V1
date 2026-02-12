@@ -38,6 +38,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import EnquiryChatDialog from "./EnquiryChatDialog";
 
 const EnquiriesUI = () => {
   const navigate = useNavigate();
@@ -51,6 +52,10 @@ const EnquiriesUI = () => {
   // Modal state
   const [openModal, setOpenModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+
+  // Chat state
+  const [openChat, setOpenChat] = useState(false);
+  const [chatEnquiry, setChatEnquiry] = useState(null);
 
   /* ===============================
      GET PROVIDER ID
@@ -228,11 +233,10 @@ const EnquiriesUI = () => {
                           <IconButton
                             size="small"
                             color="primary"
-                            onClick={() =>
-                              navigate("/makeupartist/Enqurychat", {
-                                state: e,
-                              })
-                            }
+                            onClick={() => {
+                              setChatEnquiry(e);
+                              setOpenChat(true);
+                            }}
                           >
                             <ChatIcon fontSize="small" />
                           </IconButton>
@@ -352,16 +356,25 @@ const EnquiriesUI = () => {
             startIcon={<ChatIcon />}
             onClick={() => {
               handleCloseModal();
-              navigate("/makeupartist/Enqurychat", {
-                state: selectedEnquiry,
-              });
+              setChatEnquiry(selectedEnquiry);
+              setOpenChat(true);
             }}
           >
             Open Chat
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* CHAT POPUP */}
+      <EnquiryChatDialog
+        open={openChat}
+        onClose={() => {
+          setOpenChat(false);
+          setChatEnquiry(null);
+        }}
+        enquiry={chatEnquiry}
+      />
+    </Box >
   );
 };
 

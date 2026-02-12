@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  Avatar,
+  IconButton,
+  Stack
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useLocation, useNavigate } from "react-router-dom";
 import EnquiryChatDialog from "./EnquiryChatDialog";
 
@@ -10,46 +18,82 @@ const EnquiryChatPage = () => {
   const [enquiry, setEnquiry] = useState(null);
 
   useEffect(() => {
-    if (state) {
-      setEnquiry(state);
+    const enquiryData = state?.enquiry || state;
+
+    if (enquiryData && enquiryData._id) {
+      setEnquiry(enquiryData);
+      setOpen(true);
     } else {
-      // fallback (direct URL access)
-      setEnquiry({
-        fullName: "John Doe",
-        description: "Need evening makeup service",
-        moduleId: { title: "Makeup Artist" },
-      });
+      navigate("/venue/enquiries");
     }
-  }, [state]);
+  }, [state, navigate]);
 
   if (!enquiry) return null;
 
   return (
-    <Box p={3}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#f0f2f5",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        p: 3
+      }}
+    >
       <Paper
+        elevation={10}
         sx={{
-          minHeight: "70vh",
-          bgcolor: "#f5f7fa",
-          p: 4,
-          textAlign: "center",
+          width: "100%",
+          maxWidth: 500,
+          borderRadius: 4,
+          overflow: "hidden",
+          position: "relative"
         }}
       >
-        <Typography variant="h5" fontWeight={600}>
-          Enquiry Chat
-        </Typography>
-        <Typography color="text.secondary">
-          Chat with customer
-        </Typography>
-      </Paper>
+        {/* Header */}
+        <Box
+          sx={{
+            bgcolor: "#075E54",
+            color: "#fff",
+            px: 2,
+            py: 1.5
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <IconButton
+              onClick={() => navigate("/venue/enquiries")}
+              sx={{ color: "#fff" }}
+              size="small"
+            >
+              <ArrowBackIcon />
+            </IconButton>
 
-      <EnquiryChatDialog
-        open={open}
-        enquiry={enquiry}
-        onClose={() => {
-          setOpen(false);
-          navigate("/makeupartist/Enqury");
-        }}
-      />
+            <Avatar sx={{ bgcolor: "#25D366" }}>
+              {enquiry.fullName?.charAt(0) || "C"}
+            </Avatar>
+
+            <Box>
+              <Typography fontWeight={600}>
+                {enquiry.fullName || "Customer"}
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                Venue Enquiry
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+
+        {/* Chat Dialog Component */}
+        <EnquiryChatDialog
+          open={open}
+          enquiry={enquiry}
+          onClose={() => {
+            setOpen(false);
+            navigate("/venue/enquiries");
+          }}
+        />
+      </Paper>
     </Box>
   );
 };
