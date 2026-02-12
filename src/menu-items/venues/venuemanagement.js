@@ -6,7 +6,9 @@ import {
   IconList,
   IconChefHat,
   IconCalendarTime,
-  IconRocket
+  IconRocket,
+    IconMessageCircle,
+
 } from '@tabler/icons-react';
 
 // constants
@@ -17,7 +19,9 @@ const icons = {
   IconList,
   IconChefHat,
   IconCalendarTime,
-  IconRocket
+  IconRocket,
+    IconMessageCircle,
+
 };
 
 // ==============================|| DASHBOARD FULL MENU GROUP ||============================== //
@@ -85,7 +89,7 @@ const venuemanagement = {
       title: 'Enquiries',
       type: 'item',
       url: '/venue/enquiries',
-      icon: icons.IconRocket, // 🚀 Upgrade
+      icon: icons.IconMessageCircle, 
       breadcrumbs: false
     }
   ]
