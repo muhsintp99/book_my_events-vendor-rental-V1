@@ -1,8 +1,23 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  Box, Typography, TextField, IconButton, Stack, Avatar, Paper,
-  CircularProgress, InputBase, Badge, List, ListItem, ListItemAvatar,
-  ListItemText, ListItemButton, Divider, useTheme, useMediaQuery
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  Stack,
+  Avatar,
+  Paper,
+  CircularProgress,
+  InputBase,
+  Badge,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemButton,
+  Divider,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -58,13 +73,14 @@ const EnquiryChatPage = () => {
 
   // Fetch all venue enquiries
   useEffect(() => {
-    if (!vendorId) { setLoading(false); return; }
+    if (!vendorId) {
+      setLoading(false);
+      return;
+    }
     var fetchEnquiries = async () => {
       try {
         setLoading(true);
-        var res = await axios.get(
-          'https://api.bookmyevent.ae/api/enquiries/provider/' + vendorId
-        );
+        var res = await axios.get('https://api.bookmyevent.ae/api/enquiries/provider/' + vendorId);
         var all = res.data.data || [];
         var venue = all.filter((e) => {
           var mt = e.moduleId?.moduleType?.toLowerCase();
@@ -90,9 +106,7 @@ const EnquiryChatPage = () => {
     var fetchMessages = async () => {
       try {
         setChatLoading(true);
-        var res = await axios.get(
-          'https://api.bookmyevent.ae/api/enquiries/' + activeEnquiry._id + '/messages'
-        );
+        var res = await axios.get('https://api.bookmyevent.ae/api/enquiries/' + activeEnquiry._id + '/messages');
         setMessages(res.data?.data || []);
       } catch (err) {
         console.error('Failed to fetch messages:', err);
@@ -112,21 +126,32 @@ const EnquiryChatPage = () => {
 
     var handleReceive = (data) => {
       if (data.enquiryId && data.enquiryId !== activeEnquiry._id) return;
-      var messageKey = data._id || (data.senderId + '-' + data.timestamp);
+      var messageKey = data._id || data.senderId + '-' + data.timestamp;
       if (pendingMessagesRef.current.has(messageKey) || pendingMessagesRef.current.has(data.timestamp)) {
         pendingMessagesRef.current.delete(messageKey);
         pendingMessagesRef.current.delete(data.timestamp);
-        setMessages((prev) => prev.map((msg) =>
-          (msg.timestamp === data.timestamp && String(msg.senderId) === String(data.senderId))
-            ? { ...data, _id: data._id, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-            : msg
-        ));
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.timestamp === data.timestamp && String(msg.senderId) === String(data.senderId)
+              ? {
+                  ...data,
+                  _id: data._id,
+                  time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }
+              : msg
+          )
+        );
         return;
       }
       setMessages((prev) => {
-        var exists = prev.some((msg) => msg._id === data._id || (msg.timestamp && msg.timestamp === data.timestamp && msg.senderId === data.senderId));
+        var exists = prev.some(
+          (msg) => msg._id === data._id || (msg.timestamp && msg.timestamp === data.timestamp && msg.senderId === data.senderId)
+        );
         if (exists) return prev;
-        return [...prev, { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+        return [
+          ...prev,
+          { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ];
       });
     };
 
@@ -161,14 +186,17 @@ const EnquiryChatPage = () => {
       senderRole: 'vendor',
       text: currentMsg,
       message: currentMsg,
-      timestamp: timestamp,
+      timestamp: timestamp
     };
     pendingMessagesRef.current.add(timestamp);
-    setMessages((prev) => [...prev, {
-      ...payload,
-      _id: 'optimistic-' + Date.now(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...payload,
+        _id: 'optimistic-' + Date.now(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
     socket.emit('send_message', payload);
   };
 
@@ -195,40 +223,51 @@ const EnquiryChatPage = () => {
   var customerName = activeEnquiry ? getCustomerName(activeEnquiry) : '';
 
   return (
-    <Box sx={{
-      height: 'calc(100vh - 100px)',
-      display: 'flex',
-      bgcolor: 'white',
-      borderRadius: { xs: '0px', md: '16px' },
-      overflow: 'hidden',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-      border: '1px solid #E0E4EC',
-      m: { xs: 0, md: 2 },
-    }}>
-
+    <Box
+      sx={{
+        height: 'calc(100vh - 100px)',
+        display: 'flex',
+        bgcolor: 'white',
+        borderRadius: { xs: '0px', md: '16px' },
+        overflow: 'hidden',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        border: '1px solid #E0E4EC',
+        m: { xs: 0, md: 2 }
+      }}
+    >
       {/* ===== LEFT SIDEBAR ===== */}
       {(!isMobile || !mobileChatOpen) && (
-        <Box sx={{
-          width: { xs: '100%', md: 340 },
-          minWidth: { md: 340 },
-          height: '100%',
-          borderRight: '1px solid #E0E4EC',
-          display: 'flex',
-          flexDirection: 'column',
-          bgcolor: 'white',
-        }}>
+        <Box
+          sx={{
+            width: { xs: '100%', md: 340 },
+            minWidth: { md: 340 },
+            height: '100%',
+            borderRight: '1px solid #E0E4EC',
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: 'white'
+          }}
+        >
           {/* Header */}
           <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-              <Typography variant="h5" fontWeight={800} sx={{ color: '#1abc9c' }}>Chats</Typography>
+              <Typography variant="h5" fontWeight={800} sx={{ color: '#1abc9c' }}>
+                Chats
+              </Typography>
               <IconButton size="small" sx={{ bgcolor: '#e8f8f5' }}>
                 <FilterListIcon fontSize="small" sx={{ color: '#1abc9c' }} />
               </IconButton>
             </Stack>
-            <Paper sx={{
-              p: '2px 8px', display: 'flex', alignItems: 'center',
-              bgcolor: '#F1F5F9', borderRadius: '12px', boxShadow: 'none',
-            }}>
+            <Paper
+              sx={{
+                p: '2px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: '#F1F5F9',
+                borderRadius: '12px',
+                boxShadow: 'none'
+              }}
+            >
               <SearchIcon sx={{ color: '#64748B', ml: 1 }} />
               <InputBase
                 sx={{ ml: 1, flex: 1, p: 0.8, fontWeight: 500, fontSize: '0.9rem' }}
@@ -255,9 +294,7 @@ const EnquiryChatPage = () => {
                   var name = getCustomerName(enq);
                   var initials = getInitials(name);
                   var isActive = activeEnquiry?._id === enq._id;
-                  var dateStr = enq.createdAt
-                    ? new Date(enq.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
-                    : '';
+                  var dateStr = enq.createdAt ? new Date(enq.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
 
                   return (
                     <ListItem key={enq._id} disablePadding>
@@ -265,26 +302,33 @@ const EnquiryChatPage = () => {
                         selected={isActive}
                         onClick={() => handleSelectEnquiry(enq)}
                         sx={{
-                          py: 1.8, px: 2,
+                          py: 1.8,
+                          px: 2,
                           borderLeft: isActive ? '4px solid #1abc9c' : '4px solid transparent',
                           '&.Mui-selected': { bgcolor: '#e8f8f5' },
-                          '&:hover': { bgcolor: '#f0fdf9' },
+                          '&:hover': { bgcolor: '#f0fdf9' }
                         }}
                       >
                         <ListItemAvatar>
-                          <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                            variant="dot" color="success"
-                            sx={{ '& .MuiBadge-badge': { border: '2px solid white' } }}>
-                            <Avatar sx={{ bgcolor: '#d1f2eb', color: '#1abc9c', fontWeight: 700, fontSize: '0.85rem' }}>
-                              {initials}
-                            </Avatar>
+                          <Badge
+                            overlap="circular"
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            variant="dot"
+                            color="success"
+                            sx={{ '& .MuiBadge-badge': { border: '2px solid white' } }}
+                          >
+                            <Avatar sx={{ bgcolor: '#d1f2eb', color: '#1abc9c', fontWeight: 700, fontSize: '0.85rem' }}>{initials}</Avatar>
                           </Badge>
                         </ListItemAvatar>
                         <ListItemText
                           primary={
                             <Stack direction="row" justifyContent="space-between" alignItems="center">
-                              <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ maxWidth: 150 }}>{name}</Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{dateStr}</Typography>
+                              <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ maxWidth: 150 }}>
+                                {name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                {dateStr}
+                              </Typography>
                             </Stack>
                           }
                           secondary={
@@ -307,44 +351,69 @@ const EnquiryChatPage = () => {
       {(!isMobile || mobileChatOpen) && (
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', height: '100%' }}>
           {!activeEnquiry ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                opacity: 0.4
+              }}
+            >
               <ChatIcon sx={{ fontSize: 80, color: '#1abc9c', mb: 2 }} />
-              <Typography variant="h5" fontWeight={700} color="text.secondary">Select a conversation</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Choose a customer from the list to start chatting</Typography>
+              <Typography variant="h5" fontWeight={700} color="text.secondary">
+                Select a conversation
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Choose a customer from the list to start chatting
+              </Typography>
             </Box>
           ) : (
             <React.Fragment>
               {/* Chat Header */}
-              <Box sx={{
-                p: isMobile ? 1.5 : 2, bgcolor: 'white', borderBottom: '1px solid #E0E4EC',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
+              <Box
+                sx={{
+                  p: isMobile ? 1.5 : 2,
+                  bgcolor: 'white',
+                  borderBottom: '1px solid #E0E4EC',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
                 <Stack direction="row" spacing={2} alignItems="center">
                   {isMobile && (
                     <IconButton onClick={() => setMobileChatOpen(false)}>
                       <ArrowBackIcon />
                     </IconButton>
                   )}
-                  <Avatar sx={{
-                    width: isMobile ? 40 : 48, height: isMobile ? 40 : 48,
-                    bgcolor: '#1abc9c', fontWeight: 800, fontSize: isMobile ? '0.9rem' : '1.1rem',
-                  }}>
+                  <Avatar
+                    sx={{
+                      width: isMobile ? 40 : 48,
+                      height: isMobile ? 40 : 48,
+                      bgcolor: '#1abc9c',
+                      fontWeight: 800,
+                      fontSize: isMobile ? '0.9rem' : '1.1rem'
+                    }}
+                  >
                     {getInitials(customerName)}
                   </Avatar>
                   <Box>
                     <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight={800} sx={{ lineHeight: 1.2 }}>
                       {customerName}
                     </Typography>
-                    <Stack direction={isMobile ? 'column' : 'row'} spacing={isMobile ? 0 : 1.5}
-                      alignItems={isMobile ? 'flex-start' : 'center'}>
+                    <Stack
+                      direction={isMobile ? 'column' : 'row'}
+                      spacing={isMobile ? 0 : 1.5}
+                      alignItems={isMobile ? 'flex-start' : 'center'}
+                    >
                       {activeEnquiry.email && (
                         <Typography variant="caption" sx={{ color: '#1abc9c', fontWeight: 700 }}>
                           {activeEnquiry.email}
                         </Typography>
                       )}
-                      {!isMobile && activeEnquiry.contact && (
-                        <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />
-                      )}
+                      {!isMobile && activeEnquiry.contact && <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />}
                       {activeEnquiry.contact && (
                         <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
                           {activeEnquiry.contact}
@@ -356,62 +425,109 @@ const EnquiryChatPage = () => {
               </Box>
 
               {/* Messages */}
-              <Box sx={{
-                flexGrow: 1, overflowY: 'auto', p: isMobile ? 2 : 3,
-                display: 'flex', flexDirection: 'column', gap: 2,
-              }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  overflowY: 'auto',
+                  p: isMobile ? 2 : 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2
+                }}
+              >
                 {chatLoading ? (
                   <Box display="flex" justifyContent="center" py={4}>
                     <CircularProgress sx={{ color: '#1abc9c' }} />
                   </Box>
                 ) : messages.length === 0 ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.3 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      opacity: 0.3
+                    }}
+                  >
                     <ChatIcon sx={{ fontSize: 60, color: '#1abc9c', mb: 1 }} />
-                    <Typography variant="h6" fontWeight={600}>No messages yet</Typography>
-                    <Typography variant="body2" color="text.secondary">Start the conversation!</Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      No messages yet
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Start the conversation!
+                    </Typography>
                   </Box>
                 ) : (
                   messages.map((msg, i) => {
                     var fromMe = isMe(msg.senderId);
                     var isOptimistic = String(msg._id).startsWith('optimistic-');
                     return (
-                      <Box key={msg._id || i} sx={{
-                        alignSelf: fromMe ? 'flex-end' : 'flex-start',
-                        maxWidth: { xs: '85%', md: '65%' },
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: fromMe ? 'flex-end' : 'flex-start',
-                      }}>
-                        <Paper elevation={0} sx={{
-                          p: 1.5, px: 2,
-                          borderRadius: fromMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                          bgcolor: fromMe ? '#1abc9c' : 'white',
-                          color: fromMe ? 'white' : '#1A1A2E',
-                          boxShadow: fromMe ? '0 4px 12px rgba(26,188,156,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                          border: fromMe ? 'none' : '1px solid #eef0f4',
-                          position: 'relative',
-                          '&:hover .delete-msg': { opacity: 1 },
-                        }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.5 }}>
+                      <Box
+                        key={msg._id || i}
+                        sx={{
+                          alignSelf: fromMe ? 'flex-end' : 'flex-start',
+                          maxWidth: { xs: '85%', md: '65%' },
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: fromMe ? 'flex-end' : 'flex-start'
+                        }}
+                      >
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 1.5,
+                            px: 2,
+                            borderRadius: fromMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                            bgcolor: fromMe ? '#1abc9c' : 'white',
+                            color: fromMe ? 'white' : '#1A1A2E',
+                            boxShadow: fromMe ? '0 4px 12px rgba(26,188,156,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+                            border: fromMe ? 'none' : '1px solid #eef0f4',
+                            position: 'relative',
+                            '&:hover .delete-msg': { opacity: 1 }
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 500,
+                              lineHeight: 1.5,
+                              color: fromMe ? '#ffffff !important' : '#1A1A2E'
+                            }}
+                          >
                             {msg.text || msg.message}
                           </Typography>
+
                           {fromMe && !isOptimistic && (
-                            <IconButton className="delete-msg" size="small"
+                            <IconButton
+                              className="delete-msg"
+                              size="small"
                               onClick={() => handleDeletedMessage(msg._id)}
                               sx={{
-                                position: 'absolute', top: -10, right: -10,
-                                bgcolor: '#ff4d4d', color: '#fff', p: 0.2,
-                                opacity: 0, transition: 'opacity 0.2s',
-                                '&:hover': { bgcolor: '#cc0000' },
-                              }}>
+                                position: 'absolute',
+                                top: -10,
+                                right: -10,
+                                bgcolor: '#ff4d4d',
+                                color: '#fff',
+                                p: 0.2,
+                                opacity: 0,
+                                transition: 'opacity 0.2s',
+                                '&:hover': { bgcolor: '#cc0000' }
+                              }}
+                            >
                               <DeleteIcon sx={{ fontSize: 14 }} />
                             </IconButton>
                           )}
                         </Paper>
                         <Typography variant="caption" sx={{ mt: 0.3, px: 1, color: '#94A3B8', fontWeight: 600, fontSize: '0.65rem' }}>
-                          {isOptimistic
-                            ? <span style={{ fontStyle: 'italic', opacity: 0.7 }}>sending...</span>
-                            : <span>{msg.time} {fromMe && <DoneAllIcon sx={{ fontSize: 12, ml: 0.5, verticalAlign: 'middle', color: '#1abc9c' }} />}</span>
-                          }
+                          {isOptimistic ? (
+                            <span style={{ fontStyle: 'italic', opacity: 0.7 }}>sending...</span>
+                          ) : (
+                            <span>
+                              {msg.time}{' '}
+                              {fromMe && <DoneAllIcon sx={{ fontSize: 12, ml: 0.5, verticalAlign: 'middle', color: '#1abc9c' }} />}
+                            </span>
+                          )}
                         </Typography>
                       </Box>
                     );
@@ -422,26 +538,49 @@ const EnquiryChatPage = () => {
 
               {/* Input */}
               <Box sx={{ p: isMobile ? 1.5 : 2, bgcolor: 'white', borderTop: '1px solid #E0E4EC' }}>
-                <Paper component="form" elevation={0}
-                  onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                <Paper
+                  component="form"
+                  elevation={0}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSend();
+                  }}
                   sx={{
-                    p: '4px 8px', display: 'flex', alignItems: 'center',
-                    borderRadius: '16px', bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
-                  }}>
-                  <IconButton sx={{ color: '#64748B' }}><AddIcon /></IconButton>
-                  <TextField fullWidth placeholder="Type a message..." variant="standard"
-                    value={message} onChange={(e) => setMessage(e.target.value)}
+                    p: '4px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: '16px',
+                    bgcolor: '#F8FAFC',
+                    border: '1px solid #E2E8F0'
+                  }}
+                >
+                  <IconButton sx={{ color: '#64748B' }}>
+                    <AddIcon />
+                  </IconButton>
+                  <TextField
+                    fullWidth
+                    placeholder="Type a message..."
+                    variant="standard"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     InputProps={{ disableUnderline: true }}
                     sx={{ ml: 1, flex: 1, '& .MuiInputBase-input': { fontWeight: 500 } }}
                   />
-                  <IconButton sx={{ color: '#64748B' }}><EmojiEmotionsIcon /></IconButton>
+                  <IconButton sx={{ color: '#64748B' }}>
+                    <EmojiEmotionsIcon />
+                  </IconButton>
                   <Divider sx={{ height: 28, mx: 1 }} orientation="vertical" />
-                  <IconButton onClick={handleSend} disabled={!message.trim()}
+                  <IconButton
+                    onClick={handleSend}
+                    disabled={!message.trim()}
                     sx={{
-                      p: 1.2, color: 'white', bgcolor: '#1abc9c',
+                      p: 1.2,
+                      color: 'white',
+                      bgcolor: '#1abc9c',
                       '&:hover': { bgcolor: '#16a085' },
-                      '&.Mui-disabled': { bgcolor: '#b2dfdb', color: 'white' },
-                    }}>
+                      '&.Mui-disabled': { bgcolor: '#b2dfdb', color: 'white' }
+                    }}
+                  >
                     <SendIcon sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Paper>
