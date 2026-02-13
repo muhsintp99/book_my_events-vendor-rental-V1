@@ -1,8 +1,8 @@
-import React from "react";
-import OrnamentsBookings from "./OrnamentsBookings";
+import React from 'react';
+import OrnamentsBookings from './OrnamentsBookings';
 
-const Cancelledbookings = () => {
+const Ornamentscancelled = () => {
   return <OrnamentsBookings initialTab="Cancelled" hideTabs={true} />;
 };
 
-export default Cancelledbookings;
+export default Ornamentscancelled;
