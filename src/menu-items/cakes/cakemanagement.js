@@ -98,14 +98,14 @@ const cakemanagement = {
       breadcrumbs: false
     },
 
-    {
-      id: 'cake-enquiries',
-      title: 'Enquiries',
-      type: 'item',
-      url: '/cake/enquiry',
-      icon: icons.IconMessageCircle,
-      breadcrumbs: false
-    }
+    // {
+    //   id: 'cake-enquiries',
+    //   title: 'Enquiries',
+    //   type: 'item',
+    //   url: '/cake/enquiry',
+    //   icon: icons.IconMessageCircle,
+    //   breadcrumbs: false
+    // }
   ]
 };
 

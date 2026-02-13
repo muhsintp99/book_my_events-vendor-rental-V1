@@ -13,10 +13,7 @@ import {
   Stack,
   CircularProgress,
   Alert,
-  Select,
-  MenuItem,
   IconButton,
-  Chip,
   Tooltip,
   Dialog,
   DialogTitle,
@@ -24,10 +21,11 @@ import {
   DialogActions,
   Button,
   Grid,
-  Divider,
   Card,
   CardContent,
+  Snackbar,
 } from "@mui/material";
+
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -38,44 +36,45 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import EventIcon from "@mui/icons-material/Event";
 import CategoryIcon from "@mui/icons-material/Category";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import EnquiryChatDialog from "./EnquiryChatDialog";
 
 const EnquiriesUI = () => {
-  const navigate = useNavigate();
-
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [providerId, setProviderId] = useState(null);
-  
+  const [successMsg, setSuccessMsg] = useState("");
+
   // Modal state
   const [openModal, setOpenModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
+  // Chat state
+  const [openChat, setOpenChat] = useState(false);
+  const [chatEnquiry, setChatEnquiry] = useState(null);
+
   /* ===============================
      GET PROVIDER ID
   =============================== */
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setProviderId(user.providerId || user._id);
-    }
-  }, []);
+useEffect(() => {
+  const userData = localStorage.getItem("user");
+  if (userData) {
+    const user = JSON.parse(userData);
+    console.log("Vendor Mongo ID:", user._id);
+    setProviderId(user._id);   // ✅ FIXED
+  }
+}, []);
+
 
   /* ===============================
      FETCH ENQUIRIES
   =============================== */
   useEffect(() => {
     const fetchEnquiries = async () => {
-      if (!providerId) {
-        setError("Provider ID not found");
-        setLoading(false);
-        return;
-      }
+      if (!providerId) return;
 
       try {
         const res = await axios.get(
@@ -95,21 +94,46 @@ const EnquiriesUI = () => {
   }, [providerId]);
 
   /* ===============================
-     FILTER
+     DELETE ENQUIRY
+  =============================== */
+  const handleDeleteEnquiry = async (enquiryId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this enquiry?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(
+        `https://api.bookmyevent.ae/api/enquiries/${enquiryId}`
+      );
+
+      // Remove from UI
+      setEnquiries((prev) =>
+        prev.filter((e) => e._id !== enquiryId)
+      );
+
+      setSuccessMsg("Enquiry deleted successfully");
+    } catch (err) {
+      setError("Failed to delete enquiry");
+    }
+  };
+
+  /* ===============================
+     SEARCH FILTER
   =============================== */
   const filteredEnquiries = enquiries.filter((e) => {
-    const matchSearch =
+    return (
       (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
       (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
       (e.contact || "").includes(search) ||
-      (e.moduleId?.title || "").toLowerCase().includes(search.toLowerCase());
-
-    const matchStatus = status === "all" || e.status === status;
-    return matchSearch && matchStatus;
+      (e.moduleId?.title || "")
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
   });
 
   /* ===============================
-     HANDLE VIEW
+     VIEW MODAL
   =============================== */
   const handleViewEnquiry = (enquiry) => {
     setSelectedEnquiry(enquiry);
@@ -125,41 +149,37 @@ const EnquiriesUI = () => {
      DETAIL ROW COMPONENT
   =============================== */
   const DetailRow = ({ icon, label, value }) => (
-    <Box 
-      display="flex" 
-      alignItems="center" 
-      gap={2} 
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
       py={1.5}
       sx={{
         borderBottom: "1px solid",
         borderColor: "divider",
-        "&:last-child": {
-          borderBottom: "none"
-        }
+        "&:last-child": { borderBottom: "none" },
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           width: 40,
           height: 40,
           borderRadius: "50%",
           bgcolor: "primary.light",
           color: "primary.main",
-          flexShrink: 0
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
         }}
       >
         {icon}
       </Box>
-      <Box flex={1}>
-        <Typography variant="caption" color="text.secondary" display="block">
+      <Box>
+        <Typography variant="caption" color="text.secondary">
           {label}
         </Typography>
-        <Typography variant="body1" fontWeight={500}>
-          {value || "N/A"}
-        </Typography>
+        <Typography fontWeight={500}>{value || "N/A"}</Typography>
       </Box>
     </Box>
   );
@@ -177,8 +197,8 @@ const EnquiriesUI = () => {
       )}
 
       <Paper sx={{ mt: 2 }}>
-        {/* SEARCH + FILTER */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} p={2}>
+        {/* SEARCH */}
+        <Box p={2}>
           <TextField
             label="Search enquiries"
             size="small"
@@ -186,20 +206,7 @@ const EnquiriesUI = () => {
             onChange={(e) => setSearch(e.target.value)}
             fullWidth
           />
-
-          <Select
-            size="small"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            sx={{ minWidth: 160 }}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="responded">Responded</MenuItem>
-            <MenuItem value="confirmed">Confirmed</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
-          </Select>
-        </Stack>
+        </Box>
 
         {/* TABLE */}
         <TableContainer>
@@ -211,7 +218,6 @@ const EnquiriesUI = () => {
                 <TableCell>Module</TableCell>
                 <TableCell>Contact</TableCell>
                 <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -219,7 +225,7 @@ const EnquiriesUI = () => {
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={6} align="center">
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -234,53 +240,43 @@ const EnquiriesUI = () => {
                       <Typography fontWeight={600}>
                         {e.fullName}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >
                         {e.email}
                       </Typography>
                     </TableCell>
 
                     <TableCell>{e.moduleId?.title}</TableCell>
                     <TableCell>{e.contact}</TableCell>
-
                     <TableCell>
                       {new Date(e.bookingDate).toLocaleDateString()}
                     </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={e.status}
-                        color={
-                          e.status === "pending"
-                            ? "warning"
-                            : e.status === "confirmed"
-                            ? "success"
-                            : "default"
-                        }
-                      />
-                    </TableCell>
-
-                    {/* ACTIONS */}
                     <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="center"
+                      >
                         {/* CHAT */}
-                        <Tooltip title="Open Chat">
+                        <Tooltip title="Chat">
                           <IconButton
                             size="small"
                             color="primary"
-                            onClick={() =>
-                              navigate("/makeupartist/Enqurychat", {
-                                state: e,
-                              })
-                            }
+                            onClick={() => {
+                              setChatEnquiry(e);
+                              setOpenChat(true);
+                            }}
                           >
                             <ChatIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
 
                         {/* VIEW */}
-                        <Tooltip title="View Enquiry">
-                          <IconButton 
+                        <Tooltip title="View">
+                          <IconButton
                             size="small"
                             color="info"
                             onClick={() => handleViewEnquiry(e)}
@@ -290,8 +286,14 @@ const EnquiriesUI = () => {
                         </Tooltip>
 
                         {/* DELETE */}
-                        <Tooltip title="Delete Enquiry">
-                          <IconButton size="small" color="error">
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() =>
+                              handleDeleteEnquiry(e._id)
+                            }
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -302,7 +304,7 @@ const EnquiriesUI = () => {
 
               {!loading && filteredEnquiries.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={6} align="center">
                     No enquiries found
                   </TableCell>
                 </TableRow>
@@ -313,222 +315,125 @@ const EnquiriesUI = () => {
       </Paper>
 
       {/* VIEW MODAL */}
-      <Dialog 
-        open={openModal} 
+      <Dialog
+        open={openModal}
         onClose={handleCloseModal}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-          }
-        }}
       >
         <DialogTitle
-          sx={{
-            bgcolor: "primary.main",
-            color: "white",
-            py: 2.5
-          }}
+          sx={{ bgcolor: "primary.main", color: "white" }}
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6" fontWeight={600}>
+          <Box display="flex" justifyContent="space-between">
+            <Typography fontWeight={600}>
               Enquiry Details
             </Typography>
-            <IconButton 
-              onClick={handleCloseModal} 
-              size="small"
-              sx={{ 
-                color: "white",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.1)"
-                }
-              }}
+            <IconButton
+              onClick={handleCloseModal}
+              sx={{ color: "white" }}
             >
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
-        
-        <DialogContent sx={{ p: 0 }}>
+
+        <DialogContent>
           {selectedEnquiry && (
-            <Box>
-              {/* HEADER CARD - Status */}
-              <Box 
-                sx={{ 
-                  bgcolor: "grey.50", 
-                  p: 3,
-                  borderBottom: "1px solid",
-                  borderColor: "divider"
-                }}
-              >
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Enquiry ID
+            <Grid container spacing={3} mt={1}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography fontWeight={600} mb={2}>
+                      Customer Information
                     </Typography>
-                    <Typography variant="body2" fontWeight={500} sx={{ fontFamily: "monospace" }}>
-                      {selectedEnquiry._id}
+
+                    <DetailRow
+                      icon={<PersonIcon fontSize="small" />}
+                      label="Full Name"
+                      value={selectedEnquiry.fullName}
+                    />
+                    <DetailRow
+                      icon={<EmailIcon fontSize="small" />}
+                      label="Email"
+                      value={selectedEnquiry.email}
+                    />
+                    <DetailRow
+                      icon={<PhoneIcon fontSize="small" />}
+                      label="Contact"
+                      value={selectedEnquiry.contact}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography fontWeight={600} mb={2}>
+                      Booking Information
                     </Typography>
-                  </Box>
-                  <Chip
-                    label={selectedEnquiry.status?.toUpperCase()}
-                    color={
-                      selectedEnquiry.status === "pending"
-                        ? "warning"
-                        : selectedEnquiry.status === "confirmed"
-                        ? "success"
-                        : selectedEnquiry.status === "cancelled"
-                        ? "error"
-                        : "default"
-                    }
-                    sx={{ fontWeight: 600 }}
-                  />
-                </Stack>
-              </Box>
 
-              {/* MAIN CONTENT */}
-              <Box p={3}>
-                <Grid container spacing={3}>
-                  {/* LEFT COLUMN - Customer Info */}
-                  <Grid item xs={12} md={6}>
-                    <Card variant="outlined" sx={{ height: "100%" }}>
-                      <CardContent>
-                        <Typography 
-                          variant="subtitle1" 
-                          fontWeight={600} 
-                          gutterBottom
-                          sx={{ mb: 2 }}
-                        >
-                          Customer Information
-                        </Typography>
-                        
-                        <DetailRow 
-                          icon={<PersonIcon fontSize="small" />}
-                          label="Full Name"
-                          value={selectedEnquiry.fullName}
-                        />
-                        
-                        <DetailRow 
-                          icon={<EmailIcon fontSize="small" />}
-                          label="Email Address"
-                          value={selectedEnquiry.email}
-                        />
-                        
-                        <DetailRow 
-                          icon={<PhoneIcon fontSize="small" />}
-                          label="Contact Number"
-                          value={selectedEnquiry.contact}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  {/* RIGHT COLUMN - Booking Info */}
-                  <Grid item xs={12} md={6}>
-                    <Card variant="outlined" sx={{ height: "100%" }}>
-                      <CardContent>
-                        <Typography 
-                          variant="subtitle1" 
-                          fontWeight={600} 
-                          gutterBottom
-                          sx={{ mb: 2 }}
-                        >
-                          Booking Information
-                        </Typography>
-                        
-                        <DetailRow 
-                          icon={<CategoryIcon fontSize="small" />}
-                          label="Module/Service"
-                          value={selectedEnquiry.moduleId?.title}
-                        />
-                        
-                        <DetailRow 
-                          icon={<EventIcon fontSize="small" />}
-                          label="Booking Date"
-                          value={selectedEnquiry.bookingDate 
-                            ? new Date(selectedEnquiry.bookingDate).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })
-                            : null}
-                        />
-                        
-                        <DetailRow 
-                          icon={<AccessTimeIcon fontSize="small" />}
-                          label="Created At"
-                          value={selectedEnquiry.createdAt 
-                            ? new Date(selectedEnquiry.createdAt).toLocaleString('en-US', {
-                                dateStyle: 'medium',
-                                timeStyle: 'short'
-                              })
-                            : null}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  {/* MESSAGE SECTION */}
-                  {selectedEnquiry.message && (
-                    <Grid item xs={12}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Typography 
-                            variant="subtitle1" 
-                            fontWeight={600} 
-                            gutterBottom
-                          >
-                            Message
-                          </Typography>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 2.5, 
-                              bgcolor: "grey.50",
-                              mt: 1.5,
-                              border: "none"
-                            }}
-                          >
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                lineHeight: 1.7,
-                                whiteSpace: "pre-wrap"
-                              }}
-                            >
-                              {selectedEnquiry.message}
-                            </Typography>
-                          </Paper>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  )}
-                </Grid>
-              </Box>
-            </Box>
+                    <DetailRow
+                      icon={<CategoryIcon fontSize="small" />}
+                      label="Module"
+                      value={selectedEnquiry.moduleId?.title}
+                    />
+                    <DetailRow
+                      icon={<EventIcon fontSize="small" />}
+                      label="Booking Date"
+                      value={new Date(
+                        selectedEnquiry.bookingDate
+                      ).toLocaleDateString()}
+                    />
+                    <DetailRow
+                      icon={<AccessTimeIcon fontSize="small" />}
+                      label="Created At"
+                      value={new Date(
+                        selectedEnquiry.createdAt
+                      ).toLocaleString()}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, bgcolor: "grey.50" }}>
+        <DialogActions>
           <Button onClick={handleCloseModal} variant="outlined">
             Close
           </Button>
-          <Button 
+          <Button
             variant="contained"
             startIcon={<ChatIcon />}
             onClick={() => {
               handleCloseModal();
-              navigate("/makeupartist/Enqurychat", {
-                state: selectedEnquiry,
-              });
+              setChatEnquiry(selectedEnquiry);
+              setOpenChat(true);
             }}
           >
             Open Chat
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* CHAT POPUP */}
+      <EnquiryChatDialog
+        open={openChat}
+        onClose={() => {
+          setOpenChat(false);
+          setChatEnquiry(null);
+        }}
+        enquiry={chatEnquiry}
+      />
+
+      {/* SUCCESS SNACKBAR */}
+      <Snackbar
+        open={!!successMsg}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMsg("")}
+        message={successMsg}
+      />
     </Box>
   );
 };

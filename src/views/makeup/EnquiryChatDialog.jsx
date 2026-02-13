@@ -1,310 +1,370 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Box,
-    Typography,
-    TextField,
-    IconButton,
-    Stack,
-    Button,
-    Avatar,
-    CircularProgress,
-    Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  Stack,
+  Avatar,
+  CircularProgress,
 } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
-import CloseIcon from "@mui/icons-material/Close";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import CloseIcon from "@mui/icons-material/Close";
+import SendIcon from "@mui/icons-material/Send";
 import { socket } from "../../socket";
 
 const EnquiryChatDialog = ({ open, onClose, enquiry }) => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const messagesEndRef = useRef(null);
 
-    // ❗️ MOVE THIS TO TOP — before hooks
-    if (!open || !enquiry) return null;
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const loggedInId = user?._id;
 
-    const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [socketConnected, setSocketConnected] = useState(false);
-    const messagesEndRef = useRef(null);
+  /* ================= AUTO SCROLL ================= */
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const loggedInId = user?.providerId || user?._id;
-
-    /* =================================================
-       AUTO SCROLL
-    ================================================= */
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
-
-    /* =================================================
-       SOCKET SETUP
-    ================================================= */
-useEffect(() => {
+  /* ================= SOCKET SETUP ================= */
+  useEffect(() => {
     if (!open || !enquiry?._id) return;
 
     setLoading(true);
-    setMessages([]);
 
-    // Ensure socket connection
+    const enquiryId = enquiry._id;
+    const vendorId = user?._id;
+    const userId = enquiry.userId?._id || enquiry.userId;
+
     if (!socket.connected) {
-        socket.connect();
+      socket.connect();
     }
 
-    // Immediately sync state
-    setSocketConnected(socket.connected);
+    const handleConnect = () => {
+      setSocketConnected(true);
 
-    // Join room
-    socket.emit("join_enquiry", {
-        enquiryId: enquiry._id,
-        vendorId: loggedInId,
-        vendorName: user.businessName || user.name || "Vendor",
-    });
+      socket.emit("join_enquiry", {
+        enquiryId,
+        vendorId,
+        userId,
+      });
+    };
 
-    // Receive history
-    socket.on("message_history", (history) => {
-        setMessages(history || []);
-        setLoading(false);
-    });
+    const handleDisconnect = () => {
+      setSocketConnected(false);
+    };
 
-    // Receive new messages
-    socket.on("receive_message", (data) => {
-        setMessages((prev) => [...prev, data]);
-    });
+    const handleHistory = (history) => {
+      setMessages(history || []);
+      setLoading(false);
+    };
 
-    // Socket status listeners
-    socket.on("connect", () => {
-        setSocketConnected(true);
-    });
+    const handleReceive = (msg) => {
+      setMessages((prev) => {
+        // Replace optimistic message
+        const tempMsg = prev.find(
+          (m) =>
+            m._id?.startsWith("temp-") &&
+            (m.message === msg.message || m.text === msg.message) &&
+            String(m.senderId) === String(msg.senderId)
+        );
 
-    socket.on("disconnect", () => {
-        setSocketConnected(false);
-    });
+        if (tempMsg) {
+          return prev.map((m) =>
+            m._id === tempMsg._id ? msg : m
+          );
+        }
 
-    // Safety: stop loading after 1s
-    const timer = setTimeout(() => {
-        setLoading(false);
-    }, 1000);
+        return [...prev, msg];
+      });
+    };
+
+    const handleDelete = ({ messageId }) => {
+      setMessages((prev) =>
+        prev.filter((m) => m._id !== messageId)
+      );
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("message_history", handleHistory);
+    socket.on("receive_message", handleReceive);
+    socket.on("message_deleted", handleDelete);
+
+    if (socket.connected) {
+      handleConnect();
+    }
 
     return () => {
-        clearTimeout(timer);
-        socket.off("message_history");
-        socket.off("receive_message");
-        socket.off("connect");
-        socket.off("disconnect");
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("message_history", handleHistory);
+      socket.off("receive_message", handleReceive);
+      socket.off("message_deleted", handleDelete);
+    };
+  }, [open, enquiry?._id]);
+
+  /* ================= SEND MESSAGE ================= */
+  const handleSend = () => {
+    if (!message.trim()) return;
+
+    const tempId = "temp-" + Date.now();
+    const currentMsg = message;
+
+    const payload = {
+      enquiryId: enquiry._id,
+      senderId: loggedInId,
+      receiverId: enquiry.userId?._id || enquiry.userId,
+      senderRole: "vendor",
+      message: currentMsg,
+      timestamp: new Date().toISOString(),
     };
 
-}, [open, enquiry?._id]);
+    // Optimistic UI update
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...payload,
+        _id: tempId,
+      },
+    ]);
 
+    setMessage("");
 
+    if (socket.connected) {
+      socket.emit("send_message", payload);
+    }
+  };
 
+  /* ================= ENTER KEY ================= */
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-    /* =================================================
-       SEND MESSAGE
-    ================================================= */
-    const handleSend = () => {
-        if (!message.trim()) return;
+  /* ================= DELETE MESSAGE ================= */
+  const handleDeleteMessage = (messageId) => {
+    if (socket.connected) {
+      socket.emit("delete_message", {
+        messageId,
+        enquiryId: enquiry._id,
+      });
+    }
+  };
 
-        const payload = {
-            enquiryId: enquiry._id,
-            senderId: user._id,
-            senderName: user.businessName || user.name || "Vendor",
-            senderRole: "vendor",
-            text: message,
-            timestamp: new Date().toISOString(),
-            time: new Date().toLocaleTimeString(),
-        };
+  const isMe = (senderId) =>
+    String(senderId) === String(loggedInId);
 
-        // Emit through socket
-        socket.emit("send_message", payload, (acknowledgment) => {
-            console.log("Message sent:", acknowledgment);
-        });
+  if (!enquiry) return null;
 
-        // Optimistically add to local messages
-        setMessage("");
-    };
-
-    /* =================================================
-       HANDLE ENTER KEY
-    ================================================= */
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    };
-
-    return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            fullWidth
-            maxWidth="sm"
-            PaperProps={{
-                sx: {
-                    height: "80vh",
-                    display: "flex",
-                    flexDirection: "column",
-                }
-            }}
-        >
-            {/* HEADER */}
-            <DialogTitle
-                sx={{
-                    bgcolor: "#075E54",
-                    color: "#fff",
-                    p: 2,
-                    flexShrink: 0,
-                }}
-            >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                    <Avatar sx={{ bgcolor: "#25D366", width: 40, height: 40 }}>
-                        {enquiry.fullName?.charAt(0) || "C"}
-                    </Avatar>
-
-                    <Box flex={1}>
-                        <Typography fontWeight={600} variant="subtitle2">
-                            {enquiry.fullName || "Customer"}
-                        </Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {enquiry.moduleId?.title || "Venue"} Enquiry
-                            {socketConnected && " • Connected"}
-                        </Typography>
-                    </Box>
-
-                    <IconButton
-                        onClick={onClose}
-                        sx={{
-                            color: "#fff",
-                            "&:hover": { bgcolor: "rgba(255,255,255,0.2)" }
-                        }}
-                        size="small"
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </Stack>
-            </DialogTitle>
-
-            {/* CHAT BODY */}
-            <DialogContent
-                sx={{
-                    flex: 1,
-                    overflowY: "auto",
-                    bgcolor: "#ECE5DD",
-                    p: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-            >
-                {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                        <CircularProgress size={40} />
-                    </Box>
-                ) : messages.length === 0 ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                        <Typography color="text.secondary" textAlign="center">
-                            No messages yet. Start the conversation!
-                        </Typography>
-                    </Box>
-                ) : (
-                    messages.map((msg, i) => {
-                        const isMe = msg.senderId === user._id;
-
-                        return (
-                            <Box
-                                key={i}
-                                display="flex"
-                                justifyContent={isMe ? "flex-end" : "flex-start"}
-                                mb={1}
-                            >
-                                <Box
-                                    sx={{
-                                        px: 2,
-                                        py: 1.2,
-                                        maxWidth: "75%",
-                                        borderRadius: "18px",
-                                        bgcolor: isMe ? "#DCF8C6" : "#fff",
-                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                                        wordBreak: "break-word",
-                                    }}
-                                >
-                                    <Typography variant="body2">
-                                        {msg.text}
-                                    </Typography>
-
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            display: "block",
-                                            textAlign: "right",
-                                            opacity: 0.6,
-                                            mt: 0.5,
-                                            fontSize: "0.7rem",
-                                        }}
-                                    >
-                                        {msg.time || new Date(msg.timestamp).toLocaleTimeString()}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        );
-                    })
-                )}
-                <div ref={messagesEndRef} />
-            </DialogContent>
-
-            {/* INPUT FOOTER */}
-            <DialogActions
-                sx={{
-                    p: 1.5,
-                    bgcolor: "#f7f7f7",
-                    borderTop: "1px solid #ddd",
-                    gap: 1,
-                    flexShrink: 0,
-                }}
-            >
-                <ChatBubbleOutlineIcon sx={{ color: "#888" }} />
-
-               <TextField
-    fullWidth
-    size="small"
-    placeholder="Type a message..."
-    value={message}
-    onChange={(e) => setMessage(e.target.value)}
-    onKeyDown={handleKeyDown}
-    multiline
-    maxRows={3}
-    disabled={!open}
-    sx={{
-        bgcolor: "#fff",
-        borderRadius: "20px",
-        "& .MuiOutlinedInput-root": {
-            borderRadius: "20px",
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          height: "80vh",
+          display: "flex",
+          flexDirection: "column",
         },
-    }}
-/>
+      }}
+    >
+      {/* ================= HEADER ================= */}
+      <DialogTitle sx={{ bgcolor: "#075E54", color: "#fff" }}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Avatar sx={{ bgcolor: "#25D366" }}>
+            {enquiry.fullName?.charAt(0) || "C"}
+          </Avatar>
 
+          <Box flex={1}>
+            <Typography fontWeight={600}>
+              {enquiry.fullName}
+            </Typography>
+            <Typography variant="caption">
+              {enquiry.moduleId?.title}
+              {socketConnected && " • Connected"}
+            </Typography>
+          </Box>
 
-            <IconButton
-    onClick={handleSend}
-    disabled={!message.trim()}
-    sx={{
-        bgcolor: message.trim() ? "#25D366" : "#ccc",
-        color: "#fff",
-        "&:hover": {
-            bgcolor: message.trim() ? "#1ebd5a" : "#ccc",
-        },
-    }}
-    size="small"
+          <IconButton onClick={onClose} sx={{ color: "#fff" }}>
+            <CloseIcon />
+          </IconButton>
+        </Stack>
+      </DialogTitle>
+
+      {/* ================= BODY ================= */}
+      <DialogContent
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          bgcolor: "#ECE5DD",
+          p: 2,
+        }}
+      >
+        {loading ? (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="100%"
+          >
+            <CircularProgress />
+          </Box>
+        ) : messages.length === 0 ? (
+          <Typography textAlign="center" color="text.secondary">
+            No messages yet. Start the conversation!
+          </Typography>
+        ) : (
+          messages.map((msg) => {
+            const fromMe = isMe(msg.senderId);
+            const isTemp = msg._id?.startsWith("temp-");
+
+            return (
+              <Box
+                key={msg._id}
+                display="flex"
+                justifyContent={fromMe ? "flex-end" : "flex-start"}
+                mb={1}
+              >
+                <Box
+  sx={{
+    p: 1.5,
+    borderRadius: fromMe
+      ? "15px 15px 2px 15px"
+      : "15px 15px 15px 2px",
+    bgcolor: fromMe ? "#DCF8C6" : "#fff",
+    position: "relative",
+    maxWidth: "75%",
+    transition: "0.2s ease",
+
+    // 👇 Hover effect
+    "&:hover .delete-btn": {
+      opacity: 1,
+      transform: "scale(1)",
+    },
+  }}
 >
-    <SendIcon />
-</IconButton>
+  <Typography variant="body2">
+    {msg.message || msg.text}
+  </Typography>
 
-            </DialogActions>
-        </Dialog>
-    );
+  {/* DELETE BUTTON - HIDDEN BY DEFAULT */}
+  {fromMe && !isTemp && (
+    <IconButton
+      className="delete-btn"
+      size="small"
+      onClick={() => handleDeleteMessage(msg._id)}
+      sx={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        bgcolor: "#ff4d4d",
+        color: "#fff",
+        p: 0.5,
+
+        // 👇 Hidden initially
+        opacity: 0,
+        transform: "scale(0.8)",
+        transition: "all 0.2s ease",
+
+        "&:hover": {
+          bgcolor: "#cc0000",
+        },
+      }}
+    >
+      <DeleteIcon sx={{ fontSize: 12 }} />
+    </IconButton>
+  )}
+
+
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 0.5,
+                      mt: 0.5,
+                      fontSize: "0.65rem",
+                      color: "text.secondary",
+                    }}
+                  >
+                    {isTemp ? (
+                      "sending..."
+                    ) : (
+                      <DoneAllIcon
+                        sx={{ fontSize: 12, color: "#4caf50" }}
+                      />
+                    )}
+                    {new Date(
+                      msg.timestamp || msg.createdAt
+                    ).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </DialogContent>
+
+      {/* ================= FOOTER ================= */}
+      <DialogActions sx={{ p: 1.5, bgcolor: "#f7f7f7" }}>
+        <ChatBubbleOutlineIcon sx={{ color: "#888" }} />
+
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown} // ✅ ENTER FIX
+          multiline
+          maxRows={3}
+          disabled={!socketConnected}
+          sx={{
+            bgcolor: "#fff",
+            borderRadius: "20px",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "20px",
+            },
+          }}
+        />
+
+        <IconButton
+          onClick={handleSend}
+          disabled={!message.trim() || !socketConnected}
+          sx={{
+            bgcolor:
+              message.trim() && socketConnected
+                ? "#25D366"
+                : "#ccc",
+            color: "#fff",
+            "&:hover": {
+              bgcolor: "#1ebd5a",
+            },
+          }}
+        >
+          <SendIcon />
+        </IconButton>
+      </DialogActions>
+    </Dialog>
+  );
 };
 
 export default EnquiryChatDialog;

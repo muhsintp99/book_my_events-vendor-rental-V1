@@ -59,6 +59,7 @@ const Category = Loadable(lazy(() => import('views/vehiclecategories')));
 const Brandlist = Loadable(lazy(() => import('views/BrandList')));
 const Upgrade = Loadable(lazy(() => import('../views/upgrade')));
 const Vehicleschedules = Loadable(lazy(() => import('../views/transportshedules')));
+const Vehicleenquiry = Loadable(lazy(() => import('../views/transport/Vehicleenquiries')));
 
 // driver
 const AddDriver = Loadable(lazy(() => import('views/AddDriver')));
@@ -110,6 +111,10 @@ const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisb
 const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
 const Cateringupgrade = Loadable(lazy(() => import('../views/catering/cateringupgrade')));
 const Cateringschedule = Loadable(lazy(() => import('../views/catering/schedulecatering')));
+const Cateringenquiry = Loadable(lazy(() => import('../views/catering/Cateringenquiries')));
+// const Enquirychat = Loadable(lazy(() => import('../views/catering/EnquiryChatPage')));
+
+
 
 // Bookings
 const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
@@ -184,7 +189,7 @@ const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/Enqu
 const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
 const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
 
-const Allornaments = Loadable(lazy(() => import('../views/ornaments/Allornaments.jsx')));
+const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
 const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
 const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamentscompleted.jsx')));
@@ -278,7 +283,9 @@ const MainRoutes = {
             { path: 'categories', element: <Category /> },
             { path: 'brands', element: <Brandlist /> },
             { path: 'upgrade', element: <Upgrade /> },
-            { path: 'schedules', element: <Vehicleschedules /> }
+            { path: 'schedules', element: <Vehicleschedules /> },
+            { path: 'enquiries', element: <Vehicleenquiry /> },
+
           ]
         },
         {
@@ -448,7 +455,9 @@ const MainRoutes = {
             { path: 'packagelist', element: <PackageList /> },
             { path: 'cateringreport', element: <CateringReport /> },
             { path: 'upgrade', element: <Cateringupgrade /> },
-            { path: 'schedules', element: <Cateringschedule /> }
+            { path: 'schedules', element: <Cateringschedule /> },
+            { path: 'enquiries', element: <Cateringenquiry /> },
+
           ]
         },
 

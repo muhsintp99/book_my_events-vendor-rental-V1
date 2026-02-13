@@ -11,6 +11,8 @@ import {
   IconEngine,
   IconCalendar,
   IconBowlSpoon,
+    IconMessageCircle,
+
   IconCalendarEvent
 } from '@tabler/icons-react';
 
@@ -27,6 +29,8 @@ const icons = {
   IconEngine,
   IconCalendar,
   IconBowlSpoon,
+    IconMessageCircle,
+
   IconCalendarEvent
 };
 
@@ -83,6 +87,14 @@ const venuemanagement = {
       type: 'item',
       url: '/catering/schedules',
       icon: icons.IconCalendarEvent,
+      breadcrumbs: false
+    },
+     {
+      id: 'enquiries',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/catering/enquiries',
+      icon: icons.IconMessageCircle,
       breadcrumbs: false
     }
   ]

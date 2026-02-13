@@ -9,6 +9,8 @@ import {
   IconUpload,
   IconDownload,
   IconEngine,
+  IconMessageCircle,
+
   IconCalendar
 } from '@tabler/icons-react';
 
@@ -23,6 +25,8 @@ const icons = {
   IconUpload,
   IconDownload,
   IconEngine,
+  IconMessageCircle,
+
   IconCalendar
 };
 
@@ -96,7 +100,15 @@ const vehiclemanagement = {
       url: '/vehicles/upgrade',
       icon: icons.IconCalendar,
       breadcrumbs: false
-    }
+    },
+    {
+      id: 'vehicle-enquiries',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/vehicles/enquiries',
+      icon: icons.IconMessageCircle,
+      breadcrumbs: false
+    },
   ]
 };
 
