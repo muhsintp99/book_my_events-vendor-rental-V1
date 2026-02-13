@@ -59,7 +59,8 @@ const Category = Loadable(lazy(() => import('views/vehiclecategories')));
 const Brandlist = Loadable(lazy(() => import('views/BrandList')));
 const Upgrade = Loadable(lazy(() => import('../views/upgrade')));
 const Vehicleschedules = Loadable(lazy(() => import('../views/transportshedules')));
-const Vehicleenquiry = Loadable(lazy(() => import('../views/transport/Vehicleenquiries')));
+const TransportEnquiries = Loadable(lazy(() => import('../views/transport/Vehicleenquiries')));
+const TransportEnquiryChat = Loadable(lazy(() => import('../views/transport/EnquiryChatPage')));
 
 // driver
 const AddDriver = Loadable(lazy(() => import('views/AddDriver')));
@@ -111,10 +112,8 @@ const CateringDisburse = Loadable(lazy(() => import('views/catering/CateringDisb
 const CateringExpense = Loadable(lazy(() => import('views/catering/CateringExpense')));
 const Cateringupgrade = Loadable(lazy(() => import('../views/catering/cateringupgrade')));
 const Cateringschedule = Loadable(lazy(() => import('../views/catering/schedulecatering')));
-const Cateringenquiry = Loadable(lazy(() => import('../views/catering/Cateringenquiries')));
-// const Enquirychat = Loadable(lazy(() => import('../views/catering/EnquiryChatPage')));
-
-
+const CateringEnquiry = Loadable(lazy(() => import('../views/catering/Cateringenquiries')));
+const CateringEnquiryChat = Loadable(lazy(() => import('../views/catering/EnquiryChatPage')));
 
 // Bookings
 const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
@@ -189,7 +188,7 @@ const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/Enqu
 const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
 const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
 
-const Allornaments = Loadable(lazy(() => import('../views/ornaments/Allornaments.jsx')));
+const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
 const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
 const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamentscompleted.jsx')));
@@ -284,8 +283,9 @@ const MainRoutes = {
             { path: 'brands', element: <Brandlist /> },
             { path: 'upgrade', element: <Upgrade /> },
             { path: 'schedules', element: <Vehicleschedules /> },
-            { path: 'enquiries', element: <Vehicleenquiry /> },
-
+            { path: 'enquiry', element: <TransportEnquiries /> },
+            { path: 'enquiries', element: <TransportEnquiries /> },
+            { path: 'enquirychat', element: <TransportEnquiryChat /> }
           ]
         },
         {
@@ -431,6 +431,7 @@ const MainRoutes = {
             { path: 'categories', element: <VenueCategory /> },
             { path: 'schedules', element: <Schedules /> },
             { path: 'upgrade', element: <Upgradevenue /> },
+            { path: 'enquiry', element: <Enquiriesvenue /> },
             { path: 'enquiries', element: <Enquiriesvenue /> },
             { path: 'enquirychat', element: <VenueEnquiryChat /> },
 
@@ -456,8 +457,9 @@ const MainRoutes = {
             { path: 'cateringreport', element: <CateringReport /> },
             { path: 'upgrade', element: <Cateringupgrade /> },
             { path: 'schedules', element: <Cateringschedule /> },
-            { path: 'enquiries', element: <Cateringenquiry /> },
-
+            { path: 'enquiry', element: <CateringEnquiry /> },
+            { path: 'enquiries', element: <CateringEnquiry /> },
+            { path: 'enquirychat', element: <CateringEnquiryChat /> }
           ]
         },
 
@@ -470,7 +472,9 @@ const MainRoutes = {
             { path: 'packagelist', element: <MakeupList /> },
             { path: 'portfolio', element: <Portfolio /> },
             { path: 'upgrade', element: <Makeupupgrade /> },
-            { path: 'Enqury', element: <Makeupenquiry /> },
+            { path: 'enquiry', element: <Makeupenquiry /> },
+            { path: 'enquiries', element: <Makeupenquiry /> },
+            { path: 'enquirychat', element: <Enquirychat /> },
             { path: 'schedules', element: <MakeupSchedules /> }
           ]
         },
@@ -485,7 +489,8 @@ const MainRoutes = {
             { path: 'portfolio', element: <PhotographyPortfolio /> },
             { path: 'upgrade', element: <Photographyupgrade /> },
             { path: 'enquiry', element: <Photographyenquiry /> },
-            { path: 'Enqurychat', element: <Photographyenquirychat /> },
+            { path: 'enquiries', element: <Photographyenquiry /> },
+            { path: 'enquirychat', element: <Photographyenquirychat /> },
             { path: 'schedules', element: <PhotographySchedules /> }
           ]
         },
@@ -498,7 +503,8 @@ const MainRoutes = {
             { path: 'packagelist', element: <Cakelist /> },
             { path: 'upgrade', element: <Cakeupgrade /> },
             { path: 'enquiry', element: <Cakeenquiry /> },
-            { path: 'Enqurychat', element: <Cakeenquirychat /> },
+            { path: 'enquiries', element: <Cakeenquiry /> },
+            { path: 'enquirychat', element: <Cakeenquirychat /> },
             { path: 'schedules', element: <CakeSchedules /> },
             { path: 'categories', element: <Cakecategories /> },
             { path: 'Addons', element: <Cakeaddons /> }
@@ -516,7 +522,8 @@ const MainRoutes = {
             { path: 'packagelist', element: <Ornamentslist /> },
             { path: 'upgrade', element: <Ornamentsupgrade /> },
             { path: 'enquiry', element: <Ornamentsenquiry /> },
-            { path: 'Enqurychat', element: <Ornamentsenquirychat /> },
+            { path: 'enquiries', element: <Ornamentsenquiry /> },
+            { path: 'enquirychat', element: <Ornamentsenquirychat /> },
             { path: 'schedules', element: <OrnamentsSchedules /> },
             { path: 'categories', element: <Ornamentscategories /> },
 
@@ -533,7 +540,8 @@ const MainRoutes = {
 
             { path: 'upgrade', element: <Boutiqueupgrade /> },
             { path: 'enquiry', element: <Boutiqueenquiry /> },
-            { path: 'Enqurychat', element: <Boutiqueenquirychat /> },
+            { path: 'enquiries', element: <Boutiqueenquiry /> },
+            { path: 'enquirychat', element: <Boutiqueenquirychat /> },
             { path: 'chat', element: <BoutiqueChat /> },
             { path: 'schedules', element: <BoutiqueSchedules /> },
             { path: 'categories', element: <Boutiquecategories /> },

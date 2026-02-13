@@ -261,20 +261,20 @@ const EnquiriesUI = () => {
 
                     <TableCell align="center">
                       <Stack direction="row" spacing={1} justifyContent="center">
-              <Tooltip title="Chat">
-  <IconButton
-    size="small"
-    color="primary"
-    onClick={() => {
-      navigate("/venue/enquirychat", {
-  state: { enquiry: e },
-});
+                        <Tooltip title="Chat">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              navigate("/venue/enquirychat", {
+                                state: { enquiry: e },
+                              });
 
-    }}
-  >
-    <ChatIcon fontSize="small" />
-  </IconButton>
-</Tooltip>
+                            }}
+                          >
+                            <ChatIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
 
 
                         <Tooltip title="View">
@@ -406,16 +406,16 @@ const EnquiriesUI = () => {
       </Dialog>
 
       {/* CHAT POPUP */}
-     {chatEnquiry && (
-  <EnquiryChatDialog
-    open={openChat}
-    onClose={() => {
-      setOpenChat(false);
-      setChatEnquiry(null);
-    }}
-    enquiry={chatEnquiry}
-  />
-)}
+      {chatEnquiry && (
+        <EnquiryChatDialog
+          open={openChat}
+          onClose={() => {
+            setOpenChat(false);
+            setChatEnquiry(null);
+          }}
+          enquiry={chatEnquiry}
+        />
+      )}
 
     </Box>
   );

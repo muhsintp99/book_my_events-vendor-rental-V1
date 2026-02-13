@@ -24,6 +24,10 @@ import {
   Card,
   CardContent,
   Snackbar,
+  Select,
+  MenuItem,
+  Chip,
+  Divider,
 } from "@mui/material";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -38,10 +42,14 @@ import CategoryIcon from "@mui/icons-material/Category";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import EnquiryChatDialog from "./EnquiryChatDialog";
 
 const EnquiriesUI = () => {
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,14 +67,14 @@ const EnquiriesUI = () => {
   /* ===============================
      GET PROVIDER ID
   =============================== */
-useEffect(() => {
-  const userData = localStorage.getItem("user");
-  if (userData) {
-    const user = JSON.parse(userData);
-    console.log("Vendor Mongo ID:", user._id);
-    setProviderId(user._id);   // ✅ FIXED
-  }
-}, []);
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      console.log("Vendor Mongo ID:", user._id);
+      setProviderId(user._id);   // ✅ FIXED
+    }
+  }, []);
 
 
   /* ===============================
@@ -80,6 +88,7 @@ useEffect(() => {
         const res = await axios.get(
           `https://api.bookmyevent.ae/api/enquiries/provider/${providerId}`
         );
+        // The API might return all enquiries for the vendor across modules
         setEnquiries(res.data.data || []);
         setError(null);
       } catch (err) {
@@ -119,21 +128,27 @@ useEffect(() => {
   };
 
   /* ===============================
-     SEARCH FILTER
+     FILTER
   =============================== */
   const filteredEnquiries = enquiries.filter((e) => {
-    return (
+    // 1. Module Filter: Only photography enquiries
+    const isPhotography = e.moduleId?.title === "Photography";
+    if (!isPhotography) return false;
+
+    // 2. Search Filter
+    const matchSearch =
       (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
       (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (e.contact || "").includes(search) ||
-      (e.moduleId?.title || "")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
+      (e.contact || "").includes(search);
+
+    // 3. Status Filter
+    const matchStatus = status === "all" || e.status === status;
+
+    return matchSearch && matchStatus;
   });
 
   /* ===============================
-     VIEW MODAL
+     HANDLE VIEW
   =============================== */
   const handleViewEnquiry = (enquiry) => {
     setSelectedEnquiry(enquiry);
@@ -157,29 +172,33 @@ useEffect(() => {
       sx={{
         borderBottom: "1px solid",
         borderColor: "divider",
-        "&:last-child": { borderBottom: "none" },
+        "&:last-child": {
+          borderBottom: "none"
+        }
       }}
     >
       <Box
         sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           width: 40,
           height: 40,
           borderRadius: "50%",
           bgcolor: "primary.light",
           color: "primary.main",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          flexShrink: 0
         }}
       >
         {icon}
       </Box>
-      <Box>
-        <Typography variant="caption" color="text.secondary">
+      <Box flex={1}>
+        <Typography variant="caption" color="text.secondary" display="block">
           {label}
         </Typography>
-        <Typography fontWeight={500}>{value || "N/A"}</Typography>
+        <Typography variant="body1" fontWeight={500}>
+          {value || "N/A"}
+        </Typography>
       </Box>
     </Box>
   );
@@ -197,8 +216,8 @@ useEffect(() => {
       )}
 
       <Paper sx={{ mt: 2 }}>
-        {/* SEARCH */}
-        <Box p={2}>
+        {/* SEARCH + FILTER */}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} p={2}>
           <TextField
             label="Search enquiries"
             size="small"
@@ -206,7 +225,20 @@ useEffect(() => {
             onChange={(e) => setSearch(e.target.value)}
             fullWidth
           />
-        </Box>
+
+          <Select
+            size="small"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            sx={{ minWidth: 160 }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="responded">Responded</MenuItem>
+            <MenuItem value="confirmed">Confirmed</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+          </Select>
+        </Stack>
 
         {/* TABLE */}
         <TableContainer>
@@ -240,42 +272,38 @@ useEffect(() => {
                       <Typography fontWeight={600}>
                         {e.fullName}
                       </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
+                      <Typography variant="caption" color="text.secondary">
                         {e.email}
                       </Typography>
                     </TableCell>
 
                     <TableCell>{e.moduleId?.title}</TableCell>
                     <TableCell>{e.contact}</TableCell>
+
                     <TableCell>
                       {new Date(e.bookingDate).toLocaleDateString()}
                     </TableCell>
 
+                    {/* ACTIONS */}
                     <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
+                      <Stack direction="row" spacing={1} justifyContent="center">
                         {/* CHAT */}
-                        <Tooltip title="Chat">
+                        <Tooltip title="Open Chat">
                           <IconButton
                             size="small"
                             color="primary"
-                            onClick={() => {
-                              setChatEnquiry(e);
-                              setOpenChat(true);
-                            }}
+                            onClick={() =>
+                              navigate("/photography/enquirychat", {
+                                state: e,
+                              })
+                            }
                           >
                             <ChatIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
 
                         {/* VIEW */}
-                        <Tooltip title="View">
+                        <Tooltip title="View Enquiry">
                           <IconButton
                             size="small"
                             color="info"
@@ -286,14 +314,8 @@ useEffect(() => {
                         </Tooltip>
 
                         {/* DELETE */}
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDeleteEnquiry(e._id)
-                            }
-                          >
+                        <Tooltip title="Delete Enquiry">
+                          <IconButton size="small" color="error">
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -408,8 +430,9 @@ useEffect(() => {
             startIcon={<ChatIcon />}
             onClick={() => {
               handleCloseModal();
-              setChatEnquiry(selectedEnquiry);
-              setOpenChat(true);
+              navigate("/photography/enquirychat", {
+                state: selectedEnquiry,
+              });
             }}
           >
             Open Chat

@@ -23,7 +23,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Snackbar,
 } from "@mui/material";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -38,15 +37,17 @@ import CategoryIcon from "@mui/icons-material/Category";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import EnquiryChatDialog from "./EnquiryChatDialog";
 
 const EnquiriesUI = () => {
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [providerId, setProviderId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
 
   // Modal state
   const [openModal, setOpenModal] = useState(false);
@@ -72,7 +73,11 @@ const EnquiriesUI = () => {
   =============================== */
   useEffect(() => {
     const fetchEnquiries = async () => {
-      if (!providerId) return;
+      if (!providerId) {
+        setError("Provider ID not found");
+        setLoading(false);
+        return;
+      }
 
       try {
         const res = await axios.get(
@@ -90,31 +95,6 @@ const EnquiriesUI = () => {
 
     fetchEnquiries();
   }, [providerId]);
-
-  /* ===============================
-     DELETE ENQUIRY
-  =============================== */
-  const handleDeleteEnquiry = async (enquiryId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this enquiry?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      await axios.delete(
-        `https://api.bookmyevent.ae/api/enquiries/${enquiryId}`
-      );
-
-      // Remove from UI
-      setEnquiries((prev) =>
-        prev.filter((e) => e._id !== enquiryId)
-      );
-
-      setSuccessMsg("Enquiry deleted successfully");
-    } catch (err) {
-      setError("Failed to delete enquiry");
-    }
-  };
 
   /* ===============================
      SEARCH FILTER
@@ -144,7 +124,7 @@ const EnquiriesUI = () => {
   };
 
   /* ===============================
-     DETAIL ROW COMPONENT
+     DETAIL ROW
   =============================== */
   const DetailRow = ({ icon, label, value }) => (
     <Box
@@ -235,13 +215,8 @@ const EnquiriesUI = () => {
                     <TableCell>{i + 1}</TableCell>
 
                     <TableCell>
-                      <Typography fontWeight={600}>
-                        {e.fullName}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
+                      <Typography fontWeight={600}>{e.fullName}</Typography>
+                      <Typography variant="caption" color="text.secondary">
                         {e.email}
                       </Typography>
                     </TableCell>
@@ -253,26 +228,19 @@ const EnquiriesUI = () => {
                     </TableCell>
 
                     <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        {/* CHAT */}
+                      <Stack direction="row" spacing={1} justifyContent="center">
                         <Tooltip title="Chat">
                           <IconButton
                             size="small"
                             color="primary"
                             onClick={() => {
-                              setChatEnquiry(e);
-                              setOpenChat(true);
+                              navigate('/makeupartist/enquirychat', { state: { enquiry: e } });
                             }}
                           >
                             <ChatIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
 
-                        {/* VIEW */}
                         <Tooltip title="View">
                           <IconButton
                             size="small"
@@ -283,15 +251,8 @@ const EnquiriesUI = () => {
                           </IconButton>
                         </Tooltip>
 
-                        {/* DELETE */}
                         <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDeleteEnquiry(e._id)
-                            }
-                          >
+                          <IconButton size="small" color="error">
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -313,23 +274,11 @@ const EnquiriesUI = () => {
       </Paper>
 
       {/* VIEW MODAL */}
-      <Dialog
-        open={openModal}
-        onClose={handleCloseModal}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{ bgcolor: "primary.main", color: "white" }}
-        >
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ bgcolor: "primary.main", color: "white" }}>
           <Box display="flex" justifyContent="space-between">
-            <Typography fontWeight={600}>
-              Enquiry Details
-            </Typography>
-            <IconButton
-              onClick={handleCloseModal}
-              sx={{ color: "white" }}
-            >
+            <Typography fontWeight={600}>Enquiry Details</Typography>
+            <IconButton onClick={handleCloseModal} sx={{ color: "white" }}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -405,9 +354,9 @@ const EnquiriesUI = () => {
             variant="contained"
             startIcon={<ChatIcon />}
             onClick={() => {
-              handleCloseModal();
               setChatEnquiry(selectedEnquiry);
               setOpenChat(true);
+              navigate('/makeupartist/enquirychat', { state: { enquiry: selectedEnquiry } });
             }}
           >
             Open Chat
@@ -424,15 +373,7 @@ const EnquiriesUI = () => {
         }}
         enquiry={chatEnquiry}
       />
-
-      {/* SUCCESS SNACKBAR */}
-      <Snackbar
-        open={!!successMsg}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMsg("")}
-        message={successMsg}
-      />
-    </Box>
+    </Box >
   );
 };
 

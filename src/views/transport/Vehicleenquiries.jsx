@@ -1,439 +1,188 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  TextField,
-  Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-  TableContainer,
-  Stack,
-  CircularProgress,
-  Alert,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Snackbar,
-} from "@mui/material";
+    Box, TextField, Typography, Table, TableHead, TableRow, TableCell, TableBody,
+    Paper, TableContainer, Stack, CircularProgress, Alert, IconButton, Tooltip,
+    Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, Card, CardContent
+} from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ChatIcon from '@mui/icons-material/Chat';
+import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EventIcon from '@mui/icons-material/Event';
+import CategoryIcon from '@mui/icons-material/Category';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ChatIcon from "@mui/icons-material/Chat";
-import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
-import EventIcon from "@mui/icons-material/Event";
-import CategoryIcon from "@mui/icons-material/Category";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
+var TransportEnquiries = function () {
+    var navigate = useNavigate();
+    var [search, setSearch] = useState('');
+    var [enquiries, setEnquiries] = useState([]);
+    var [loading, setLoading] = useState(true);
+    var [error, setError] = useState(null);
+    var [providerId, setProviderId] = useState(null);
+    var [openModal, setOpenModal] = useState(false);
+    var [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
-import axios from "axios";
-import EnquiryChatDialog from "./EnquiryChatDialog";
+    useEffect(function () {
+        var userData = localStorage.getItem('user');
+        if (userData) {
+            var user = JSON.parse(userData);
+            setProviderId(user.providerId || user._id);
+        }
+    }, []);
 
-const EnquiriesUI = () => {
-  const [search, setSearch] = useState("");
-  const [enquiries, setEnquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [providerId, setProviderId] = useState(null);
-  const [successMsg, setSuccessMsg] = useState("");
+    useEffect(function () {
+        var fetchEnquiries = async function () {
+            if (!providerId) { setError('Provider ID not found'); setLoading(false); return; }
+            try {
+                var res = await axios.get('https://api.bookmyevent.ae/api/enquiries/provider/' + providerId);
+                var all = res.data.data || [];
+                var filtered = all.filter(function (e) {
+                    var mt = (e.moduleId?.moduleType || '').toLowerCase();
+                    var title = (e.moduleId?.title || '').toLowerCase();
+                    return mt === 'transport' || mt === 'vehicle' || title.includes('transport') || title.includes('vehicle');
+                });
+                setEnquiries(filtered);
+                setError(null);
+            } catch (err) {
+                setError('Failed to fetch enquiries');
+                setEnquiries([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEnquiries();
+    }, [providerId]);
 
-  // Modal state
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+    var filteredEnquiries = enquiries.filter(function (e) {
+        var q = search.toLowerCase();
+        return (e.fullName || '').toLowerCase().includes(q) || (e.email || '').toLowerCase().includes(q) || (e.contact || '').includes(search) || (e.moduleId?.title || '').toLowerCase().includes(q);
+    });
 
-  // Chat state
-  const [openChat, setOpenChat] = useState(false);
-  const [chatEnquiry, setChatEnquiry] = useState(null);
+    var handleViewEnquiry = function (enquiry) { setSelectedEnquiry(enquiry); setOpenModal(true); };
+    var handleCloseModal = function () { setOpenModal(false); setSelectedEnquiry(null); };
 
-  /* ===============================
-     GET PROVIDER ID
-  =============================== */
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setProviderId(user.providerId || user._id);
-    }
-  }, []);
-
-  /* ===============================
-     FETCH ENQUIRIES
-  =============================== */
-  useEffect(() => {
-    const fetchEnquiries = async () => {
-      if (!providerId) return;
-
-      try {
-        const res = await axios.get(
-          `https://api.bookmyevent.ae/api/enquiries/provider/${providerId}`
+    var DetailRow = function (props) {
+        return (
+            <Box display="flex" alignItems="center" gap={2} py={1.5} sx={{ borderBottom: '1px solid', borderColor: 'divider', '&:last-child': { borderBottom: 'none' } }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: 'primary.light', color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {props.icon}
+                </Box>
+                <Box>
+                    <Typography variant="caption" color="text.secondary">{props.label}</Typography>
+                    <Typography fontWeight={500}>{props.value || 'N/A'}</Typography>
+                </Box>
+            </Box>
         );
-        setEnquiries(res.data.data || []);
-        setError(null);
-      } catch (err) {
-        setError("Failed to fetch enquiries");
-        setEnquiries([]);
-      } finally {
-        setLoading(false);
-      }
     };
 
-    fetchEnquiries();
-  }, [providerId]);
-
-  /* ===============================
-     DELETE ENQUIRY
-  =============================== */
-  const handleDeleteEnquiry = async (enquiryId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this enquiry?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      await axios.delete(
-        `https://api.bookmyevent.ae/api/enquiries/${enquiryId}`
-      );
-
-      // Remove from UI
-      setEnquiries((prev) =>
-        prev.filter((e) => e._id !== enquiryId)
-      );
-
-      setSuccessMsg("Enquiry deleted successfully");
-    } catch (err) {
-      setError("Failed to delete enquiry");
-    }
-  };
-
-  /* ===============================
-     SEARCH FILTER
-  =============================== */
-  const filteredEnquiries = enquiries.filter((e) => {
     return (
-      (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (e.contact || "").includes(search) ||
-      (e.moduleId?.title || "")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  });
-
-  /* ===============================
-     VIEW MODAL
-  =============================== */
-  const handleViewEnquiry = (enquiry) => {
-    setSelectedEnquiry(enquiry);
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedEnquiry(null);
-  };
-
-  /* ===============================
-     DETAIL ROW COMPONENT
-  =============================== */
-  const DetailRow = ({ icon, label, value }) => (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      py={1.5}
-      sx={{
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        "&:last-child": { borderBottom: "none" },
-      }}
-    >
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          bgcolor: "primary.light",
-          color: "primary.main",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="caption" color="text.secondary">
-          {label}
-        </Typography>
-        <Typography fontWeight={500}>{value || "N/A"}</Typography>
-      </Box>
-    </Box>
-  );
-
-  return (
-    <Box p={2}>
-      <Typography variant="h4" gutterBottom>
-        Enquiries
-      </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper sx={{ mt: 2 }}>
-        {/* SEARCH */}
         <Box p={2}>
-          <TextField
-            label="Search enquiries"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            fullWidth
-          />
+            <Typography variant="h4" gutterBottom>Transport Enquiries</Typography>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            <Paper sx={{ mt: 2 }}>
+                <Box p={2}>
+                    <TextField label="Search enquiries" size="small" value={search} onChange={function (e) { setSearch(e.target.value); }} fullWidth />
+                </Box>
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Customer</TableCell>
+                                <TableCell>Module</TableCell>
+                                <TableCell>Contact</TableCell>
+                                <TableCell>Date</TableCell>
+                                <TableCell align="center">Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {loading && (
+                                <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={28} /></TableCell></TableRow>
+                            )}
+                            {!loading && filteredEnquiries.map(function (e, i) {
+                                return (
+                                    <TableRow key={e._id} hover>
+                                        <TableCell>{i + 1}</TableCell>
+                                        <TableCell>
+                                            <Typography fontWeight={600}>{e.fullName}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{e.email}</Typography>
+                                        </TableCell>
+                                        <TableCell>{e.moduleId?.title}</TableCell>
+                                        <TableCell>{e.contact}</TableCell>
+                                        <TableCell>{new Date(e.bookingDate).toLocaleDateString()}</TableCell>
+                                        <TableCell align="center">
+                                            <Stack direction="row" spacing={1} justifyContent="center">
+                                                <Tooltip title="Chat">
+                                                    <IconButton size="small" color="primary"
+                                                        onClick={function () { navigate('/vehicles/enquirychat', { state: { enquiry: e } }); }}>
+                                                        <ChatIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="View">
+                                                    <IconButton size="small" color="info" onClick={function () { handleViewEnquiry(e); }}>
+                                                        <VisibilityIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete">
+                                                    <IconButton size="small" color="error"><DeleteIcon fontSize="small" /></IconButton>
+                                                </Tooltip>
+                                            </Stack>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                            {!loading && filteredEnquiries.length === 0 && (
+                                <TableRow><TableCell colSpan={6} align="center">No enquiries found</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
+
+            <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
+                    <Box display="flex" justifyContent="space-between">
+                        <Typography fontWeight={600}>Enquiry Details</Typography>
+                        <IconButton onClick={handleCloseModal} sx={{ color: 'white' }}><CloseIcon /></IconButton>
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    {selectedEnquiry && (
+                        <Grid container spacing={3} mt={1}>
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined"><CardContent>
+                                    <Typography fontWeight={600} mb={2}>Customer Information</Typography>
+                                    <DetailRow icon={<PersonIcon fontSize="small" />} label="Full Name" value={selectedEnquiry.fullName} />
+                                    <DetailRow icon={<EmailIcon fontSize="small" />} label="Email" value={selectedEnquiry.email} />
+                                    <DetailRow icon={<PhoneIcon fontSize="small" />} label="Contact" value={selectedEnquiry.contact} />
+                                </CardContent></Card>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined"><CardContent>
+                                    <Typography fontWeight={600} mb={2}>Booking Information</Typography>
+                                    <DetailRow icon={<CategoryIcon fontSize="small" />} label="Module" value={selectedEnquiry.moduleId?.title} />
+                                    <DetailRow icon={<EventIcon fontSize="small" />} label="Booking Date" value={new Date(selectedEnquiry.bookingDate).toLocaleDateString()} />
+                                    <DetailRow icon={<AccessTimeIcon fontSize="small" />} label="Created At" value={new Date(selectedEnquiry.createdAt).toLocaleString()} />
+                                </CardContent></Card>
+                            </Grid>
+                        </Grid>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseModal} variant="outlined">Close</Button>
+                    <Button variant="contained" startIcon={<ChatIcon />}
+                        onClick={function () { handleCloseModal(); navigate('/vehicles/enquirychat', { state: { enquiry: selectedEnquiry } }); }}>
+                        Open Chat
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
-
-        {/* TABLE */}
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Module</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!loading &&
-                filteredEnquiries.map((e, i) => (
-                  <TableRow key={e._id} hover>
-                    <TableCell>{i + 1}</TableCell>
-
-                    <TableCell>
-                      <Typography fontWeight={600}>
-                        {e.fullName}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {e.email}
-                      </Typography>
-                    </TableCell>
-
-                    <TableCell>{e.moduleId?.title}</TableCell>
-                    <TableCell>{e.contact}</TableCell>
-                    <TableCell>
-                      {new Date(e.bookingDate).toLocaleDateString()}
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        {/* CHAT */}
-                        <Tooltip title="Chat">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => {
-                              setChatEnquiry(e);
-                              setOpenChat(true);
-                            }}
-                          >
-                            <ChatIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        {/* VIEW */}
-                        <Tooltip title="View">
-                          <IconButton
-                            size="small"
-                            color="info"
-                            onClick={() => handleViewEnquiry(e)}
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        {/* DELETE */}
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDeleteEnquiry(e._id)
-                            }
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-              {!loading && filteredEnquiries.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No enquiries found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
-      {/* VIEW MODAL */}
-      <Dialog
-        open={openModal}
-        onClose={handleCloseModal}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{ bgcolor: "primary.main", color: "white" }}
-        >
-          <Box display="flex" justifyContent="space-between">
-            <Typography fontWeight={600}>
-              Enquiry Details
-            </Typography>
-            <IconButton
-              onClick={handleCloseModal}
-              sx={{ color: "white" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-
-        <DialogContent>
-          {selectedEnquiry && (
-            <Grid container spacing={3} mt={1}>
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography fontWeight={600} mb={2}>
-                      Customer Information
-                    </Typography>
-
-                    <DetailRow
-                      icon={<PersonIcon fontSize="small" />}
-                      label="Full Name"
-                      value={selectedEnquiry.fullName}
-                    />
-                    <DetailRow
-                      icon={<EmailIcon fontSize="small" />}
-                      label="Email"
-                      value={selectedEnquiry.email}
-                    />
-                    <DetailRow
-                      icon={<PhoneIcon fontSize="small" />}
-                      label="Contact"
-                      value={selectedEnquiry.contact}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography fontWeight={600} mb={2}>
-                      Booking Information
-                    </Typography>
-
-                    <DetailRow
-                      icon={<CategoryIcon fontSize="small" />}
-                      label="Module"
-                      value={selectedEnquiry.moduleId?.title}
-                    />
-                    <DetailRow
-                      icon={<EventIcon fontSize="small" />}
-                      label="Booking Date"
-                      value={new Date(
-                        selectedEnquiry.bookingDate
-                      ).toLocaleDateString()}
-                    />
-                    <DetailRow
-                      icon={<AccessTimeIcon fontSize="small" />}
-                      label="Created At"
-                      value={new Date(
-                        selectedEnquiry.createdAt
-                      ).toLocaleString()}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleCloseModal} variant="outlined">
-            Close
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<ChatIcon />}
-            onClick={() => {
-              handleCloseModal();
-              setChatEnquiry(selectedEnquiry);
-              setOpenChat(true);
-            }}
-          >
-            Open Chat
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* CHAT POPUP */}
-      <EnquiryChatDialog
-        open={openChat}
-        onClose={() => {
-          setOpenChat(false);
-          setChatEnquiry(null);
-        }}
-        enquiry={chatEnquiry}
-      />
-
-      {/* SUCCESS SNACKBAR */}
-      <Snackbar
-        open={!!successMsg}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMsg("")}
-        message={successMsg}
-      />
-    </Box>
-  );
+    );
 };
 
-export default EnquiriesUI;
+export default TransportEnquiries;

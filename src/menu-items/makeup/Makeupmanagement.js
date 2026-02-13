@@ -10,7 +10,7 @@ import {
   IconPhoto,
   IconRocket,
   IconMessageCircle,
-  IconCalendarEvent   
+  IconCalendarEvent
 } from '@tabler/icons-react';
 
 // Icons object
@@ -23,7 +23,7 @@ const icons = {
   IconPhoto,
   IconRocket,
   IconMessageCircle,
-  IconCalendarEvent   
+  IconCalendarEvent
 };
 
 // Makeup Menu Structure
@@ -87,7 +87,7 @@ const makeupmanagement = {
       id: 'enquiries',
       title: 'Enquiries',
       type: 'item',
-      url: '/makeupartist/Enqury',
+      url: '/makeupartist/enquiries',
       icon: icons.IconMessageCircle,
       breadcrumbs: false
     },

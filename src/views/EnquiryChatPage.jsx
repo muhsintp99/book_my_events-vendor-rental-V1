@@ -1,253 +1,455 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  Box,
-  Typography,
-  TextField,
-  IconButton,
-  Stack,
-  Avatar,
-  Paper,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useLocation, useNavigate } from "react-router-dom";
-import { socket } from "../socket";
-import axios from "axios";
+  Box, Typography, TextField, IconButton, Stack, Avatar, Paper,
+  CircularProgress, InputBase, Badge, List, ListItem, ListItemAvatar,
+  ListItemText, ListItemButton, Divider, useTheme, useMediaQuery
+} from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ChatIcon from '@mui/icons-material/Chat';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import AddIcon from '@mui/icons-material/Add';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { socket } from '../socket';
+import axios from 'axios';
 
 const EnquiryChatPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const enquiry = location.state?.enquiry;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const initialEnquiry = location.state?.enquiry || null;
 
-  const [message, setMessage] = useState("");
+  const [enquiries, setEnquiries] = useState([]);
+  const [activeEnquiry, setActiveEnquiry] = useState(initialEnquiry);
+  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [mobileChatOpen, setMobileChatOpen] = useState(!!initialEnquiry);
   const messagesEndRef = useRef(null);
+  const pendingMessagesRef = useRef(new Set());
 
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const user = JSON.parse(localStorage.getItem('user')) || {};
   const vendorId = user?.providerId || user?._id;
 
-  /* ==============================
-     REDIRECT IF NO ENQUIRY
-  ============================== */
-  useEffect(() => {
-    if (!enquiry?._id) {
-      navigate("/venue/enquiries");
+  // Helpers
+  const getCustomerName = (enq) => {
+    if (!enq) return 'Customer';
+    if (enq.userId?.firstName) {
+      return (enq.userId.firstName + ' ' + (enq.userId.lastName || '')).trim();
     }
-  }, [enquiry?._id, navigate]);
+    return enq.fullName || 'Customer';
+  };
 
-  /* ==============================
-     FETCH CHAT HISTORY
-  ============================== */
+  const getInitials = (name) => {
+    if (!name) return '?';
+    var parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const isMe = (sid) => String(sid) === String(vendorId);
+
+  // Fetch all venue enquiries
   useEffect(() => {
-    if (!enquiry?._id) return;
-
-    const fetchMessages = async () => {
+    if (!vendorId) { setLoading(false); return; }
+    var fetchEnquiries = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `https://api.bookmyevent.ae/api/enquiries/${enquiry._id}/messages`
+        var res = await axios.get(
+          'https://api.bookmyevent.ae/api/enquiries/provider/' + vendorId
         );
-        setMessages(res.data?.data || []);
+        var all = res.data.data || [];
+        var venue = all.filter((e) => {
+          var mt = e.moduleId?.moduleType?.toLowerCase();
+          var title = e.moduleId?.title?.toLowerCase();
+          return mt === 'venue' || (title && title.includes('venue')) || e.moduleId?._id === '68e5ea9f27ca1c19b2d3924a';
+        });
+        setEnquiries(venue);
+        if (!initialEnquiry && venue.length > 0) {
+          setActiveEnquiry(venue[0]);
+        }
       } catch (err) {
-        console.error("Failed to fetch messages:", err);
-        setMessages([]);
+        console.error('Failed to fetch enquiries:', err);
       } finally {
         setLoading(false);
       }
     };
+    fetchEnquiries();
+  }, [vendorId]);
 
-    fetchMessages();
-  }, [enquiry?._id]);
-
-  /* ==============================
-     SOCKET CONNECT
-  ============================== */
-  const pendingMessagesRef = useRef(new Set());
-
+  // Fetch chat messages for active enquiry
   useEffect(() => {
-    if (!enquiry?._id || !vendorId) return;
+    if (!activeEnquiry?._id) return;
+    var fetchMessages = async () => {
+      try {
+        setChatLoading(true);
+        var res = await axios.get(
+          'https://api.bookmyevent.ae/api/enquiries/' + activeEnquiry._id + '/messages'
+        );
+        setMessages(res.data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch messages:', err);
+        setMessages([]);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+    fetchMessages();
+  }, [activeEnquiry?._id]);
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+  // Socket
+  useEffect(() => {
+    if (!activeEnquiry?._id || !vendorId) return;
+    if (!socket.connected) socket.connect();
+    socket.emit('join_enquiry', { enquiryId: activeEnquiry._id, vendorId });
 
-    socket.emit("join_enquiry", {
-      enquiryId: enquiry._id,
-      vendorId,
-    });
-
-    const handleReceive = (data) => {
-      console.log("📨 Received message:", data);
-
-      const messageKey = data._id || `${data.senderId}-${data.timestamp}`;
-
+    var handleReceive = (data) => {
+      if (data.enquiryId && data.enquiryId !== activeEnquiry._id) return;
+      var messageKey = data._id || (data.senderId + '-' + data.timestamp);
       if (pendingMessagesRef.current.has(messageKey) || pendingMessagesRef.current.has(data.timestamp)) {
         pendingMessagesRef.current.delete(messageKey);
         pendingMessagesRef.current.delete(data.timestamp);
-
-        // Update the optimistic message with server data
-        setMessages((prev) =>
-          prev.map(msg =>
-            (msg.timestamp === data.timestamp && msg.senderId === data.senderId)
-              ? { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-              : msg
-          )
-        );
+        setMessages((prev) => prev.map((msg) =>
+          (msg.timestamp === data.timestamp && String(msg.senderId) === String(data.senderId))
+            ? { ...data, _id: data._id, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+            : msg
+        ));
         return;
       }
-
       setMessages((prev) => {
-        const exists = prev.some(
-          (msg) =>
-            msg._id === data._id ||
-            (msg.timestamp && msg.timestamp === data.timestamp && msg.senderId === data.senderId)
-        );
+        var exists = prev.some((msg) => msg._id === data._id || (msg.timestamp && msg.timestamp === data.timestamp && msg.senderId === data.senderId));
         if (exists) return prev;
         return [...prev, { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
       });
     };
 
-    const handleDeleted = (data) => {
-      console.log("🗑️ Message deleted:", data.messageId);
+    var handleDeleted = (data) => {
       setMessages((prev) => prev.filter((msg) => msg._id !== data.messageId));
     };
 
-    socket.on("receive_message", handleReceive);
-    socket.on("message_deleted", handleDeleted);
-
+    socket.on('receive_message', handleReceive);
+    socket.on('message_deleted', handleDeleted);
     return () => {
-      socket.off("receive_message", handleReceive);
-      socket.off("message_deleted", handleDeleted);
+      socket.off('receive_message', handleReceive);
+      socket.off('message_deleted', handleDeleted);
     };
-  }, [enquiry?._id, vendorId]);
+  }, [activeEnquiry?._id, vendorId]);
 
-  /* ==============================
-     AUTO SCROLL
-  ============================== */
+  // Auto scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ==============================
-     SEND MESSAGE
-  ============================== */
-  const handleSend = () => {
-    if (!message.trim() || !enquiry?._id) return;
-
-    const currentMsg = message;
-    setMessage(""); // Clear input
-
-    const timestamp = new Date().toISOString();
-    const payload = {
-      enquiryId: enquiry._id,
+  // Send message
+  var handleSend = () => {
+    if (!message.trim() || !activeEnquiry?._id) return;
+    var currentMsg = message;
+    setMessage('');
+    var timestamp = new Date().toISOString();
+    var payload = {
+      enquiryId: activeEnquiry._id,
       senderId: vendorId,
-      receiverId: enquiry.userId?._id || enquiry.userId, // FIXED: Added receiverId
-      senderName: user?.businessName || user?.name || "Vendor",
-      senderRole: "vendor",
+      receiverId: activeEnquiry.userId?._id || activeEnquiry.userId,
+      senderName: user?.businessName || user?.name || 'Vendor',
+      senderRole: 'vendor',
       text: currentMsg,
       message: currentMsg,
       timestamp: timestamp,
     };
-
-    // Optimistic update
-    const tempId = "optimistic-" + Date.now();
     pendingMessagesRef.current.add(timestamp);
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        ...payload,
-        _id: tempId,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
-
-    socket.emit("send_message", payload);
+    setMessages((prev) => [...prev, {
+      ...payload,
+      _id: 'optimistic-' + Date.now(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }]);
+    socket.emit('send_message', payload);
   };
 
-  const handleDeletedMessage = (messageId) => {
-    if (!socket.connected || !enquiry?._id) return;
-    if (window.confirm("Unsend this message?")) {
-      socket.emit("delete_message", { messageId, enquiryId: enquiry._id });
+  var handleDeletedMessage = (messageId) => {
+    if (!socket.connected || !activeEnquiry?._id) return;
+    if (window.confirm('Unsend this message?')) {
+      socket.emit('delete_message', { messageId, enquiryId: activeEnquiry._id });
     }
   };
 
-  if (!enquiry?._id) return <Box p={4}><CircularProgress /></Box>;
+  var handleSelectEnquiry = (enquiry) => {
+    setActiveEnquiry(enquiry);
+    setMessages([]);
+    if (isMobile) setMobileChatOpen(true);
+  };
 
-  const customerName = enquiry.userId?.firstName
-    ? `${enquiry.userId.firstName} ${enquiry.userId.lastName || ""}`.trim()
-    : enquiry.fullName || "Customer";
+  var filteredEnquiries = enquiries.filter((e) => {
+    var name = getCustomerName(e).toLowerCase();
+    var email = (e.email || '').toLowerCase();
+    var q = sidebarSearch.toLowerCase();
+    return name.includes(q) || email.includes(q);
+  });
+
+  var customerName = activeEnquiry ? getCustomerName(activeEnquiry) : '';
 
   return (
-    <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
-      <Paper elevation={0} sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", borderRadius: 0, overflow: "hidden" }}>
-        {/* HEADER */}
-        <Box sx={{ p: 2, bgcolor: "#1abc9c", color: "#fff" }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <IconButton onClick={() => navigate(-1)} sx={{ color: "#fff" }}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Avatar sx={{ bgcolor: "rgba(255,255,255,0.2)" }}>{customerName.charAt(0)}</Avatar>
-            <Box>
-              <Typography variant="h6" fontWeight={600}>{customerName}</Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>{enquiry.moduleId?.title || "Enquiry"}</Typography>
-            </Box>
-          </Stack>
-        </Box>
+    <Box sx={{
+      height: 'calc(100vh - 100px)',
+      display: 'flex',
+      bgcolor: 'white',
+      borderRadius: { xs: '0px', md: '16px' },
+      overflow: 'hidden',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      border: '1px solid #E0E4EC',
+      m: { xs: 0, md: 2 },
+    }}>
 
-        {/* CHAT BODY */}
-        <Box sx={{ flex: 1, overflowY: "auto", p: 3, bgcolor: "#fff", display: "flex", flexDirection: "column", gap: 2 }}>
-          {loading ? (
-            <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
-          ) : messages.length === 0 ? (
-            <Box textAlign="center" py={4} color="text.secondary">No messages yet.</Box>
-          ) : (
-            messages.map((msg, i) => {
-              const isMe = msg.senderId === vendorId;
-              const isOptimistic = String(msg._id).startsWith("optimistic-");
+      {/* ===== LEFT SIDEBAR ===== */}
+      {(!isMobile || !mobileChatOpen) && (
+        <Box sx={{
+          width: { xs: '100%', md: 340 },
+          minWidth: { md: 340 },
+          height: '100%',
+          borderRight: '1px solid #E0E4EC',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'white',
+        }}>
+          {/* Header */}
+          <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0' }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+              <Typography variant="h5" fontWeight={800} sx={{ color: '#1abc9c' }}>Chats</Typography>
+              <IconButton size="small" sx={{ bgcolor: '#e8f8f5' }}>
+                <FilterListIcon fontSize="small" sx={{ color: '#1abc9c' }} />
+              </IconButton>
+            </Stack>
+            <Paper sx={{
+              p: '2px 8px', display: 'flex', alignItems: 'center',
+              bgcolor: '#F1F5F9', borderRadius: '12px', boxShadow: 'none',
+            }}>
+              <SearchIcon sx={{ color: '#64748B', ml: 1 }} />
+              <InputBase
+                sx={{ ml: 1, flex: 1, p: 0.8, fontWeight: 500, fontSize: '0.9rem' }}
+                placeholder="Search customers..."
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+              />
+            </Paper>
+          </Box>
 
-              return (
-                <Box key={msg._id || i} sx={{ alignSelf: isMe ? "flex-end" : "flex-start", maxWidth: "70%" }}>
-                  <Box sx={{ p: 1.5, borderRadius: isMe ? "12px 12px 0 12px" : "12px 11px 12px 0", bgcolor: isMe ? "#1abc9c" : "#bbc6cc", color: isMe ? "#fff" : "#000", position: "relative", "&:hover .delete-msg": { opacity: 1 } }}>
-                    <Typography variant="body2">{msg.text || msg.message}</Typography>
+          {/* List */}
+          <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={4}>
+                <CircularProgress size={28} sx={{ color: '#1abc9c' }} />
+              </Box>
+            ) : filteredEnquiries.length === 0 ? (
+              <Box textAlign="center" py={4} color="text.secondary">
+                <Typography variant="body2">No enquiries found</Typography>
+              </Box>
+            ) : (
+              <List sx={{ py: 0 }}>
+                {filteredEnquiries.map((enq) => {
+                  var name = getCustomerName(enq);
+                  var initials = getInitials(name);
+                  var isActive = activeEnquiry?._id === enq._id;
+                  var dateStr = enq.createdAt
+                    ? new Date(enq.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
+                    : '';
 
-                    {isMe && !isOptimistic && (
-                      <IconButton
-                        className="delete-msg"
-                        size="small"
-                        onClick={() => handleDeletedMessage(msg._id)}
-                        sx={{ position: "absolute", top: -10, right: -10, bgcolor: "#ff4d4d", color: "#fff", p: 0.2, opacity: 0, transition: "opacity 0.2s", "&:hover": { bgcolor: "#cc0000" } }}
+                  return (
+                    <ListItem key={enq._id} disablePadding>
+                      <ListItemButton
+                        selected={isActive}
+                        onClick={() => handleSelectEnquiry(enq)}
+                        sx={{
+                          py: 1.8, px: 2,
+                          borderLeft: isActive ? '4px solid #1abc9c' : '4px solid transparent',
+                          '&.Mui-selected': { bgcolor: '#e8f8f5' },
+                          '&:hover': { bgcolor: '#f0fdf9' },
+                        }}
                       >
-                        <DeleteIcon sx={{ fontSize: 14 }} />
-                      </IconButton>
-                    )}
+                        <ListItemAvatar>
+                          <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            variant="dot" color="success"
+                            sx={{ '& .MuiBadge-badge': { border: '2px solid white' } }}>
+                            <Avatar sx={{ bgcolor: '#d1f2eb', color: '#1abc9c', fontWeight: 700, fontSize: '0.85rem' }}>
+                              {initials}
+                            </Avatar>
+                          </Badge>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                              <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ maxWidth: 150 }}>{name}</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{dateStr}</Typography>
+                            </Stack>
+                          }
+                          secondary={
+                            <Typography variant="body2" noWrap sx={{ maxWidth: '200px', color: '#64748B', fontSize: '0.8rem' }}>
+                              {enq.packageDetails?.venueName || enq.moduleId?.title || enq.email || 'Venue Enquiry'}
+                            </Typography>
+                          }
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Box>
+        </Box>
+      )}
 
-                    <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
-                      {isOptimistic && <Typography variant="caption" sx={{ fontSize: "10px", fontStyle: "italic", opacity: 0.7 }}>sending...</Typography>}
-                      <Typography variant="caption" sx={{ fontSize: "10px", opacity: 0.7 }}>{msg.time}</Typography>
+      {/* ===== RIGHT CHAT PANE ===== */}
+      {(!isMobile || mobileChatOpen) && (
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', height: '100%' }}>
+          {!activeEnquiry ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.4 }}>
+              <ChatIcon sx={{ fontSize: 80, color: '#1abc9c', mb: 2 }} />
+              <Typography variant="h5" fontWeight={700} color="text.secondary">Select a conversation</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Choose a customer from the list to start chatting</Typography>
+            </Box>
+          ) : (
+            <React.Fragment>
+              {/* Chat Header */}
+              <Box sx={{
+                p: isMobile ? 1.5 : 2, bgcolor: 'white', borderBottom: '1px solid #E0E4EC',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  {isMobile && (
+                    <IconButton onClick={() => setMobileChatOpen(false)}>
+                      <ArrowBackIcon />
+                    </IconButton>
+                  )}
+                  <Avatar sx={{
+                    width: isMobile ? 40 : 48, height: isMobile ? 40 : 48,
+                    bgcolor: '#1abc9c', fontWeight: 800, fontSize: isMobile ? '0.9rem' : '1.1rem',
+                  }}>
+                    {getInitials(customerName)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight={800} sx={{ lineHeight: 1.2 }}>
+                      {customerName}
+                    </Typography>
+                    <Stack direction={isMobile ? 'column' : 'row'} spacing={isMobile ? 0 : 1.5}
+                      alignItems={isMobile ? 'flex-start' : 'center'}>
+                      {activeEnquiry.email && (
+                        <Typography variant="caption" sx={{ color: '#1abc9c', fontWeight: 700 }}>
+                          {activeEnquiry.email}
+                        </Typography>
+                      )}
+                      {!isMobile && activeEnquiry.contact && (
+                        <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />
+                      )}
+                      {activeEnquiry.contact && (
+                        <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                          {activeEnquiry.contact}
+                        </Typography>
+                      )}
                     </Stack>
                   </Box>
-                </Box>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </Box>
+                </Stack>
+              </Box>
 
-        {/* INPUT */}
-        <Box sx={{ p: 2, borderTop: "1px solid #eee", bgcolor: "#fff" }}>
-          <Stack direction="row" spacing={1}>
-            <TextField fullWidth size="small" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} sx={{ "& .MuiOutlinedInput-root": { borderRadius: "20px" } }} />
-            <IconButton onClick={handleSend} disabled={!message.trim()} sx={{ bgcolor: "#1abc9c", color: "#fff", "&:hover": { bgcolor: "#16a085" } }}>
-              <SendIcon />
-            </IconButton>
-          </Stack>
+              {/* Messages */}
+              <Box sx={{
+                flexGrow: 1, overflowY: 'auto', p: isMobile ? 2 : 3,
+                display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
+                {chatLoading ? (
+                  <Box display="flex" justifyContent="center" py={4}>
+                    <CircularProgress sx={{ color: '#1abc9c' }} />
+                  </Box>
+                ) : messages.length === 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.3 }}>
+                    <ChatIcon sx={{ fontSize: 60, color: '#1abc9c', mb: 1 }} />
+                    <Typography variant="h6" fontWeight={600}>No messages yet</Typography>
+                    <Typography variant="body2" color="text.secondary">Start the conversation!</Typography>
+                  </Box>
+                ) : (
+                  messages.map((msg, i) => {
+                    var fromMe = isMe(msg.senderId);
+                    var isOptimistic = String(msg._id).startsWith('optimistic-');
+                    return (
+                      <Box key={msg._id || i} sx={{
+                        alignSelf: fromMe ? 'flex-end' : 'flex-start',
+                        maxWidth: { xs: '85%', md: '65%' },
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: fromMe ? 'flex-end' : 'flex-start',
+                      }}>
+                        <Paper elevation={0} sx={{
+                          p: 1.5, px: 2,
+                          borderRadius: fromMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          bgcolor: fromMe ? '#1abc9c' : 'white',
+                          color: fromMe ? 'white' : '#1A1A2E',
+                          boxShadow: fromMe ? '0 4px 12px rgba(26,188,156,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+                          border: fromMe ? 'none' : '1px solid #eef0f4',
+                          position: 'relative',
+                          '&:hover .delete-msg': { opacity: 1 },
+                        }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.5 }}>
+                            {msg.text || msg.message}
+                          </Typography>
+                          {fromMe && !isOptimistic && (
+                            <IconButton className="delete-msg" size="small"
+                              onClick={() => handleDeletedMessage(msg._id)}
+                              sx={{
+                                position: 'absolute', top: -10, right: -10,
+                                bgcolor: '#ff4d4d', color: '#fff', p: 0.2,
+                                opacity: 0, transition: 'opacity 0.2s',
+                                '&:hover': { bgcolor: '#cc0000' },
+                              }}>
+                              <DeleteIcon sx={{ fontSize: 14 }} />
+                            </IconButton>
+                          )}
+                        </Paper>
+                        <Typography variant="caption" sx={{ mt: 0.3, px: 1, color: '#94A3B8', fontWeight: 600, fontSize: '0.65rem' }}>
+                          {isOptimistic
+                            ? <span style={{ fontStyle: 'italic', opacity: 0.7 }}>sending...</span>
+                            : <span>{msg.time} {fromMe && <DoneAllIcon sx={{ fontSize: 12, ml: 0.5, verticalAlign: 'middle', color: '#1abc9c' }} />}</span>
+                          }
+                        </Typography>
+                      </Box>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </Box>
+
+              {/* Input */}
+              <Box sx={{ p: isMobile ? 1.5 : 2, bgcolor: 'white', borderTop: '1px solid #E0E4EC' }}>
+                <Paper component="form" elevation={0}
+                  onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                  sx={{
+                    p: '4px 8px', display: 'flex', alignItems: 'center',
+                    borderRadius: '16px', bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
+                  }}>
+                  <IconButton sx={{ color: '#64748B' }}><AddIcon /></IconButton>
+                  <TextField fullWidth placeholder="Type a message..." variant="standard"
+                    value={message} onChange={(e) => setMessage(e.target.value)}
+                    InputProps={{ disableUnderline: true }}
+                    sx={{ ml: 1, flex: 1, '& .MuiInputBase-input': { fontWeight: 500 } }}
+                  />
+                  <IconButton sx={{ color: '#64748B' }}><EmojiEmotionsIcon /></IconButton>
+                  <Divider sx={{ height: 28, mx: 1 }} orientation="vertical" />
+                  <IconButton onClick={handleSend} disabled={!message.trim()}
+                    sx={{
+                      p: 1.2, color: 'white', bgcolor: '#1abc9c',
+                      '&:hover': { bgcolor: '#16a085' },
+                      '&.Mui-disabled': { bgcolor: '#b2dfdb', color: 'white' },
+                    }}>
+                    <SendIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Paper>
+              </Box>
+            </React.Fragment>
+          )}
         </Box>
-      </Paper>
+      )}
     </Box>
   );
 };
