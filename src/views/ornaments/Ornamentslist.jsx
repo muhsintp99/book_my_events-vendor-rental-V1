@@ -59,6 +59,8 @@ const API_BASE_URL = 'https://api.bookmyevent.ae/api/ornaments';
 const THEME_COLOR = '#E15B65';
 const SECONDARY_COLOR = '#c14a54';
 const ACCENT_COLOR = '#FFD700'; // Gold for jewelry vibe
+const GLASS_BG = 'rgba(255, 255, 255, 0.9)';
+const DARK_BG = '#1A202C';
 
 export default function OrnamentsList() {
   const navigate = useNavigate();
@@ -202,150 +204,157 @@ export default function OrnamentsList() {
   );
 
   return (
-    <Box sx={{ bgcolor: '#F7FAFC', minHeight: '100vh', pb: 8 }}>
-      {/* Premium Gradient Header */}
+    <Box sx={{ bgcolor: '#F0F2F5', minHeight: '100vh', pb: 8 }}>
+      {/* Premium Header with Glassmorphism */}
       <Box sx={{
-background: 'linear-gradient(135deg, #ece6f5 0%, #a44c7a 100%)',
-        color: 'white',
-        pt: 6,
-        pb: 12,
-        px: 4,
         position: 'relative',
-        overflow: 'hidden',
-        boxShadow: `0 10px 30px ${alpha(THEME_COLOR, 0.3)}`,
-        '&::after': {
-          content: '""',
+        height: '350px',
+        background: 'linear-gradient(135deg, #2D3748 0%, #1A202C 100%)',
+        color: 'white',
+        pt: 8,
+        px: 4,
+        overflow: 'hidden'
+      }}>
+        {/* Animated Background Circles */}
+        <Box sx={{
           position: 'absolute',
-          top: '-20%',
-          right: '-10%',
+          top: '-10%',
+          right: '-5%',
+          width: '400px',
+          height: '400px',
+          background: `radial-gradient(circle, ${alpha(THEME_COLOR, 0.15)} 0%, transparent 70%)`,
+          borderRadius: '50%',
+          zIndex: 0
+        }} />
+        <Box sx={{
+          position: 'absolute',
+          bottom: '-20%',
+          left: '10%',
           width: '300px',
           height: '300px',
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
-          borderRadius: '50%'
-        }
-      }}>
-        <Container maxWidth="xl">
+          background: `radial-gradient(circle, ${alpha(ACCENT_COLOR, 0.1)} 0%, transparent 70%)`,
+          borderRadius: '50%',
+          zIndex: 0
+        }} />
+
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
             <Box>
-              <Typography variant="h3" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-1.5px', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                💎 Royal Ornament Gallery
+              <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-1px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                Ornaments Collection
               </Typography>
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ opacity: 0.8, fontWeight: 400, mb: 4, maxWidth: 600 }}>
+                Manage your luxury inventory with precision. Track styles, stock, and value in one professional dashboard.
+              </Typography>
+              <Stack direction="row" spacing={3}>
                 {[
-                  { label: 'Total Items', value: ornamentsList.length, color: 'rgba(255,255,255,0.2)' },
-                  { label: 'Active', value: ornamentsList.filter(o => o.isActive).length, color: 'rgba(76, 175, 80, 0.3)' },
-                  { label: 'Inactive', value: ornamentsList.filter(o => !o.isActive).length, color: 'rgba(255,255,255,0.1)' }
+                  { label: 'Total Pieces', value: ornamentsList.length, icon: <Diamond /> },
+                  { label: 'Active Items', value: ornamentsList.filter(o => o.isActive).length, icon: <CheckCircle /> },
                 ].map((stat, i) => (
-                  <Paper key={i} elevation={0} sx={{
-                    bgcolor: stat.color,
-                    px: 3,
-                    py: 1,
-                    borderRadius: 3,
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900 }}>{stat.value}</Typography>
-                    <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>{stat.label}</Typography>
-                  </Paper>
+                  <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.2), color: THEME_COLOR, width: 56, height: 56 }}>
+                      {stat.icon}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1 }}>{stat.value}</Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.7, fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</Typography>
+                    </Box>
+                  </Box>
                 ))}
               </Stack>
             </Box>
             <Button
               variant="contained"
               size="large"
-              startIcon={<Add sx={{ fontSize: 24 }} />}
+              startIcon={<Add />}
               onClick={() => navigate("/ornaments/addpackage")}
               sx={{
-                bgcolor: 'white',
-                color: THEME_COLOR,
-                fontWeight: 800,
-                fontSize: '1.1rem',
-                px: 5,
-                py: 2,
-                borderRadius: '20px',
+                bgcolor: THEME_COLOR,
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '1rem',
+                px: 4,
+                py: 1.8,
+                borderRadius: '16px',
                 textTransform: 'none',
-                boxShadow: '0 15px 35px rgba(0,0,0,0.15)',
+                boxShadow: `0 12px 24px ${alpha(THEME_COLOR, 0.3)}`,
                 '&:hover': {
-                  bgcolor: '#F8F9FF',
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 20px 45px rgba(0,0,0,0.2)'
+                  bgcolor: SECONDARY_COLOR,
+                  transform: 'translateY(-4px)',
+                  boxShadow: `0 16px 32px ${alpha(THEME_COLOR, 0.4)}`,
                 },
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'all 0.3s'
               }}
             >
-              Add New Collection Item
+              Add New Piece
             </Button>
           </Stack>
         </Container>
       </Box>
 
-      <Container maxWidth="xl" sx={{ mt: -6, position: 'relative', zIndex: 10 }}>
-        {/* Floating Search Bar */}
-        <Paper elevation={10} sx={{
-          borderRadius: 4,
-          overflow: 'hidden',
+      <Container maxWidth="xl" sx={{ mt: -8, position: 'relative', zIndex: 10 }}>
+        {/* Professional Search & Filter Bar */}
+        <Paper elevation={4} sx={{
+          borderRadius: '24px',
           p: 1,
-          bgcolor: 'white',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-          mb: 6
+          mb: 6,
+          background: GLASS_BG,
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          display: 'flex',
+          alignItems: 'center'
         }}>
           <TextField
             fullWidth
             variant="standard"
-            placeholder="Search by name, material, or luxury details..."
+            placeholder="Search by name, SKU, or material..."
             value={searchQuery}
             onChange={(e) => setPendingSearch(e.target.value)}
             InputProps={{
               disableUnderline: true,
               startAdornment: (
                 <InputAdornment position="start" sx={{ pl: 3 }}>
-                  <Search sx={{ color: THEME_COLOR, fontSize: 32 }} />
+                  <Search sx={{ color: '#718096', fontSize: 28 }} />
                 </InputAdornment>
               ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end" sx={{ pr: 1 }}>
-                  <IconButton onClick={() => setPendingSearch('')} size="small">
-                    <Close />
-                  </IconButton>
-                </InputAdornment>
-              ),
-              sx: {
-                height: 80,
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                color: '#2d3748'
-              }
+              sx: { height: 70, fontSize: '1.1rem', fontWeight: 500, color: '#2D3748' }
             }}
           />
+          <Divider orientation="vertical" flexItem sx={{ mx: 2, my: 1 }} />
+          <Box sx={{ pr: 2 }}>
+            <Tooltip title="Filter Collections">
+              <IconButton sx={{ bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                <Category sx={{ color: THEME_COLOR }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Paper>
 
-        {/* Content Section */}
         {loading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 15 }}>
-            <CircularProgress size={80} thickness={4} sx={{ color: THEME_COLOR }} />
-            <Typography variant="h6" sx={{ mt: 3, fontWeight: 700, color: 'text.secondary' }}>Curating your collection...</Typography>
+            <CircularProgress size={64} thickness={4} sx={{ color: THEME_COLOR }} />
+            <Typography variant="h6" sx={{ mt: 3, fontWeight: 600, color: 'text.secondary' }}>Loading your collection...</Typography>
           </Box>
         ) : filteredOrnaments.length === 0 ? (
           <Fade in={true}>
             <Paper sx={{
-              borderRadius: 6,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              borderRadius: '32px',
               textAlign: 'center',
-              py: 15,
-              px: 4,
+              py: 12,
+              px: orientation === 'vertical' ? 4 : 8,
+              bgcolor: 'white',
               border: '2px dashed #E2E8F0'
             }}>
-              <Box sx={{ mb: 4 }}>
-                <Diamond sx={{ fontSize: 100, color: '#CBD5E0' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 900, color: '#2D3748', mb: 2 }}>
-                {ornamentsList.length === 0 ? "Begin Your Legacy" : "No Matches Found"}
+              <Avatar sx={{ bgcolor: '#F7FAFC', width: 120, height: 120, mx: 'auto', mb: 4 }}>
+                <InventoryIcon sx={{ fontSize: 60, color: '#CBD5E0' }} />
+              </Avatar>
+              <Typography variant="h3" sx={{ fontWeight: 800, color: '#2D3748', mb: 2 }}>
+                {ornamentsList.length === 0 ? "Inventory is Empty" : "No Results Found"}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 5, maxWidth: 500, mx: 'auto', fontSize: '1.1rem' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 6, maxWidth: 500, mx: 'auto', fontWeight: 400 }}>
                 {ornamentsList.length === 0
-                  ? "Craft your first masterpiece to display it in your professional showroom."
-                  : "We couldn't find any ornaments matching your search criteria. Try a different term."}
+                  ? "Start building your digital showroom by adding your first ornament piece."
+                  : "We couldn't find any ornaments matching your search. Please try different keywords."}
               </Typography>
               {ornamentsList.length === 0 && (
                 <Button
@@ -355,12 +364,13 @@ background: 'linear-gradient(135deg, #ece6f5 0%, #a44c7a 100%)',
                     bgcolor: THEME_COLOR,
                     px: 6,
                     py: 2,
-                    borderRadius: 4,
-                    fontWeight: 800,
+                    borderRadius: '16px',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
                     '&:hover': { bgcolor: SECONDARY_COLOR }
                   }}
                 >
-                  Create First Ornament
+                  Create Your First Piece
                 </Button>
               )}
             </Paper>
@@ -368,172 +378,129 @@ background: 'linear-gradient(135deg, #ece6f5 0%, #a44c7a 100%)',
         ) : (
           <Grid container spacing={4}>
             {filteredOrnaments.map((ornament, index) => (
-              <Grid item xs={12} sm={6} md={6} lg={4} xl={4} key={ornament._id}>
-                <Zoom in={true} style={{ transitionDelay: `${index * 50}ms` }}>
+              <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={ornament._id}>
+                <Zoom in={true} style={{ transitionDelay: `${index * 40}ms` }}>
                   <Card sx={{
                     height: '100%',
-                    borderRadius: 6,
+                    borderRadius: '28px',
+                    bgcolor: 'white',
                     overflow: 'hidden',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    border: '1px solid #edf2f7',
+                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
                     position: 'relative',
+                    border: '1px solid #E2E8F0',
                     '&:hover': {
-                      transform: 'translateY(-15px)',
-                      boxShadow: `0 30px 60px ${alpha(THEME_COLOR, 0.15)}`,
+                      transform: 'translateY(-12px)',
+                      boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
                       borderColor: THEME_COLOR,
-                      '& .card-image': { transform: 'scale(1.1)' },
-                      '& .actions-overlay': { opacity: 1 }
+                      '& .action-btns': { opacity: 1, transform: 'translateY(0)' }
                     }
                   }}>
-                    {/* Image Area */}
-                    <Box sx={{ position: 'relative', paddingTop: '80%', background: '#F7FAFC', overflow: 'hidden' }}>
-                      {ornament.thumbnail ? (
-                        <CardMedia
-                          className="card-image"
-                          component="img"
-                          image={getImageUrl(ornament.thumbnail)}
-                          alt={ornament.name}
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            transition: 'transform 0.8s ease'
-                          }}
-                        />
-                      ) : (
-                        <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ImageIcon sx={{ fontSize: 80, color: '#E2E8F0' }} />
-                        </Box>
-                      )}
-
-                      {/* Premium Badges */}
-                      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 5 }}>
-                        <Chip
-                          label={ornament.isActive ? 'IN STOCK' : 'OUT OF STOCK'}
-                          size="small"
-                          sx={{
-                            bgcolor: ornament.isActive ? '#48BB78' : '#A0AEC0',
-                            color: 'white',
-                            fontWeight: 900,
-                            fontSize: '0.7rem',
-                            letterSpacing: 1,
-                            px: 1,
-                            borderRadius: 2
-                          }}
-                        />
-                      </Box>
-
-                      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 5 }}>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.9)',
-                            '&:hover': { bgcolor: 'white' },
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-                          }}
-                          onClick={() => handleToggleStatus(ornament._id, ornament.isActive)}
-                        >
-                          <Switch
-                            checked={ornament.isActive}
-                            size="small"
-                            color="success"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </IconButton>
-                      </Box>
-
-                      {/* Hover Actions Overlay */}
-                      <Box className="actions-overlay" sx={{
-                        position: 'absolute',
-                        top: 0, left: 0, width: '100%', height: '100%',
-                        bgcolor: alpha(THEME_COLOR, 0.4),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 2,
-                        opacity: 0,
-                        transition: '0.3s',
-                        backdropFilter: 'blur(3px)'
-                      }}>
-                        <Tooltip title="View Details">
-                          <Avatar sx={{ bgcolor: 'white', color: THEME_COLOR, cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => handleView(ornament)}>
-                            <Visibility />
-                          </Avatar>
-                        </Tooltip>
-                        <Tooltip title="Edit Ornament">
-                          <Avatar sx={{ bgcolor: 'white', color: '#2B6CB0', cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => navigate(`/ornaments/edit/${ornament._id}`)}>
-                            <Edit />
-                          </Avatar>
-                        </Tooltip>
-                        <Tooltip title="Delete Permanently">
-                          <Avatar sx={{ bgcolor: 'white', color: '#C53030', cursor: 'pointer', '&:hover': { transform: 'scale(1.1)' } }} onClick={() => { setOrnamentToDelete(ornament._id); setOpenConfirm(true); }}>
-                            <Delete />
-                          </Avatar>
-                        </Tooltip>
-                      </Box>
+                    {/* Badge Overlay */}
+                    <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
+                      <Chip
+                        label={ornament.isActive ? 'Active' : 'Hidden'}
+                        size="small"
+                        sx={{
+                          bgcolor: ornament.isActive ? alpha('#48BB78', 0.9) : alpha('#A0AEC0', 0.9),
+                          color: 'white',
+                          fontWeight: 800,
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          backdropFilter: 'blur(4px)'
+                        }}
+                      />
                     </Box>
 
-                    {/* Content Area */}
-                    <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h5" sx={{ fontWeight: 900, color: '#2D3748', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {ornament.name}
-                      </Typography>
+                    {/* Image Showcase */}
+                    <Box sx={{ position: 'relative', paddingTop: '100%', bgcolor: '#F7FAFC' }}>
+                      <CardMedia
+                        component="img"
+                        image={getImageUrl(ornament.thumbnail)}
+                        alt={ornament.name}
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      {/* Floating Actions */}
+                      <Stack
+                        direction="row"
+                        className="action-btns"
+                        spacing={1}
+                        sx={{
+                          position: 'absolute',
+                          bottom: 16,
+                          left: '50%',
+                          transform: 'translateX(-50%) translateY(20px)',
+                          opacity: 0,
+                          transition: '0.3s all',
+                          zIndex: 5
+                        }}
+                      >
+                        {[
+                          { icon: <Visibility fontSize="small" />, color: DARK_BG, onClick: () => handleView(ornament), tip: 'Quick View' },
+                          { icon: <Edit fontSize="small" />, color: '#2B6CB0', onClick: () => navigate(`/ornaments/edit/${ornament._id}`), tip: 'Edit' },
+                          { icon: <Delete fontSize="small" />, color: '#C53030', onClick: () => { setOrnamentToDelete(ornament._id); setOpenConfirm(true); }, tip: 'Delete' }
+                        ].map((btn, i) => (
+                          <Tooltip key={i} title={btn.tip}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => { e.stopPropagation(); btn.onClick(); }}
+                              sx={{
+                                bgcolor: 'white',
+                                color: btn.color,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                '&:hover': { bgcolor: btn.color, color: 'white' }
+                              }}
+                            >
+                              {btn.icon}
+                            </IconButton>
+                          </Tooltip>
+                        ))}
+                      </Stack>
+                    </Box>
 
-                      <Stack direction="row" spacing={1} sx={{ mb: 2.5 }}>
-                        <Chip
-                          icon={<Palette sx={{ fontSize: '14px !important' }} />}
-                          label={ornament.material || 'Premium Gold'}
+                    {/* Information Content */}
+                    <CardContent sx={{ p: 3 }}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: '#2D3748', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {ornament.name}
+                        </Typography>
+                        <Switch
                           size="small"
-                          variant="outlined"
-                          sx={{ borderRadius: 2, fontWeight: 700, borderColor: '#E2E8F0', color: '#4A5568' }}
-                        />
-                        <Chip
-                          icon={<Category sx={{ fontSize: '14px !important' }} />}
-                          label={ornament.category?.title || 'Jewelry'}
-                          size="small"
-                          sx={{ borderRadius: 2, fontWeight: 700, bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }}
+                          checked={ornament.isActive}
+                          onChange={(e) => { e.stopPropagation(); handleToggleStatus(ornament._id, ornament.isActive); }}
+                          color="success"
                         />
                       </Stack>
 
-                      <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
+                      <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
+                        <Chip label={ornament.material || 'Gold'} size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, height: 20 }} />
+                        <Chip label={ornament.category?.title || 'Jewelry'} size="small" sx={{ borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, height: 20, bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }} />
+                      </Stack>
 
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#718096', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Purchase Value</Typography>
-                          <Typography variant="h4" sx={{ fontWeight: 900, color: THEME_COLOR }}>
+                      <Divider sx={{ mb: 2, borderStyle: 'dashed' }} />
+
+                      <Grid container spacing={1}>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Purchase</Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 900, color: THEME_COLOR }}>
                             {formatINR(ornament.buyPricing?.totalPrice)}
                           </Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography variant="caption" sx={{ color: '#718096', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Rental / Day</Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 800, color: '#48BB78' }}>
+                        </Grid>
+                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                          <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Rental / Day</Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 900, color: '#48BB78' }}>
                             {formatINR(ornament.rentalPricing?.pricePerDay)}
                           </Typography>
-                        </Box>
-                      </Box>
+                        </Grid>
+                      </Grid>
                     </CardContent>
-
-                    <Box sx={{ px: 3, pb: 2 }}>
-                      <Button
-                        fullWidth
-                        variant="soft"
-                        onClick={() => handleView(ornament)}
-                        sx={{
-                          bgcolor: alpha(THEME_COLOR, 0.05),
-                          color: THEME_COLOR,
-                          fontWeight: 800,
-                          borderRadius: 3,
-                          py: 1,
-                          '&:hover': { bgcolor: alpha(THEME_COLOR, 0.1) }
-                        }}
-                      >
-                        Manage Details
-                      </Button>
-                    </Box>
                   </Card>
                 </Zoom>
               </Grid>
@@ -542,186 +509,145 @@ background: 'linear-gradient(135deg, #ece6f5 0%, #a44c7a 100%)',
         )}
       </Container>
 
-      {/* Styled View Details Modal */}
+      {/* Modern Detail View Dialog */}
       <Dialog
         open={openView}
         onClose={() => setOpenView(false)}
         maxWidth="lg"
         fullWidth
-        scroll="body"
-        PaperProps={{
-          sx: { borderRadius: 6, overflow: 'hidden' }
-        }}
+        PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden' } }}
       >
-        <DialogTitle sx={{
-          background: `linear-gradient(135deg, ${THEME_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
-          color: 'white',
-          p: 4,
-          position: 'relative'
-        }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 900 }}>{selectedOrnament?.name}</Typography>
-              <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 600 }}>{selectedOrnament?.ornamentId || 'SKU-PRIVATE-COLLECTION'}</Typography>
-            </Box>
-            <IconButton onClick={() => setOpenView(false)} sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}>
-              <Close />
-            </IconButton>
-          </Stack>
-        </DialogTitle>
-
         <DialogContent sx={{ p: 0 }}>
           {selectedOrnament && (
             <Grid container>
-              {/* Left Column: Media Showcase */}
-              <Grid item xs={12} lg={6} sx={{ bgcolor: '#1A202C', p: 4 }}>
-                <Box sx={{ position: 'relative', mb: 3 }}>
-                  <Paper elevation={24} sx={{ borderRadius: 6, overflow: 'hidden', height: 450 }}>
-                    <img
-                      src={getImageUrl(selectedImageIndex === 0 ? selectedOrnament.thumbnail : selectedOrnament.galleryImages[selectedImageIndex - 1])}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
-                      alt="Product Showcase"
-                    />
-                  </Paper>
-                </Box>
-
-                <Stack direction="row" spacing={1.5} sx={{ overflowX: 'auto', pb: 1, '&::-webkit-scrollbar': { height: 6 }, '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 10 } }}>
-                  {/* Thumbnail Avatar */}
-                  <Avatar
-                    variant="rounded"
-                    src={getImageUrl(selectedOrnament.thumbnail)}
-                    onClick={() => setSelectedImageIndex(0)}
-                    sx={{
-                      width: 80, height: 80, cursor: 'pointer',
-                      border: selectedImageIndex === 0 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
-                      transition: '0.2s', '&:hover': { transform: 'scale(1.05)' }
-                    }}
+              {/* Left Side: Visuals */}
+              <Grid item xs={12} md={6} sx={{ bgcolor: '#F7FAFC', p: 4, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', flex: 1, mb: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.05)' }}>
+                  <img
+                    src={getImageUrl(selectedImageIndex === 0 ? selectedOrnament.thumbnail : selectedOrnament.galleryImages[selectedImageIndex - 1])}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white' }}
+                    alt="Ornament View"
                   />
-                  {selectedOrnament.galleryImages?.map((img, i) => (
+                  <IconButton
+                    onClick={() => setOpenView(false)}
+                    sx={{ position: 'absolute', top: 16, right: 16, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
+                  >
+                    <Close />
+                  </IconButton>
+                </Box>
+                <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
+                  {[selectedOrnament.thumbnail, ...(selectedOrnament.galleryImages || [])].map((img, i) => (
                     <Avatar
                       key={i}
                       variant="rounded"
                       src={getImageUrl(img)}
-                      onClick={() => setSelectedImageIndex(i + 1)}
+                      onClick={() => setSelectedImageIndex(i)}
                       sx={{
-                        width: 80, height: 80, cursor: 'pointer',
-                        border: selectedImageIndex === i + 1 ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
-                        transition: '0.2s', '&:hover': { transform: 'scale(1.05)' }
+                        width: 70, height: 70, cursor: 'pointer',
+                        border: selectedImageIndex === i ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
+                        transition: '0.2s', '&:hover': { opacity: 0.8 }
                       }}
                     />
                   ))}
                 </Stack>
               </Grid>
 
-              {/* Right Column: Specifications */}
-              <Grid item xs={12} lg={6} sx={{ p: 4, bgcolor: 'white' }}>
+              {/* Right Side: Specs & Data */}
+              <Grid item xs={12} md={6} sx={{ p: { xs: 4, md: 6 }, bgcolor: 'white' }}>
                 <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Collection Details</Typography>
-                  <Grid container spacing={1}>
-                    <Grid item xs={6}><DetailItem icon={<Category />} label="Department" value={selectedOrnament.category?.title} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<Palette />} label="Primary Material" value={selectedOrnament.material} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<Info />} label="Weight Specs" value={`${selectedOrnament.weight || 0} ${selectedOrnament.unit || 'gms'}`} /></Grid>
-                    <Grid item xs={6}><DetailItem icon={<InventoryIcon />} label="Stock Available" value={selectedOrnament.stock?.quantity} /></Grid>
-                  </Grid>
+                  <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2 }}>
+                    Product Specification
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 900, color: '#2D3748', mt: 1, mb: 2 }}>{selectedOrnament.name}</Typography>
+                  <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8 }}>{selectedOrnament.description || 'No description provided.'}</Typography>
                 </Box>
 
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Investment Value</Typography>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4, mb: 2, bgcolor: alpha(THEME_COLOR, 0.02) }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Box>
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>BUYOUT PRICE</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedOrnament.buyPricing?.totalPrice)}</Typography>
-                      </Box>
-                      {selectedOrnament.buyPricing?.discountValue > 0 && (
-                        <Chip label={`- ${selectedOrnament.buyPricing.discountValue}${selectedOrnament.buyPricing.discountType === 'percentage' ? '%' : ' OFF'}`} color="error" sx={{ fontWeight: 900 }} />
-                      )}
-                    </Stack>
-                  </Paper>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4, bgcolor: '#F0FFF4' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Box>
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>DAILY RENTAL RATE</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>{formatINR(selectedOrnament.rentalPricing?.pricePerDay)}</Typography>
-                      </Box>
-                      <Chip label={`Min ${selectedOrnament.rentalPricing?.minimumDays || 1} Days`} variant="outlined" sx={{ fontWeight: 700, borderColor: '#2F855A', color: '#2F855A' }} />
-                    </Stack>
-                  </Paper>
-                </Box>
+                <Grid container spacing={3} sx={{ mb: 5 }}>
+                  <Grid item xs={6}><DetailItem icon={<Info />} label="SKU ID" value={selectedOrnament.ornamentId || 'N/A'} /></Grid>
+                  <Grid item xs={6}><DetailItem icon={<Category />} label="Category" value={selectedOrnament.category?.title} /></Grid>
+                  <Grid item xs={6}><DetailItem icon={<Palette />} label="Material" value={selectedOrnament.material} /></Grid>
+                  <Grid item xs={6}><DetailItem icon={<InventoryIcon />} label="Stock Status" value={selectedOrnament.stock?.quantity > 0 ? `${selectedOrnament.stock.quantity} Units` : 'Out of Stock'} success={selectedOrnament.stock?.quantity > 0} error={selectedOrnament.stock?.quantity <= 0} chip /></Grid>
+                </Grid>
 
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2, color: '#2D3748' }}>Story & Craftsmanship</Typography>
-                  <Typography variant="body1" sx={{ color: '#4A5568', lineHeight: 1.8 }}>
-                    {selectedOrnament.description || "A masterfully crafted piece from our exclusive collection, designed to be passed down through generations. Every detail reflects superior quality and timeless elegance."}
+                <Box sx={{ p: 4, bgcolor: '#F7FAFC', borderRadius: '24px', mb: 5 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                    <Box>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>BUYING VALUE</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedOrnament.buyPricing?.totalPrice)}</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>RENTAL / DAY</Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>{formatINR(selectedOrnament.rentalPricing?.pricePerDay)}</Typography>
+                    </Box>
+                  </Stack>
+                  <Divider sx={{ mb: 2 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#718096', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LocalOffer fontSize="inherit" /> Pricing includes applicable taxes and service charges.
                   </Typography>
                 </Box>
 
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Occasions & Tags</Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {selectedOrnament.occasions?.map((occ, i) => (
-                      <Chip key={i} label={occ} size="small" sx={{ fontWeight: 700, px: 1 }} />
-                    ))}
-                    {selectedOrnament.features?.basicFeatures?.map((f, i) => (
-                      <Chip key={i} label={f} size="small" color="primary" sx={{ fontWeight: 700, px: 1 }} />
-                    ))}
-                  </Stack>
-                </Box>
+                <Stack direction="row" spacing={2}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    startIcon={<Edit />}
+                    onClick={() => navigate(`/ornaments/edit/${selectedOrnament._id}`)}
+                    sx={{ bgcolor: '#2D3748', color: 'white', borderRadius: '16px', py: 2, fontWeight: 700, '&:hover': { bgcolor: '#1A202C' } }}
+                  >
+                    Edit Piece
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    onClick={() => setOpenView(false)}
+                    sx={{ borderRadius: '16px', py: 2, fontWeight: 700, borderColor: '#E2E8F0', color: '#4A5568' }}
+                  >
+                    Close
+                  </Button>
+                </Stack>
               </Grid>
             </Grid>
           )}
         </DialogContent>
-
-        <DialogActions sx={{ p: 4, bgcolor: '#F7FAFC' }}>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Edit />}
-            onClick={() => navigate(`/ornaments/edit/${selectedOrnament._id}`)}
-            sx={{ bgcolor: '#2B6CB0', px: 4, borderRadius: 3, fontWeight: 800 }}
-          >
-            Edit This Piece
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => setOpenView(false)}
-            sx={{ px: 4, borderRadius: 3, fontWeight: 800 }}
-          >
-            Close Viewer
-          </Button>
-        </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      {/* Styled Delete Confirmation */}
       <Dialog
         open={openConfirm}
         onClose={() => setOpenConfirm(false)}
-        PaperProps={{ sx: { borderRadius: 6, p: 2 } }}
+        PaperProps={{ sx: { borderRadius: '28px', p: 3, maxWidth: 400 } }}
       >
-        <DialogTitle sx={{ fontWeight: 900, fontSize: '1.5rem', textAlign: 'center' }}>Permanently Remove?</DialogTitle>
-        <DialogContent sx={{ textAlign: 'center' }}>
-          <Avatar sx={{ width: 100, height: 100, bgcolor: alpha('#C53030', 0.1), color: '#C53030', mx: 'auto', mb: 3 }}>
-            <Delete sx={{ fontSize: 50 }} />
+        <Box sx={{ textAlign: 'center', py: 2 }}>
+          <Avatar sx={{ width: 80, height: 80, bgcolor: alpha('#C53030', 0.1), color: '#C53030', mx: 'auto', mb: 3 }}>
+            <Delete sx={{ fontSize: 40 }} />
           </Avatar>
-          <Typography variant="body1" sx={{ color: '#4A5568', fontSize: '1.1rem' }}>
-            This will permanently remove <b>this ornament</b> from your digital catalog. This action cannot be undone.
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5 }}>Delete Ornament?</Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            Are you sure you want to permanently remove this piece from your collection? This action is irreversible.
           </Typography>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => setOpenConfirm(false)} variant="outlined" sx={{ borderRadius: 3, px: 3, fontWeight: 700 }}>Keep It</Button>
-          <Button onClick={handleDelete} variant="contained" sx={{ bgcolor: '#C53030', borderRadius: 3, px: 3, fontWeight: 700, '&:hover': { bgcolor: '#9B2C2C' } }}>Yes, Delete</Button>
-        </DialogActions>
+          <Stack direction="row" spacing={2}>
+            <Button fullWidth onClick={() => setOpenConfirm(false)} sx={{ color: '#718096', fontWeight: 700 }}>Cancel</Button>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleDelete}
+              sx={{ bgcolor: '#C53030', color: 'white', borderRadius: '12px', fontWeight: 700, '&:hover': { bgcolor: '#9B2C2C' } }}
+            >
+              Confirm Delete
+            </Button>
+          </Stack>
+        </Box>
       </Dialog>
 
-      {/* Toast Notification */}
       <Snackbar
         open={toast.open}
         autoHideDuration={4000}
         onClose={() => setToast({ ...toast, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: 4, fontWeight: 700, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: '12px', fontWeight: 600 }}>
           {toast.message}
         </Alert>
       </Snackbar>

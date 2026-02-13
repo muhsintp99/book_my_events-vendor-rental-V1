@@ -71,13 +71,13 @@ import axios from 'axios';
 // Theme & Colors
 // ------------------------------
 const THEME = {
-  primary: '#9C27B0',
-  secondary: '#E91E63',
-  accent: '#FF4081',
+  primary: '#E15B65',
+  secondary: '#c14a54',
+  accent: '#FFD700',
   dark: '#1A1A2E',
   light: '#F8F9FF',
-  gradient: 'linear-gradient(135deg, #9C27B0 0%, #E91E63 100%)',
-  gradientLight: 'linear-gradient(135deg, rgba(156, 39, 176, 0.08) 0%, rgba(233, 30, 99, 0.08) 100%)',
+  gradient: 'linear-gradient(135deg, #E15B65 0%, #c14a54 100%)',
+  gradientLight: 'linear-gradient(135deg, rgba(225, 91, 101, 0.08) 0%, rgba(193, 74, 84, 0.08) 100%)',
   success: '#4CAF50',
   warning: '#FF9800',
   info: '#2196F3'

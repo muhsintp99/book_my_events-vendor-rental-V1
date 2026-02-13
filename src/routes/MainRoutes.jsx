@@ -184,7 +184,7 @@ const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/Enqu
 const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
 const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
 
-const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
+const Allornaments = Loadable(lazy(() => import('../views/ornaments/Allornaments.jsx')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
 const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
 const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamentscompleted.jsx')));
@@ -425,7 +425,7 @@ const MainRoutes = {
             { path: 'schedules', element: <Schedules /> },
             { path: 'upgrade', element: <Upgradevenue /> },
             { path: 'enquiries', element: <Enquiriesvenue /> },
-{ path: 'enquirychat', element: <VenueEnquiryChat /> },
+            { path: 'enquirychat', element: <VenueEnquiryChat /> },
 
 
 
