@@ -508,8 +508,8 @@ export default function Vehicles() {
               const basePrice = vehicle.pricing?.basicPackage?.price || vehicle.pricing?.hourly || vehicle.pricing?.perDay || 0;
               const grandTotal = vehicle.pricing?.grandTotal || basePrice;
               const seating = vehicle.capacityAndComfort?.seatingCapacity || vehicle.seatingCapacity;
-              const fuel = vehicle.engineCharacteristics?.fuelType || vehicle.fuelType;
-              const transmission = vehicle.engineCharacteristics?.transmissionType?.value || vehicle.engineCharacteristics?.transmissionType || vehicle.transmissionType;
+              const fuel = (typeof vehicle.engineCharacteristics?.fuelType === 'object' ? vehicle.engineCharacteristics?.fuelType?.value : vehicle.engineCharacteristics?.fuelType) || vehicle.fuelType || "N/A";
+              const transmission = vehicle.engineCharacteristics?.transmissionType?.value || (typeof vehicle.engineCharacteristics?.transmissionType === 'string' ? vehicle.engineCharacteristics?.transmissionType : null) || vehicle.transmissionType || "N/A";
 
               return (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={vehicle._id}>

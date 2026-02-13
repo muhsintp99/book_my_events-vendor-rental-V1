@@ -1080,44 +1080,44 @@ const CarListingView = () => {
               </Card>
             </Grid>
             {/* Advance Pricing */}
-<Grid item xs={12} md={3}>
-  <Card
-    sx={{
-      borderRadius: 3,
-      height: '100%',
-      bgcolor: '#fff7e6',
-      border: '1px solid #ffc107'
-    }}
-  >
-    <CardContent>
-      <Typography variant="h6" fontWeight={700} mb={2}>
-        Advance Pricing
-      </Typography>
+            <Grid item xs={12} md={3}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  height: '100%',
+                  bgcolor: '#fff7e6',
+                  border: '1px solid #ffc107'
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" fontWeight={700} mb={2}>
+                    Advance Pricing
+                  </Typography>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          p: 2,
-          borderRadius: 2,
-          bgcolor: '#fff3cd'
-        }}
-      >
-        <CurrencyRupeeIcon sx={{ fontSize: 40, color: '#856404' }} />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: '#fff3cd'
+                    }}
+                  >
+                    <CurrencyRupeeIcon sx={{ fontSize: 40, color: '#856404' }} />
 
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            Advance Booking Amount
-          </Typography>
-          <Typography variant="h4" fontWeight={800} color="#856404">
-            ₹ {Number(vehicle.advanceBookingAmount || 0).toLocaleString('en-IN')}
-          </Typography>
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-</Grid>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Advance Booking Amount
+                      </Typography>
+                      <Typography variant="h4" fontWeight={800} color="#856404">
+                        ₹ {Number(vehicle.advanceBookingAmount || 0).toLocaleString('en-IN')}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
 
           </Grid>
         </Grid>
