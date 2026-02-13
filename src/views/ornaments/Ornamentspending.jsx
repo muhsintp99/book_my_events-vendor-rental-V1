@@ -1,8 +1,8 @@
-import React from "react";
-import OrnamentsBookings from "./OrnamentsBookings";
+import React from 'react';
+import OrnamentsBookings from './OrnamentsBookings';
 
-const Pendingbookings = () => {
+const Ornamentspending = () => {
   return <OrnamentsBookings initialTab="Pending" hideTabs={true} />;
 };
 
-export default Pendingbookings;
+export default Ornamentspending;
