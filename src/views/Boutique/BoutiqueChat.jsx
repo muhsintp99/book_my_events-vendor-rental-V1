@@ -43,7 +43,8 @@ import {
     NotificationsOffOutlined,
     PersonOutline,
     Close,
-    FilterList
+    FilterList,
+    OpenInNew
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { socket } from '../../socket';
@@ -58,6 +59,18 @@ const THEME = {
 };
 
 const COMMON_EMOJIS = ['😊', '😂', '😍', '👍', '🙏', '🔥', '✨', '❤️', '🎉', '👗', '👜', '📍', '💯', '👏', '🙌', '⭐'];
+
+const API_BASE_IMG = "https://api.bookmyevent.ae";
+
+const formatImage = (path) => {
+    if (!path) return "assets/img/default-placeholder.jpg";
+    if (typeof path === 'string' && path.startsWith("http")) return path;
+    if (typeof path === 'string' && path.startsWith("/var/www/backend/")) {
+        path = path.replace("/var/www/backend/", "");
+    }
+    const cleanPath = String(path).replace(/^\//, "");
+    return `${API_BASE_IMG}/${cleanPath}`;
+};
 
 const getCustomerName = (enq) => {
     if (!enq) return 'Customer';
@@ -127,8 +140,18 @@ const BoutiqueChat = () => {
                     const desc = (e.description || '').toLowerCase();
                     const moduleType = (e.moduleId?.moduleType || '').toLowerCase();
                     const title = (e.moduleId?.title || '').toLowerCase();
-                    const isBoutique = moduleType === 'boutique' || title.includes('boutique');
-                    const isCustom = desc.includes('customize') || desc.includes('design');
+                    const moduleIdStr = typeof e.moduleId === 'string' ? e.moduleId : (e.moduleId?._id || '');
+
+                    // Inclusive check for Boutique
+                    const isBoutique = moduleType === 'boutique' ||
+                        title.includes('boutique') ||
+                        moduleIdStr === "68e5fd7b8164d482d281c37f";
+
+                    // Inclusive check for Customization/Design
+                    const isCustom = desc.includes('customize') ||
+                        desc.includes('design') ||
+                        desc.includes('boutique'); // Fallback: if it's in this module, show it
+
                     return isBoutique && isCustom;
                 });
                 setEnquiries(customizations);
@@ -381,17 +404,105 @@ const BoutiqueChat = () => {
                             )}
                             {!showSearch ? (
                                 <>
-                                    <Avatar sx={{ width: isMobile ? 40 : 50, height: isMobile ? 40 : 50, bgcolor: THEME.primary, fontWeight: 800, fontSize: isMobile ? '1rem' : '1.2rem' }}>
+                                    <Avatar sx={{ width: isMobile ? 35 : 45, height: isMobile ? 35 : 45, bgcolor: THEME.primary, fontWeight: 800, fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
                                         {getInitials(getCustomerName(activeEnquiry))}
                                     </Avatar>
-                                    <Box>
-                                        <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={800} sx={{ lineHeight: 1.2 }}>{getCustomerName(activeEnquiry)}</Typography>
-                                        <Stack direction={isMobile ? "column" : "row"} spacing={isMobile ? 0 : 1.5} alignItems={isMobile ? "flex-start" : "center"}>
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant={isMobile ? "subtitle2" : "subtitle1"} fontWeight={800} sx={{ lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {getCustomerName(activeEnquiry)}
+                                        </Typography>
+                                        <Stack direction="row" spacing={1} alignItems="center">
                                             <Typography variant="caption" sx={{ color: THEME.secondary, fontWeight: 700 }}>{activeEnquiry?.email}</Typography>
                                             {!isMobile && <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />}
-                                            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>{activeEnquiry?.contact}</Typography>
+                                            {!isMobile && <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>{activeEnquiry?.contact}</Typography>}
                                         </Stack>
                                     </Box>
+
+                                    <Box sx={{ flexGrow: 1 }} />
+
+                                    {/* Premium Package Info Card */}
+                                    {activeEnquiry?.packageDetails && (
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1.5,
+                                                p: '4px 10px',
+                                                borderRadius: '12px',
+                                                bgcolor: 'rgba(255, 255, 255, 0.85)',
+                                                backdropFilter: 'blur(12px)',
+                                                border: '1px solid rgba(156, 39, 176, 0.1)',
+                                                boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                                                maxWidth: { xs: '140px', sm: '260px' },
+                                                mr: 1.5,
+                                                transition: 'all 0.3s ease',
+                                                '&:hover': {
+                                                    boxShadow: '0 6px 20px rgba(156, 39, 176, 0.1)',
+                                                    transform: 'translateY(-1px)',
+                                                    bgcolor: 'white'
+                                                }
+                                            }}
+                                        >
+                                            <Box sx={{
+                                                width: 38,
+                                                height: 38,
+                                                borderRadius: '8px',
+                                                overflow: 'hidden',
+                                                flexShrink: 0,
+                                                border: '1.5px solid white',
+                                                boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                                            }}>
+                                                <img
+                                                    src={formatImage(activeEnquiry.packageDetails.thumbnail)}
+                                                    alt="Package"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                            </Box>
+                                            <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: 'block',
+                                                        fontWeight: 800,
+                                                        color: THEME.dark,
+                                                        fontSize: '0.68rem',
+                                                        noWrap: true,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        lineHeight: 1.1
+                                                    }}
+                                                >
+                                                    {activeEnquiry.packageDetails.name}
+                                                </Typography>
+                                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            fontWeight: 900,
+                                                            color: THEME.primary,
+                                                            fontSize: '0.78rem'
+                                                        }}
+                                                    >
+                                                        ₹{activeEnquiry.packageDetails.buyPricing?.totalPrice || activeEnquiry.packageDetails.rentalPricing?.totalPrice || '0'}
+                                                    </Typography>
+                                                    <IconButton
+                                                        size="small"
+                                                        component="a"
+                                                        href={`https://bookmyevent.ae/boutique-details.html?id=${activeEnquiry.packageId}`}
+                                                        target="_blank"
+                                                        sx={{
+                                                            p: 0,
+                                                            color: THEME.primary,
+                                                            opacity: 0.6,
+                                                            '&:hover': { opacity: 1, bgcolor: 'transparent' }
+                                                        }}
+                                                    >
+                                                        <OpenInNew sx={{ fontSize: 11 }} />
+                                                    </IconButton>
+                                                </Stack>
+                                            </Box>
+                                        </Box>
+                                    )}
                                 </>
                             ) : (
                                 <Box sx={{ flex: 1, bgcolor: '#f1f5f9', borderRadius: '12px', px: 2, py: 1, display: 'flex', alignItems: 'center', animation: 'fadeIn 0.3s ease-in-out' }}>
@@ -402,14 +513,14 @@ const BoutiqueChat = () => {
                             )}
                         </Stack>
 
-                        <Stack direction="row" spacing={1}>
-                            {!showSearch && <IconButton onClick={() => setShowSearch(true)} sx={{ bgcolor: alpha(THEME.primary, 0.05) }}><Search fontSize="small" /></IconButton>}
-                            <IconButton onClick={handleMenuOpen} sx={{ bgcolor: alpha(THEME.primary, 0.05) }}><MoreVert fontSize="small" /></IconButton>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            {!showSearch && <IconButton onClick={() => setShowSearch(true)} sx={{ color: '#64748B' }}><Search fontSize="small" /></IconButton>}
+                            <IconButton onClick={handleMenuOpen} sx={{ color: '#64748B' }}><MoreVert fontSize="small" /></IconButton>
                         </Stack>
                     </Box>
 
                     {/* Chat Messages */}
-                    <Box sx={{ flexGrow: 1, overflowY: 'auto', p: isMobile ? 2 : 3, display: 'flex', flexDirection: 'column', gap: 2, backgroundImage: 'radial-gradient(#9C27B010 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+                    <Box sx={{ flexGrow: 1, overflowY: 'auto', p: isMobile ? 1.5 : 3, display: 'flex', flexDirection: 'column', gap: 2, backgroundImage: 'radial-gradient(#9C27B010 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
                         {chatLoading ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                                 <CircularProgress size={40} />
