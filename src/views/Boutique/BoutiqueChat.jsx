@@ -24,7 +24,8 @@ import {
     ListItem,
     ListItemAvatar,
     ListItemText,
-    ListItemButton
+    ListItemButton,
+    CircularProgress
 } from '@mui/material';
 import {
     Send,
@@ -45,6 +46,8 @@ import {
     FilterList
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { socket } from '../../socket';
+import axios from 'axios';
 
 const THEME = {
     primary: '#9C27B0',
@@ -56,114 +59,176 @@ const THEME = {
 
 const COMMON_EMOJIS = ['😊', '😂', '😍', '👍', '🙏', '🔥', '✨', '❤️', '🎉', '👗', '👜', '📍', '💯', '👏', '🙌', '⭐'];
 
-const INITIAL_CHATS = [
-    {
-        id: 1,
-        name: "Sarah Johnson",
-        avatar: "SJ",
-        email: "sarah.j@example.com",
-        phone: "+1 (555) 012-3456",
-        online: true,
-        lastMessage: "That's great! I'll send over some references soon.",
-        time: "09:25 AM",
-        unreadCount: 2,
-        messages: [
-            { id: 1, sender: 'customer', text: "Hello, I'm interested in working with your boutique for some upcoming designs. How do we get started?", time: '09:15 AM', type: 'text' },
-            { id: 2, sender: 'vendor', text: "Hi there! Welcome to our boutique. We'd love to help you. You can share your ideas here, and we can discuss the specifics!", time: '09:20 AM', type: 'text' },
-            { id: 3, sender: 'customer', text: "That's great! I'll send over some references soon.", time: '09:25 AM', type: 'text' }
-        ]
-    },
-    {
-        id: 2,
-        name: "Michael Chen",
-        avatar: "MC",
-        email: "m.chen@outlook.com",
-        phone: "+1 (555) 098-7654",
-        online: false,
-        lastMessage: "Do you offer international shipping?",
-        time: "Yesterday",
-        unreadCount: 0,
-        messages: [
-            { id: 1, sender: 'customer', text: "Hi, I saw your new collection. It looks amazing!", time: 'Yesterday', type: 'text' },
-            { id: 2, sender: 'customer', text: "Do you offer international shipping?", time: 'Yesterday', type: 'text' }
-        ]
-    },
-    {
-        id: 3,
-        name: "Elena Rodriguez",
-        avatar: "ER",
-        email: "elena.rd@gmail.com",
-        phone: "+1 (555) 456-7890",
-        online: true,
-        lastMessage: "I loved the fabric quality!",
-        time: "10:45 AM",
-        unreadCount: 0,
-        messages: [
-            { id: 1, sender: 'customer', text: "The sample arrived today.", time: '10:40 AM', type: 'text' },
-            { id: 2, sender: 'customer', text: "I loved the fabric quality!", time: '10:45 AM', type: 'text' }
-        ]
-    }
-];
+const getCustomerName = (enq) => {
+    if (!enq) return 'Customer';
+    if (enq.userId?.firstName) return (enq.userId.firstName + ' ' + (enq.userId.lastName || '')).trim();
+    return enq.fullName || 'Customer';
+};
+
+const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+};
+
+// Customization enquiries handled via state.
 
 const BoutiqueChat = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const [chats, setChats] = useState(INITIAL_CHATS);
-    const [activeChatId, setActiveChatId] = useState(1);
-    const [sidebarSearch, setSidebarSearch] = useState('');
+    const userStr = localStorage.getItem('user') || '{}';
+    const user = JSON.parse(userStr);
+    const vendorId = user?.providerId || user?._id;
+
+    // State
+    const [enquiries, setEnquiries] = useState([]);
+    const [activeEnquiry, setActiveEnquiry] = useState(location.state?.enquiry || null);
+    const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [chatLoading, setChatLoading] = useState(false);
+
+    const [sidebarSearch, setSidebarSearch] = useState('');
     const [emojiAnchorEl, setEmojiAnchorEl] = useState(null);
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [mobileChatOpen, setMobileChatOpen] = useState(false);
+    const [mobileChatOpen, setMobileChatOpen] = useState(!!location.state?.enquiry);
 
     const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
+    const pendingMessagesRef = useRef(new Set());
 
-    const activeChat = useMemo(() =>
-        chats.find(c => c.id === activeChatId) || chats[0],
-        [chats, activeChatId]);
-
-    const filteredChats = useMemo(() =>
-        chats.filter(c => c.name.toLowerCase().includes(sidebarSearch.toLowerCase())),
-        [chats, sidebarSearch]);
+    const filteredChats = useMemo(() => {
+        let list = enquiries;
+        if (location.state?.product?._id) {
+            list = list.filter(e => String(e.packageId) === String(location.state.product._id));
+        }
+        return list.filter(e => getCustomerName(e).toLowerCase().includes(sidebarSearch.toLowerCase()));
+    }, [enquiries, sidebarSearch, location.state?.product?._id]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // Fetch Customization Enquiries
+    useEffect(() => {
+        if (!vendorId) return;
+        const fetchEnquiries = async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`https://api.bookmyevent.ae/api/enquiries/provider/${vendorId}`);
+                const all = res.data.data || [];
+                const customizations = all.filter(e => {
+                    const desc = (e.description || '').toLowerCase();
+                    const moduleType = (e.moduleId?.moduleType || '').toLowerCase();
+                    const title = (e.moduleId?.title || '').toLowerCase();
+                    const isBoutique = moduleType === 'boutique' || title.includes('boutique');
+                    const isCustom = desc.includes('customize') || desc.includes('design');
+                    return isBoutique && isCustom;
+                });
+                setEnquiries(customizations);
+                if (!activeEnquiry && customizations.length > 0) {
+                    setActiveEnquiry(customizations[0]);
+                }
+            } catch (err) {
+                console.error("Failed to fetch enquiries:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEnquiries();
+    }, [vendorId]);
+
+    // Fetch Messages
+    useEffect(() => {
+        if (!activeEnquiry?._id) return;
+        const fetchMessages = async () => {
+            try {
+                setChatLoading(true);
+                const res = await axios.get(`https://api.bookmyevent.ae/api/enquiries/${activeEnquiry._id}/messages`);
+                setMessages(res.data?.data || []);
+            } catch (err) {
+                console.error("Failed to fetch messages:", err);
+            } finally {
+                setChatLoading(false);
+            }
+        };
+        fetchMessages();
+    }, [activeEnquiry?._id]);
+
+    // Socket Setup
+    useEffect(() => {
+        if (!activeEnquiry?._id || !vendorId) return;
+
+        if (!socket.connected) socket.connect();
+        socket.emit('join_enquiry', { enquiryId: activeEnquiry._id, vendorId: vendorId });
+
+        const handleReceive = (data) => {
+            if (data.enquiryId && data.enquiryId !== activeEnquiry._id) return;
+
+            const key = data._id || data.timestamp;
+            if (pendingMessagesRef.current.has(key)) {
+                pendingMessagesRef.current.delete(key);
+                setMessages(prev => prev.map(msg =>
+                    (msg.timestamp === data.timestamp && String(msg.senderId) === String(data.senderId)) ?
+                        { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : msg
+                ));
+                return;
+            }
+
+            setMessages(prev => {
+                const exists = prev.some(msg => msg._id === data._id || (data.timestamp && msg.timestamp === data.timestamp));
+                if (exists) return prev;
+                return [...prev, { ...data, time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+            });
+        };
+
+        const handleDeleted = (data) => {
+            setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+        };
+
+        socket.on('receive_message', handleReceive);
+        socket.on('message_deleted', handleDeleted);
+
+        return () => {
+            socket.off('receive_message', handleReceive);
+            socket.off('message_deleted', handleDeleted);
+        };
+    }, [activeEnquiry?._id, vendorId]);
+
     useEffect(() => {
         scrollToBottom();
-    }, [activeChat.messages]);
+    }, [messages]);
 
     const handleSend = (content = message, type = 'text') => {
         if (type === 'text' && !content.trim()) return;
+        if (!activeEnquiry?._id) return;
 
-        const newMessage = {
-            id: activeChat.messages.length + 1,
-            sender: 'vendor',
-            text: type === 'text' ? content : null,
-            file: type === 'image' ? content : null,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        const timestamp = new Date().toISOString();
+        const payload = {
+            enquiryId: activeEnquiry._id,
+            senderId: vendorId,
+            receiverId: activeEnquiry.userId?._id || activeEnquiry.userId,
+            senderName: user?.businessName || user?.name || 'Vendor',
+            senderRole: 'vendor',
+            text: type === 'text' ? content : 'Sent an image',
+            message: type === 'text' ? content : 'Sent an image',
+            timestamp: timestamp,
             type: type
         };
 
-        const updatedChats = chats.map(chat => {
-            if (chat.id === activeChatId) {
-                return {
-                    ...chat,
-                    messages: [...chat.messages, newMessage],
-                    lastMessage: type === 'text' ? content : 'Sent an image',
-                    time: newMessage.time
-                };
-            }
-            return chat;
-        });
+        pendingMessagesRef.current.add(timestamp);
+        setMessages(prev => [
+            ...prev,
+            { ...payload, _id: 'optimistic-' + Date.now(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
 
-        setChats(updatedChats);
+        socket.emit('send_message', payload);
         if (type === 'text') setMessage('');
     };
 
@@ -187,12 +252,13 @@ const BoutiqueChat = () => {
     const handleMenuOpen = (e) => setMenuAnchorEl(e.currentTarget);
     const handleMenuClose = () => setMenuAnchorEl(null);
     const handleClearChat = () => {
-        setChats(chats.map(c => c.id === activeChatId ? { ...c, messages: [] } : c));
+        // Option to clear messages locally or via API
+        setMessages([]);
         handleMenuClose();
     };
 
-    const handleSelectChat = (id) => {
-        setActiveChatId(id);
+    const handleSelectChat = (enq) => {
+        setActiveEnquiry(enq);
         if (isMobile) setMobileChatOpen(true);
     };
 
@@ -208,7 +274,7 @@ const BoutiqueChat = () => {
             {/* Sidebar Header */}
             <Box sx={{ p: 2, bgcolor: 'white' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                    <Typography variant="h5" fontWeight={800} color={THEME.primary}>Chats</Typography>
+                    <Typography variant="h5" fontWeight={800} color={THEME.primary}>Customization</Typography>
                     <Stack direction="row" spacing={1}>
                         <IconButton size="small" sx={{ bgcolor: alpha(THEME.primary, 0.05) }}><FilterList fontSize="small" /></IconButton>
                     </Stack>
@@ -226,60 +292,61 @@ const BoutiqueChat = () => {
 
             {/* Chat List */}
             <List sx={{ flexGrow: 1, overflowY: 'auto', py: 0 }}>
-                {filteredChats.map((chat) => (
-                    <ListItem key={chat.id} disablePadding>
-                        <ListItemButton
-                            selected={activeChatId === chat.id}
-                            onClick={() => handleSelectChat(chat.id)}
-                            sx={{
-                                py: 2,
-                                px: 2,
-                                borderLeft: `4px solid ${activeChatId === chat.id ? THEME.primary : 'transparent'}`,
-                                '&.Mui-selected': { bgcolor: alpha(THEME.primary, 0.05) }
-                            }}
-                        >
-                            <ListItemAvatar>
-                                <Badge
-                                    overlap="circle"
-                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                    variant="dot"
-                                    color={chat.online ? "success" : "default"}
-                                    sx={{ '& .MuiBadge-badge': { border: '2px solid white' } }}
-                                >
-                                    <Avatar sx={{ bgcolor: alpha(THEME.primary, 0.1), color: THEME.primary, fontWeight: 700 }}>
-                                        {chat.avatar}
-                                    </Avatar>
-                                </Badge>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="subtitle1" fontWeight={700}>{chat.name}</Typography>
-                                        <Typography variant="caption" color="text.secondary">{chat.time}</Typography>
-                                    </Stack>
-                                }
-                                secondary={
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                {loading ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={30} /></Box>
+                ) : filteredChats.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">No customizations found</Typography>
+                    </Box>
+                ) : (
+                    filteredChats.map((enq) => (
+                        <ListItem key={enq._id} disablePadding>
+                            <ListItemButton
+                                selected={activeEnquiry?._id === enq._id}
+                                onClick={() => handleSelectChat(enq)}
+                                sx={{
+                                    py: 2,
+                                    px: 2,
+                                    borderLeft: `4px solid ${activeEnquiry?._id === enq._id ? THEME.primary : 'transparent'}`,
+                                    '&.Mui-selected': { bgcolor: alpha(THEME.primary, 0.05) }
+                                }}
+                            >
+                                <ListItemAvatar>
+                                    <Badge
+                                        overlap="circle"
+                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                        variant="dot"
+                                        color="success"
+                                        sx={{ '& .MuiBadge-badge': { border: '2px solid white' } }}
+                                    >
+                                        <Avatar sx={{ bgcolor: alpha(THEME.primary, 0.1), color: THEME.primary, fontWeight: 700 }}>
+                                            {getInitials(getCustomerName(enq))}
+                                        </Avatar>
+                                    </Badge>
+                                </ListItemAvatar>
+                                <ListItemText
+                                    primary={
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="subtitle1" fontWeight={700}>{getCustomerName(enq)}</Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {new Date(enq.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                            </Typography>
+                                        </Stack>
+                                    }
+                                    secondary={
                                         <Typography
                                             variant="body2"
                                             noWrap
-                                            sx={{ maxWidth: '180px', color: chat.unreadCount > 0 ? '#1E293B' : '#64748B', fontWeight: chat.unreadCount > 0 ? 600 : 400 }}
+                                            sx={{ maxWidth: '180px', color: '#64748B' }}
                                         >
-                                            {chat.lastMessage}
+                                            {enq.description}
                                         </Typography>
-                                        {chat.unreadCount > 0 && (
-                                            <Chip
-                                                label={chat.unreadCount}
-                                                size="small"
-                                                sx={{ height: 18, minWidth: 18, bgcolor: THEME.primary, color: 'white', fontWeight: 800, fontSize: '0.65rem' }}
-                                            />
-                                        )}
-                                    </Stack>
-                                }
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
+                                    }
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    ))
+                )}
             </List>
         </Box>
     );
@@ -315,14 +382,14 @@ const BoutiqueChat = () => {
                             {!showSearch ? (
                                 <>
                                     <Avatar sx={{ width: isMobile ? 40 : 50, height: isMobile ? 40 : 50, bgcolor: THEME.primary, fontWeight: 800, fontSize: isMobile ? '1rem' : '1.2rem' }}>
-                                        {activeChat.avatar}
+                                        {getInitials(getCustomerName(activeEnquiry))}
                                     </Avatar>
                                     <Box>
-                                        <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={800} sx={{ lineHeight: 1.2 }}>{activeChat.name}</Typography>
+                                        <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight={800} sx={{ lineHeight: 1.2 }}>{getCustomerName(activeEnquiry)}</Typography>
                                         <Stack direction={isMobile ? "column" : "row"} spacing={isMobile ? 0 : 1.5} alignItems={isMobile ? "flex-start" : "center"}>
-                                            <Typography variant="caption" sx={{ color: THEME.secondary, fontWeight: 700 }}>{activeChat.email}</Typography>
+                                            <Typography variant="caption" sx={{ color: THEME.secondary, fontWeight: 700 }}>{activeEnquiry?.email}</Typography>
                                             {!isMobile && <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />}
-                                            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>{activeChat.phone}</Typography>
+                                            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>{activeEnquiry?.contact}</Typography>
                                         </Stack>
                                     </Box>
                                 </>
@@ -343,16 +410,20 @@ const BoutiqueChat = () => {
 
                     {/* Chat Messages */}
                     <Box sx={{ flexGrow: 1, overflowY: 'auto', p: isMobile ? 2 : 3, display: 'flex', flexDirection: 'column', gap: 2, backgroundImage: 'radial-gradient(#9C27B010 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-                        {activeChat.messages.length === 0 ? (
+                        {chatLoading ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                <CircularProgress size={40} />
+                            </Box>
+                        ) : messages.length === 0 ? (
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.3 }}>
                                 <Chat sx={{ fontSize: 60, color: THEME.primary, mb: 1 }} />
                                 <Typography variant="h6" fontWeight={600}>No messages yet</Typography>
                             </Box>
                         ) : (
-                            activeChat.messages.map((msg) => {
-                                const isVendor = msg.sender === 'vendor';
+                            messages.map((msg, idx) => {
+                                const isVendor = msg.senderRole === 'vendor';
                                 return (
-                                    <Box key={msg.id} sx={{ alignSelf: isVendor ? 'flex-end' : 'flex-start', maxWidth: { xs: '90%', md: '70%' }, display: 'flex', flexDirection: 'column', alignItems: isVendor ? 'flex-end' : 'flex-start' }}>
+                                    <Box key={msg._id || idx} sx={{ alignSelf: isVendor ? 'flex-end' : 'flex-start', maxWidth: { xs: '90%', md: '70%' }, display: 'flex', flexDirection: 'column', alignItems: isVendor ? 'flex-end' : 'flex-start' }}>
                                         <Paper sx={{
                                             p: msg.type === 'image' ? 0.5 : 2,
                                             borderRadius: isVendor ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
@@ -367,11 +438,11 @@ const BoutiqueChat = () => {
                                                     <img src={msg.file} alt="sent" style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'cover' }} />
                                                 </Box>
                                             ) : (
-                                                <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.5 }}>{msg.text}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.5 }}>{msg.text || msg.message}</Typography>
                                             )}
                                         </Paper>
                                         <Typography variant="caption" sx={{ mt: 0.5, px: 1, color: '#94A3B8', fontWeight: 600 }}>
-                                            {msg.time} {isVendor && <CheckCircle sx={{ fontSize: 12, ml: 0.5, verticalAlign: 'middle', color: THEME.primary }} />}
+                                            {msg.time || new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {isVendor && <CheckCircle sx={{ fontSize: 12, ml: 0.5, verticalAlign: 'middle', color: THEME.primary }} />}
                                         </Typography>
                                     </Box>
                                 );
