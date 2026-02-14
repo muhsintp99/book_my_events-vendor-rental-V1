@@ -116,14 +116,16 @@ const CateringEnquiry = Loadable(lazy(() => import('../views/catering/Cateringen
 const CateringEnquiryChat = Loadable(lazy(() => import('../views/catering/EnquiryChatPage')));
 
 // Bookings
-const Allbookings = Loadable(lazy(() => import('../views/Alltrips')));
+// Bookings (Venue)
+const VenueAll = Loadable(lazy(() => import('../views/venues/VenueAll')));
+const VenuePending = Loadable(lazy(() => import('../views/venues/VenuePending')));
+const VenueConfirmed = Loadable(lazy(() => import('../views/venues/VenueConfirmed')));
+const VenueCompleted = Loadable(lazy(() => import('../views/venues/VenueCompleted')));
+const VenueCancelled = Loadable(lazy(() => import('../views/venues/VenueCancelled')));
+const VenuePaymentFailed = Loadable(lazy(() => import('../views/venues/VenuePaymentFailed')));
 const Scheduledbookings = Loadable(lazy(() => import('../views/Scheduled')));
-const Pendingbookings = Loadable(lazy(() => import('../views/Pendings')));
-const Confirmedbookings = Loadable(lazy(() => import('../views/Confirmed')));
-const Ongoingbookings = Loadable(lazy(() => import('../views/Ongoing')));
-const Completedbookings = Loadable(lazy(() => import('../views/Completed')));
-const Cancelledbookings = Loadable(lazy(() => import('../views/Canceled')));
 const Paymentfailedbookings = Loadable(lazy(() => import('../views/PaymentFailed')));
+const Ongoingbookings = Loadable(lazy(() => import('../views/Ongoing')));
 
 // MAKEUP
 const AddmakeupPackage = Loadable(lazy(() => import('../views/makeup/AddmakePackage')));
@@ -343,14 +345,14 @@ const MainRoutes = {
         {
           path: 'bookings',
           children: [
-            { path: 'all', element: <Allbookings /> },
+            { path: 'all', element: <VenueAll /> },
             { path: 'scheduled', element: <Scheduledbookings /> },
-            { path: 'Pending', element: <Pendingbookings /> },
-            { path: 'confirmed', element: <Confirmedbookings /> },
+            { path: 'Pending', element: <VenuePending /> },
+            { path: 'confirmed', element: <VenueConfirmed /> },
             { path: 'ongoing', element: <Ongoingbookings /> },
-            { path: 'completed', element: <Completedbookings /> },
-            { path: 'cancelled', element: <Cancelledbookings /> },
-            { path: 'paymentfailedbookings', element: <Paymentfailedbookings /> },
+            { path: 'completed', element: <VenueCompleted /> },
+            { path: 'cancelled', element: <VenueCancelled /> },
+            { path: 'paymentfailedbookings', element: <VenuePaymentFailed /> },
             // MAKEUP BOOKINGS
             { path: 'allmakeup', element: <AllMakeup /> },
             { path: 'pendingmakeup', element: <MakeupPending /> },
