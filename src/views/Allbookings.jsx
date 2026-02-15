@@ -116,7 +116,8 @@ const Allbookings = () => {
                                 <TableCell sx={{ fontWeight: 700 }}>Module</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Booking Date</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>Final Price</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Paid</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Payment</TableCell>
                                 <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
@@ -148,7 +149,7 @@ const Allbookings = () => {
                                             <Typography variant="body2" sx={{ fontWeight: 500 }}>{b.fullName || "N/A"}</Typography>
                                             <Typography variant="caption" color="textSecondary">{b.emailAddress}</Typography>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>
                                             {new Date(b.bookingDate).toLocaleDateString("en-IN", {
                                                 day: "2-digit",
                                                 month: "short",
@@ -156,8 +157,14 @@ const Allbookings = () => {
                                             })}
                                         </TableCell>
 
+                                        <TableCell sx={{ fontWeight: 700, color: "#10b981" }}>
+                                            ₹{(b.moduleType === 'Cake' && ['completed', 'paid', 'success'].includes(String(b.paymentStatus || '').toLowerCase())
+                                                ? (b.finalPrice || 0)
+                                                : (b.advanceAmount || 0)).toLocaleString()}
+                                        </TableCell>
+
                                         <TableCell sx={{ fontWeight: 700, color: "#2e7d32" }}>
-                                            ₹{b.finalPrice?.toLocaleString() || 0}
+                                            ₹{(b.finalPrice || 0).toLocaleString()}
                                         </TableCell>
 
                                         <TableCell>

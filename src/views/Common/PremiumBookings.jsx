@@ -387,10 +387,11 @@ const PremiumBookings = ({
                             <TableLabel flex={2} label="Customer" />
                             <TableLabel flex={2.5} label="Email" />
                             <TableLabel flex={1.5} label="Booking Date" />
-                            <TableLabel flex={1.5} label="Amount" />
+                            <TableLabel flex={1.2} label="Paid" />
+                            <TableLabel flex={1.3} label="Total" />
                             <TableLabel flex={1.5} label="Status" />
-                            <TableLabel flex={1.5} label="Payment" />
-                            <TableLabel flex={2} label="Action" textAlign="center" />
+                            <TableLabel flex={1.2} label="Payment" />
+                            <TableLabel flex={1.8} label="Action" textAlign="center" />
                         </Box>
                     )}
 
@@ -412,6 +413,7 @@ const PremiumBookings = ({
                                     getDataFn={getDataFn}
                                     getImageUrl={getImageUrl}
                                     ModuleIcon={ModuleIcon}
+                                    moduleLabel={moduleLabel}
                                 />
                             ))
                         )}
@@ -460,7 +462,7 @@ const TableLabel = ({ label, flex, textAlign = 'left' }) => (
     <Typography variant="caption" fontWeight={800} color="#64748b" sx={{ flex, textAlign, fontSize: '0.7rem', textTransform: 'uppercase' }}>{label}</Typography>
 );
 
-const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusColor, getDataFn, getImageUrl, ModuleIcon }) => {
+const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusColor, getDataFn, getImageUrl, ModuleIcon, moduleLabel }) => {
     const isPending = String(booking.status).toLowerCase() === 'pending';
     const data = getDataFn(booking);
 
@@ -472,7 +474,19 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
                     <Box flex={1}>
                         <Stack direction="row" justifyContent="space-between"><Typography variant="caption" fontWeight={800} color={GOLD_COLOR}>#{booking._id?.slice(-6)}</Typography><Chip label={booking.status} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: alpha(statusColor, 0.1), color: statusColor }} /></Stack>
                         <Typography variant="subtitle2" fontWeight={800} noWrap>{data.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
+                            <Box sx={{ textAlign: 'right' }}>
+                                <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: '#10b981' }}>
+                                    Paid: ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
+                                        ? (booking.finalPrice || 0)
+                                        : (booking.advanceAmount || 0)).toLocaleString()}
+                                </Typography>
+                                <Typography variant="caption" sx={{ display: 'block', fontWeight: 800 }}>
+                                    Total: ₹{(booking.finalPrice || 0).toLocaleString()}
+                                </Typography>
+                            </Box>
+                        </Stack>
                     </Box>
                 </Stack>
             </Box>
@@ -490,10 +504,17 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
             <Typography variant="body2" sx={{ flex: 2, fontWeight: 700 }}>{booking.fullName}</Typography>
             <Typography variant="body2" sx={{ flex: 2.5, color: 'text.secondary', fontSize: '0.8rem' }} noWrap>{booking.emailAddress}</Typography>
             <Typography variant="body2" sx={{ flex: 1.5 }}>{new Date(booking.bookingDate).toLocaleDateString()}</Typography>
-            <Typography variant="body2" sx={{ flex: 1.5, fontWeight: 800 }}>₹{parseFloat(booking.finalPrice || 0).toLocaleString()}</Typography>
+            <Typography variant="body2" sx={{ flex: 1.2, fontWeight: 700, color: '#10b981' }}>
+                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
+                    ? (booking.finalPrice || 0)
+                    : (booking.advanceAmount || 0)).toLocaleString()}
+            </Typography>
+            <Typography variant="body2" sx={{ flex: 1.3, fontWeight: 800 }}>
+                ₹{(booking.finalPrice || 0).toLocaleString()}
+            </Typography>
             <Box sx={{ flex: 1.5 }}><Chip label={booking.status} size="small" sx={{ fontWeight: 800, bgcolor: alpha(statusColor, 0.1), color: statusColor }} /></Box>
-            <Box sx={{ flex: 1.5 }}><Typography variant="caption" fontWeight={700} sx={{ textTransform: 'capitalize' }}>{booking.paymentStatus || 'Pending'}</Typography></Box>
-            <Stack direction="row" spacing={1} sx={{ flex: 2 }} justifyContent="center">
+            <Box sx={{ flex: 1.2 }}><Typography variant="caption" fontWeight={700} sx={{ textTransform: 'capitalize' }}>{booking.paymentStatus || 'Pending'}</Typography></Box>
+            <Stack direction="row" spacing={1} sx={{ flex: 1.8 }} justifyContent="center">
                 {isPending ? (
                     <><IconButton size="small" color="success" onClick={(e) => onUpdateStatus(booking._id, 'accepted', e)}><CheckCircle fontSize="small" /></IconButton><IconButton size="small" color="error" onClick={(e) => onUpdateStatus(booking._id, 'rejected', e)}><Cancel fontSize="small" /></IconButton></>
                 ) : (
@@ -576,7 +597,33 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                     </Stack>
                 </Box>
                 <Box sx={{ p: 3, borderRadius: '24px', background: PREMIUM_DARK, color: '#fff' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center"><Box><Typography variant="caption" sx={{ opacity: 0.7 }}>GRAND TOTAL</Typography><Typography variant="h4" fontWeight={900} color={GOLD_COLOR}>₹{parseFloat(booking.finalPrice || 0).toLocaleString()}</Typography></Box><Chip label={booking.paymentStatus || 'Pending'} color="primary" sx={{ fontWeight: 800 }} /></Stack>
+                    <Typography variant="caption" sx={{ opacity: 0.7, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Payment Breakdown</Typography>
+                    <Stack spacing={2} mt={2}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" color="rgba(255,255,255,0.7)">Paid Amount</Typography>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#10b981' }}>
+                                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
+                                    ? (booking.finalPrice || 0)
+                                    : (booking.advanceAmount || 0)).toLocaleString()}
+                            </Typography>
+                        </Stack>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" color="rgba(255,255,255,0.7)">Remaining Amount</Typography>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f59e0b' }}>
+                                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
+                                    ? 0
+                                    : Math.max(0, (booking.finalPrice || 0) - (booking.advanceAmount || 0))).toLocaleString()}
+                            </Typography>
+                        </Stack>
+                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Box>
+                                <Typography variant="caption" sx={{ opacity: 0.7 }}>GRAND TOTAL</Typography>
+                                <Typography variant="h5" fontWeight={900} color={GOLD_COLOR}>₹{(booking.finalPrice || 0).toLocaleString()}</Typography>
+                            </Box>
+                            <Chip label={booking.paymentStatus || 'Pending'} color="primary" sx={{ fontWeight: 800, textTransform: 'capitalize' }} />
+                        </Stack>
+                    </Stack>
                 </Box>
                 <Stack direction="row" spacing={2}><Button fullWidth variant="soft" startIcon={<WhatsApp />} sx={{ bgcolor: alpha('#25d366', 0.1), color: '#25d366' }} onClick={() => window.open(`https://wa.me/${booking.contactNumber}`, '_blank')}>Chat</Button></Stack>
             </Stack>

@@ -477,14 +477,15 @@ const VenueBookings = ({ initialTab = 'All', hideTabs = false }) => {
                             <TableLabel flex={0.5} label="SI#" />
                             <TableLabel flex={1.5} label="Booking ID" />
                             <TableLabel flex={2.5} label="Venue" />
-                            <TableLabel flex={2} label="Customer" />
-                            <TableLabel flex={2.5} label="Email" />
+                            <TableLabel flex={1.5} label="Customer" />
+                            <TableLabel flex={2.2} label="Email" />
                             <TableLabel flex={1.5} label="Booking Date" />
-                            <TableLabel flex={1} label="Guests" />
-                            <TableLabel flex={1.5} label="Amount" />
+                            <TableLabel flex={0.8} label="Guests" />
+                            <TableLabel flex={1.2} label="Paid" />
+                            <TableLabel flex={1.3} label="Total" />
                             <TableLabel flex={1.5} label="Status" />
-                            <TableLabel flex={1.5} label="Payment" />
-                            <TableLabel flex={2} label="Action" textAlign="center" />
+                            <TableLabel flex={1.2} label="Payment" />
+                            <TableLabel flex={1.8} label="Action" textAlign="center" />
                         </Box>
                     )}
 
@@ -605,11 +606,17 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
                             <Chip label={booking.status} size="small" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 800, bgcolor: alpha(statusColor, 0.1), color: statusColor }} />
                         </Stack>
                         <Typography variant="subtitle2" fontWeight={800} noWrap>{venue.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
+                            <Box sx={{ textAlign: 'right' }}>
+                                <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: '#10b981' }}>Paid: ₹{(booking.advanceAmount || 0).toLocaleString()}</Typography>
+                                <Typography variant="caption" sx={{ display: 'block', fontWeight: 800 }}>Total: ₹{(booking.finalPrice || 0).toLocaleString()}</Typography>
+                            </Box>
+                        </Stack>
                     </Box>
                 </Stack>
                 <Stack direction="row" justifyContent="space-between" mt={1.5} alignItems="center">
-                    <Typography variant="body2" fontWeight={900}>₹{parseFloat(booking.finalPrice || 0).toLocaleString()}</Typography>
+                    <Box></Box>
                     <Stack direction="row" spacing={1}>
                         <IconButton size="small" sx={{ border: '1px solid #e2e8f0', color: GOLD_COLOR }} onClick={(e) => { e.stopPropagation(); window.open(`tel:${booking.contactNumber}`); }}><Phone fontSize="small" /></IconButton>
                         <IconButton size="small" sx={{ border: '1px solid #e2e8f0', color: '#25d366' }} onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${booking.contactNumber}`); }}><WhatsApp fontSize="small" /></IconButton>
@@ -645,23 +652,26 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
                 </Box>
             </Box>
 
-            <Typography variant="body2" sx={{ flex: 2, fontWeight: 700 }}>{booking.fullName}</Typography>
-            <Typography variant="body2" sx={{ flex: 2.5, color: 'text.secondary', fontSize: '0.8rem' }} noWrap>{booking.emailAddress}</Typography>
+            <Typography variant="body2" sx={{ flex: 1.5, fontWeight: 700 }}>{booking.fullName}</Typography>
+            <Typography variant="body2" sx={{ flex: 2.2, color: 'text.secondary', fontSize: '0.8rem' }} noWrap>{booking.emailAddress}</Typography>
             <Typography variant="body2" sx={{ flex: 1.5 }}>{new Date(booking.bookingDate).toLocaleDateString()}</Typography>
-            <Typography variant="body2" sx={{ flex: 1, fontWeight: 700 }}>{booking.numberOfGuests || '-'}</Typography>
+            <Typography variant="body2" sx={{ flex: 0.8, fontWeight: 700 }}>{booking.numberOfGuests || '-'}</Typography>
 
-            <Typography variant="body2" sx={{ flex: 1.5, fontWeight: 800, color: PREMIUM_DARK }}>
-                ₹{parseFloat(booking.finalPrice || 0).toLocaleString()}
+            <Typography variant="body2" sx={{ flex: 1.2, fontWeight: 700, color: '#10b981' }}>
+                ₹{(booking.advanceAmount || 0).toLocaleString()}
+            </Typography>
+            <Typography variant="body2" sx={{ flex: 1.3, fontWeight: 800 }}>
+                ₹{(booking.finalPrice || 0).toLocaleString()}
             </Typography>
             <Box sx={{ flex: 1.5 }}>
                 <Chip label={booking.status} size="small" sx={{ fontWeight: 800, bgcolor: alpha(statusColor, 0.1), color: statusColor }} />
             </Box>
-            <Box sx={{ flex: 1.5 }}>
+            <Box sx={{ flex: 1.2 }}>
                 <Typography variant="caption" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
                     {booking.paymentStatus || 'Pending'}
                 </Typography>
             </Box>
-            <Stack direction="row" spacing={1} sx={{ flex: 2 }} justifyContent="center">
+            <Stack direction="row" spacing={1} sx={{ flex: 1.8 }} justifyContent="center">
                 {isPending ? (
                     <>
                         <Tooltip title="Confirm">
@@ -754,12 +764,24 @@ const DetailDrawer = ({ open, onClose, booking, onUpdateStatus, getStatusColor }
 
                 {/* Pricing */}
                 <Box sx={{ p: 3, borderRadius: '24px', background: PREMIUM_DARK, color: '#fff' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                            <Typography variant="caption" sx={{ opacity: 0.7 }}>GRAND TOTAL</Typography>
-                            <Typography variant="h4" fontWeight={900} color={GOLD_COLOR}>₹{parseFloat(booking.finalPrice || 0).toLocaleString()}</Typography>
-                        </Box>
-                        <Chip label={booking.paymentStatus || 'Pending'} color="primary" sx={{ fontWeight: 800 }} />
+                    <Typography variant="caption" sx={{ opacity: 0.7, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Payment Breakdown</Typography>
+                    <Stack spacing={2} mt={2}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" color="rgba(255,255,255,0.7)">Paid Amount</Typography>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#10b981' }}>₹{(booking.advanceAmount || 0).toLocaleString()}</Typography>
+                        </Stack>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" color="rgba(255,255,255,0.7)">Remaining Amount</Typography>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f59e0b' }}>₹{(Math.max(0, (booking.finalPrice || 0) - (booking.advanceAmount || 0))).toLocaleString()}</Typography>
+                        </Stack>
+                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Box>
+                                <Typography variant="caption" sx={{ opacity: 0.7 }}>GRAND TOTAL</Typography>
+                                <Typography variant="h5" fontWeight={900} color={GOLD_COLOR}>₹{(booking.finalPrice || 0).toLocaleString()}</Typography>
+                            </Box>
+                            <Chip label={booking.paymentStatus || 'Pending'} color="primary" sx={{ fontWeight: 800, textTransform: 'capitalize' }} />
+                        </Stack>
                     </Stack>
                 </Box>
 
