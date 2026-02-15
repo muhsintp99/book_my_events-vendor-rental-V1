@@ -6,17 +6,17 @@ const MakeupBookings = (props) => {
     return (
         <PremiumBookings
             {...props}
-            moduleType="makeupartist"
+            moduleType={['Makeup', 'Makeup Artist', 'makeupartist']}
             moduleUrlName="makeup"
             moduleLabel="Makeup Artist"
             primaryColor="#8b5cf6" // Purple for makeup
             moduleIcon={Brush}
             getDataFn={(b) => {
-                const pkg = b.packageId || {};
+                const pkg = b.makeupId || b.packageId || {};
                 return {
-                    name: pkg.name || b.packageName || 'Makeup Session',
-                    thumbnail: pkg.thumbnail || b.thumbnail || '',
-                    category: pkg.category?.title || 'Makeup',
+                    name: pkg.packageTitle || b.packageName || 'Makeup Session',
+                    thumbnail: (pkg.gallery && pkg.gallery.length > 0) ? pkg.gallery[0] : (pkg.thumbnail || b.thumbnail || ''),
+                    category: pkg.makeupType || 'Makeup',
                     id: pkg._id || b._id || 'N/A'
                 };
             }}

@@ -6,7 +6,7 @@ const CateringBookings = (props) => {
     return (
         <PremiumBookings
             {...props}
-            moduleType="catering"
+            moduleType={['Catering', 'catering']}
             moduleUrlName="catering"
             moduleLabel="Catering"
             primaryColor="#10b981" // Green for catering
@@ -14,8 +14,8 @@ const CateringBookings = (props) => {
             getDataFn={(b) => {
                 const caterRef = b.cateringId || b.packageId || {};
                 return {
-                    name: caterRef.packageName || b.packageName || 'Catering Service',
-                    thumbnail: caterRef.thumbnail || b.thumbnail || '',
+                    name: caterRef.title || b.packageName || 'Catering Service',
+                    thumbnail: caterRef.thumbnail || (caterRef.images && caterRef.images.length > 0 ? caterRef.images[0] : (b.thumbnail || '')),
                     category: caterRef.category?.title || 'Catering',
                     id: caterRef._id || b._id || 'N/A'
                 };
