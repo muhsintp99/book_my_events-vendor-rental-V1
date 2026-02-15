@@ -75,13 +75,13 @@ const cakeManagementMenu = {
           url: '/bookings/cakeconfirmed',
           icon: icons.IconUserCheck
         },
-        {
-          id: 'completed-cake',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedcake',
-          icon: icons.IconGraph
-        },
+        // {
+        //   id: 'completed-cake',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedcake',
+        //   icon: icons.IconGraph
+        // },
         {
           id: 'cancelled-cake',
           title: 'Canceled',

@@ -71,12 +71,12 @@ const cateringManagementMenu = {
           type: 'item',
           url: '/bookings/cateringconfirmed'
         },
-        {
-          id: 'completed-catering',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedcatering'
-        },
+        // {
+        //   id: 'completed-catering',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedcatering'
+        // },
         {
           id: 'cancelled-catering',
           title: 'Canceled',

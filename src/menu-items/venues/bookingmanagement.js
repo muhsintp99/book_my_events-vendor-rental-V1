@@ -72,13 +72,13 @@ const bookingmanagement = {
           url: '/bookings/ongoing',
           icon: icons.IconProgress // 🔄 Ongoing
         },
-        {
-          id: 'completed-bookings',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completed',
-          icon: icons.IconChecks // ✔ Completed
-        },
+        // {
+        //   id: 'completed-bookings',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completed',
+        //   icon: icons.IconChecks // ✔ Completed
+        // },
         {
           id: 'canceled-bookings',
           title: 'Canceled',

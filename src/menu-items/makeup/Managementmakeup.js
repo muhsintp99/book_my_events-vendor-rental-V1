@@ -71,12 +71,12 @@ const management = {
           type: 'item',
           url: '/bookings/makeupconfirmed'
         },
-        {
-          id: 'completed-makeup',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedmakeup'
-        },
+        // {
+        //   id: 'completed-makeup',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedmakeup'
+        // },
         {
           id: 'cancelled-makeup',
           title: 'Canceled',

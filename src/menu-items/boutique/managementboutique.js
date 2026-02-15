@@ -77,13 +77,13 @@ const boutiqueManagementMenu = {
           url: '/bookings/boutiqueconfirmed',
           icon: icons.IconUserCheck
         },
-        {
-          id: 'completed-boutique',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedboutique',
-          icon: icons.IconGraph
-        },
+        // {
+        //   id: 'completed-boutique',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedboutique',
+        //   icon: icons.IconGraph
+        // },
         {
           id: 'cancelled-boutique',
           title: 'Canceled',

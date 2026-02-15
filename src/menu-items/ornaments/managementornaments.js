@@ -75,13 +75,13 @@ const ornamentsManagementMenu = {
           url: '/bookings/ornamentsconfirmed',
           icon: icons.IconUserCheck
         },
-        {
-          id: 'completed-ornaments',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedornaments',
-          icon: icons.IconGraph
-        },
+        // {
+        //   id: 'completed-ornaments',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedornaments',
+        //   icon: icons.IconGraph
+        // },
         {
           id: 'cancelled-ornaments',
           title: 'Canceled',

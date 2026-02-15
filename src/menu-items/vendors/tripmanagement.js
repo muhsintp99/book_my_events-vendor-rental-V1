@@ -83,12 +83,12 @@ const tripmanagement = {
           type: 'item',
           url: '/trips/ongoing'
         },
-        {
-          id: 'completed-trips',
-          title: 'Completed',
-          type: 'item',
-          url: '/trips/completed'
-        },
+        // {
+        //   id: 'completed-trips',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/trips/completed'
+        // },
         {
           id: 'canceled-trips',
           title: 'Canceled',
