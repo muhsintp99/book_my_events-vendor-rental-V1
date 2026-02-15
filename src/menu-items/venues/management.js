@@ -83,12 +83,12 @@ const management = {
         //   type: 'item',
         //   url: '/bookings/ongoing'
         // },
-        {
-          id: 'converted',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completed'
-        },
+        // {
+        //   id: 'converted',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completed'
+        // },
         {
           id: 'converted',
           title: 'Canceled',
