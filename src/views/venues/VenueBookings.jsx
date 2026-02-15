@@ -129,7 +129,7 @@ const VenueBookings = ({ initialTab = 'All', hideTabs = false }) => {
 
     // Filter & Sort State
     const [searchText, setSearchText] = useState('');
-    const [sortBy, setSortBy] = useState('date_desc');
+    const [sortBy, setSortBy] = useState('newest');
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [detailOpen, setDetailOpen] = useState(false);
 
@@ -223,13 +223,14 @@ const VenueBookings = ({ initialTab = 'All', hideTabs = false }) => {
             const nameB = (b.fullName || '').toLowerCase();
 
             switch (sortBy) {
-                case 'date_asc': return dateA - dateB;
-                case 'date_desc': return dateB - dateA;
-                case 'price_high': return priceB - priceA;
-                case 'price_low': return priceA - priceB;
-                case 'name_asc': return nameA.localeCompare(nameB);
-                case 'name_desc': return nameB.localeCompare(nameA);
-                default: return 0;
+                case 'newest': return b._id.localeCompare(a._id);
+                case 'date_asc': return dateA - dateB || b._id.localeCompare(a._id);
+                case 'date_desc': return dateB - dateA || b._id.localeCompare(a._id);
+                case 'price_high': return priceB - priceA || b._id.localeCompare(a._id);
+                case 'price_low': return priceA - priceB || b._id.localeCompare(a._id);
+                case 'name_asc': return nameA.localeCompare(nameB) || b._id.localeCompare(a._id);
+                case 'name_desc': return nameB.localeCompare(nameA) || b._id.localeCompare(a._id);
+                default: return b._id.localeCompare(a._id);
             }
         });
 
@@ -535,8 +536,9 @@ const VenueBookings = ({ initialTab = 'All', hideTabs = false }) => {
                     <Typography variant="caption" fontWeight={700} color="text.secondary">SORT BY</Typography>
                 </Box>
                 {[
-                    { value: 'date_desc', label: 'Date (Newest)', icon: <ArrowDownward fontSize="small" /> },
-                    { value: 'date_asc', label: 'Date (Oldest)', icon: <ArrowUpward fontSize="small" /> },
+                    { value: 'newest', label: 'Latest First', icon: <ArrowDownward fontSize="small" /> },
+                    { value: 'date_desc', label: 'Event Date (Newest)', icon: <ArrowDownward fontSize="small" /> },
+                    { value: 'date_asc', label: 'Event Date (Oldest)', icon: <ArrowUpward fontSize="small" /> },
                     { value: 'price_high', label: 'Amount (High to Low)', icon: <ArrowDownward fontSize="small" /> },
                     { value: 'price_low', label: 'Amount (Low to High)', icon: <ArrowUpward fontSize="small" /> },
                 ].map((option) => (

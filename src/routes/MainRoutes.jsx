@@ -127,40 +127,56 @@ const Scheduledbookings = Loadable(lazy(() => import('../views/Scheduled')));
 const Paymentfailedbookings = Loadable(lazy(() => import('../views/PaymentFailed')));
 const Ongoingbookings = Loadable(lazy(() => import('../views/Ongoing')));
 
-// MAKEUP
+// MAKEUP Other
 const AddmakeupPackage = Loadable(lazy(() => import('../views/makeup/AddmakePackage')));
 const MakeupList = Loadable(lazy(() => import('../views/makeup/Makeuplist')));
 const Portfolio = Loadable(lazy(() => import('../views/makeup/MakeupPortfolio')));
-
-// MAKEUP BOOKINGS
-const AllMakeup = Loadable(lazy(() => import('views/makeup/Allmakeup')));
-const MakeupPending = Loadable(lazy(() => import('views/makeup/Makeuppending')));
-const MakeupConfirmed = Loadable(lazy(() => import('views/makeup/Makeupconfirmed')));
-const MakeupCompleted = Loadable(lazy(() => import('views/makeup/Makeupcompleted')));
-const MakeupCancelled = Loadable(lazy(() => import('views/makeup/Makeupcancelled')));
-const MakeupPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade')));
 const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/Makeupenquiries')));
 const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatPage')));
 const MakeupSchedules = Loadable(lazy(() => import('../views/makeup/Schedulesmakeup')));
 
-//PHOTOGRAPHY BOOKINGS
-const AllPhotography = Loadable(lazy(() => import('../views/photography/Allphotography')));
-const PhotographyPending = Loadable(lazy(() => import('../views/photography/Photographypending')));
-const PhotographyConfirmed = Loadable(lazy(() => import('../views/photography/Photographyconfirmed')));
-const PhotographyCompleted = Loadable(lazy(() => import('../views/photography/Photographycompleted')));
-const PhotographyCancelled = Loadable(lazy(() => import('../views/photography/Allphotography')));
-const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
+// PHOTOGRAPHY BOOKINGS PREMIUM
+const PhotoAll = Loadable(lazy(() => import('../views/photography/PhotoAll')));
+const PhotoPending = Loadable(lazy(() => import('../views/photography/PhotoPending')));
+const PhotoConfirmed = Loadable(lazy(() => import('../views/photography/PhotoConfirmed')));
+const PhotoCompleted = Loadable(lazy(() => import('../views/photography/PhotoCompleted')));
+const PhotoCancelled = Loadable(lazy(() => import('../views/photography/PhotoCancelled')));
+const PhotoPaymentFailed = Loadable(lazy(() => import('../views/photography/PhotoPaymentFailed')));
 
-// CATERING BOOKINGS
-const AllCatering = Loadable(lazy(() => import('../views/catering/AllCatering')));
-const CateringPending = Loadable(lazy(() => import('../views/catering/CateringPending')));
-const CateringConfirmed = Loadable(lazy(() => import('../views/catering/CateringConfirmed')));
-const CateringCompleted = Loadable(lazy(() => import('../views/catering/CateringCompleted')));
-const CateringCancelled = Loadable(lazy(() => import('../views/catering/CateringCancelled')));
-const CateringPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
+// MAKEUP BOOKINGS PREMIUM
+const MakeupAll = Loadable(lazy(() => import('../views/makeup/MakeupAll')));
+const MakeupPendingPremium = Loadable(lazy(() => import('../views/makeup/MakeupPendingPremium')));
+const MakeupConfirmedPremium = Loadable(lazy(() => import('../views/makeup/MakeupConfirmedPremium')));
+const MakeupCompletedPremium = Loadable(lazy(() => import('../views/makeup/MakeupCompletedPremium')));
+const MakeupCancelledPremium = Loadable(lazy(() => import('../views/makeup/MakeupCancelledPremium')));
+const MakeupPaymentFailedPremium = Loadable(lazy(() => import('../views/makeup/MakeupPaymentFailedPremium')));
 
-// PHOTOGRAPHY
+// CATERING BOOKINGS PREMIUM
+const CateringAllPremium = Loadable(lazy(() => import('../views/catering/CateringAllPremium')));
+const CateringPendingPremium = Loadable(lazy(() => import('../views/catering/CateringPendingPremium')));
+const CateringConfirmedPremium = Loadable(lazy(() => import('../views/catering/CateringConfirmedPremium')));
+const CateringCompletedPremium = Loadable(lazy(() => import('../views/catering/CateringCompletedPremium')));
+const CateringCancelledPremium = Loadable(lazy(() => import('../views/catering/CateringCancelledPremium')));
+const CateringPaymentFailedPremium = Loadable(lazy(() => import('../views/catering/CateringPaymentFailedPremium')));
+
+// CAKE BOOKINGS PREMIUM
+const CakeAllPremium = Loadable(lazy(() => import('../views/cake/CakeAllPremium')));
+const CakePendingPremium = Loadable(lazy(() => import('../views/cake/CakePendingPremium')));
+const CakeConfirmedPremium = Loadable(lazy(() => import('../views/cake/CakeConfirmedPremium')));
+const CakeCompletedPremium = Loadable(lazy(() => import('../views/cake/CakeCompletedPremium')));
+const CakeCancelledPremium = Loadable(lazy(() => import('../views/cake/CakeCancelledPremium')));
+const CakePaymentFailedPremium = Loadable(lazy(() => import('../views/cake/CakePaymentFailedPremium')));
+
+// TRANSPORT BOOKINGS PREMIUM
+const TransportAllPremium = Loadable(lazy(() => import('../views/transport/TransportAllPremium')));
+const TransportPendingPremium = Loadable(lazy(() => import('../views/transport/TransportPendingPremium')));
+const TransportConfirmedPremium = Loadable(lazy(() => import('../views/transport/TransportConfirmedPremium')));
+const TransportCompletedPremium = Loadable(lazy(() => import('../views/transport/TransportCompletedPremium')));
+const TransportCancelledPremium = Loadable(lazy(() => import('../views/transport/TransportCancelledPremium')));
+const TransportPaymentFailedPremium = Loadable(lazy(() => import('../views/transport/TransportPaymentFailedPremium')));
+
+// PHOTOGRAPHY Other
 const AddphotographyPackage = Loadable(lazy(() => import('../views/photography/AddphotographyPackage')));
 const Photographylist = Loadable(lazy(() => import('../views/photography/Photographylist')));
 const PhotographyPortfolio = Loadable(lazy(() => import('../views/photography/Photoportfolio')));
@@ -169,7 +185,7 @@ const Photographyenquiry = Loadable(lazy(() => import('../views/photography/Phot
 const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
 const PhotographySchedules = Loadable(lazy(() => import('../views/photography/photoschedule')));
 
-// Cake/////////////////////
+// Cake Other
 const AddcakePackage = Loadable(lazy(() => import('../views/cake/Addcakepackage')));
 const Cakelist = Loadable(lazy(() => import('../views/cake/Cakelist')));
 const Cakeupgrade = Loadable(lazy(() => import('../views/cake/Cakeupgrade')));
@@ -178,10 +194,8 @@ const Cakeenquirychat = Loadable(lazy(() => import('../views/cake/EnquiryChatPag
 const CakeSchedules = Loadable(lazy(() => import('../views/cake/Schedulescake')));
 const Cakecategories = Loadable(lazy(() => import('../views/cake/Categories')));
 const Cakeaddons = Loadable(lazy(() => import('../views/cake/Add-ons.jsx')));
-
-
-// ornamnets//////////////////
-
+// const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
+// Ornaments
 const AddornamentsPackage = Loadable(lazy(() => import('../views/ornaments/Addornaments.jsx')));
 const Ornamentslist = Loadable(lazy(() => import('../views/ornaments/Ornamentslist.jsx')));
 const Ornamentsupgrade = Loadable(lazy(() => import('../views/ornaments/Ornamnetsupgrade.jsx')));
@@ -190,41 +204,28 @@ const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/Enqu
 const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
 const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
 
-const Allornaments = Loadable(lazy(() => import('../views/cake/Allcake')));
+const Allornaments = Loadable(lazy(() => import('../views/ornaments/OrnamentsBookings.jsx')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
 const OrnamentsConfirmed = Loadable(lazy(() => import('../views/ornaments/Ornamentsconfirmed.jsx')));
 const OrnamentsCompleted = Loadable(lazy(() => import('../views/ornaments/Ornamentscompleted.jsx')));
 const OrnamentsCancelled = Loadable(lazy(() => import('../views/ornaments/Ornamentscancelled.jsx')));
 
-
-
-
+// Boutique
 const AddboutiquePackage = Loadable(lazy(() => import('../views/Boutique/Addboutique.jsx')));
 const Boutiquelist = Loadable(lazy(() => import('../views/Boutique/Boutiquelist.jsx')));
 const Attributes = Loadable(lazy(() => import('../views/Boutique/Attributes.jsx')));
 const BoutiqueChat = Loadable(lazy(() => import('../views/Boutique/BoutiqueChat.jsx')));
-
-
-
 const Boutiqueupgrade = Loadable(lazy(() => import('../views/Boutique/Boutiqueupgrade.jsx')));
 const Boutiqueenquiry = Loadable(lazy(() => import('../views/Boutique/Boutiqueenquiries.jsx')));
 const Boutiqueenquirychat = Loadable(lazy(() => import('../views/Boutique/EnquiryChatPage.jsx')));
 const BoutiqueSchedules = Loadable(lazy(() => import('../views/Boutique/Schedulesboutique.jsx')));
 const Boutiquecategories = Loadable(lazy(() => import('../views/Boutique/Categories.jsx')));
 
-const Allboutique = Loadable(lazy(() => import('../views/Boutique/Allboutique.jsx')));
+const Allboutique = Loadable(lazy(() => import('../views/Boutique/BoutiqueBookings.jsx')));
 const BoutiquePending = Loadable(lazy(() => import('../views/Boutique/Boutiquepending.jsx')));
 const BoutiqueConfirmed = Loadable(lazy(() => import('../views/Boutique/Boutiqueconfirmed.jsx')));
 const BoutiqueCompleted = Loadable(lazy(() => import('../views/Boutique/Boutiquecompleted.jsx')));
 const BoutiqueCancelled = Loadable(lazy(() => import('../views/Boutique/Boutiquecancelled.jsx')));
-
-
-const Allcake = Loadable(lazy(() => import('../views/cake/Allcake')));
-const CakePending = Loadable(lazy(() => import('../views/cake/Cakepending')));
-const CakeConfirmed = Loadable(lazy(() => import('../views/cake/Cakeconfirmed')));
-const CakeCompleted = Loadable(lazy(() => import('../views/cake/Cakecompleted')));
-const CakeCancelled = Loadable(lazy(() => import('../views/cake/Cakecancelled')));
-// const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 
 import ErrorBoundary from 'ui-component/ErrorBoundary';
 
@@ -354,36 +355,44 @@ const MainRoutes = {
             { path: 'cancelled', element: <VenueCancelled /> },
             { path: 'paymentfailedbookings', element: <VenuePaymentFailed /> },
             // MAKEUP BOOKINGS
-            { path: 'allmakeup', element: <AllMakeup /> },
-            { path: 'pendingmakeup', element: <MakeupPending /> },
-            { path: 'makeupconfirmed', element: <MakeupConfirmed /> },
-            { path: 'completedmakeup', element: <MakeupCompleted /> },
-            { path: 'cancelledmakeup', element: <MakeupCancelled /> },
-            { path: 'paymentfailedmakeup', element: <MakeupPaymentFailed /> },
+            { path: 'allmakeup', element: <MakeupAll /> },
+            { path: 'pendingmakeup', element: <MakeupPendingPremium /> },
+            { path: 'makeupconfirmed', element: <MakeupConfirmedPremium /> },
+            { path: 'completedmakeup', element: <MakeupCompletedPremium /> },
+            { path: 'cancelledmakeup', element: <MakeupCancelledPremium /> },
+            { path: 'paymentfailedmakeup', element: <MakeupPaymentFailedPremium /> },
 
             // CATERING BOOKINGS
-            { path: 'allcatering', element: <AllCatering /> },
-            { path: 'pendingcatering', element: <CateringPending /> },
-            { path: 'cateringconfirmed', element: <CateringConfirmed /> },
-            { path: 'completedcatering', element: <CateringCompleted /> },
-            { path: 'cancelledcatering', element: <CateringCancelled /> },
-            { path: 'paymentfailedcatering', element: <CateringPaymentFailed /> },
+            { path: 'allcatering', element: <CateringAllPremium /> },
+            { path: 'pendingcatering', element: <CateringPendingPremium /> },
+            { path: 'cateringconfirmed', element: <CateringConfirmedPremium /> },
+            { path: 'completedcatering', element: <CateringCompletedPremium /> },
+            { path: 'cancelledcatering', element: <CateringCancelledPremium /> },
+            { path: 'paymentfailedcatering', element: <CateringPaymentFailedPremium /> },
 
             // PHOTOGRAPHY BOOKINGS
-            { path: 'allphotography', element: <AllPhotography /> },
-            { path: 'pendingphotography', element: <PhotographyPending /> },
-            { path: 'photographyconfirmed', element: <PhotographyConfirmed /> },
-            { path: 'completedphotography', element: <PhotographyCompleted /> },
-            { path: 'cancelledphotography', element: <PhotographyCancelled /> },
-            { path: 'paymentfailedphotography', element: <PhotographyPaymentFailed /> },
+            { path: 'allphotography', element: <PhotoAll /> },
+            { path: 'pendingphotography', element: <PhotoPending /> },
+            { path: 'photographyconfirmed', element: <PhotoConfirmed /> },
+            { path: 'completedphotography', element: <PhotoCompleted /> },
+            { path: 'cancelledphotography', element: <PhotoCancelled /> },
+            { path: 'paymentfailedphotography', element: <PhotoPaymentFailed /> },
 
-            // Cake BOOKINGS///////////////
-            { path: 'allcake', element: <Allcake /> },
-            { path: 'pendingcake', element: <CakePending /> },
-            { path: 'cakeconfirmed', element: <CakeConfirmed /> },
-            { path: 'completedcake', element: <CakeCompleted /> },
-            { path: 'cancelledcake', element: <CakeCancelled /> },
-            // { path: 'paymentfailedcake', element: <CPaymentFailed /> }
+            // Cake BOOKINGS
+            { path: 'allcake', element: <CakeAllPremium /> },
+            { path: 'pendingcake', element: <CakePendingPremium /> },
+            { path: 'cakeconfirmed', element: <CakeConfirmedPremium /> },
+            { path: 'completedcake', element: <CakeCompletedPremium /> },
+            { path: 'cancelledcake', element: <CakeCancelledPremium /> },
+            { path: 'paymentfailedcake', element: <CakePaymentFailedPremium /> },
+
+            // TRANSPORT BOOKINGS
+            { path: 'alltransport', element: <TransportAllPremium /> },
+            { path: 'pendingtransport', element: <TransportPendingPremium /> },
+            { path: 'transportconfirmed', element: <TransportConfirmedPremium /> },
+            { path: 'completedtransport', element: <TransportCompletedPremium /> },
+            { path: 'cancelledtransport', element: <TransportCancelledPremium /> },
+            { path: 'paymentfailedtransport', element: <TransportPaymentFailedPremium /> },
 
             // ornaments BOOKINGS///////////////
             { path: 'allornaments', element: <Allornaments /> },
