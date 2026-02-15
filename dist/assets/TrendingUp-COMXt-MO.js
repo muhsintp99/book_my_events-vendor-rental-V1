@@ -1,1 +1,0 @@
-import{c as s,j as t}from"./index-DKDRBmg1.js";const a=s(t.jsx("path",{d:"M3 18h6v-2H3zM3 6v2h18V6zm0 7h12v-2H3z"})),r=s(t.jsx("path",{d:"m16 6 2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"}));export{a as S,r as T};

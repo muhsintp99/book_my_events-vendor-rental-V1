@@ -52,6 +52,29 @@ const EnquiriesUI = () => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
+
+  /* ===============================
+   DELETE ENQUIRY
+================================ */
+const handleDeleteEnquiry = async (id) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this enquiry?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await axios.delete(
+      `https://api.bookmyevent.ae/api/enquiries/${id}`
+    );
+
+    // Remove deleted enquiry from UI instantly
+    setEnquiries((prev) => prev.filter((e) => e._id !== id));
+  } catch (err) {
+    alert("Failed to delete enquiry");
+  }
+};
+
   /* ===============================
      GET PROVIDER ID
   =============================== */
@@ -248,11 +271,16 @@ const EnquiriesUI = () => {
                           </IconButton>
                         </Tooltip>
 
-                        <Tooltip title="Delete">
-                          <IconButton size="small" color="error">
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                       <Tooltip title="Delete">
+  <IconButton
+    size="small"
+    color="error"
+    onClick={() => handleDeleteEnquiry(e._id)}
+  >
+    <DeleteIcon fontSize="small" />
+  </IconButton>
+</Tooltip>
+
                       </Stack>
                     </TableCell>
                   </TableRow>
