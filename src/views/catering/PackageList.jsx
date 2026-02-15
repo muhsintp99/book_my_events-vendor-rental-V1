@@ -303,6 +303,11 @@ const CateringPackagesList = () => {
             <Typography variant="h4" color="primary">
               ₹{currentPackage.price} Per Head
             </Typography>
+            {currentPackage.price > 0 && (
+              <Typography variant="body2" color="text.secondary">
+                Advance Booking (10% Fixed): ₹{(currentPackage.price * 0.1).toFixed(2)}
+              </Typography>
+            )}
           </Box>
 
           <Typography variant="h6" sx={{ mb: 1 }}>

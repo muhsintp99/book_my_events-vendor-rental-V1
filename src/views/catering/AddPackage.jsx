@@ -171,12 +171,14 @@ const AddNewMenu = () => {
   }, [availableCategories, currentPackage]);
 
   const populateForm = (pkg) => {
+    const price = pkg.price || 0;
+    const advance = (price * 0.1).toFixed(2);
     setFormData({
       packageTitle: pkg.title || '',
       subtitle: pkg.subtitle || '',
       description: pkg.description || '',
-      startingPrice: pkg.price?.toString() || '',
-      advanceBookingAmount: pkg.advanceBookingAmount?.toString() || '' // ✅
+      startingPrice: price.toString() || '',
+      advanceBookingAmount: advance.toString() || ''
     });
 
     setMenuSections(
@@ -197,7 +199,14 @@ const AddNewMenu = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData((p) => {
+      const newState = { ...p, [name]: value };
+      if (name === 'startingPrice') {
+        const price = parseFloat(value) || 0;
+        newState.advanceBookingAmount = (price * 0.1).toFixed(2);
+      }
+      return newState;
+    });
   };
 
   const handleMenuChange = (id, field, value) => {
@@ -280,8 +289,8 @@ const AddNewMenu = () => {
     else payload.append('categories', JSON.stringify([]));
 
     payload.append('price', String(price));
-    const advanceAmount = parseFloat(formData.advanceBookingAmount) || 0;
-    payload.append('advanceBookingAmount', String(advanceAmount)); // ✅
+    const advanceAmount = (price * 0.1).toFixed(2);
+    payload.append('advanceBookingAmount', String(advanceAmount));
 
     if (thumbnailFile) payload.append('thumbnail', thumbnailFile);
     galleryFiles.forEach((f) => payload.append('images', f));
@@ -406,10 +415,10 @@ const AddNewMenu = () => {
                     {it}
                   </Typography>
                 )) || (
-                  <Typography variant="body2" color="text.secondary">
-                    No items
-                  </Typography>
-                )}
+                    <Typography variant="body2" color="text.secondary">
+                      No items
+                    </Typography>
+                  )}
               </Stack>
             </Box>
           ))}
@@ -421,12 +430,11 @@ const AddNewMenu = () => {
             <Typography variant="h4" color="primary">
               ₹{currentPackage.price || 0} Per Head
             </Typography>
-            {currentPackage.advanceBookingAmount > 0 && (
-  <Typography variant="body2" color="text.secondary">
-    Advance Booking Amount: ₹{currentPackage.advanceBookingAmount}
-  </Typography>
-)}
-
+            {currentPackage.price > 0 && (
+              <Typography variant="body2" color="text.secondary">
+                Advance Booking (10% Fixed): ₹{(currentPackage.price * 0.1).toFixed(2)}
+              </Typography>
+            )}
           </Box>
 
           <Box sx={{ mb: 3 }}>
@@ -761,14 +769,11 @@ const AddNewMenu = () => {
 
             <TextField
               fullWidth
-              label="₹ Advance Booking Amount"
-              name="advanceBookingAmount"
-              value={formData.advanceBookingAmount}
-              onChange={handleInputChange}
-              type="number"
-              inputProps={{ min: 0 }}
+              label="Advance Percentage (%)"
+              value="10"
+              disabled
               variant="outlined"
-              helperText="Amount to be paid in advance"
+              helperText={`Fixed 10% advance: ₹${formData.advanceBookingAmount || 0}`}
             />
           </Box>
 
