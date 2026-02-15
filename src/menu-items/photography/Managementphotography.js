@@ -71,12 +71,12 @@ const photographyManagementMenu = {
           type: 'item',
           url: '/bookings/photographyconfirmed'
         },
-        {
-          id: 'completed-catering',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedphotography'
-        },
+        // {
+        //   id: 'completed-catering',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedphotography'
+        // },
         {
           id: 'cancelled-catering',
           title: 'Canceled',
