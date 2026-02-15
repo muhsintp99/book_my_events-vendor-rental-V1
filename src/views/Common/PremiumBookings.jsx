@@ -45,7 +45,9 @@ import {
     Clear,
     ArrowUpward,
     ArrowDownward,
-    LocationOn
+    LocationOn,
+    Diamond,
+    Category
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -80,14 +82,19 @@ const PremiumBookings = ({
     const [loading, setLoading] = useState(true);
 
     // Tab Mapping
-    const tabs = useMemo(() => [
-        { label: 'All', value: 0, filterFn: () => true, key: 'All' },
-        { label: 'Pending', value: 1, filterFn: (s) => s === 'pending', key: 'Pending' },
-        { label: 'Confirmed', value: 2, filterFn: (s, p, b) => ['accepted', 'confirmed', 'approve', 'approved'].includes(s) && new Date(b.bookingDate) >= new Date().setHours(0, 0, 0, 0), key: 'Confirmed' },
-        { label: 'Completed', value: 3, filterFn: (s, p, b) => s === 'completed' || s === 'completed bookings' || s === 'done' || (['accepted', 'confirmed'].includes(s) && new Date(b.bookingDate) < new Date().setHours(0, 0, 0, 0)), key: 'Completed' },
-        { label: 'Cancelled', value: 4, filterFn: (s) => ['cancelled', 'rejected'].includes(s), key: 'Cancelled' },
-        { label: 'Payment Failed', value: 5, filterFn: (s, p) => p === 'failed' || p === 'Payment Failed' || p === 'payment failed', key: 'Payment Failed' },
-    ], []);
+    const tabs = useMemo(() => {
+        const baseTabs = [
+            { label: 'All', value: 0, filterFn: () => true, key: 'All' },
+            { label: 'Scheduled', value: 1, filterFn: (s) => s === 'scheduled', key: 'Scheduled', hidden: moduleUrlName !== 'transport' },
+            { label: 'Pending', value: 2, filterFn: (s) => s === 'pending', key: 'Pending' },
+            { label: 'Confirmed', value: 3, filterFn: (s, p, b) => ['accepted', 'confirmed', 'approve', 'approved'].includes(s) && new Date(b.bookingDate) >= new Date().setHours(0, 0, 0, 0), key: 'Confirmed' },
+            { label: 'Ongoing', value: 4, filterFn: (s) => s === 'ongoing', key: 'Ongoing', hidden: moduleUrlName !== 'transport' },
+            { label: 'Completed', value: 5, filterFn: (s, p, b) => s === 'completed' || s === 'completed bookings' || s === 'done' || (['accepted', 'confirmed'].includes(s) && new Date(b.bookingDate) < new Date().setHours(0, 0, 0, 0)), key: 'Completed' },
+            { label: 'Cancelled', value: 6, filterFn: (s) => ['cancelled', 'rejected'].includes(s), key: 'Cancelled' },
+            { label: 'Payment Failed', value: 7, filterFn: (s, p) => p === 'failed' || p === 'Payment Failed' || p === 'payment failed', key: 'Payment Failed' },
+        ];
+        return baseTabs.filter(t => !t.hidden).map((t, idx) => ({ ...t, value: idx }));
+    }, [moduleUrlName]);
 
     const initialIndex = useMemo(() => {
         const found = tabs.findIndex(t => t.key.toLowerCase() === initialTab.toLowerCase());
@@ -243,13 +250,27 @@ const PremiumBookings = ({
         if (!path) return null;
         if (path.startsWith('http')) return path;
 
+        const lowerPath = path.toLowerCase();
         // If it's already a full relative path like /uploads/photography/xyz.jpg
-        if (path.startsWith('/uploads/')) return `${API_BASE_URL}${path}`;
-        if (path.startsWith('uploads/')) return `${API_BASE_URL}/${path}`;
+        if (lowerPath.startsWith('/uploads/')) return `${API_BASE_URL}${path}`;
+        if (lowerPath.startsWith('uploads/')) return `${API_BASE_URL}/${path}`;
 
-        // Fallback for just filenames
+        // Module specific mapping for upload folders
+        const folderMap = {
+            'transport': 'vehicles',
+            'vehicle': 'vehicles',
+            'cake': 'cakes',
+            'photography': 'photography',
+            'catering': 'catering',
+            'makeup': 'makeup',
+            'venue': 'venues',
+            'venues': 'venues',
+            'package': 'packages'
+        };
+
+        const folder = folderMap[String(moduleUrlName).toLowerCase()] || moduleUrlName;
         const filename = path.split('/').pop();
-        return `${API_BASE_URL}/uploads/${moduleUrlName}/${filename}`;
+        return `${API_BASE_URL}/uploads/${folder}/${filename}`;
     };
 
     return (
@@ -407,6 +428,7 @@ const PremiumBookings = ({
                 getDataFn={getDataFn}
                 getImageUrl={getImageUrl}
                 moduleLabel={moduleLabel}
+                primaryColor={primaryColor}
             />
 
             <Menu anchorEl={sortMenuAnchor} open={Boolean(sortMenuAnchor)} onClose={() => setSortMenuAnchor(null)}>
@@ -482,7 +504,15 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
     );
 };
 
-const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getImageUrl, moduleLabel }) => {
+const renderTimeSlot = (timeSlot) => {
+    if (!timeSlot) return null;
+    if (typeof timeSlot === 'string') return timeSlot;
+    if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
+    if (typeof timeSlot === 'object') return timeSlot.label || timeSlot.time || 'N/A';
+    return null;
+};
+
+const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getImageUrl, moduleLabel, primaryColor }) => {
     if (!booking) return null;
     const statusColor = getStatusColor(booking.status);
     const data = getDataFn(booking);
@@ -492,7 +522,13 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}><Typography variant="h5" fontWeight={800}>Booking Details</Typography><IconButton onClick={onClose}><Cancel /></IconButton></Stack>
             <Stack spacing={4}>
                 <Box sx={{ p: 3, borderRadius: '20px', bgcolor: alpha(statusColor, 0.05), border: '1px solid', borderColor: alpha(statusColor, 0.1) }}>
-                    <Stack direction="row" justifyContent="space-between"><Box><Typography variant="caption" fontWeight={700}>STATUS</Typography><Typography variant="h6" fontWeight={800} color={statusColor} sx={{ textTransform: 'capitalize' }}>{booking.status}</Typography></Box><Chip label={booking.moduleType || moduleLabel} sx={{ fontWeight: 700, bgcolor: '#fff' }} /></Stack>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase' }}>Current Status</Typography>
+                            <Typography variant="h6" fontWeight={800} color={statusColor} sx={{ textTransform: 'capitalize' }}>{booking.status}</Typography>
+                        </Box>
+                        <Chip label={booking.bookingType || booking.packageType || booking.moduleType || moduleLabel} sx={{ fontWeight: 700, bgcolor: '#fff', textTransform: 'capitalize' }} />
+                    </Stack>
                 </Box>
                 <Box sx={{ p: 3, borderRadius: '24px', bgcolor: alpha(GOLD_COLOR, 0.03), border: '1px solid', borderColor: alpha(GOLD_COLOR, 0.1) }}>
                     <Typography variant="caption" fontWeight={800}>PACKAGE INFO</Typography>
@@ -500,7 +536,35 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                         <Avatar src={getImageUrl(data.thumbnail)} variant="rounded" sx={{ width: 80, height: 80, borderRadius: '16px' }} />
                         <Box flex={1}><Typography variant="h6" fontWeight={800}>{data.name}</Typography><Typography variant="body2" color="text.secondary">{data.category}</Typography></Box>
                     </Stack>
+                    {(data.sizes && data.sizes.length > 0) && (
+                        <Box mt={2}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700}>AVAILABLE SIZES</Typography>
+                            <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap">
+                                {data.sizes.map((s, idx) => <Chip key={idx} label={s} size="small" sx={{ height: 20, fontSize: '0.65rem' }} />)}
+                            </Stack>
+                        </Box>
+                    )}
+                    {(data.colors && data.colors.length > 0) && (
+                        <Box mt={2}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700}>AVAILABLE COLORS</Typography>
+                            <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap">
+                                {data.colors.map((c, idx) => <Chip key={idx} label={c} size="small" sx={{ height: 20, fontSize: '0.65rem' }} />)}
+                            </Stack>
+                        </Box>
+                    )}
                 </Box>
+                {booking.transportDetails && (
+                    <Box sx={{ p: 3, borderRadius: '24px', bgcolor: alpha(primaryColor, 0.03), border: '1px solid', borderColor: alpha(primaryColor, 0.1) }}>
+                        <Typography variant="caption" fontWeight={800}>TRIP DETAILS</Typography>
+                        <Stack spacing={2} sx={{ mt: 2 }}>
+                            {booking.transportDetails.tripType && <DetailRow label="Trip Type" value={booking.transportDetails.tripType} />}
+                            {(booking.transportDetails.hours > 0) && <DetailRow label="Duration (Hours)" value={booking.transportDetails.hours} />}
+                            {(booking.transportDetails.days > 0) && <DetailRow label="Duration (Days)" value={booking.transportDetails.days} />}
+                            {(booking.transportDetails.distanceKm > 0) && <DetailRow label="Distance (KM)" value={booking.transportDetails.distanceKm} />}
+                            {booking.transportDetails.decorationIncluded && <DetailRow label="Decoration" value={`Included (+₹${booking.transportDetails.decorationPrice})`} />}
+                        </Stack>
+                    </Box>
+                )}
                 <Box>
                     <Typography variant="caption" fontWeight={800}>CUSTOMER INFO</Typography>
                     <Stack spacing={2} sx={{ mt: 2 }}>
@@ -508,6 +572,7 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                         <DetailRow icon={<Email />} label="Email" value={booking.emailAddress} />
                         <DetailRow icon={<Phone />} label="Phone" value={booking.contactNumber} />
                         <DetailRow icon={<CalendarMonth />} label="Event Date" value={new Date(booking.bookingDate).toLocaleDateString()} />
+                        {booking.timeSlot && <DetailRow icon={<AccessTime />} label="Time Slot" value={renderTimeSlot(booking.timeSlot)} />}
                     </Stack>
                 </Box>
                 <Box sx={{ p: 3, borderRadius: '24px', background: PREMIUM_DARK, color: '#fff' }}>

@@ -20,14 +20,14 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 const PageNotFound = Loadable(lazy(() => import('views/PageNotFound')));
 
 // trips
-const AllTrips = Loadable(lazy(() => import('views/Alltrips')));
-const Scheduled = Loadable(lazy(() => import('views/Scheduled')));
-const Pendings = Loadable(lazy(() => import('views/Pendings')));
-const Confirmed = Loadable(lazy(() => import('views/Confirmed')));
-const Ongoing = Loadable(lazy(() => import('views/Ongoing')));
-const Completed = Loadable(lazy(() => import('views/Completed')));
-const Canceled = Loadable(lazy(() => import('views/Canceled')));
-const PaymentFailed = Loadable(lazy(() => import('views/PaymentFailed')));
+// const AllTrips = Loadable(lazy(() => import('views/Alltrips')));
+// const Scheduled = Loadable(lazy(() => import('views/Scheduled')));
+// const Pendings = Loadable(lazy(() => import('views/Pendings')));
+// const Confirmed = Loadable(lazy(() => import('views/Confirmed')));
+// const Ongoing = Loadable(lazy(() => import('views/Ongoing')));
+// const Completed = Loadable(lazy(() => import('views/Completed')));
+// const Canceled = Loadable(lazy(() => import('views/Canceled')));
+// const PaymentFailed = Loadable(lazy(() => import('views/PaymentFailed')));
 
 //venue
 const VenueCreate = Loadable(lazy(() => import('views/VenueCreate')));
@@ -170,8 +170,10 @@ const CakePaymentFailedPremium = Loadable(lazy(() => import('../views/cake/CakeP
 
 // TRANSPORT BOOKINGS PREMIUM
 const TransportAllPremium = Loadable(lazy(() => import('../views/transport/TransportAllPremium')));
+const TransportScheduledPremium = Loadable(lazy(() => import('../views/transport/TransportScheduledPremium')));
 const TransportPendingPremium = Loadable(lazy(() => import('../views/transport/TransportPendingPremium')));
 const TransportConfirmedPremium = Loadable(lazy(() => import('../views/transport/TransportConfirmedPremium')));
+const TransportOngoingPremium = Loadable(lazy(() => import('../views/transport/TransportOngoingPremium')));
 const TransportCompletedPremium = Loadable(lazy(() => import('../views/transport/TransportCompletedPremium')));
 const TransportCancelledPremium = Loadable(lazy(() => import('../views/transport/TransportCancelledPremium')));
 const TransportPaymentFailedPremium = Loadable(lazy(() => import('../views/transport/TransportPaymentFailedPremium')));
@@ -259,14 +261,16 @@ const MainRoutes = {
         {
           path: 'trips',
           children: [
-            { path: '', element: <AllTrips /> },
-            { path: 'scheduled', element: <Scheduled /> },
-            { path: 'pending', element: <Pendings /> },
-            { path: 'confirmed', element: <Confirmed /> },
-            { path: 'ongoing', element: <Ongoing /> },
-            { path: 'completed', element: <Completed /> },
-            { path: 'canceled', element: <Canceled /> },
-            { path: 'payment-failed', element: <PaymentFailed /> }
+            { path: '', element: <TransportAllPremium /> },
+            { path: 'all', element: <TransportAllPremium /> },
+            { path: 'scheduled', element: <TransportScheduledPremium /> },
+            { path: 'pending', element: <TransportPendingPremium /> },
+            { path: 'confirmed', element: <TransportConfirmedPremium /> },
+            { path: 'ongoing', element: <TransportOngoingPremium /> },
+            { path: 'completed', element: <TransportCompletedPremium /> },
+            { path: 'canceled', element: <TransportCancelledPremium /> },
+            { path: 'cancelled', element: <TransportCancelledPremium /> },
+            { path: 'payment-failed', element: <TransportPaymentFailedPremium /> }
           ]
         },
         {
