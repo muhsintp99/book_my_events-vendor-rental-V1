@@ -445,6 +445,17 @@ const PremiumBookings = ({
     );
 };
 
+// --- Helpers ---
+const getPaidAmount = (booking, moduleLabel) => {
+    const fullPaymentModules = ['Cake', 'Boutique', 'Boutiques', 'Ornament', 'Ornaments', 'boutique', 'ornament'];
+    const isCompleted = ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase());
+
+    if (fullPaymentModules.includes(moduleLabel) && isCompleted) {
+        return booking.finalPrice || 0;
+    }
+    return booking.advanceAmount || 0;
+};
+
 // --- Sub-Components ---
 const StatCard = ({ label, value, color, icon }) => (
     <Grid item xs={12} sm={6} md={3}>
@@ -478,9 +489,7 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
                             <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
                             <Box sx={{ textAlign: 'right' }}>
                                 <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: '#10b981' }}>
-                                    Paid: ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
-                                        ? (booking.finalPrice || 0)
-                                        : (booking.advanceAmount || 0)).toLocaleString()}
+                                    Paid: ₹{getPaidAmount(booking, moduleLabel).toLocaleString()}
                                 </Typography>
                                 <Typography variant="caption" sx={{ display: 'block', fontWeight: 800 }}>
                                     Total: ₹{(booking.finalPrice || 0).toLocaleString()}
@@ -505,9 +514,7 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
             <Typography variant="body2" sx={{ flex: 2.5, color: 'text.secondary', fontSize: '0.8rem' }} noWrap>{booking.emailAddress}</Typography>
             <Typography variant="body2" sx={{ flex: 1.5 }}>{new Date(booking.bookingDate).toLocaleDateString()}</Typography>
             <Typography variant="body2" sx={{ flex: 1.2, fontWeight: 700, color: '#10b981' }}>
-                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
-                    ? (booking.finalPrice || 0)
-                    : (booking.advanceAmount || 0)).toLocaleString()}
+                ₹{getPaidAmount(booking, moduleLabel).toLocaleString()}
             </Typography>
             <Typography variant="body2" sx={{ flex: 1.3, fontWeight: 800 }}>
                 ₹{(booking.finalPrice || 0).toLocaleString()}
@@ -601,16 +608,14 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                     <Stack spacing={2} mt={2}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="body2" color="rgba(255,255,255,0.7)">Paid Amount</Typography>
-                            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#10b981' }}>
-                                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
-                                    ? (booking.finalPrice || 0)
-                                    : (booking.advanceAmount || 0)).toLocaleString()}
+                            <Typography variant="body1" sx={{ fontWeight: 700, color: '#10b981' }}>
+                                ₹{getPaidAmount(booking, moduleLabel).toLocaleString()}
                             </Typography>
                         </Stack>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="body2" color="rgba(255,255,255,0.7)">Remaining Amount</Typography>
                             <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f59e0b' }}>
-                                ₹{(moduleLabel === 'Cake' && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
+                                ₹{(['Cake', 'Boutique', 'Boutiques', 'Ornament', 'Ornaments'].includes(moduleLabel) && ['completed', 'paid', 'success'].includes(String(booking.paymentStatus || '').toLowerCase())
                                     ? 0
                                     : Math.max(0, (booking.finalPrice || 0) - (booking.advanceAmount || 0))).toLocaleString()}
                             </Typography>

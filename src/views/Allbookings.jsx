@@ -158,7 +158,7 @@ const Allbookings = () => {
                                         </TableCell>
 
                                         <TableCell sx={{ fontWeight: 700, color: "#10b981" }}>
-                                            ₹{(b.moduleType === 'Cake' && ['completed', 'paid', 'success'].includes(String(b.paymentStatus || '').toLowerCase())
+                                            ₹{(['Cake', 'Boutique', 'Boutiques', 'Ornament', 'Ornaments', 'cake', 'boutique', 'ornament'].includes(b.moduleType) && ['completed', 'paid', 'success'].includes(String(b.paymentStatus || '').toLowerCase())
                                                 ? (b.finalPrice || 0)
                                                 : (b.advanceAmount || 0)).toLocaleString()}
                                         </TableCell>
