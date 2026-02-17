@@ -60,10 +60,14 @@ import {
   Storefront as TakeawayIcon
 } from '@mui/icons-material';
 import { styled, alpha } from '@mui/material/styles';
+import Slider from "@mui/material/Slider";
+
 import axios from 'axios';
 
 const PINK = '#E91E63';
-const API_BASE = 'https://api.bookmyevent.ae';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://api.bookmyevent.ae';
 const CAKE_MODULE_ID = '68e5fc09651cc12c1fc0f9c9';
 
 // ------------------------------ STYLED COMPONENTS ------------------------------
@@ -440,6 +444,9 @@ const AddCakePackage = () => {
     longitude: '',
     address: ''
   });
+  const [radiusKm, setRadiusKm] = useState(26);
+  const circleRef = useRef(null);
+  const [coveredPincodes, setCoveredPincodes] = useState([]);
 
   // Form State
   const [name, setName] = useState('');
@@ -484,7 +491,62 @@ const AddCakePackage = () => {
     const loadInitialData = async () => {
       try {
         const vendorData = localStorage.getItem('vendor') || localStorage.getItem('user');
-        if (vendorData) setCurrentVendor(JSON.parse(vendorData));
+        let parsedVendor = null;
+        if (vendorData) {
+          parsedVendor = JSON.parse(vendorData);
+          setCurrentVendor(parsedVendor);
+
+          // 🔥 Fetch vendor profile from API to get saved location (zone/lat/lng)
+          if (!isEditMode && !id) {
+            try {
+              // ✅ Use USER ID — new endpoint looks up vendorprofile by user field
+              const userData = localStorage.getItem('user');
+              const parsedUser = userData ? JSON.parse(userData) : null;
+              const userId = parsedUser?._id || parsedUser?.id || parsedVendor?.user || parsedVendor?._id || parsedVendor?.id;
+              const tkn = localStorage.getItem('token');
+              console.log("🔍 Fetching vendor profile for userId:", userId);
+              const profileRes = await axios.get(`${API_BASE}/api/vendorprofiles/find/${userId}`, {
+                headers: { Authorization: `Bearer ${tkn}` }
+              });
+              const profile = profileRes.data?.data;
+
+              if (profile?.latitude && profile?.longitude) {
+                setPickupLocation({
+                  latitude: profile.latitude.toString(),
+                  longitude: profile.longitude.toString(),
+                  address: profile.storeAddress?.fullAddress || ''
+                });
+                if (profile.storeAddress?.fullAddress) {
+                  setShipping(prev => ({ ...prev, takeawayLocation: profile.storeAddress.fullAddress }));
+                }
+                console.log("✅ Loaded vendor location from profile:", profile.latitude, profile.longitude);
+              } else if (parsedVendor.latitude && parsedVendor.longitude) {
+                // Fallback to localStorage
+                setPickupLocation({
+                  latitude: parsedVendor.latitude,
+                  longitude: parsedVendor.longitude,
+                  address: parsedVendor.storeAddress?.fullAddress || ''
+                });
+                if (parsedVendor.storeAddress?.fullAddress) {
+                  setShipping(prev => ({ ...prev, takeawayLocation: parsedVendor.storeAddress.fullAddress }));
+                }
+              }
+            } catch (profileErr) {
+              console.error('Failed to fetch vendor profile for location:', profileErr);
+              // Fallback to localStorage
+              if (parsedVendor.latitude && parsedVendor.longitude) {
+                setPickupLocation({
+                  latitude: parsedVendor.latitude,
+                  longitude: parsedVendor.longitude,
+                  address: parsedVendor.storeAddress?.fullAddress || ''
+                });
+                if (parsedVendor.storeAddress?.fullAddress) {
+                  setShipping(prev => ({ ...prev, takeawayLocation: parsedVendor.storeAddress.fullAddress }));
+                }
+              }
+            }
+          }
+        }
         const token = localStorage.getItem('token');
         const catRes = await axios.get(`${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -517,6 +579,9 @@ const AddCakePackage = () => {
                 longitude: cake.shipping.pickupLongitude.toString(),
                 address: cake.shipping.takeawayLocation || ''
               });
+              if (cake.shipping.deliveryRadius) {
+                setRadiusKm(Number(cake.shipping.deliveryRadius));
+              }
             }
             if (cake.variations?.length)
               setVariations(cake.variations.map((v, idx) => ({ id: v._id || `old-${idx}`, name: v.name, price: v.price, image: v.image })));
@@ -569,10 +634,10 @@ const AddCakePackage = () => {
   }, []);
 
   useEffect(() => {
-    if (mapsLoaded && shipping.takeaway && window.google?.maps) {
+    if (mapsLoaded && shipping.free && window.google?.maps) {
       initPickupMap();
     }
-  }, [mapsLoaded, shipping.takeaway]);
+  }, [mapsLoaded, shipping.free]);
 
   const initPickupMap = useCallback(() => {
     if (!window.google || !mapRef.current) return;
@@ -583,15 +648,11 @@ const AddCakePackage = () => {
     };
 
     const newMap = new window.google.maps.Map(mapRef.current, {
-      zoom: 12,
+      zoom: 14,
       center,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }]
-        }
-      ]
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
     });
 
     newMap.addListener('click', (event) => {
@@ -622,13 +683,25 @@ const AddCakePackage = () => {
         }
       });
     });
+    // Create radius circle
+    circleRef.current = new window.google.maps.Circle({
+      strokeColor: '#2563EB',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#2563EB',
+      fillOpacity: 0.15,
+      map: newMap,
+      center,
+      radius: radiusKm * 1000 // meters
+    });
 
     setMap(newMap);
 
-    if (searchInputRef.current) {
+    if (searchInputRef.current && !window.autocompleteInstance) {
       const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
         fields: ['geometry', 'formatted_address']
       });
+      window.autocompleteInstance = autocomplete; // Prevent double binding
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
@@ -651,10 +724,74 @@ const AddCakePackage = () => {
 
         setShipping((prev) => ({ ...prev, takeawayLocation: place.formatted_address }));
         newMap.setCenter(loc);
-        newMap.setZoom(17);
+        newMap.setZoom(14);
       });
     }
   }, [pickupLocation.latitude, pickupLocation.longitude, shipping.takeaway]);
+
+  // Debounce ref
+  const debounceRef = useRef(null);
+
+  const fetchPincodesInRadius = useCallback(async () => {
+    if (!pickupLocation.latitude || !pickupLocation.longitude) return;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${API_BASE}/api/pincodes/radius`, {
+          params: {
+            lat: pickupLocation.latitude,
+            lng: pickupLocation.longitude,
+            radius: radiusKm
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.data.success) {
+          setCoveredPincodes(res.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching pincodes:", err);
+      }
+    }, 500);
+  }, [pickupLocation.latitude, pickupLocation.longitude, radiusKm]);
+
+  useEffect(() => {
+    if (map && circleRef.current && pickupLocation.latitude && pickupLocation.longitude) {
+      const lat = parseFloat(pickupLocation.latitude);
+      const lng = parseFloat(pickupLocation.longitude);
+      const newCenter = { lat, lng };
+
+      // Update Circle
+      circleRef.current.setCenter(newCenter);
+      circleRef.current.setRadius(radiusKm * 1000);
+
+      // Update Marker
+      if (markerRef.current) {
+        markerRef.current.setPosition(newCenter);
+      } else {
+        markerRef.current = new window.google.maps.Marker({
+          position: newCenter,
+          map: map,
+          animation: window.google.maps.Animation.DROP
+        });
+      }
+
+      // Fit Map Bounds to Circle
+      const bounds = circleRef.current.getBounds();
+      if (bounds) {
+        map.fitBounds(bounds);
+      }
+
+      // Fetch pincodes
+      fetchPincodesInRadius();
+    }
+  }, [pickupLocation.latitude, pickupLocation.longitude, radiusKm, map, fetchPincodesInRadius]);
+
 
   useEffect(() => {
     const fetchAddons = async () => {
@@ -919,7 +1056,8 @@ const AddCakePackage = () => {
       JSON.stringify({
         ...shipping,
         pickupLatitude: pickupLocation.latitude,
-        pickupLongitude: pickupLocation.longitude
+        pickupLongitude: pickupLocation.longitude,
+        deliveryRadius: radiusKm
       })
     );
     formData.append('prepTime', prepTime);
@@ -2043,7 +2181,16 @@ const AddCakePackage = () => {
                     </Box>
 
                     {/* Content Area */}
-                    <Box sx={{ p: 2.5, textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <Box
+                      sx={{
+                        p: 2.5,
+                        textAlign: 'center',
+                        flexGrow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                      }}
+                    >
                       <Typography
                         sx={{
                           fontWeight: 900,
@@ -2071,17 +2218,19 @@ const AddCakePackage = () => {
                             fontSize: '18px',
                             letterSpacing: '-0.02em',
                             position: 'relative',
-                            '&::after': isSelected ? {
-                              content: '""',
-                              position: 'absolute',
-                              bottom: -2,
-                              left: '50%',
-                              transform: 'translateX(-50%)',
-                              width: '20px',
-                              height: '2px',
-                              bgcolor: PINK,
-                              borderRadius: '2px'
-                            } : {}
+                            '&::after': isSelected
+                              ? {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -2,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                width: '20px',
+                                height: '2px',
+                                bgcolor: PINK,
+                                borderRadius: '2px'
+                              }
+                              : {}
                           }}
                         >
                           ₹{addon.price}
@@ -2217,74 +2366,150 @@ const AddCakePackage = () => {
             </Grid>
 
             {/* FULL WIDTH MAP & LOCATION SECTION */}
-            {shipping.takeaway && (
+            {shipping.free && (
               <Grid item xs={12}>
                 <Box
                   sx={{
                     mt: 3,
-                    p: { xs: 2, md: 4 },
+                    p: 0,
                     borderRadius: '24px',
                     bgcolor: '#FFFFFF',
                     border: '1px solid #E5E7EB',
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.03)'
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.03)',
+                    overflow: 'hidden'
                   }}
                 >
-                  <Stack spacing={3}>
-                    {/* Search Location */}
-                    <Box>
-                      <Typography
-                        sx={{
-                          mb: 1.5,
-                          fontWeight: 800,
-                          color: '#374151',
-                          textTransform: 'uppercase',
-                          fontSize: '11px',
-                          letterSpacing: '1px'
-                        }}
-                      >
-                        Search Pickup Location
+                  {/* Controls Section with Padding */}
+                  <Box sx={{ p: { xs: 2, md: 4 }, pb: 2 }}>
+                    <Stack spacing={3}>
+                      {/* Search Location */}
+                      <Box>
+                        <Typography
+                          sx={{
+                            mb: 1.5,
+                            fontWeight: 800,
+                            color: '#374151',
+                            textTransform: 'uppercase',
+                            fontSize: '11px',
+                            letterSpacing: '1px'
+                          }}
+                        >
+                          Search Pickup Location
+                        </Typography>
+                        <PremiumTextField fullWidth inputRef={searchInputRef} placeholder="Search for your store location or landmark..." />
+                      </Box>
+
+                      {/* Instruction */}
+                      <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <InfoIcon fontSize="small" sx={{ color: PINK }} />
+                        Click on the map to pin the exact pickup location for customers
                       </Typography>
-                      <PremiumTextField fullWidth inputRef={searchInputRef} placeholder="Search for your store location or landmark..." />
-                    </Box>
+                    </Stack>
+                  </Box>
 
-                    {/* Instruction */}
-                    <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <InfoIcon fontSize="small" sx={{ color: PINK }} />
-                      Click on the map to pin the exact pickup location for customers
-                    </Typography>
-
-                    {/* Google Map */}
-                    {mapsLoaded ? (
+                  {/* Google Map - Full Width */}
+                  {mapsLoaded ? (
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: '100%',
+                        height: 500,
+                        borderRadius: '20px',
+                        overflow: 'hidden',
+                        border: '1px solid #E5E7EB'
+                      }}
+                    >
+                      {/* Google Map */}
                       <Box
                         ref={mapRef}
                         sx={{
-                          height: 400,
                           width: '100%',
-                          borderRadius: '20px',
-                          border: '1px solid #E5E7EB',
-                          overflow: 'hidden',
-                          boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)'
+                          height: '100%'
                         }}
                       />
-                    ) : (
+
+                      {/* Radius Slider Overlay */}
                       <Box
                         sx={{
-                          height: 400,
+                          position: 'absolute',
+                          bottom: 20,
+                          left: 20,
+                          right: 20,
+                          zIndex: 10,
+                          bgcolor: 'rgba(255, 255, 255, 0.95)',
+                          backdropFilter: 'blur(10px)',
+                          borderRadius: '16px',
+                          p: 2.5,
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                           display: 'flex',
-                          flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '20px',
-                          bgcolor: '#F9FAFB'
+                          gap: 3,
+                          maxWidth: '500px',
+                          margin: '0 auto'
                         }}
                       >
-                        <CircularProgress sx={{ color: PINK, mb: 2 }} />
-                        <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>Initializing Map Engine...</Typography>
-                      </Box>
-                    )}
+                        <Typography sx={{ fontWeight: 800, color: '#1F2937', minWidth: '80px' }}>
+                          Radius: {radiusKm} km
+                        </Typography>
 
-                    {/* Coordinates & Address */}
+                        <Slider
+                          value={radiusKm}
+                          min={1}
+                          max={100}
+                          onChange={(e, val) => setRadiusKm(val)}
+                          sx={{
+                            color: '#2563EB',
+                            height: 6,
+                            '& .MuiSlider-thumb': {
+                              width: 20,
+                              height: 20,
+                              backgroundColor: '#fff',
+                              border: '2px solid currentColor',
+                              '&:hover': {
+                                boxShadow: '0 0 0 8px rgba(37, 99, 235, 0.16)',
+                              },
+                            },
+                            '& .MuiSlider-track': {
+                              border: 'none',
+                            },
+                            '& .MuiSlider-rail': {
+                              opacity: 0.3,
+                              backgroundColor: '#bfbfbf',
+                            },
+                          }}
+                        />
+
+                        {coveredPincodes.length > 0 && (
+                          <Chip
+                            label={`${coveredPincodes.length} Pincodes`}
+                            size="small"
+                            color="primary"
+                            sx={{ fontWeight: 700, borderRadius: '8px' }}
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                  ) : (
+
+                    <Box
+                      sx={{
+                        height: 400,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '20px',
+                        bgcolor: '#F9FAFB'
+                      }}
+                    >
+                      <CircularProgress sx={{ color: PINK, mb: 2 }} />
+                      <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>Initializing Map Engine...</Typography>
+                    </Box>
+                  )}
+
+                  {/* Coordinates & Address */}
+                  <Box sx={{ p: { xs: 2, md: 4 }, pt: 2 }}>
                     <Grid container spacing={3}>
                       <Grid item xs={12}>
                         <Stack direction="row" spacing={2}>
@@ -2334,7 +2559,7 @@ const AddCakePackage = () => {
                         />
                       </Grid>
                     </Grid>
-                  </Stack>
+                  </Box>
                 </Box>
               </Grid>
             )}
@@ -2831,7 +3056,7 @@ const AddCakePackage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Box >
   );
 };
 
