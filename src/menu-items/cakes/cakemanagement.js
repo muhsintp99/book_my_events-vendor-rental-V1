@@ -1,35 +1,27 @@
 // assets
 import {
-  IconBuilding,
   IconCategory,
-  IconTrademark,
   IconPlus,
   IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
   IconEngine,
-  IconCalendar,
   IconBowlSpoon,
   IconCalendarEvent,
-  IconMessageCircle
+  IconTruckDelivery,
+  IconPuzzle,
+  IconRocket
 } from '@tabler/icons-react';
 
 // constants
 const icons = {
-  IconBuilding,
   IconCategory,
-  IconTrademark,
   IconPlus,
   IconList,
-  IconClipboardCheck,
-  IconUpload,
-  IconDownload,
   IconEngine,
-  IconCalendar,
   IconBowlSpoon,
   IconCalendarEvent,
-  IconMessageCircle
+  IconTruckDelivery,
+  IconPuzzle,
+  IconRocket
 };
 
 // ==============================|| CAKE MANAGEMENT MENU ||============================== //
@@ -67,7 +59,16 @@ const cakemanagement = {
       title: 'Add-ons',
       type: 'item',
       url: '/cake/Addons',
-      icon: icons.IconCategory,
+      icon: icons.IconPuzzle,
+      breadcrumbs: false
+    },
+
+    {
+      id: 'delivery-profile',
+      title: 'Delivery Profile',
+      type: 'item',
+      url: '/cake/deliveryprofile',
+      icon: icons.IconTruckDelivery,
       breadcrumbs: false
     },
 
@@ -85,7 +86,7 @@ const cakemanagement = {
       title: 'Upgrade',
       type: 'item',
       url: '/cake/upgrade',
-      icon: icons.IconEngine,
+      icon: icons.IconRocket,
       breadcrumbs: false
     },
 
@@ -96,16 +97,7 @@ const cakemanagement = {
       url: '/cake/schedules',
       icon: icons.IconCalendarEvent,
       breadcrumbs: false
-    },
-
-    // {
-    //   id: 'cake-enquiries',
-    //   title: 'Enquiries',
-    //   type: 'item',
-    //   url: '/cake/enquiry',
-    //   icon: icons.IconMessageCircle,
-    //   breadcrumbs: false
-    // }
+    }
   ]
 };
 

@@ -432,21 +432,7 @@ const AddCakePackage = () => {
   const [openRelatedModal, setOpenRelatedModal] = useState(false);
   const [drilldownCategory, setDrilldownCategory] = useState(null);
 
-  // Google Maps
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const searchInputRef = useRef(null);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
-  const [map, setMap] = useState(null);
-  const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
-  const [pickupLocation, setPickupLocation] = useState({
-    latitude: '',
-    longitude: '',
-    address: ''
-  });
-  const [radiusKm, setRadiusKm] = useState(26);
-  const circleRef = useRef(null);
-  const [coveredPincodes, setCoveredPincodes] = useState([]);
+  // No longer needed: pickupLocation, radiusKm, map, coveredPincodes mapping moved to vendor profile
 
   // Form State
   const [name, setName] = useState('');
@@ -476,7 +462,11 @@ const AddCakePackage = () => {
 
   // Addons & Shipping
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [shipping, setShipping] = useState({ free: false, flatRate: false, takeaway: false, takeawayLocation: '', price: '' });
+  const [deliveryMode, setDeliveryMode] = useState('standard');
+  const [homeDelivery, setHomeDelivery] = useState(true);
+  const [takeaway, setTakeaway] = useState(false);
+  const [enabledModes, setEnabledModes] = useState([]); // Configurations from vendor profile
+  const [loadingModes, setLoadingModes] = useState(false);
 
   // Media
   const [thumbnail, setThumbnail] = useState(null);
@@ -496,62 +486,38 @@ const AddCakePackage = () => {
           parsedVendor = JSON.parse(vendorData);
           setCurrentVendor(parsedVendor);
 
-          // 🔥 Fetch vendor profile from API to get saved location (zone/lat/lng)
-          if (!isEditMode && !id) {
-            try {
-              // ✅ Use USER ID — new endpoint looks up vendorprofile by user field
-              const userData = localStorage.getItem('user');
-              const parsedUser = userData ? JSON.parse(userData) : null;
-              const userId = parsedUser?._id || parsedUser?.id || parsedVendor?.user || parsedVendor?._id || parsedVendor?.id;
-              const tkn = localStorage.getItem('token');
-              console.log("🔍 Fetching vendor profile for userId:", userId);
-              const profileRes = await axios.get(`${API_BASE}/api/vendorprofiles/find/${userId}`, {
-                headers: { Authorization: `Bearer ${tkn}` }
-              });
-              const profile = profileRes.data?.data;
+          // 🔥 Fetch vendor profile from API to get enabled delivery modes
+          try {
+            const userData = localStorage.getItem('user');
+            const parsedUser = userData ? JSON.parse(userData) : null;
+            const userId = parsedUser?._id || parsedUser?.id || parsedVendor?.user || parsedVendor?._id || parsedVendor?.id;
+            const tkn = localStorage.getItem('token');
+            const profileRes = await axios.get(`${API_BASE}/api/vendorprofiles/find/${userId}`, {
+              headers: { Authorization: `Bearer ${tkn}` }
+            });
+            const profile = profileRes.data?.data;
 
-              if (profile?.latitude && profile?.longitude) {
-                setPickupLocation({
-                  latitude: profile.latitude.toString(),
-                  longitude: profile.longitude.toString(),
-                  address: profile.storeAddress?.fullAddress || ''
-                });
-                if (profile.storeAddress?.fullAddress) {
-                  setShipping(prev => ({ ...prev, takeawayLocation: profile.storeAddress.fullAddress }));
-                }
-                console.log("✅ Loaded vendor location from profile:", profile.latitude, profile.longitude);
-              } else if (parsedVendor.latitude && parsedVendor.longitude) {
-                // Fallback to localStorage
-                setPickupLocation({
-                  latitude: parsedVendor.latitude,
-                  longitude: parsedVendor.longitude,
-                  address: parsedVendor.storeAddress?.fullAddress || ''
-                });
-                if (parsedVendor.storeAddress?.fullAddress) {
-                  setShipping(prev => ({ ...prev, takeawayLocation: parsedVendor.storeAddress.fullAddress }));
-                }
-              }
-            } catch (profileErr) {
-              console.error('Failed to fetch vendor profile for location:', profileErr);
-              // Fallback to localStorage
-              if (parsedVendor.latitude && parsedVendor.longitude) {
-                setPickupLocation({
-                  latitude: parsedVendor.latitude,
-                  longitude: parsedVendor.longitude,
-                  address: parsedVendor.storeAddress?.fullAddress || ''
-                });
-                if (parsedVendor.storeAddress?.fullAddress) {
-                  setShipping(prev => ({ ...prev, takeawayLocation: parsedVendor.storeAddress.fullAddress }));
-                }
+            if (profile?.deliveryProfile?.deliveryConfigurations) {
+              const activeModes = profile.deliveryProfile.deliveryConfigurations.filter(c => c.status);
+              setEnabledModes(activeModes);
+
+              // If current deliveryMode is not in enabled modes, set default to first enabled mode
+              if (activeModes.length > 0 && !activeModes.find(m => m.mode === deliveryMode)) {
+                const standard = activeModes.find(m => m.mode.toLowerCase() === 'standard package delivery');
+                setDeliveryMode(standard ? standard.mode : activeModes[0].mode);
               }
             }
+          } catch (profileErr) {
+            console.error('Failed to fetch vendor profile for modes:', profileErr);
           }
         }
+
         const token = localStorage.getItem('token');
         const catRes = await axios.get(`${API_BASE}/api/categories/parents/${CAKE_MODULE_ID}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCategories(catRes.data?.data || []);
+
         if (isEditMode && id) {
           const cakeRes = await axios.get(`${API_BASE}/api/cakes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
           const cake = cakeRes.data?.data;
@@ -565,24 +531,10 @@ const AddCakePackage = () => {
             setSearchTags((cake.searchTags || []).join(', '));
             setExistingThumbnail(cake.thumbnail || '');
             setExistingGallery(cake.images || []);
-            setShipping({
-              free: cake.shipping?.free || false,
-              flatRate: cake.shipping?.flatRate || false,
-              takeaway: cake.shipping?.takeaway || false,
-              takeawayLocation: cake.shipping?.takeawayLocation || '',
-              price: cake.shipping?.price || ''
-            });
+            setDeliveryMode(cake.deliveryMode || 'standard');
+            setHomeDelivery(cake.shipping?.homeDelivery !== undefined ? cake.shipping.homeDelivery : true);
+            setTakeaway(cake.shipping?.takeaway || false);
 
-            if (cake.shipping?.pickupLatitude && cake.shipping?.pickupLongitude) {
-              setPickupLocation({
-                latitude: cake.shipping.pickupLatitude.toString(),
-                longitude: cake.shipping.pickupLongitude.toString(),
-                address: cake.shipping.takeawayLocation || ''
-              });
-              if (cake.shipping.deliveryRadius) {
-                setRadiusKm(Number(cake.shipping.deliveryRadius));
-              }
-            }
             if (cake.variations?.length)
               setVariations(cake.variations.map((v, idx) => ({ id: v._id || `old-${idx}`, name: v.name, price: v.price, image: v.image })));
             setSelectedAddons(cake.addons || []);
@@ -594,7 +546,6 @@ const AddCakePackage = () => {
               const itemIds = cake.relatedItems.items.map((i) => i._id || i);
               setRelatedItems(itemIds);
 
-              // Only set objects for items that are actually objects
               const objects = cake.relatedItems.items.filter((i) => typeof i === 'object' && i !== null);
               setSelectedRelatedObjects(objects);
               setRelatedLinkBy(cake.relatedItems.linkBy || 'product');
@@ -602,6 +553,7 @@ const AddCakePackage = () => {
           }
         }
       } catch (err) {
+        console.error('Load Error:', err);
         setError('Failed to load initial data');
       } finally {
         setLoading(false);
@@ -610,187 +562,7 @@ const AddCakePackage = () => {
     loadInitialData();
   }, [id, isEditMode]);
 
-  useEffect(() => {
-    if (window.google?.maps) {
-      setMapsLoaded(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setMapsLoaded(true);
-    document.head.appendChild(script);
-
-    return () => {
-      if (document.head.contains(script)) {
-        try {
-          document.head.removeChild(script);
-        } catch (e) {
-          console.error('Error removing map script');
-        }
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (mapsLoaded && shipping.free && window.google?.maps) {
-      initPickupMap();
-    }
-  }, [mapsLoaded, shipping.free]);
-
-  const initPickupMap = useCallback(() => {
-    if (!window.google || !mapRef.current) return;
-
-    const center = {
-      lat: pickupLocation.latitude ? parseFloat(pickupLocation.latitude) : 25.2048,
-      lng: pickupLocation.longitude ? parseFloat(pickupLocation.longitude) : 55.2708
-    };
-
-    const newMap = new window.google.maps.Map(mapRef.current, {
-      zoom: 14,
-      center,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false
-    });
-
-    newMap.addListener('click', (event) => {
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
-
-      setPickupLocation((prev) => ({
-        ...prev,
-        latitude: lat.toString(),
-        longitude: lng.toString()
-      }));
-
-      if (markerRef.current) markerRef.current.setMap(null);
-      markerRef.current = new window.google.maps.Marker({
-        position: { lat, lng },
-        map: newMap,
-        animation: window.google.maps.Animation.DROP
-      });
-
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          setPickupLocation((prev) => ({
-            ...prev,
-            address: results[0].formatted_address
-          }));
-          setShipping((prev) => ({ ...prev, takeawayLocation: results[0].formatted_address }));
-        }
-      });
-    });
-    // Create radius circle
-    circleRef.current = new window.google.maps.Circle({
-      strokeColor: '#2563EB',
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: '#2563EB',
-      fillOpacity: 0.15,
-      map: newMap,
-      center,
-      radius: radiusKm * 1000 // meters
-    });
-
-    setMap(newMap);
-
-    if (searchInputRef.current && !window.autocompleteInstance) {
-      const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
-        fields: ['geometry', 'formatted_address']
-      });
-      window.autocompleteInstance = autocomplete; // Prevent double binding
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry?.location) return;
-
-        const loc = place.geometry.location;
-
-        if (markerRef.current) markerRef.current.setMap(null);
-        markerRef.current = new window.google.maps.Marker({
-          position: loc,
-          map: newMap,
-          animation: window.google.maps.Animation.DROP
-        });
-
-        setPickupLocation({
-          latitude: loc.lat().toString(),
-          longitude: loc.lng().toString(),
-          address: place.formatted_address
-        });
-
-        setShipping((prev) => ({ ...prev, takeawayLocation: place.formatted_address }));
-        newMap.setCenter(loc);
-        newMap.setZoom(14);
-      });
-    }
-  }, [pickupLocation.latitude, pickupLocation.longitude, shipping.takeaway]);
-
-  // Debounce ref
-  const debounceRef = useRef(null);
-
-  const fetchPincodesInRadius = useCallback(async () => {
-    if (!pickupLocation.latitude || !pickupLocation.longitude) return;
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${API_BASE}/api/pincodes/radius`, {
-          params: {
-            lat: pickupLocation.latitude,
-            lng: pickupLocation.longitude,
-            radius: radiusKm
-          },
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (res.data.success) {
-          setCoveredPincodes(res.data.data);
-        }
-      } catch (err) {
-        console.error("Error fetching pincodes:", err);
-      }
-    }, 500);
-  }, [pickupLocation.latitude, pickupLocation.longitude, radiusKm]);
-
-  useEffect(() => {
-    if (map && circleRef.current && pickupLocation.latitude && pickupLocation.longitude) {
-      const lat = parseFloat(pickupLocation.latitude);
-      const lng = parseFloat(pickupLocation.longitude);
-      const newCenter = { lat, lng };
-
-      // Update Circle
-      circleRef.current.setCenter(newCenter);
-      circleRef.current.setRadius(radiusKm * 1000);
-
-      // Update Marker
-      if (markerRef.current) {
-        markerRef.current.setPosition(newCenter);
-      } else {
-        markerRef.current = new window.google.maps.Marker({
-          position: newCenter,
-          map: map,
-          animation: window.google.maps.Animation.DROP
-        });
-      }
-
-      // Fit Map Bounds to Circle
-      const bounds = circleRef.current.getBounds();
-      if (bounds) {
-        map.fitBounds(bounds);
-      }
-
-      // Fetch pincodes
-      fetchPincodesInRadius();
-    }
-  }, [pickupLocation.latitude, pickupLocation.longitude, radiusKm, map, fetchPincodesInRadius]);
+  // Maps logic removed - coverage handled in Vendor Profile
 
 
   useEffect(() => {
@@ -810,6 +582,28 @@ const AddCakePackage = () => {
       }
     };
     fetchAddons();
+  }, [currentVendor]);
+
+  useEffect(() => {
+    const fetchDeliveryModes = async () => {
+      const vendorId = currentVendor?._id || currentVendor?.id;
+      if (!vendorId) return;
+      try {
+        setLoadingModes(true);
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${API_BASE}/api/vendorprofiles/find/${vendorId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success && res.data.data?.deliveryProfile?.deliveryConfigurations) {
+          setEnabledModes(res.data.data.deliveryProfile.deliveryConfigurations);
+        }
+      } catch (err) {
+        console.error('Error fetching delivery modes:', err);
+      } finally {
+        setLoadingModes(false);
+      }
+    };
+    fetchDeliveryModes();
   }, [currentVendor]);
 
   useEffect(() => {
@@ -1051,15 +845,9 @@ const AddCakePackage = () => {
       )
     );
     formData.append('addons', JSON.stringify(selectedAddons));
-    formData.append(
-      'shipping',
-      JSON.stringify({
-        ...shipping,
-        pickupLatitude: pickupLocation.latitude,
-        pickupLongitude: pickupLocation.longitude,
-        deliveryRadius: radiusKm
-      })
-    );
+    formData.append('deliveryMode', deliveryMode);
+    formData.append('homeDelivery', homeDelivery);
+    formData.append('takeaway', takeaway);
     formData.append('prepTime', prepTime);
     formData.append('basePrice', unitPrice || 0);
     formData.append('discountType', discountType);
@@ -1123,23 +911,6 @@ const AddCakePackage = () => {
       setSubmitting(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const handleTakeawayToggle = (checked) => {
-    let location = shipping.takeawayLocation;
-    if (checked && !location && currentVendor) {
-      const addr = currentVendor.storeAddress || currentVendor.address;
-      if (addr) {
-        if (typeof addr === 'string') {
-          location = addr;
-        } else {
-          location =
-            addr.fullAddress ||
-            `${addr.street ? addr.street + ', ' : ''}${addr.city ? addr.city + ', ' : ''}${addr.state || ''}`.trim().replace(/, *$/, '');
-        }
-      }
-    }
-    setShipping({ ...shipping, takeaway: checked, takeawayLocation: location });
   };
 
   if (loading)
@@ -2244,326 +2015,166 @@ const AddCakePackage = () => {
           )}
         </PremiumCard>
 
-        {/* 🚚 SECTION 5: SHIPPING LOGISTICS */}
+        {/* 🚚 SECTION 5: DELIVERY MODE SELECTION */}
         <PremiumCard>
-          <StyledSectionTitle>Shipping</StyledSectionTitle>
+          <StyledSectionTitle>Delivery Mode</StyledSectionTitle>
           <StyledSectionSubtitle>Ensure your cake arrives safely with precise delivery controls.</StyledSectionSubtitle>
 
-          <Grid container spacing={4}>
-            {/* Delivery Master Toggle */}
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  p: 3.5,
-                  borderRadius: '24px',
-                  border: `2px solid ${shipping.free ? PINK : '#F3F4F6'}`,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    borderColor: PINK,
-                    bgcolor: alpha(PINK, 0.01)
-                  }
-                }}
-              >
-                <Stack direction="row" spacing={2.5} alignItems="center">
-                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 1.5, borderRadius: '14px' }}>
-                    <ShippingIcon sx={{ color: PINK }} />
+          <Grid container spacing={3} sx={{ mt: 2, mb: 4 }}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{
+                p: 3,
+                borderRadius: '24px',
+                bgcolor: alpha(PINK, 0.04),
+                border: `1px solid ${alpha(PINK, 0.1)}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '16px',
+                    bgcolor: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: PINK,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                  }}>
+                    <ShippingIcon />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 900, fontSize: '15px' }}>Home Delivery</Typography>
-                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                      {shipping.free
-                        ? shipping.flatRate
-                          ? 'Paid Delivery Enabled'
-                          : 'Complimentary Delivery Enabled'
-                        : 'Enable Doorstep Delivery'}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 800, color: '#1a1a2e' }}>Home Delivery</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>Enable Doorstep Delivery</Typography>
                   </Box>
                 </Stack>
-
-                <Switch checked={shipping.free} onChange={(e) => setShipping({ ...shipping, free: e.target.checked })} />
-              </Box>
-
-              {/* Conditional Delivery Options */}
-              {shipping.free && (
-                <Stack spacing={3} sx={{ mt: 3 }}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      borderRadius: '22px',
-                      border: `2px solid ${shipping.flatRate ? PINK : '#F3F4F6'}`,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      bgcolor: shipping.flatRate ? alpha(PINK, 0.02) : '#fff'
-                    }}
-                  >
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <PaymentsIcon sx={{ color: PINK, fontSize: 20 }} />
-                      <Box>
-                        <Typography sx={{ fontWeight: 800, fontSize: '14px' }}>Standard Flat Rate</Typography>
-                        <Typography variant="caption">Charge customer for delivery</Typography>
-                      </Box>
-                    </Stack>
-                    <Switch
-                      size="small"
-                      checked={shipping.flatRate}
-                      onChange={(e) =>
-                        setShipping({ ...shipping, flatRate: e.target.checked, price: e.target.checked ? shipping.price : 0 })
-                      }
-                    />
-                  </Box>
-
-                  {shipping.flatRate && (
-                    <PremiumTextField
-                      fullWidth
-                      label="Flat Rate amount"
-                      placeholder="0.00"
-                      value={shipping.price}
-                      onChange={(e) => setShipping({ ...shipping, price: e.target.value })}
-                      InputProps={{
-                        startAdornment: <Typography sx={{ mr: 1, fontWeight: 700, color: '#9CA3AF' }}>₹</Typography>
-                      }}
-                    />
-                  )}
-                </Stack>
-              )}
-            </Grid>
-
-            {/* Takeaway Master Toggle */}
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  p: 3.5,
-                  borderRadius: '24px',
-                  border: `2px solid ${shipping.takeaway ? PINK : '#F3F4F6'}`,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    borderColor: PINK,
-                    bgcolor: alpha(PINK, 0.01)
-                  }
-                }}
-              >
-                <Stack direction="row" spacing={2.5} alignItems="center">
-                  <Box sx={{ bgcolor: alpha(PINK, 0.1), p: 1.5, borderRadius: '14px' }}>
-                    <TakeawayIcon sx={{ color: PINK }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 900, fontSize: '15px' }}>Takeaway / Pickup</Typography>
-                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                      Allow customer to collect from store
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                <Switch checked={shipping.takeaway} onChange={(e) => handleTakeawayToggle(e.target.checked)} />
-              </Box>
-            </Grid>
-
-            {/* FULL WIDTH MAP & LOCATION SECTION */}
-            {shipping.free && (
-              <Grid item xs={12}>
-                <Box
+                <Switch
+                  checked={homeDelivery}
+                  onChange={(e) => setHomeDelivery(e.target.checked)}
                   sx={{
-                    mt: 3,
-                    p: 0,
-                    borderRadius: '24px',
-                    bgcolor: '#FFFFFF',
-                    border: '1px solid #E5E7EB',
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.03)',
-                    overflow: 'hidden'
+                    '& .MuiSwitch-switchBase.Mui-checked': { color: PINK },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: PINK }
                   }}
-                >
-                  {/* Controls Section with Padding */}
-                  <Box sx={{ p: { xs: 2, md: 4 }, pb: 2 }}>
-                    <Stack spacing={3}>
-                      {/* Search Location */}
-                      <Box>
-                        <Typography
-                          sx={{
-                            mb: 1.5,
-                            fontWeight: 800,
-                            color: '#374151',
-                            textTransform: 'uppercase',
-                            fontSize: '11px',
-                            letterSpacing: '1px'
-                          }}
-                        >
-                          Search Pickup Location
-                        </Typography>
-                        <PremiumTextField fullWidth inputRef={searchInputRef} placeholder="Search for your store location or landmark..." />
-                      </Box>
+                />
+              </Box>
+            </Grid>
 
-                      {/* Instruction */}
-                      <Typography variant="body2" sx={{ color: '#6B7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <InfoIcon fontSize="small" sx={{ color: PINK }} />
-                        Click on the map to pin the exact pickup location for customers
-                      </Typography>
-                    </Stack>
+            <Grid item xs={12} md={6}>
+              <Box sx={{
+                p: 3,
+                borderRadius: '24px',
+                bgcolor: alpha(PINK, 0.04),
+                border: `1px solid ${alpha(PINK, 0.1)}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '16px',
+                    bgcolor: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: PINK,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                  }}>
+                    <TakeawayIcon />
                   </Box>
-
-                  {/* Google Map - Full Width */}
-                  {mapsLoaded ? (
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        width: '100%',
-                        height: 500,
-                        borderRadius: '20px',
-                        overflow: 'hidden',
-                        border: '1px solid #E5E7EB'
-                      }}
-                    >
-                      {/* Google Map */}
-                      <Box
-                        ref={mapRef}
-                        sx={{
-                          width: '100%',
-                          height: '100%'
-                        }}
-                      />
-
-                      {/* Radius Slider Overlay */}
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          bottom: 20,
-                          left: 20,
-                          right: 20,
-                          zIndex: 10,
-                          bgcolor: 'rgba(255, 255, 255, 0.95)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '16px',
-                          p: 2.5,
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          maxWidth: '500px',
-                          margin: '0 auto'
-                        }}
-                      >
-                        <Typography sx={{ fontWeight: 800, color: '#1F2937', minWidth: '80px' }}>
-                          Radius: {radiusKm} km
-                        </Typography>
-
-                        <Slider
-                          value={radiusKm}
-                          min={1}
-                          max={100}
-                          onChange={(e, val) => setRadiusKm(val)}
-                          sx={{
-                            color: '#2563EB',
-                            height: 6,
-                            '& .MuiSlider-thumb': {
-                              width: 20,
-                              height: 20,
-                              backgroundColor: '#fff',
-                              border: '2px solid currentColor',
-                              '&:hover': {
-                                boxShadow: '0 0 0 8px rgba(37, 99, 235, 0.16)',
-                              },
-                            },
-                            '& .MuiSlider-track': {
-                              border: 'none',
-                            },
-                            '& .MuiSlider-rail': {
-                              opacity: 0.3,
-                              backgroundColor: '#bfbfbf',
-                            },
-                          }}
-                        />
-
-                        {coveredPincodes.length > 0 && (
-                          <Chip
-                            label={`${coveredPincodes.length} Pincodes`}
-                            size="small"
-                            color="primary"
-                            sx={{ fontWeight: 700, borderRadius: '8px' }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                  ) : (
-
-                    <Box
-                      sx={{
-                        height: 400,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '20px',
-                        bgcolor: '#F9FAFB'
-                      }}
-                    >
-                      <CircularProgress sx={{ color: PINK, mb: 2 }} />
-                      <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>Initializing Map Engine...</Typography>
-                    </Box>
-                  )}
-
-                  {/* Coordinates & Address */}
-                  <Box sx={{ p: { xs: 2, md: 4 }, pt: 2 }}>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12}>
-                        <Stack direction="row" spacing={2}>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography sx={{ mb: 1, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px' }}>
-                              Latitude
-                            </Typography>
-                            <PremiumTextField
-                              value={pickupLocation.latitude}
-                              onChange={(e) => setPickupLocation((p) => ({ ...p, latitude: e.target.value }))}
-                              placeholder="0.0000"
-                              disabled
-                            />
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography sx={{ mb: 1, fontWeight: 800, color: '#374151', textTransform: 'uppercase', fontSize: '11px' }}>
-                              Longitude
-                            </Typography>
-                            <PremiumTextField
-                              value={pickupLocation.longitude}
-                              onChange={(e) => setPickupLocation((p) => ({ ...p, longitude: e.target.value }))}
-                              placeholder="0.0000"
-                              disabled
-                            />
-                          </Box>
-                        </Stack>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography
-                          sx={{
-                            mb: 1,
-                            fontWeight: 800,
-                            color: '#374151',
-                            textTransform: 'uppercase',
-                            fontSize: '11px',
-                            letterSpacing: '1px'
-                          }}
-                        >
-                          Final Pickup Address
-                        </Typography>
-                        <PremiumTextField
-                          multiline
-                          rows={2}
-                          value={shipping.takeawayLocation}
-                          onChange={(e) => setShipping({ ...shipping, takeawayLocation: e.target.value })}
-                          placeholder="Pin on map or type full address here..."
-                        />
-                      </Grid>
-                    </Grid>
+                  <Box>
+                    <Typography sx={{ fontWeight: 800, color: '#1a1a2e' }}>Takeaway / Pickup</Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280' }}>Allow customer to collect from store</Typography>
                   </Box>
-                </Box>
-              </Grid>
-            )}
+                </Stack>
+                <Switch
+                  checked={takeaway}
+                  onChange={(e) => setTakeaway(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': { color: PINK },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: PINK }
+                  }}
+                />
+              </Box>
+            </Grid>
           </Grid>
+
+          {homeDelivery && (
+            <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid #F3F4F6' }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, mb: 4, color: '#1a1a2e' }}>Select Delivery Mode</Typography>
+
+              {loadingModes ? (
+                <CircularProgress size={24} sx={{ color: PINK }} />
+              ) : enabledModes.length === 0 ? (
+                <Alert severity="warning" sx={{ borderRadius: '16px' }}>
+                  You haven't configured any delivery modes in your <Button onClick={() => navigate('/cake/deliveryprofile')} sx={{ fontWeight: 800 }}>Delivery Profile</Button>.
+                </Alert>
+              ) : (
+                <Grid container spacing={2}>
+                  {enabledModes.map((config) => {
+                    const isSelected = deliveryMode === config.mode;
+                    return (
+                      <Grid item xs={12} sm={6} md={4} key={config.mode}>
+                        <Box
+                          onClick={() => setDeliveryMode(config.mode)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            p: 2.5,
+                            borderRadius: '16px',
+                            cursor: 'pointer',
+                            border: isSelected ? `2px solid ${PINK}` : '1px solid #E5E7EB',
+                            bgcolor: isSelected ? alpha(PINK, 0.04) : '#ffffff',
+                            transition: 'all 0.2s',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              borderColor: isSelected ? PINK : '#D1D5DB',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                            }
+                          }}
+                        >
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{
+                              fontWeight: 800,
+                              fontSize: '15px',
+                              color: isSelected ? '#1a1a2e' : '#4B5563',
+                              mb: 0.5
+                            }}>
+                              {config.mode}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 600 }}>
+                              {config.radius ? `Up to ${config.radius} km` : 'Fixed Zone'}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              border: `2px solid ${isSelected ? PINK : '#D1D5DB'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              ml: 2
+                            }}
+                          >
+                            {isSelected && <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: PINK }} />}
+                          </Box>
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              )}
+            </Box>
+          )}
         </PremiumCard>
 
         {/* 🏷️ SECTION 6: SEARCH ENGINE OPTIMIZATION */}
@@ -2733,11 +2344,11 @@ const AddCakePackage = () => {
                           sx={{
                             width: 50,
                             height: 50,
-                            borderRadius: '10px',
+                            borderRadius: '12px',
                             overflow: 'hidden',
-                            flexShrink: 0,
+                            mr: 2,
                             bgcolor: '#fff',
-                            border: '1px solid #eee'
+                            border: '1px solid #F1F5F9'
                           }}
                         >
                           <img
@@ -3056,7 +2667,7 @@ const AddCakePackage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box >
+    </Box>
   );
 };
 

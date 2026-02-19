@@ -196,6 +196,8 @@ const Cakeenquirychat = Loadable(lazy(() => import('../views/cake/EnquiryChatPag
 const CakeSchedules = Loadable(lazy(() => import('../views/cake/Schedulescake')));
 const Cakecategories = Loadable(lazy(() => import('../views/cake/Categories')));
 const Cakeaddons = Loadable(lazy(() => import('../views/cake/Add-ons.jsx')));
+const Deliveryprofile = Loadable(lazy(() => import('../views/cake/Deliveryprofile.jsx')));
+
 // const PhotographyPaymentFailed = Loadable(lazy(() => import('../views/PaymentFailed')));
 // Ornaments
 const AddornamentsPackage = Loadable(lazy(() => import('../views/ornaments/Addornaments.jsx')));
@@ -522,7 +524,9 @@ const MainRoutes = {
             { path: 'enquirychat', element: <Cakeenquirychat /> },
             { path: 'schedules', element: <CakeSchedules /> },
             { path: 'categories', element: <Cakecategories /> },
-            { path: 'Addons', element: <Cakeaddons /> }
+            { path: 'Addons', element: <Cakeaddons /> },
+             { path: 'deliveryprofile', element: <Deliveryprofile /> }
+
 
 
           ]
