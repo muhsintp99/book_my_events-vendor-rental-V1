@@ -771,7 +771,7 @@ const styles = `
 `;
 
 const DeliveryProfile = () => {
-const [title, setTitle] = useState("");
+  const [title, setTitle] = useState("Standard package delivery");
   const [zoneInput, setZoneInput] = useState("");
   const [zoneTags, setZoneTags] = useState([]);
   const [shippingPrice, setShippingPrice] = useState("");
@@ -782,11 +782,10 @@ const [title, setTitle] = useState("");
   const [locationSelected, setLocationSelected] = useState(false);
   const [coverageType, setCoverageType] = useState("radius_based"); // 'radius_based' or 'entire_zone'
 
+  const [editIndex, setEditIndex] = useState(null);
   const [vendorProfile, setVendorProfile] = useState(null);
   const [deliveryModes, setDeliveryModes] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   // Google Maps state & refs
@@ -853,7 +852,9 @@ const [title, setTitle] = useState("");
           distance: `${c.radius || 0} km`,
           zone: c.selectedPincodes?.length > 0 ? c.selectedPincodes.join(', ') : 'Registered Area',
           status: c.status ? 'Active' : 'Inactive',
-          shippingPrice: c.shippingPrice
+          shippingPrice: c.shippingPrice,
+          _originalIndex: idx,
+          _rawConfig: c
         }));
         setDeliveryModes(mappedModes);
 
@@ -1019,18 +1020,15 @@ const [title, setTitle] = useState("");
     };
 
     const existingConfigs = vendorProfile.deliveryProfile?.deliveryConfigurations || [];
-let updatedConfigs = [];
+    let updatedConfigs = [];
 
-if (editIndex !== null) {
-  // Update existing
-  updatedConfigs = existingConfigs.map((item, index) =>
-    index === editIndex ? newConfig : item
-  );
-} else {
-  // Add new
-  updatedConfigs = [...existingConfigs, newConfig];
-}
-
+    if (editIndex !== null) {
+      // Update existing
+      updatedConfigs = existingConfigs.map((c, i) => i === editIndex ? newConfig : c);
+    } else {
+      // Append new
+      updatedConfigs = [...existingConfigs, newConfig];
+    }
 
     try {
       const token = localStorage.getItem('token');
@@ -1046,8 +1044,7 @@ if (editIndex !== null) {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 2400);
         fetchProfile(); // Refresh table
-handleReset();
-setEditIndex(null);
+        handleReset();
       }
     } catch (err) {
       console.error('Error saving profile:', err);
@@ -1083,13 +1080,12 @@ setEditIndex(null);
   };
 
   const handleReset = () => {
-setTitle("");
+    setEditIndex(null);
+    setTitle("Standard package delivery");
     setZoneTags([]);
     setZoneInput("");
     setShippingPrice("");
     setRadiusKm(26);
-    setEditIndex(null);
-
     setLocationSelected(false);
     setCoverageType("radius_based");
     setPickupLocation({
@@ -1155,8 +1151,6 @@ setTitle("");
   };
 
   const filteredModes = deliveryModes.filter(m => {
-    if (m.mode.toLowerCase() === 'standard package delivery') return false;
-
     const searchLow = tableSearch.toLowerCase();
     const smartLow = smartSearchZone.toLowerCase();
 
@@ -1274,7 +1268,7 @@ setTitle("");
               )}
 
               {/* Select button row */}
-              {/* <div className="dp-map-select-row">
+              <div className="dp-map-select-row">
                 <div className="dp-map-tip-inline">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                   Click on the map to pin your pickup/delivery location
@@ -1283,10 +1277,10 @@ setTitle("");
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" /><circle cx="12" cy="10" r="3" /></svg>
                   Select
                 </button>
-              </div> */}
+              </div>
 
               {/* Coordinates row */}
-              {/* <div className="dp-coords-row">
+              <div className="dp-coords-row">
                 <div className="dp-coord-field">
                   <label>Latitude</label>
                   <input value={pickupLocation.latitude} placeholder="0.0000" disabled readOnly />
@@ -1304,7 +1298,7 @@ setTitle("");
                     placeholder="Pin on map or type address..."
                   />
                 </div>
-              </div> */}
+              </div>
             </div>
 
             {/* Shipping Price + Save row */}
@@ -1319,9 +1313,11 @@ setTitle("");
                 />
               </div>
               <div className="dp-bottom-actions">
-                <button className="dp-btn-ghost" onClick={handleReset} disabled={saving}>Reset</button>
+                <button className="dp-btn-ghost" onClick={handleReset} disabled={saving}>
+                  {editIndex !== null ? 'Cancel Edit' : 'Reset'}
+                </button>
                 <button className="dp-btn-save" onClick={handleSave} disabled={saving}>
-{saving ? 'Saving...' : editIndex !== null ? 'Update' : 'Save'}
+                  {saving ? 'Saving...' : (editIndex !== null ? 'Update Mode' : 'Save')}
                 </button>
               </div>
             </div>
@@ -1338,7 +1334,7 @@ setTitle("");
               </svg>
               <input
                 className="dp-table-search"
-                placeholder="Search Modes..."
+                placeholder="Search Area..."
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
               />
@@ -1351,6 +1347,7 @@ setTitle("");
                   <th>Mode</th>
                   <th>Distance (km)</th>
                   <th>Zone / District</th>
+                  <th>Price</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -1371,6 +1368,21 @@ setTitle("");
                       </td>
                       <td className="dp-td-zone">{mode.zone}</td>
                       <td>
+                        <span className="dp-price-pill" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          background: '#fdf2f8',
+                          border: '1px solid #fce7f3',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          color: '#db2777'
+                        }}>
+                          ₹ {parseFloat(mode.shippingPrice || 0).toFixed(2)}
+                        </span>
+                      </td>
+                      <td>
                         <span className="dp-status-active">
                           {mode.status}
                         </span>
@@ -1380,21 +1392,14 @@ setTitle("");
                           <button
                             className="dp-action-edit"
                             title="Edit"
-onClick={() => {
-  const existingConfigs = vendorProfile.deliveryProfile?.deliveryConfigurations || [];
-  const config = existingConfigs[mode.id - 1];
-
-  if (!config) return;
-
-  setTitle(config.mode);
-  setShippingPrice(config.shippingPrice);
-  setRadiusKm(config.radius || 26);
-  setZoneTags(config.selectedPincodes || []);
-  setEditIndex(mode.id - 1);
-
-  // Scroll to top smoothly
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}}
+                            onClick={() => {
+                              setTitle(mode.mode);
+                              setShippingPrice(mode.shippingPrice);
+                              setRadiusKm(mode._rawConfig.radius || 26);
+                              setZoneTags(mode._rawConfig.selectedPincodes || []);
+                              setEditIndex(mode._originalIndex);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                           </button>

@@ -178,7 +178,9 @@ const PremiumSelect = styled(Select)(({ theme }) => ({
   }
 }));
 
-const HeroUploadBox = styled(Box)(({ theme, hasImage }) => ({
+const HeroUploadBox = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'hasImage'
+})(({ theme, hasImage }) => ({
   width: '100%',
   height: '250px',
   borderRadius: '28px',
@@ -462,7 +464,7 @@ const AddCakePackage = () => {
 
   // Addons & Shipping
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [deliveryMode, setDeliveryMode] = useState('standard');
+  const [deliveryMode, setDeliveryMode] = useState('');
   const [homeDelivery, setHomeDelivery] = useState(true);
   const [takeaway, setTakeaway] = useState(false);
   const [enabledModes, setEnabledModes] = useState([]); // Configurations from vendor profile
@@ -501,10 +503,14 @@ const AddCakePackage = () => {
               const activeModes = profile.deliveryProfile.deliveryConfigurations.filter(c => c.status);
               setEnabledModes(activeModes);
 
-              // If current deliveryMode is not in enabled modes, set default to first enabled mode
-              if (activeModes.length > 0 && !activeModes.find(m => m.mode === deliveryMode)) {
+              // If creating NEW package, auto-select "Standard package delivery" or the first available
+              if (!isEditMode && activeModes.length > 0 && !deliveryMode) {
                 const standard = activeModes.find(m => m.mode.toLowerCase() === 'standard package delivery');
-                setDeliveryMode(standard ? standard.mode : activeModes[0].mode);
+                if (standard) {
+                  setDeliveryMode(standard.mode);
+                } else {
+                  setDeliveryMode(activeModes[0].mode);
+                }
               }
             }
           } catch (profileErr) {
@@ -531,7 +537,7 @@ const AddCakePackage = () => {
             setSearchTags((cake.searchTags || []).join(', '));
             setExistingThumbnail(cake.thumbnail || '');
             setExistingGallery(cake.images || []);
-            setDeliveryMode(cake.deliveryMode || 'standard');
+            setDeliveryMode(cake.deliveryMode || '');
             setHomeDelivery(cake.shipping?.homeDelivery !== undefined ? cake.shipping.homeDelivery : true);
             setTakeaway(cake.shipping?.takeaway || false);
 
@@ -584,27 +590,7 @@ const AddCakePackage = () => {
     fetchAddons();
   }, [currentVendor]);
 
-  useEffect(() => {
-    const fetchDeliveryModes = async () => {
-      const vendorId = currentVendor?._id || currentVendor?.id;
-      if (!vendorId) return;
-      try {
-        setLoadingModes(true);
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${API_BASE}/api/vendorprofiles/find/${vendorId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.success && res.data.data?.deliveryProfile?.deliveryConfigurations) {
-          setEnabledModes(res.data.data.deliveryProfile.deliveryConfigurations);
-        }
-      } catch (err) {
-        console.error('Error fetching delivery modes:', err);
-      } finally {
-        setLoadingModes(false);
-      }
-    };
-    fetchDeliveryModes();
-  }, [currentVendor]);
+  // Redundant fetch removed - handled in main loadInitialData effect
 
   useEffect(() => {
     const fetchSubCategories = async () => {
@@ -1926,7 +1912,11 @@ const AddCakePackage = () => {
                     <Box sx={{ width: '100%', height: 180, bgcolor: '#F9FAFB', overflow: 'hidden', position: 'relative' }}>
                       {addon.image ? (
                         <img
-                          src={addon.image}
+                          src={
+                            addon.image.startsWith('http')
+                              ? addon.image
+                              : `${API_BASE}${addon.image.startsWith('/') ? '' : '/'}${addon.image}`
+                          }
                           alt={addon.title}
                           className="addon-img"
                           style={{
@@ -2151,6 +2141,9 @@ const AddCakePackage = () => {
                             <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 600 }}>
                               {config.radius ? `Up to ${config.radius} km` : 'Fixed Zone'}
                             </Typography>
+                            <Typography sx={{ color: PINK, fontWeight: 800, fontSize: '12px', mt: 0.5 }}>
+                              ₹ {config.shippingPrice || 0}
+                            </Typography>
                           </Box>
 
                           <Box
@@ -2354,7 +2347,7 @@ const AddCakePackage = () => {
                           <img
                             src={
                               item.thumbnail ||
-                              (item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`) : '/placeholder.png')
+                              (item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image.startsWith('/') ? '' : '/'}${item.image}`) : '/placeholder.png')
                             }
                             alt=""
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
