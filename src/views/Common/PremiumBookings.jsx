@@ -430,6 +430,7 @@ const PremiumBookings = ({
                 getDataFn={getDataFn}
                 getImageUrl={getImageUrl}
                 moduleLabel={moduleLabel}
+                moduleUrlName={moduleUrlName}
                 primaryColor={primaryColor}
             />
 
@@ -534,13 +535,25 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
 
 const renderTimeSlot = (timeSlot) => {
     if (!timeSlot) return null;
-    if (typeof timeSlot === 'string') return timeSlot;
-    if (Array.isArray(timeSlot)) return timeSlot.map(ts => (typeof ts === 'object' ? ts.label || ts.time : ts)).join(', ');
-    if (typeof timeSlot === 'object') return timeSlot.label || timeSlot.time || 'N/A';
-    return null;
+
+    const formatSingle = (ts) => {
+        if (typeof ts === 'string') return ts;
+        if (typeof ts === 'object' && ts !== null) {
+            // Favor the specific time value over the generic slot label to show exact time
+            return ts.time || ts.label || 'N/A';
+        }
+        return 'N/A';
+    };
+
+    if (Array.isArray(timeSlot)) {
+        const slots = timeSlot.map(formatSingle).filter(Boolean);
+        return slots.length > 0 ? slots.join(', ') : 'N/A';
+    }
+
+    return formatSingle(timeSlot);
 };
 
-const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getImageUrl, moduleLabel, primaryColor }) => {
+const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getImageUrl, moduleLabel, moduleUrlName, primaryColor }) => {
     if (!booking) return null;
     const statusColor = getStatusColor(booking.status);
     const data = getDataFn(booking);
@@ -581,26 +594,80 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                         </Box>
                     )}
                 </Box>
-                {booking.transportDetails && (
+                {/* Trip & Location Details / Delivery Details */}
+                {(booking.transportDetails || booking.deliveryType || booking.address || booking.location) && (
                     <Box sx={{ p: 3, borderRadius: '24px', bgcolor: alpha(primaryColor, 0.03), border: '1px solid', borderColor: alpha(primaryColor, 0.1) }}>
-                        <Typography variant="caption" fontWeight={800}>TRIP DETAILS</Typography>
+                        <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase' }}>
+                            {moduleUrlName === 'transport' ? 'TRIP & LOCATION DETAILS' : 'DELIVERY & LOCATION DETAILS'}
+                        </Typography>
                         <Stack spacing={2} sx={{ mt: 2 }}>
-                            {booking.transportDetails.tripType && <DetailRow label="Trip Type" value={booking.transportDetails.tripType} />}
-                            {(booking.transportDetails.hours > 0) && <DetailRow label="Duration (Hours)" value={booking.transportDetails.hours} />}
-                            {(booking.transportDetails.days > 0) && <DetailRow label="Duration (Days)" value={booking.transportDetails.days} />}
-                            {(booking.transportDetails.distanceKm > 0) && <DetailRow label="Distance (KM)" value={booking.transportDetails.distanceKm} />}
-                            {booking.transportDetails.decorationIncluded && <DetailRow label="Decoration" value={`Included (+₹${booking.transportDetails.decorationPrice})`} />}
+                            {/* Trip Specific (Transport) */}
+                            {moduleUrlName === 'transport' && booking.transportDetails && (
+                                <>
+                                    {booking.transportDetails.tripType && <DetailRow label="Trip Type" value={booking.transportDetails.tripType} />}
+                                    {booking.transportDetails.hours > 0 && <DetailRow label="Duration (Hours)" value={booking.transportDetails.hours} />}
+                                    {booking.transportDetails.days > 0 && <DetailRow label="Duration (Days)" value={booking.transportDetails.days} />}
+                                    {booking.transportDetails.distanceKm > 0 && <DetailRow label="Distance (KM)" value={booking.transportDetails.distanceKm} />}
+                                    {booking.transportDetails.decorationIncluded && <DetailRow label="Decoration" value={`Included (+₹${booking.transportDetails.decorationPrice || 0})`} />}
+                                </>
+                            )}
+
+                            {/* Delivery Specific (Cake/Boutique) */}
+                            {booking.deliveryType && <DetailRow label="Delivery Mode" value={booking.deliveryType} />}
+                            {booking.shippingPrice > 0 && <DetailRow label="Shipping Price" value={`₹${booking.shippingPrice}`} />}
+
+                            {/* General Location/Address */}
+                            {(() => {
+                                const displayLocation = (booking.location && booking.location !== 'N/A')
+                                    ? booking.location
+                                    : (booking.address && booking.address !== 'N/A')
+                                        ? booking.address
+                                        : null;
+
+                                return displayLocation ? (
+                                    <DetailRow
+                                        icon={<LocationOn sx={{ fontSize: 18 }} />}
+                                        label={moduleUrlName === 'transport' ? "Pickup Location" : "Delivery Address"}
+                                        value={displayLocation}
+                                    />
+                                ) : (
+                                    <DetailRow
+                                        icon={<LocationOn sx={{ fontSize: 18 }} />}
+                                        label={moduleUrlName === 'transport' ? "Pickup Location" : "Delivery Address"}
+                                        value="N/A"
+                                    />
+                                );
+                            })()}
+                            {booking.pincode && <DetailRow label="Pincode" value={booking.pincode} />}
                         </Stack>
                     </Box>
                 )}
+
                 <Box>
-                    <Typography variant="caption" fontWeight={800}>CUSTOMER INFO</Typography>
+                    <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase' }}>Customer Info</Typography>
                     <Stack spacing={2} sx={{ mt: 2 }}>
                         <DetailRow icon={<Person />} label="Full Name" value={booking.fullName} />
                         <DetailRow icon={<Email />} label="Email" value={booking.emailAddress} />
                         <DetailRow icon={<Phone />} label="Phone" value={booking.contactNumber} />
                         <DetailRow icon={<CalendarMonth />} label="Event Date" value={new Date(booking.bookingDate).toLocaleDateString()} />
-                        {booking.timeSlot && <DetailRow icon={<AccessTime />} label="Time Slot" value={renderTimeSlot(booking.timeSlot)} />}
+                        {/* Time Display Logic: Prioritize Exact Time > Delivery Time > Time Slot */}
+                        {(() => {
+                            const exactTime = booking.time || booking.deliveryTime;
+                            const slotInfo = booking.timeSlot ? renderTimeSlot(booking.timeSlot) : null;
+
+                            if (exactTime) {
+                                return (
+                                    <>
+                                        <DetailRow icon={<AccessTime />} label="Scheduled Time" value={exactTime} />
+                                        {slotInfo && slotInfo !== exactTime && (
+                                            <DetailRow icon={<AccessTime />} label="Time Slot" value={slotInfo} />
+                                        )}
+                                    </>
+                                );
+                            }
+
+                            return slotInfo ? <DetailRow icon={<AccessTime />} label="Time Slot" value={slotInfo} /> : null;
+                        })()}
                     </Stack>
                 </Box>
                 <Box sx={{ p: 3, borderRadius: '24px', background: PREMIUM_DARK, color: '#fff' }}>
