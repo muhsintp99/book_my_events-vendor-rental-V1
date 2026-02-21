@@ -360,29 +360,28 @@ export default function VendorRegisterStepper() {
     const content = [
 
         /* STEP 1 */
-        <Box key={0} sx={{ animation: `${fadeUp} .35s ease` }}>
-            <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="First Name *" value={form.firstName}
-                        onChange={e => set('firstName', e.target.value)} size="medium"
-                        error={!!errors.firstName} helperText={errors.firstName} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Last Name *" value={form.lastName}
-                        onChange={e => set('lastName', e.target.value)} size="medium"
-                        error={!!errors.lastName} helperText={errors.lastName} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Email Address *" type="email" value={form.email}
-                        onChange={e => set('email', e.target.value)} size="medium"
-                        error={!!errors.email} helperText={errors.email} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Phone Number *" value={form.phone}
-                        onChange={e => set('phone', e.target.value)} size="medium"
-                        error={!!errors.phone} helperText={errors.phone} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+        <Box key={0} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Row: First Name | Last Name */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField fullWidth label="First Name *" value={form.firstName}
+                    onChange={e => set('firstName', e.target.value)} size="medium"
+                    error={!!errors.firstName} helperText={errors.firstName} sx={INPUT_SX} />
+                <TextField fullWidth label="Last Name *" value={form.lastName}
+                    onChange={e => set('lastName', e.target.value)} size="medium"
+                    error={!!errors.lastName} helperText={errors.lastName} sx={INPUT_SX} />
+            </Box>
+            {/* Row: Email | Phone */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField fullWidth label="Email Address *" type="email" value={form.email}
+                    onChange={e => set('email', e.target.value)} size="medium"
+                    error={!!errors.email} helperText={errors.email} sx={INPUT_SX} />
+                <TextField fullWidth label="Phone Number *" value={form.phone}
+                    onChange={e => set('phone', e.target.value)} size="medium"
+                    error={!!errors.phone} helperText={errors.phone} sx={INPUT_SX} />
+            </Box>
+            {/* Row: Vendor Type | (half spacer) */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ flex: '0 0 calc(50% - 8px)' }}>
                     <FormControl fullWidth size="medium">
                         <InputLabel sx={LB_SX}>Vendor Type</InputLabel>
                         <Select value={form.vendorType} label="Vendor Type" onChange={e => set('vendorType', e.target.value)}
@@ -391,82 +390,75 @@ export default function VendorRegisterStepper() {
                             <MenuItem value="company">Company / Business</MenuItem>
                         </Select>
                     </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth size="medium" error={!!errors.module}>
-                        <InputLabel sx={LB_SX}>Service Module *</InputLabel>
-                        <Select value={form.module} label="Service Module *" onChange={e => set('module', e.target.value)}
-                            sx={SELECT_SX} MenuProps={MENU_PROPS} displayEmpty={false}>
-                            {modules.length === 0
-                                ? <MenuItem disabled value=""><em style={{ color: '#aaa' }}>Loading modules…</em></MenuItem>
-                                : modules.map(m => <MenuItem key={m._id} value={m._id}>{m.title}</MenuItem>)
-                            }
-                        </Select>
-                        {errors.module && <FormHelperText>{errors.module}</FormHelperText>}
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Password *" size="medium"
-                        type={showPass ? 'text' : 'password'} value={form.password}
-                        onChange={e => set('password', e.target.value)}
-                        error={!!errors.password} helperText={errors.password} sx={INPUT_SX}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton size="small" onClick={() => setShowPass(p => !p)} edge="end">
-                                        {showPass ? <VisibilityIcon sx={{ fontSize: 18 }} /> : <VisibilityOffIcon sx={{ fontSize: 18 }} />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Confirm Password *" size="medium"
-                        type={showConf ? 'text' : 'password'} value={form.confirmPassword}
-                        onChange={e => set('confirmPassword', e.target.value)}
-                        error={!!errors.confirmPassword} helperText={errors.confirmPassword} sx={INPUT_SX}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton size="small" onClick={() => setShowConf(p => !p)} edge="end">
-                                        {showConf ? <VisibilityIcon sx={{ fontSize: 18 }} /> : <VisibilityOffIcon sx={{ fontSize: 18 }} />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }} />
-                </Grid>
-            </Grid>
+                </Box>
+                <Box sx={{ flex: 1 }} /> {/* spacer */}
+            </Box>
+            {/* Row: Service Module — FULL WIDTH always */}
+            <FormControl fullWidth size="medium" error={!!errors.module}>
+                <InputLabel sx={LB_SX}>Service Module *</InputLabel>
+                <Select value={form.module} label="Service Module *" onChange={e => set('module', e.target.value)}
+                    sx={SELECT_SX} MenuProps={MENU_PROPS}>
+                    {modules.length === 0
+                        ? <MenuItem disabled value=""><em style={{ color: '#aaa' }}>Loading modules…</em></MenuItem>
+                        : modules.map(m => <MenuItem key={m._id} value={m._id}>{m.title}</MenuItem>)
+                    }
+                </Select>
+                {errors.module && <FormHelperText>{errors.module}</FormHelperText>}
+            </FormControl>
+            {/* Row: Password | Confirm Password */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField fullWidth label="Password *" size="medium"
+                    type={showPass ? 'text' : 'password'} value={form.password}
+                    onChange={e => set('password', e.target.value)}
+                    error={!!errors.password} helperText={errors.password} sx={INPUT_SX}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton size="small" onClick={() => setShowPass(p => !p)} edge="end">
+                                    {showPass ? <VisibilityIcon sx={{ fontSize: 18 }} /> : <VisibilityOffIcon sx={{ fontSize: 18 }} />}
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }} />
+                <TextField fullWidth label="Confirm Password *" size="medium"
+                    type={showConf ? 'text' : 'password'} value={form.confirmPassword}
+                    onChange={e => set('confirmPassword', e.target.value)}
+                    error={!!errors.confirmPassword} helperText={errors.confirmPassword} sx={INPUT_SX}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton size="small" onClick={() => setShowConf(p => !p)} edge="end">
+                                    {showConf ? <VisibilityIcon sx={{ fontSize: 18 }} /> : <VisibilityOffIcon sx={{ fontSize: 18 }} />}
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }} />
+            </Box>
         </Box>,
 
         /* STEP 2 */
-        <Box key={1} sx={{ animation: `${fadeUp} .35s ease` }}>
-            <Grid container spacing={2.5}>
-                <Grid item xs={12}>
-                    <TextField fullWidth label="Store / Business Name *" value={form.storeName}
-                        onChange={e => set('storeName', e.target.value)} size="medium"
-                        error={!!errors.storeName} helperText={errors.storeName} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Business TIN" value={form.businessTIN}
-                        onChange={e => set('businessTIN', e.target.value)} size="medium"
-                        placeholder="Optional" sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="TIN Expiry Date" type="date" value={form.tinExpireDate}
-                        onChange={e => set('tinExpireDate', e.target.value)} size="medium"
-                        InputLabelProps={{ shrink: true }} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth size="medium">
-                        <InputLabel sx={LB_SX}>Zone / Area</InputLabel>
-                        <Select value={form.zone} label="Zone / Area" onChange={e => set('zone', e.target.value)}
-                            sx={SELECT_SX} MenuProps={MENU_PROPS}>
-                            <MenuItem value=""><em style={{ color: '#aaa' }}>None (optional)</em></MenuItem>
-                            {zones.map(z => <MenuItem key={z._id} value={z._id}>{z.name}{z.city ? ` — ${z.city}` : ''}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-                </Grid>
-            </Grid>
+        <Box key={1} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Row: Store Name — full width */}
+            <TextField fullWidth label="Store / Business Name *" value={form.storeName}
+                onChange={e => set('storeName', e.target.value)} size="medium"
+                error={!!errors.storeName} helperText={errors.storeName} sx={INPUT_SX} />
+            {/* Row: Business TIN | TIN Expiry */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField fullWidth label="Business TIN (optional)" value={form.businessTIN}
+                    onChange={e => set('businessTIN', e.target.value)} size="medium" sx={INPUT_SX} />
+                <TextField fullWidth label="TIN Expiry Date" type="date" value={form.tinExpireDate}
+                    onChange={e => set('tinExpireDate', e.target.value)} size="medium"
+                    InputLabelProps={{ shrink: true }} sx={INPUT_SX} />
+            </Box>
+            {/* Row: Zone — FULL WIDTH always */}
+            <FormControl fullWidth size="medium">
+                <InputLabel sx={LB_SX}>Zone / Area (optional)</InputLabel>
+                <Select value={form.zone} label="Zone / Area (optional)" onChange={e => set('zone', e.target.value)}
+                    sx={SELECT_SX} MenuProps={MENU_PROPS}>
+                    <MenuItem value=""><em style={{ color: '#aaa' }}>None — skip this</em></MenuItem>
+                    {zones.map(z => <MenuItem key={z._id} value={z._id}>{z.name}{z.city ? ` — ${z.city}` : ''}</MenuItem>)}
+                </Select>
+            </FormControl>
         </Box>,
 
         /* STEP 3 */
