@@ -40,7 +40,7 @@ export default function Login() {
               <AuthCardWrapper>
                 <Grid container spacing={2} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                   <Grid sx={{ mb: 3 }}>
-                  
+
                     <LogoSection />
                   </Grid>
                   <Grid size={12}>
@@ -63,13 +63,21 @@ export default function Login() {
                   <Grid size={12}>
                     <Divider />
                   </Grid>
-                  {/* <Grid size={12}>
+                  <Grid size={12}>
                     <Grid container direction="column" sx={{ alignItems: 'center' }} size={12}>
-                      <Typography component={Link} to="/register" variant="subtitle1" sx={{ textDecoration: 'none' }}>
-                        Don&apos;t have an account? Sign up
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        Don&apos;t have an account?{' '}
+                        <Typography
+                          component={Link}
+                          to="/pages/register"
+                          variant="body2"
+                          sx={{ color: '#E15B65', fontWeight: 700, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                        >
+                          Register as Vendor
+                        </Typography>
                       </Typography>
                     </Grid>
-                  </Grid> */}
+                  </Grid>
                 </Grid>
               </AuthCardWrapper>
             </Grid>

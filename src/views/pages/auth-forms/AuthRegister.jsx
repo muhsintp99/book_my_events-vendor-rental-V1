@@ -202,7 +202,7 @@ export default function AuthRegister() {
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : null}
             >
-              {loading ? 'Signing up...' : 'Sign up'} 
+              {loading ? 'Signing up...' : 'Sign up'}
             </Button>
           </AnimateButton>
         </Box>
