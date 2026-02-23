@@ -937,11 +937,6 @@ const DeliveryProfile = () => {
         if (status === 'OK' && results[0]) {
           const addr = results[0].formatted_address;
           setPickupLocation(prev => ({ ...prev, address: addr }));
-          // Automatically add to zone tags
-          setZoneTags(prev => {
-            if (!prev.includes(addr)) return [...prev, addr];
-            return prev;
-          });
         }
       });
     });
@@ -1082,7 +1077,8 @@ const DeliveryProfile = () => {
   const handleReset = () => {
     setEditIndex(null);
     setTitle("Standard package delivery");
-    setZoneTags([]);
+    const vendorAddr = vendorProfile?.storeAddress?.fullAddress || "";
+    setZoneTags(vendorAddr ? [vendorAddr] : []);
     setZoneInput("");
     setShippingPrice("");
     setRadiusKm(26);
@@ -1143,9 +1139,6 @@ const DeliveryProfile = () => {
 
   const handleSelectLocation = () => {
     if (pickupLocation.address) {
-      if (!zoneTags.includes(pickupLocation.address)) {
-        setZoneTags([...zoneTags, pickupLocation.address]);
-      }
       setLocationSelected(true);
     }
   };
@@ -1204,10 +1197,10 @@ const DeliveryProfile = () => {
                 ))}
                 <input
                   className="dp-tag-inner-input"
-                  placeholder={zoneTags.length === 0 ? "Type zone and press Enter..." : ""}
+                  placeholder=""
                   value={zoneInput}
-                  onChange={(e) => setZoneInput(e.target.value)}
-                  onKeyDown={handleZoneKeyDown}
+                  readOnly
+                  style={{ cursor: 'default' }}
                 />
               </div>
             </div>
