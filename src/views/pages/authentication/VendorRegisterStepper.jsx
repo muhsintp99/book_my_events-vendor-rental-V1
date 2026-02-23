@@ -72,7 +72,7 @@ const MENU_PROPS = {
         sx: {
             mt: 1, borderRadius: '14px', border: '1px solid #eef0f8',
             boxShadow: '0 12px 40px rgba(0,0,0,0.14)',
-            maxHeight: 280, overflow: 'hidden',
+            maxHeight: 280, overflowY: 'auto',
             '& .MuiList-root': { padding: '6px' },
             '& .MuiMenuItem-root': {
                 borderRadius: '8px', fontSize: 14, fontWeight: 500, color: '#333',
@@ -400,7 +400,16 @@ export default function VendorRegisterStepper() {
                     sx={SELECT_SX} MenuProps={MENU_PROPS}>
                     {modules.length === 0
                         ? <MenuItem disabled value=""><em style={{ color: '#aaa' }}>Loading modules…</em></MenuItem>
-                        : modules.map(m => <MenuItem key={m._id} value={m._id}>{m.title}</MenuItem>)
+                        : modules.map(m => (
+                            <MenuItem key={m._id} value={m._id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Avatar
+                                    src={m.icon ? `${API}${m.icon}` : ''}
+                                    variant="rounded"
+                                    sx={{ width: 24, height: 24, bgcolor: alpha(RED, 0.1), color: RED }}
+                                />
+                                {m.title}
+                            </MenuItem>
+                        ))
                     }
                 </Select>
                 {errors.module && <FormHelperText>{errors.module}</FormHelperText>}
