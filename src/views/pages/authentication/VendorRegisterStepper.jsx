@@ -4,7 +4,7 @@ import {
     Box, Button, Step, StepLabel, Stepper, Typography, TextField,
     Grid, Select, MenuItem, FormControl, InputLabel, FormHelperText,
     CircularProgress, Checkbox, FormControlLabel, Alert, Avatar,
-    Divider, Chip, Paper, InputAdornment, IconButton
+    Divider, Chip, Paper, InputAdornment, IconButton, Card, CardContent, Stack
 } from '@mui/material';
 import { styled, keyframes, alpha } from '@mui/material/styles';
 
@@ -92,7 +92,7 @@ const PageWrap = styled(Box)({
     minHeight: '100vh', background: 'linear-gradient(135deg,#f0f2f8 0%,#e8eaf3 100%)',
     display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 16px 64px',
 });
-const Card = styled(Paper)({
+const RegCard = styled(Paper)({
     width: '100%', maxWidth: 880, borderRadius: 24,
     boxShadow: '0 8px 48px rgba(0,0,0,0.10)', border: '1px solid rgba(0,0,0,0.05)',
     padding: '40px 44px', background: '#fff',
@@ -180,7 +180,7 @@ function VerificationScreen() {
             <Box sx={{ mb: 3 }}>
                 <img src={bookLogo} alt="BookMyEvent" style={{ height: 44, objectFit: 'contain' }} />
             </Box>
-            <Card elevation={0} sx={{ textAlign: 'center', maxWidth: 640, animation: `${scaleIn} .5s ease` }}>
+            <RegCard elevation={0} sx={{ textAlign: 'center', maxWidth: 640, animation: `${scaleIn} .5s ease` }}>
                 {/* Animated icon */}
                 <Box sx={{ mb: 3, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Box sx={{
@@ -262,7 +262,7 @@ function VerificationScreen() {
                     }}>
                     Back to Login
                 </Button>
-            </Card>
+            </RegCard>
         </PageWrap>
     );
 }
@@ -282,6 +282,7 @@ export default function VendorRegisterStepper() {
     const [zones, setZones] = useState([]);
     const [plans, setPlans] = useState([]);
     const [plansLoading, setPlansLoading] = useState(false);
+    const [expandedFeatures, setExpandedFeatures] = useState(null);
     const logoRef = useRef(); const coverRef = useRef(); const tinRef = useRef();
 
     const [form, setForm] = useState({
@@ -306,9 +307,9 @@ export default function VendorRegisterStepper() {
         setPlansLoading(true);
         const url = form.module ? `${API}/api/subscription/plan/module/${form.module}` : `${API}/api/admin/subscription/plan`;
         fetch(url).then(r => r.json())
-            .then(d => setPlans(Array.isArray(d.data) ? d.data : Array.isArray(d) ? d : []))
+            .then(d => setPlans(Array.isArray(d.plans) ? d.plans : Array.isArray(d.data) ? d.data : Array.isArray(d) ? d : []))
             .catch(() => setPlans([])).finally(() => setPlansLoading(false));
-    }, [step]);
+    }, [step, form.module]);
 
     const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrors(e => ({ ...e, [k]: '' })); };
     const setAddr = (k, v) => { setForm(f => ({ ...f, storeAddress: { ...f.storeAddress, [k]: v } })); setErrors(e => ({ ...e, [k]: '' })); };
@@ -318,6 +319,17 @@ export default function VendorRegisterStepper() {
         if (Object.keys(errs).length) { setErrors(errs); return; }
         setErrors({}); setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    /* ── Razorpay script loader ── */
+    const loadRazorpayScript = () => new Promise(resolve => {
+        if (window.Razorpay) { resolve(true); return; }
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.body.appendChild(s);
+    });
 
     const submit = async () => {
         if (!agreed) { setSubmitErr('Please agree to the Terms & Conditions'); return; }
@@ -338,7 +350,77 @@ export default function VendorRegisterStepper() {
             const res = await fetch(`${API}/api/auth/register`, { method: 'POST', body: fd });
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.message || 'Registration failed');
-            setSubmitted(true);
+
+            // ── Free plan → show verification screen ──
+            if (form.subscriptionPlan === 'free') {
+                setSubmitted(true);
+                return;
+            }
+
+            // ── Premium plan → trigger Razorpay payment ──
+            const userId = data.userId || data._id || data.user?._id;
+            const userEmail = data.user?.email || form.email;
+            const userPhone = data.user?.phone || form.phone || '9999999999';
+
+            const loaded = await loadRazorpayScript();
+            if (!loaded) throw new Error('Payment gateway failed to load. Please contact support.');
+
+            const subRes = await fetch(`${API}/api/razorpay/subscription/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    providerId: userId,
+                    planId: form.subscriptionPlan,
+                    customerEmail: userEmail,
+                    customerPhone: userPhone,
+                })
+            });
+            const subData = await subRes.json();
+            if (!subRes.ok || !subData.razorpay?.subscriptionId) throw new Error(subData.message || 'Failed to create subscription');
+
+            const { razorpay, customer } = subData;
+
+            const options = {
+                key: razorpay.key,
+                subscription_id: razorpay.subscriptionId,
+                name: 'Book My Event',
+                description: `Premium Subscription`,
+                image: '/logo.png',
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await fetch(`${API}/api/razorpay/subscription/verify`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(response)
+                        });
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            // Store token if available
+                            if (data.token) localStorage.setItem('token', data.token);
+                            setSubmitted(true);
+                        } else {
+                            throw new Error('Payment verification failed');
+                        }
+                    } catch (err) {
+                        setSubmitErr(err.message || 'Payment verification failed');
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        // User closed payment without paying – just show verification screen
+                        setSubmitted(true);
+                    }
+                },
+                prefill: {
+                    email: customer?.email || userEmail,
+                    contact: customer?.phone || userPhone,
+                },
+                theme: { color: '#E15B65' }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
         } catch (err) {
             setSubmitErr(err.message);
         } finally { setLoading(false); }
@@ -502,78 +584,147 @@ export default function VendorRegisterStepper() {
         <Box key={3} sx={{ animation: `${fadeUp} .35s ease` }}>
             {plansLoading
                 ? <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress sx={{ color: RED }} /></Box>
-                : <Grid container spacing={2.5}>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <PlanBox picked={form.subscriptionPlan === 'free'} onClick={() => set('subscriptionPlan', 'free')}>
-                            {form.subscriptionPlan === 'free' && (
-                                <Box sx={{
-                                    position: 'absolute', top: 12, right: 12, width: 22, height: 22, borderRadius: '50%',
-                                    bgcolor: RED, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <CheckIcon sx={{ fontSize: 13, color: '#fff' }} />
-                                </Box>
-                            )}
-                            <Chip label="FREE" size="small" sx={{ bgcolor: '#e8f5e9', color: '#2e7d32', fontWeight: 700, fontSize: 10, mb: 1.5 }} />
-                            <Typography variant="h6" fontWeight={800} sx={{ color: '#1a1a2e', mb: 0.5 }}>Free Plan</Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 2 }}>
-                                <Typography variant="h4" fontWeight={900} sx={{ color: '#4caf50' }}>₹0</Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ ml: .8 }}>/forever</Typography>
-                            </Box>
-                            <Divider sx={{ mb: 1.5 }} />
-                            {FREE_PLAN.features.map((f, i) => (
-                                <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: .8 }}>
-                                    <CheckCircleIcon sx={{ fontSize: 15, color: '#4caf50', flexShrink: 0 }} />
-                                    <Typography sx={{ fontSize: 12.5, color: '#555' }}>{f}</Typography>
-                                </Box>
-                            ))}
-                        </PlanBox>
-                    </Grid>
-                    {plans.map((pl, idx) => {
-                        const picked = form.subscriptionPlan === pl._id;
-                        const feats = Array.isArray(pl.features) ? pl.features : ['Unlimited packages', 'Priority listing', 'Premium badge', '24/7 support'];
-                        return (
-                            <Grid item xs={12} sm={6} md={4} key={pl._id}>
-                                <PlanBox picked={picked} onClick={() => set('subscriptionPlan', pl._id)}>
-                                    {idx === 0 && plans.length > 1 && (
+                : <>
+                    <Grid container spacing={3} justifyContent="center">
+                        {/* FREE PLAN */}
+                        <Grid item xs={12} md={plans.length > 0 ? 6 : 8}>
+                            <Card
+                                onClick={() => set('subscriptionPlan', 'free')}
+                                sx={{
+                                    height: '100%', borderRadius: 4, cursor: 'pointer',
+                                    border: form.subscriptionPlan === 'free' ? '3px solid #4caf50' : '2px solid #e0e0e0',
+                                    boxShadow: form.subscriptionPlan === 'free' ? '0 4px 20px rgba(76,175,80,0.2)' : '0 2px 8px rgba(0,0,0,0.08)',
+                                    transition: 'all .25s',
+                                    '&:hover': { boxShadow: '0 6px 24px rgba(0,0,0,0.12)' }
+                                }}
+                            >
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                        <Chip label="CURRENT PLAN" sx={{ bgcolor: '#9e9e9e', color: '#fff', fontWeight: 700, fontSize: 11 }} />
+                                        {form.subscriptionPlan === 'free' && <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 22 }} />}
+                                    </Box>
+                                    <Typography variant="h6" fontWeight={800} sx={{ color: '#555', mb: 0.5 }}>FREE</Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Basic access to get started on the platform</Typography>
+                                    <Typography variant="h4" fontWeight={900} sx={{ color: '#9e9e9e', mb: 2 }}>₹0</Typography>
+                                    <Divider sx={{ mb: 2 }} />
+                                    <Stack spacing={1}>
+                                        {['Limited listings', 'Basic visibility', 'Standard support', 'Up to 5 packages'].map(f => (
+                                            <Box key={f} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <CheckCircleIcon sx={{ color: '#9e9e9e', fontSize: 18, flexShrink: 0 }} />
+                                                <Typography variant="body2" color="text.secondary">{f}</Typography>
+                                            </Box>
+                                        ))}
+                                    </Stack>
+                                    <Button fullWidth disabled sx={{ mt: 3, bgcolor: '#e0e0e0', color: '#757575', fontWeight: 700, borderRadius: 2, textTransform: 'none', py: 1.2 }}>Free Plan</Button>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        {/* PREMIUM PLANS */}
+                        {plans.map((pl, idx) => {
+                            const picked = form.subscriptionPlan === pl._id;
+                            const feats = Array.isArray(pl.features) && pl.features.length > 0 ? pl.features : ['Unlimited packages', 'Priority listing', 'Premium badge', '24/7 support', 'Advanced analytics', 'Featured placement'];
+                            const showAll = expandedFeatures === pl._id;
+                            const MAX_FEATS = 3;
+                            return (
+                                <Grid item xs={12} md={6} key={pl._id} sx={{ position: 'relative' }}>
+                                    {idx === 0 && (
                                         <Box sx={{
-                                            position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
-                                            bgcolor: RED, borderRadius: 20, px: 1.5, py: .4, display: 'flex', alignItems: 'center', gap: .5
+                                            position: 'absolute', top: 4, left: '50%', transform: 'translateX(-50%)',
+                                            bgcolor: RED, borderRadius: 20, px: 2, py: 0.5, zIndex: 1,
+                                            display: 'flex', alignItems: 'center', gap: 0.5
                                         }}>
-                                            <WorkspacePremiumIcon sx={{ fontSize: 12, color: '#fff' }} />
-                                            <Typography sx={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>POPULAR</Typography>
+                                            <WorkspacePremiumIcon sx={{ fontSize: 13, color: '#fff' }} />
+                                            <Typography sx={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>BEST VALUE</Typography>
                                         </Box>
                                     )}
-                                    {picked && <Box sx={{
-                                        position: 'absolute', top: 12, right: 12, width: 22, height: 22, borderRadius: '50%',
-                                        bgcolor: RED, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        <CheckIcon sx={{ fontSize: 13, color: '#fff' }} /></Box>}
-                                    <Chip label={pl.duration ? `${pl.duration} DAYS` : 'PLAN'} size="small"
-                                        sx={{ bgcolor: RED_BG, color: RED, fontWeight: 700, fontSize: 10, mb: 1.5 }} />
-                                    <Typography variant="h6" fontWeight={800} sx={{ color: '#1a1a2e', mb: .5, pr: picked ? 3 : 0 }}>{pl.name}</Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 2 }}>
-                                        <Typography variant="h4" fontWeight={900} sx={{ color: RED }}>₹{pl.price ?? pl.amount ?? 0}</Typography>
-                                        {pl.duration && <Typography variant="body2" color="text.secondary" sx={{ ml: .8 }}>/{pl.duration}d</Typography>}
-                                    </Box>
-                                    <Divider sx={{ mb: 1.5 }} />
-                                    {feats.map((f, i) => (
-                                        <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: .8 }}>
-                                            <CheckCircleIcon sx={{ fontSize: 15, color: RED, flexShrink: 0 }} />
-                                            <Typography sx={{ fontSize: 12.5, color: '#555' }}>{f}</Typography>
-                                        </Box>
-                                    ))}
-                                </PlanBox>
-                            </Grid>
-                        );
-                    })}
+                                    <Card
+                                        onClick={() => set('subscriptionPlan', pl._id)}
+                                        sx={{
+                                            height: '100%', borderRadius: 4, cursor: 'pointer', mt: idx === 0 ? 1.5 : 0,
+                                            border: picked ? `3px solid ${RED}` : `2px solid ${alpha(RED, 0.3)}`,
+                                            boxShadow: picked ? `0 4px 24px ${alpha(RED, 0.25)}` : `0 4px 16px ${alpha(RED, 0.12)}`,
+                                            transition: 'all .25s',
+                                            '&:hover': { boxShadow: `0 8px 32px ${alpha(RED, 0.3)}` }
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 3 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                                <Chip
+                                                    icon={<WorkspacePremiumIcon sx={{ fontSize: 14, color: '#fff !important' }} />}
+                                                    label="PREMIUM"
+                                                    sx={{ bgcolor: RED, color: '#fff', fontWeight: 700, fontSize: 11 }}
+                                                />
+                                                {picked && <CheckCircleIcon sx={{ color: RED, fontSize: 22 }} />}
+                                            </Box>
+                                            <Typography variant="h6" fontWeight={800} sx={{ color: RED, mb: 0.5 }}>{pl.name}</Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                                {pl.description || 'Upgrade to unlock premium features and grow your business faster'}
+                                            </Typography>
+
+                                            {/* Pre-launch offer */}
+                                            <Chip label="🎉 Pre-Launch Offer" sx={{ bgcolor: '#fff3cd', color: '#b45309', fontWeight: 700, fontSize: 11, mb: 1.5 }} />
+                                            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, mb: 0.5 }}>
+                                                <Typography sx={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: 16, fontWeight: 600 }}>₹20,000</Typography>
+                                                <Typography variant="h4" fontWeight={900} sx={{ color: RED }}>₹{pl.price ?? pl.amount ?? 0}</Typography>
+                                                <Typography variant="body2" color="text.secondary">/ {pl.duration ? `${pl.duration} days` : 'year'}</Typography>
+                                            </Box>
+                                            <Typography sx={{ fontSize: 12, color: '#6b7280', mb: 2 }}>Limited time launch offer for early partners</Typography>
+
+                                            <Divider sx={{ mb: 2 }} />
+
+                                            <Stack spacing={1}>
+                                                {(showAll ? feats : feats.slice(0, MAX_FEATS)).map((f, i) => (
+                                                    <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                                        <CheckCircleIcon sx={{ color: RED, fontSize: 18, flexShrink: 0, mt: 0.1 }} />
+                                                        <Typography variant="body2">{f}</Typography>
+                                                    </Box>
+                                                ))}
+                                            </Stack>
+                                            {feats.length > MAX_FEATS && (
+                                                <Button
+                                                    size="small"
+                                                    onClick={e => { e.stopPropagation(); setExpandedFeatures(showAll ? null : pl._id); }}
+                                                    sx={{ mt: 1, textTransform: 'none', fontWeight: 600, color: RED, p: 0, fontSize: 12 }}
+                                                >
+                                                    {showAll ? 'Show less' : `+${feats.length - MAX_FEATS} more features`}
+                                                </Button>
+                                            )}
+
+                                            <Button
+                                                fullWidth
+                                                onClick={e => { e.stopPropagation(); set('subscriptionPlan', pl._id); }}
+                                                sx={{
+                                                    mt: 3, bgcolor: picked ? '#b71c1c' : RED, color: '#fff',
+                                                    fontWeight: 800, borderRadius: 2, py: 1.4,
+                                                    textTransform: 'none', fontSize: 15,
+                                                    boxShadow: `0 4px 14px ${alpha(RED, 0.4)}`,
+                                                    '&:hover': { bgcolor: '#b71c1c', boxShadow: `0 6px 20px ${alpha(RED, 0.5)}` }
+                                                }}
+                                            >
+                                                {picked ? '✓ Selected' : 'Choose Premium'}
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            );
+                        })}
+                    </Grid>
+
                     {plans.length === 0 && !plansLoading && (
-                        <Grid item xs={12}>
-                            <Box sx={{ py: 2, textAlign: 'center' }}>
-                                <Typography variant="body2" color="text.secondary">No paid plans available. Continue with Free.</Typography>
-                            </Box>
-                        </Grid>
+                        <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, background: '#f9faff', border: `1px solid ${alpha(RED, 0.15)}`, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">No paid plans available for this module. You can continue with the Free plan.</Typography>
+                        </Box>
                     )}
-                </Grid>
+
+                    {plans.length > 0 && (
+                        <Box sx={{ mt: 3, p: 2, bgcolor: '#fff3e0', borderRadius: 2, border: '1px solid #ffb74d' }}>
+                            <Typography variant="body2" color="text.secondary" textAlign="center">
+                                💡 <strong>Note:</strong> After registration, you'll be redirected to a secure payment page for premium plans. Your subscription will activate immediately after successful payment.
+                            </Typography>
+                        </Box>
+                    )}
+                </>
             }
         </Box>,
 
@@ -666,7 +817,7 @@ export default function VendorRegisterStepper() {
                 </Typography>
             </Box>
 
-            <Card elevation={0}>
+            <RegCard elevation={0}>
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
                     <Typography variant="h4" fontWeight={800} sx={{ color: '#1a1a2e', letterSpacing: '-0.5px' }}>
                         Join as a Vendor
@@ -751,7 +902,7 @@ export default function VendorRegisterStepper() {
                         </Typography>
                     </Typography>
                 </Box>
-            </Card>
+            </RegCard>
         </PageWrap>
     );
 }
