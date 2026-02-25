@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -24,6 +24,7 @@ import InstallMobileIcon from '@mui/icons-material/InstallMobile';
 
 export default function AuthLogin() {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const [checked, setChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -126,6 +127,13 @@ export default function AuthLogin() {
       window.location.href = "/dashboard/default";
 
     } catch (err) {
+      if (err.response?.data?.status === 'pending' || err.response?.data?.status === 'rejected') {
+        const vendorStatus = err.response.data.status;
+        const rejectReason = err.response.data.message;
+        navigate('/pages/register', { state: { status: vendorStatus, rejectReason } });
+        return;
+      }
+
       setError(
         err.response?.data?.message ||
         err.response?.data?.error ||

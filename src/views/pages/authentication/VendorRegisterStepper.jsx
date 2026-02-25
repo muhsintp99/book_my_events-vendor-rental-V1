@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     Box, Button, Step, StepLabel, Stepper, Typography, TextField,
     Grid, Select, MenuItem, FormControl, InputLabel, FormHelperText,
@@ -161,19 +161,58 @@ function Bubble({ Icon, active, done }) {
 }
 
 /* ─────────────── Verification Pending Screen ─────────────── */
-function VerificationScreen() {
+function VerificationScreen({ status = 'pending', rejectReason = '' }) {
     const [dots, setDots] = useState('');
     useEffect(() => {
+        if (status !== 'pending') return;
         const t = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 500);
         return () => clearInterval(t);
-    }, []);
+    }, [status]);
 
-    const steps2 = [
-        { icon: '📝', label: 'Registration Received', done: true },
-        { icon: '🔍', label: 'Admin Review in Progress', active: true },
-        { icon: '✉️', label: 'Approval Email Sent to You', done: false },
-        { icon: '🚀', label: 'Account Activated!', done: false },
-    ];
+    let steps2 = [];
+    let title = '';
+    let subtitle = '';
+    let description = '';
+    let mainIcon = <VerifiedUserOutlinedIcon sx={{ fontSize: 52, color: RED }} />;
+    let iconColor = RED;
+    let iconBorderColor = alpha(RED, 0.2);
+
+    if (status === 'pending') {
+        title = 'Registration Submitted! 🎉';
+        subtitle = `Under Verification${dots}`;
+        description = <>Your vendor account is now <strong>pending admin review</strong>. Our team will verify your details and activate your account within <strong>24–48 hours</strong>. You'll receive a confirmation email once approved.</>;
+        steps2 = [
+            { icon: '📝', label: 'Registration Received', done: true },
+            { icon: '🔍', label: 'Admin Review in Progress', active: true },
+            { icon: '✉️', label: 'Approval Email Sent to You', done: false },
+            { icon: '🚀', label: 'Account Activated!', done: false },
+        ];
+    } else if (status === 'approved') {
+        title = 'Account Approved! 🎉';
+        subtitle = 'Verification Successful';
+        description = <>Your vendor account has been <strong>successfully verified and approved</strong>. You can now log in and start using your dashboard.</>;
+        iconColor = '#4caf50';
+        iconBorderColor = alpha('#4caf50', 0.2);
+        mainIcon = <CheckCircleIcon sx={{ fontSize: 52, color: iconColor }} />;
+        steps2 = [
+            { icon: '📝', label: 'Registration Received', done: true },
+            { icon: '🔍', label: 'Admin Review Completed', done: true },
+            { icon: '✉️', label: 'Approval Email Sent to You', done: true },
+            { icon: '🚀', label: 'Account Activated!', done: true },
+        ];
+    } else if (status === 'rejected') {
+        title = 'Registration Rejected';
+        subtitle = 'Verification Failed';
+        description = <>Unfortunately, your vendor account registration was <strong>not approved</strong>. {rejectReason && <><br /><br /><span style={{ color: '#d32f2f' }}><strong>Reason:</strong> {rejectReason}</span></>} <br /><br />Please contact our support team for further assistance or re-apply.</>;
+        iconColor = '#d32f2f';
+        iconBorderColor = alpha('#d32f2f', 0.2);
+        mainIcon = <span style={{ fontSize: 48, filter: 'grayscale(100%)' }}>❌</span>;
+        steps2 = [
+            { icon: '📝', label: 'Registration Received', done: true },
+            { icon: '❌', label: 'Admin Review Failed', active: true, error: true },
+            { icon: '✉️', label: 'Account Not Activated', done: false },
+        ];
+    }
 
     return (
         <PageWrap>
@@ -185,56 +224,56 @@ function VerificationScreen() {
                 <Box sx={{ mb: 3, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Box sx={{
                         width: 110, height: 110, borderRadius: '50%',
-                        background: `linear-gradient(135deg,${alpha(RED, 0.12)},${alpha(RED, 0.05)})`,
-                        border: `2px solid ${alpha(RED, 0.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: `linear-gradient(135deg,${alpha(iconColor, 0.12)},${alpha(iconColor, 0.05)})`,
+                        border: `2px solid ${iconBorderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         animation: `${floatY} 3s ease-in-out infinite`
                     }}>
-                        <VerifiedUserOutlinedIcon sx={{ fontSize: 52, color: RED }} />
+                        {mainIcon}
                     </Box>
                     {/* Orbiting dot */}
-                    <Box sx={{
-                        position: 'absolute', width: 140, height: 140, borderRadius: '50%',
-                        border: `2px dashed ${alpha(RED, 0.3)}`, animation: `${spin} 8s linear infinite`
-                    }}>
+                    {status === 'pending' && (
                         <Box sx={{
-                            position: 'absolute', top: -5, left: '50%', width: 10, height: 10,
-                            borderRadius: '50%', bgcolor: RED, transform: 'translateX(-50%)'
-                        }} />
-                    </Box>
+                            position: 'absolute', width: 140, height: 140, borderRadius: '50%',
+                            border: `2px dashed ${alpha(RED, 0.3)}`, animation: `${spin} 8s linear infinite`
+                        }}>
+                            <Box sx={{
+                                position: 'absolute', top: -5, left: '50%', width: 10, height: 10,
+                                borderRadius: '50%', bgcolor: RED, transform: 'translateX(-50%)'
+                            }} />
+                        </Box>
+                    )}
                 </Box>
 
                 <Typography variant="h4" fontWeight={800} sx={{ color: '#1a1a2e', mb: 1, letterSpacing: '-0.5px' }}>
-                    Registration Submitted! 🎉
+                    {title}
                 </Typography>
-                <Typography variant="h6" fontWeight={500} sx={{ color: RED, mb: 0.5, fontSize: 16 }}>
-                    Under Verification{dots}
+                <Typography variant="h6" fontWeight={500} sx={{ color: iconColor, mb: 0.5, fontSize: 16 }}>
+                    {subtitle}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 480, mx: 'auto', lineHeight: 1.7, fontSize: 13.5 }}>
-                    Your vendor account is now <strong>pending admin review</strong>. Our team will verify your details
-                    and activate your account within <strong>24–48 hours</strong>. You'll receive a confirmation
-                    email once approved.
+                    {description}
                 </Typography>
 
                 {/* Mini process steps */}
                 <Box sx={{ mb: 4, textAlign: 'left' }}>
-                    {steps2.map(({ icon, label, done, active }, i) => (
+                    {steps2.map(({ icon, label, done, active, error }, i) => (
                         <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: i < steps2.length - 1 ? 1.5 : 0 }}>
                             <Box sx={{
                                 width: 42, height: 42, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: done ? '#e8f5e9' : active ? RED_BG : '#f5f5f5',
-                                border: done ? '2px solid #4caf50' : active ? `2px solid ${RED}` : '2px solid #eee',
+                                background: done ? '#e8f5e9' : error ? '#ffebee' : active ? RED_BG : '#f5f5f5',
+                                border: done ? '2px solid #4caf50' : error ? '2px solid #d32f2f' : active ? `2px solid ${RED}` : '2px solid #eee',
                                 fontSize: 18
                             }}>
                                 {icon}
                             </Box>
                             <Box sx={{ flex: 1 }}>
                                 <Typography sx={{
-                                    fontSize: 13.5, fontWeight: done || active ? 600 : 400,
-                                    color: done ? '#4caf50' : active ? RED : '#bbb'
+                                    fontSize: 13.5, fontWeight: done || active || error ? 600 : 400,
+                                    color: done ? '#4caf50' : error ? '#d32f2f' : active ? RED : '#bbb'
                                 }}>
                                     {label}
                                 </Typography>
-                                {active && (
+                                {(active && !error) && (
                                     <Box sx={{
                                         mt: 0.5, height: 3, borderRadius: 4, overflow: 'hidden',
                                         background: `linear-gradient(90deg,${RED},${alpha(RED, 0.3)},${RED})`,
@@ -249,8 +288,14 @@ function VerificationScreen() {
 
                 <Box sx={{ p: 2.5, borderRadius: 14, background: 'linear-gradient(135deg,#fff9f9,#fff)', border: `1px solid ${alpha(RED, 0.15)}`, mb: 3 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-                        📧 &nbsp;Check your inbox for a <strong>registration confirmation email.</strong><br />
-                        Once approved, you can log in with your registered credentials.
+                        {status === 'approved' ? (
+                            <>✅ &nbsp;Logging in will take you directly to your dashboard.</>
+                        ) : status === 'rejected' ? (
+                            <>⚠️ &nbsp;Please verify your details and try applying again or reach out to our team.</>
+                        ) : (
+                            <>📧 &nbsp;Check your inbox for a <strong>registration confirmation email.</strong><br />
+                                Once approved, you can log in with your registered credentials.</>
+                        )}
                     </Typography>
                 </Box>
 
@@ -270,10 +315,19 @@ function VerificationScreen() {
 /* ─────────────── Main Component ─────────────── */
 export default function VendorRegisterStepper() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
+
+    // Check if we arrived here via a redirect (e.g., from login due to pending/rejected status)
+    const initialStatus = location.state?.status || null;
+    const initialReason = location.state?.rejectReason || '';
+
+    const [submitted, setSubmitted] = useState(!!initialStatus);
+    const [vendorStatus, setVendorStatus] = useState(initialStatus || 'pending');
+    const [rejectReason, setRejectReason] = useState(initialReason);
+
     const [submitErr, setSubmitErr] = useState('');
     const [agreed, setAgreed] = useState(false);
     const [showPass, setShowPass] = useState(false);
@@ -353,6 +407,7 @@ export default function VendorRegisterStepper() {
 
             // ── Free plan → show verification screen ──
             if (form.subscriptionPlan === 'free') {
+                setVendorStatus('pending');
                 setSubmitted(true);
                 return;
             }
@@ -397,6 +452,7 @@ export default function VendorRegisterStepper() {
                         if (verifyData.success) {
                             // Store token if available
                             if (data.token) localStorage.setItem('token', data.token);
+                            setVendorStatus('pending');
                             setSubmitted(true);
                         } else {
                             throw new Error('Payment verification failed');
@@ -408,6 +464,7 @@ export default function VendorRegisterStepper() {
                 modal: {
                     ondismiss: function () {
                         // User closed payment without paying – just show verification screen
+                        setVendorStatus('pending');
                         setSubmitted(true);
                     }
                 },
@@ -426,7 +483,7 @@ export default function VendorRegisterStepper() {
         } finally { setLoading(false); }
     };
 
-    if (submitted) return <VerificationScreen />;
+    if (submitted) return <VerificationScreen status={vendorStatus} rejectReason={rejectReason} />;
 
     const selModule = modules.find(m => m._id === form.module);
     const selZone = zones.find(z => z._id === form.zone);
