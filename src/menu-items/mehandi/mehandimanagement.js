@@ -1,108 +1,84 @@
-
-// assets
 import {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
+  IconBrush,
+  IconPlus,
+  IconClipboardList,
+  IconCategory,
+  IconCrown,
   IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconMessageCircle
 } from '@tabler/icons-react';
 
-// constants
 const icons = {
-  IconDashboard,
-  IconUserPlus,
-  IconUsers,
-  IconBuildingSkyscraper,
-  IconBriefcase,
-  IconFileText,
-  IconVideo,
-  IconBell,
+  IconBrush,
+  IconPlus,
+  IconClipboardList,
+  IconCategory,
+  IconCrown,
   IconCalendarEvent,
-  IconCreditCard,
-  IconSettings,
-  IconCalendar,
-  IconUserCheck,
-  IconClock,
-  IconCurrencyDollar,
-  IconKey,
-  IconGraph
+  IconMessageCircle
 };
 
-// ==============================|| TRIP MANAGEMENT MENU GROUP ||============================== //
-
 const mehandimanagement = {
+  id: 'mehandi-management',
   title: 'MEHANDI MANAGEMENT',
-  id: 'mehandimanagement', // Fixed typo: was 'tripmanagemet'
   type: 'group',
   children: [
     {
-      id: 'mehandi',
-      title: 'Mehandi Bookings',
+      id: 'mehandi-setup',
+      title: 'Mehandi Setup',
       type: 'collapse',
-      icon: icons.IconBuildingSkyscraper,
+      icon: icons.IconBrush,
       children: [
         {
-          id: 'all-trips',
-          title: 'All',
+          id: 'add-package',
+          title: 'Add Package',
           type: 'item',
-          url: '/trips'
+          url: '/mehandi/addpackage',
+          icon: icons.IconPlus
         },
         {
-          id: 'scheduled-trips',
-          title: 'Scheduled',
+          id: 'package-list',
+          title: 'Package List',
           type: 'item',
-          url: '/trips/scheduled'
-        },
-        {
-          id: 'pending-trips',
-          title: 'Pending',
-          type: 'item',
-          url: '/trips/pending'
-        },
-        {
-          id: 'confirmed-trips',
-          title: 'Confirmed',
-          type: 'item',
-          url: '/trips/confirmed'
-        },
-        {
-          id: 'ongoing-trips',
-          title: 'Ongoing',
-          type: 'item',
-          url: '/trips/ongoing'
-        },
-        {
-          id: 'completed-trips',
-          title: 'Completed',
-          type: 'item',
-          url: '/trips/completed'
-        },
-        {
-          id: 'canceled-trips',
-          title: 'Canceled',
-          type: 'item',
-          url: '/trips/canceled'
-        },
-        {
-          id: 'payment-failed-trips',
-          title: 'Payment Failed',
-          type: 'item',
-          url: '/trips/payment-failed'
+          url: '/mehandi/packagelist',
+          icon: icons.IconClipboardList
         }
       ]
+    },
+    {
+      id: 'mehandi-categories',
+      title: 'Categories',
+      type: 'item',
+      url: '/mehandi/categories',
+      icon: icons.IconCategory
+    },
+    {
+      id: 'mehandi-upgrade',
+      title: 'Upgrade',
+      type: 'item',
+      url: '/mehandi/upgrade',
+      icon: icons.IconCrown
+    },
+    {
+      id: 'mehandi-portfolio',
+      title: 'Portfolio',
+      type: 'item',
+      url: '/mehandi/portfolio',
+      icon: icons.IconCrown
+    },
+    {
+      id: 'mehandi-schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/mehandi/schedules',
+      icon: icons.IconCalendarEvent
+    },
+    {
+      id: 'mehandi-enquiries',
+      title: 'Enquiries',
+      type: 'item',
+      url: '/mehandi/enquiry',
+      icon: icons.IconMessageCircle
     }
   ]
 };

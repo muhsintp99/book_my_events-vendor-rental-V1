@@ -11,12 +11,12 @@
 // import bookingmanagement from './venues/bookingmanagement';
 // import venuemanagement from './venues/venuemanagement';
 // import Marketingssection from './venues/marketingsection';
-// import Businessection from './venues/businesssection'; 
+// import Businessection from './venues/businesssection';
 // import Reportssection from './venues/reportsection';
 
 // // ==============================|| MENU ITEMS ||============================== //
 // const logRes ='rental'
-// // localStorage.getItem('logRes'); 
+// // localStorage.getItem('logRes');
 
 // const menuItems = {
 //   items: [dashboard,
@@ -25,21 +25,16 @@
 //     ,Marketingsection,Businesssection,Reportsection,Employeesection]
 // };
 // const venueItems= {
-//   items: [dashboard, 
+//   items: [dashboard,
 //     bookingmanagement,
-//     venuemanagement, 
+//     venuemanagement,
 //     Marketingssection,
 //     Businessection,
 //     Reportssection]
 
 // }
 
-
 // export default {menuItems,venueItems};
-
-
-
-
 
 // import dashboard from './dashboard';
 // import vehiclemanagement from './vendors/vehiclemanagement';
@@ -53,8 +48,8 @@
 // import Businessection from './venues/businesssection';
 
 // // ==============================|| MENU ITEMS ||============================== //
-// // const logRes = (localStorage.getItem('logRes') || ''); 
-// const logRes = (localStorage.getItem('logRes') || '').toLowerCase(); 
+// // const logRes = (localStorage.getItem('logRes') || '');
+// const logRes = (localStorage.getItem('logRes') || '').toLowerCase();
 // // ensures value is lowercase even if stored as "Rental" or "RENTAL"
 
 // console.log("logRes:", logRes);
@@ -81,8 +76,6 @@
 // };
 
 // export default menuItems;
-
-
 
 import dashboard from './dashboard';
 
@@ -113,7 +106,6 @@ import cateringmanagement from './catering/cateringmanagement';
 import Reports from './catering/Report';
 import Employees from './catering/employees';
 
-
 // makeup
 import Makeupmanagement from './makeup/Makeupmanagement';
 import Reportmakeup from './makeup/reportmakeup';
@@ -133,12 +125,12 @@ import ornamentsmanagement from './ornaments/ornamentsmanagement';
 import ornamentsection from './ornaments/ornamentssections';
 import boutiqueManagementMenu from './boutique/managementboutique';
 import boutiquemanagement from './boutique/boutiquemanagement';
+import mehandiManagementMenu from './mehandi/managementmehandi';
+import mehandisection from './mehandi/mehandisections';
 
 // ==============================|| MENU ITEMS ||============================== //
-const logRes = (localStorage.getItem('logRes') || '')
-  .toLowerCase()
-  .replace(/\s+/g, '');   // remove spaces
-console.log("logRes:", logRes);
+const logRes = (localStorage.getItem('logRes') || '').toLowerCase().replace(/\s+/g, ''); // remove spaces
+console.log('logRes:', logRes);
 
 // Common sections for all
 const commonSections = [Marketingsection];
@@ -148,48 +140,36 @@ let specificSections = [];
 // handle conditions
 if (logRes === 'transport') {
   // specificSections = [ vehiclemanagement,Reportsection,Employeesection];
-    specificSections = [tripmanagement, vehiclemanagement];
-
+  specificSections = [tripmanagement, vehiclemanagement];
 } else if (logRes === 'venues') {
   // specificSections = [management, venuemanagement, Businessection, Report, Employee];
-    specificSections = [management, venuemanagement];
-
+  specificSections = [management, venuemanagement];
 } else if (logRes === 'event') {
   specificSections = [eventmanagement];
-} else if (logRes === 'mehandi') {
-  specificSections = [mehandimanagement];
+} else if (logRes.includes('mehandi')) {
+  specificSections = [mehandiManagementMenu, mehandimanagement, mehandisection, Reportsection, Employee];
 } else if (logRes === 'photography') {
   // specificSections = [ photographyManagementMenu ,photomanagement,Photographysection,Reportphotography];
-    specificSections = [ photographyManagementMenu ,photomanagement];
-
+  specificSections = [photographyManagementMenu, photomanagement];
 } else if (logRes === 'catering') {
   // specificSections = [ cateringManagementMenu,cateringmanagement, Reports, Employees];
-    specificSections = [ cateringManagementMenu,cateringmanagement];
-
+  specificSections = [cateringManagementMenu, cateringmanagement];
 } else if (logRes === 'makeupartist') {
-    // specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];   
-        specificSections = [makeupManagement, Makeupmanagement];      
-   
-}else if (logRes === 'cake') {
+  // specificSections = [makeupManagement, Makeupmanagement,Businessection,Employee,Reportmakeup];
+  specificSections = [makeupManagement, Makeupmanagement];
+} else if (logRes === 'cake') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
-    specificSections = [cakeManagementMenu,cakemanagement];
-}
-else if (logRes === 'ornaments') {
+  specificSections = [cakeManagementMenu, cakemanagement];
+} else if (logRes === 'ornaments') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
-    specificSections = [ornamentsManagementMenu,ornamentsmanagement];
-}
-else if (logRes === 'boutique') {
+  specificSections = [ornamentsManagementMenu, ornamentsmanagement];
+} else if (logRes === 'boutique') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
-    specificSections = [boutiqueManagementMenu,boutiquemanagement];
+  specificSections = [boutiqueManagementMenu, boutiquemanagement];
 }
-
 
 const menuItems = {
-  items: [
-    dashboard,
-    ...specificSections,
-    ...commonSections
-  ]
+  items: [dashboard, ...specificSections, ...commonSections]
 };
 
 export default menuItems;

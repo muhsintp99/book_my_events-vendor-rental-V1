@@ -37,10 +37,7 @@ const FoodMenu = Loadable(lazy(() => import('views/FoodMenu')));
 const VenueListView = Loadable(lazy(() => import('views/VenueListView')));
 const Upgradevenue = Loadable(lazy(() => import('../views/audiupgrade')));
 const Enquiriesvenue = Loadable(lazy(() => import('../views/Venueenquiries')));
-const VenueEnquiryChat = Loadable(
-  lazy(() => import('../views/EnquiryChatPage'))
-);
-
+const VenueEnquiryChat = Loadable(lazy(() => import('../views/EnquiryChatPage')));
 
 // const Enquiryvenue = Loadable(lazy(() => import('../views/Enquiries')));
 
@@ -231,6 +228,24 @@ const BoutiqueConfirmed = Loadable(lazy(() => import('../views/Boutique/Boutique
 const BoutiqueCompleted = Loadable(lazy(() => import('../views/Boutique/Boutiquecompleted.jsx')));
 const BoutiqueCancelled = Loadable(lazy(() => import('../views/Boutique/Boutiquecancelled.jsx')));
 
+// mehandi/////////////////////////
+const AddmehandiPackage = Loadable(lazy(() => import('../views/mehandi/Addmehandi.jsx')));
+const Mehandilist = Loadable(lazy(() => import('../views/mehandi/Mehandilist.jsx')));
+// const Attributes = Loadable(lazy(() => import('../views/Mehandi/Attributes.jsx')));
+const MehandiChat = Loadable(lazy(() => import('../views/mehandi/MehandiChat.jsx')));
+const Mehandiupgrade = Loadable(lazy(() => import('../views/mehandi/Mehandiupgrade.jsx')));
+const Mehandienquiry = Loadable(lazy(() => import('../views/mehandi/mehandienquiries.jsx')));
+const Mehandienquirychat = Loadable(lazy(() => import('../views/mehandi/EnquiryChatPage.jsx')));
+const MehandiSchedules = Loadable(lazy(() => import('../views/mehandi/Schedulesmehandi.jsx')));
+const Mehandicategories = Loadable(lazy(() => import('../views/mehandi/Categories.jsx')));
+const Mehandiportfolio = Loadable(lazy(() => import('../views/mehandi/Portfolio.jsx')));
+const Allmehandi = Loadable(lazy(() => import('../views/mehandi/Mehandibookings.jsx')));
+const MehandiPending = Loadable(lazy(() => import('../views/mehandi/Mehandipending.jsx')));
+const MehandiConfirmed = Loadable(lazy(() => import('../views/mehandi/Mehandiconfirmed.jsx')));
+const MehandiCompleted = Loadable(lazy(() => import('../views/mehandi/Mehandicompleted.jsx')));
+const MehandiCancelled = Loadable(lazy(() => import('../views/mehandi/Mehandicancelled.jsx')));
+const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/Mehandipaymentfailed.jsx')));
+
 import ErrorBoundary from 'ui-component/ErrorBoundary';
 
 // ===========================|| MAIN ROUTING ||============================ //
@@ -408,14 +423,21 @@ const MainRoutes = {
             { path: 'cancelledornaments', element: <OrnamentsCancelled /> },
             { path: 'paymentfailedornaments', element: <Paymentfailedbookings /> },
 
-
             // boutique BOOKINGS///////////////
             { path: 'allboutique', element: <Allboutique /> },
             { path: 'pendingboutique', element: <BoutiquePending /> },
             { path: 'boutiqueconfirmed', element: <BoutiqueConfirmed /> },
             { path: 'completedboutique', element: <BoutiqueCompleted /> },
             { path: 'cancelledboutique', element: <BoutiqueCancelled /> },
-            { path: 'paymentfailedboutique', element: <Paymentfailedbookings /> }
+            { path: 'paymentfailedboutique', element: <Paymentfailedbookings /> },
+
+            // mehandi BOOKINGS///////////////
+            { path: 'allmehandi', element: <Allmehandi /> },
+            { path: 'pendingmehandi', element: <MehandiPending /> },
+            { path: 'mehandiconfirmed', element: <MehandiConfirmed /> },
+            { path: 'completedmehandi', element: <MehandiCompleted /> },
+            { path: 'cancelledmehandi', element: <MehandiCancelled /> },
+            { path: 'paymentfailedmehandi', element: <MehandiPaymentFailed /> }
           ]
         },
 
@@ -450,11 +472,7 @@ const MainRoutes = {
             { path: 'upgrade', element: <Upgradevenue /> },
             { path: 'enquiry', element: <Enquiriesvenue /> },
             { path: 'enquiries', element: <Enquiriesvenue /> },
-            { path: 'enquirychat', element: <VenueEnquiryChat /> },
-
-
-
-
+            { path: 'enquirychat', element: <VenueEnquiryChat /> }
           ]
         },
         {
@@ -512,7 +530,6 @@ const MainRoutes = {
           ]
         },
 
-
         {
           path: 'cake',
           children: [
@@ -525,13 +542,9 @@ const MainRoutes = {
             { path: 'schedules', element: <CakeSchedules /> },
             { path: 'categories', element: <Cakecategories /> },
             { path: 'Addons', element: <Cakeaddons /> },
-             { path: 'deliveryprofile', element: <Deliveryprofile /> }
-
-
-
+            { path: 'deliveryprofile', element: <Deliveryprofile /> }
           ]
         },
-
 
         {
           path: 'ornaments',
@@ -544,9 +557,7 @@ const MainRoutes = {
             { path: 'enquiries', element: <Ornamentsenquiry /> },
             { path: 'enquirychat', element: <Ornamentsenquirychat /> },
             { path: 'schedules', element: <OrnamentsSchedules /> },
-            { path: 'categories', element: <Ornamentscategories /> },
-
-
+            { path: 'categories', element: <Ornamentscategories /> }
           ]
         },
         {
@@ -563,11 +574,27 @@ const MainRoutes = {
             { path: 'enquirychat', element: <Boutiqueenquirychat /> },
             { path: 'chat', element: <BoutiqueChat /> },
             { path: 'schedules', element: <BoutiqueSchedules /> },
-            { path: 'categories', element: <Boutiquecategories /> },
-
-
+            { path: 'categories', element: <Boutiquecategories /> }
           ]
-        }
+        },
+
+        {
+          path: 'mehandi',
+          children: [
+            { path: 'addpackage', element: <AddmehandiPackage /> },
+            { path: 'edit/:id', element: <AddmehandiPackage /> },
+            { path: 'packagelist', element: <Mehandilist /> },
+            // { path: 'attributes', element: <Attributes /> },
+
+            { path: 'portfolio', element: <Mehandiportfolio /> },
+            { path: 'upgrade', element: <Mehandiupgrade /> },
+            { path: 'enquiry', element: <Mehandienquiry /> },
+            { path: 'enquirychat', element: <Mehandienquirychat /> },
+            { path: 'chat', element: <MehandiChat /> },
+            { path: 'schedules', element: <MehandiSchedules /> },
+            { path: 'categories', element: <Mehandicategories /> }
+          ]
+        },
       ]
     }
   ]
