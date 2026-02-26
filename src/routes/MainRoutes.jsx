@@ -244,7 +244,7 @@ const MehandiPending = Loadable(lazy(() => import('../views/mehandi/Mehandipendi
 const MehandiConfirmed = Loadable(lazy(() => import('../views/mehandi/Mehandiconfirmed.jsx')));
 const MehandiCompleted = Loadable(lazy(() => import('../views/mehandi/Mehandicompleted.jsx')));
 const MehandiCancelled = Loadable(lazy(() => import('../views/mehandi/Mehandicancelled.jsx')));
-const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/Mehandipaymentfailed.jsx')));
+const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/MehandiPaymentFailed.jsx')));
 
 import ErrorBoundary from 'ui-component/ErrorBoundary';
 

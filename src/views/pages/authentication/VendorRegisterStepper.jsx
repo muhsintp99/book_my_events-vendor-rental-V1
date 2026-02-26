@@ -23,6 +23,10 @@ import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import bookLogo from 'assets/images/book.png';
 
 const API = 'https://api.bookmyevent.ae';
@@ -176,138 +180,209 @@ function VerificationScreen({ status = 'pending', rejectReason = '' }) {
     let mainIcon = <VerifiedUserOutlinedIcon sx={{ fontSize: 52, color: RED }} />;
     let iconColor = RED;
     let iconBorderColor = alpha(RED, 0.2);
+    let bgGradient = `linear-gradient(135deg,${alpha(RED, 0.1)},${alpha(RED, 0.02)})`;
 
     if (status === 'pending') {
-        title = 'Registration Submitted! 🎉';
-        subtitle = `Under Verification${dots}`;
-        description = <>Your vendor account is now <strong>pending admin review</strong>. Our team will verify your details and activate your account within <strong>24–48 hours</strong>. You'll receive a confirmation email once approved.</>;
+        title = 'Application Under Review';
+        subtitle = `Verification in Progress${dots}`;
+        description = <>Thank you for joining BookMyEvent. Your vendor account is currently <strong>under admin review</strong>. We're verifying your details to ensure a high-quality marketplace. Expect activation within <strong>24–48 hours</strong>.</>;
         steps2 = [
-            { icon: '📝', label: 'Registration Received', done: true },
-            { icon: '🔍', label: 'Admin Review in Progress', active: true },
-            { icon: '✉️', label: 'Approval Email Sent to You', done: false },
-            { icon: '🚀', label: 'Account Activated!', done: false },
+            { icon: <EditIcon sx={{ fontSize: 18 }} />, label: 'Registration Received', done: true },
+            { icon: <HourglassTopIcon sx={{ fontSize: 18 }} />, label: 'Admin Review in Progress', active: true },
+            { icon: <HelpOutlineIcon sx={{ fontSize: 18 }} />, label: 'Approval Email Sent', done: false },
+            { icon: <TaskAltIcon sx={{ fontSize: 18 }} />, label: 'Account Activation', done: false },
         ];
     } else if (status === 'approved') {
-        title = 'Account Approved! 🎉';
+        title = 'Account Activated! 🎉';
         subtitle = 'Verification Successful';
-        description = <>Your vendor account has been <strong>successfully verified and approved</strong>. You can now log in and start using your dashboard.</>;
-        iconColor = '#4caf50';
-        iconBorderColor = alpha('#4caf50', 0.2);
+        description = <>Congratulations! Your vendor profile has been <strong>successfully verified and approved</strong>. You're now a member of our premium vendor community.</>;
+        iconColor = '#10b981';
+        iconBorderColor = alpha('#10b981', 0.2);
+        bgGradient = `linear-gradient(135deg,${alpha('#10b981', 0.1)},${alpha('#10b981', 0.02)})`;
         mainIcon = <CheckCircleIcon sx={{ fontSize: 52, color: iconColor }} />;
         steps2 = [
-            { icon: '📝', label: 'Registration Received', done: true },
-            { icon: '🔍', label: 'Admin Review Completed', done: true },
-            { icon: '✉️', label: 'Approval Email Sent to You', done: true },
-            { icon: '🚀', label: 'Account Activated!', done: true },
+            { icon: <EditIcon sx={{ fontSize: 18 }} />, label: 'Registration Received', done: true },
+            { icon: <VerifiedUserOutlinedIcon sx={{ fontSize: 18 }} />, label: 'Review Completed', done: true },
+            { icon: <CheckCircleIcon sx={{ fontSize: 18 }} />, label: 'Approval Email Sent', done: true },
+            { icon: <TaskAltIcon sx={{ fontSize: 18 }} />, label: 'Account Live!', done: true },
         ];
     } else if (status === 'rejected') {
-        title = 'Registration Rejected';
-        subtitle = 'Verification Failed';
-        description = <>Unfortunately, your vendor account registration was <strong>not approved</strong>. {rejectReason && <><br /><br /><span style={{ color: '#d32f2f' }}><strong>Reason:</strong> {rejectReason}</span></>} <br /><br />Please contact our support team for further assistance or re-apply.</>;
-        iconColor = '#d32f2f';
-        iconBorderColor = alpha('#d32f2f', 0.2);
-        mainIcon = <span style={{ fontSize: 48, filter: 'grayscale(100%)' }}>❌</span>;
+        title = 'Registration Update';
+        subtitle = 'Verification Unsuccessful';
+        description = <>We appreciate your interest. However, we're currently unable to approve your vendor registration. {rejectReason && <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: alpha('#ef4444', 0.08), border: `1px solid ${alpha('#ef4444', 0.1)}` }}><Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 600 }}>Reason: {rejectReason}</Typography></Box>}</>;
+        iconColor = '#ef4444';
+        iconBorderColor = alpha('#ef4444', 0.2);
+        bgGradient = `linear-gradient(135deg,${alpha('#ef4444', 0.1)},${alpha('#ef4444', 0.02)})`;
+        mainIcon = <CancelOutlinedIcon sx={{ fontSize: 52, color: iconColor }} />;
         steps2 = [
-            { icon: '📝', label: 'Registration Received', done: true },
-            { icon: '❌', label: 'Admin Review Failed', active: true, error: true },
-            { icon: '✉️', label: 'Account Not Activated', done: false },
+            { icon: <EditIcon sx={{ fontSize: 18 }} />, label: 'Registration Received', done: true },
+            { icon: <ErrorOutlineIcon sx={{ fontSize: 18 }} />, label: 'Review Failed', active: true, error: true },
+            { icon: <HelpOutlineIcon sx={{ fontSize: 18 }} />, label: 'Action Required', done: false },
         ];
     }
 
     return (
-        <PageWrap>
-            <Box sx={{ mb: 3 }}>
-                <img src={bookLogo} alt="BookMyEvent" style={{ height: 44, objectFit: 'contain' }} />
+        <PageWrap sx={{ background: '#f8fafc' }}>
+            <Box sx={{ mb: 4, animation: `${fadeUp} .6s ease` }}>
+                <img src={bookLogo} alt="BookMyEvent" style={{ height: 48, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} />
             </Box>
-            <RegCard elevation={0} sx={{ textAlign: 'center', maxWidth: 640, animation: `${scaleIn} .5s ease` }}>
-                {/* Animated icon */}
-                <Box sx={{ mb: 3, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+
+            <RegCard elevation={0} sx={{
+                textAlign: 'center',
+                maxWidth: 680,
+                animation: `${scaleIn} .7s cubic-bezier(0.16, 1, 0.3, 1)`,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                    content: '""',
+                    position: 'absolute', top: 0, left: 0, right: 0, height: '6px',
+                    background: iconColor
+                }
+            }}>
+                {/* Visual Status Indicator */}
+                <Box sx={{ mb: 4, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Box sx={{
-                        width: 110, height: 110, borderRadius: '50%',
-                        background: `linear-gradient(135deg,${alpha(iconColor, 0.12)},${alpha(iconColor, 0.05)})`,
+                        width: 120, height: 120, borderRadius: '50%',
+                        background: bgGradient,
                         border: `2px solid ${iconBorderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        animation: `${floatY} 3s ease-in-out infinite`
+                        animation: `${floatY} 4s ease-in-out infinite`,
+                        boxShadow: `0 12px 32px ${alpha(iconColor, 0.15)}`
                     }}>
                         {mainIcon}
                     </Box>
-                    {/* Orbiting dot */}
+
                     {status === 'pending' && (
                         <Box sx={{
-                            position: 'absolute', width: 140, height: 140, borderRadius: '50%',
-                            border: `2px dashed ${alpha(RED, 0.3)}`, animation: `${spin} 8s linear infinite`
+                            position: 'absolute', width: 154, height: 154, borderRadius: '50%',
+                            border: `2px dashed ${alpha(iconColor, 0.3)}`, animation: `${spin} 12s linear infinite`
                         }}>
                             <Box sx={{
-                                position: 'absolute', top: -5, left: '50%', width: 10, height: 10,
-                                borderRadius: '50%', bgcolor: RED, transform: 'translateX(-50%)'
+                                position: 'absolute', top: -6, left: '50%', width: 12, height: 12,
+                                borderRadius: '50%', bgcolor: iconColor, transform: 'translateX(-50%)',
+                                boxShadow: `0 0 12px ${iconColor}`
                             }} />
                         </Box>
                     )}
                 </Box>
 
-                <Typography variant="h4" fontWeight={800} sx={{ color: '#1a1a2e', mb: 1, letterSpacing: '-0.5px' }}>
+                <Typography variant="h4" fontWeight={900} sx={{ color: '#0f172a', mb: 1, letterSpacing: '-0.02em' }}>
                     {title}
                 </Typography>
-                <Typography variant="h6" fontWeight={500} sx={{ color: iconColor, mb: 0.5, fontSize: 16 }}>
+                <Typography variant="h6" fontWeight={700} sx={{
+                    color: iconColor, mb: 2, fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.1em'
+                }}>
                     {subtitle}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 480, mx: 'auto', lineHeight: 1.7, fontSize: 13.5 }}>
+
+                <Typography variant="body1" sx={{
+                    color: '#64748b', mb: 5, maxWidth: 520, mx: 'auto', lineHeight: 1.8, fontSize: 15
+                }}>
                     {description}
                 </Typography>
 
-                {/* Mini process steps */}
-                <Box sx={{ mb: 4, textAlign: 'left' }}>
-                    {steps2.map(({ icon, label, done, active, error }, i) => (
-                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: i < steps2.length - 1 ? 1.5 : 0 }}>
-                            <Box sx={{
-                                width: 42, height: 42, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: done ? '#e8f5e9' : error ? '#ffebee' : active ? RED_BG : '#f5f5f5',
-                                border: done ? '2px solid #4caf50' : error ? '2px solid #d32f2f' : active ? `2px solid ${RED}` : '2px solid #eee',
-                                fontSize: 18
-                            }}>
-                                {icon}
-                            </Box>
-                            <Box sx={{ flex: 1 }}>
-                                <Typography sx={{
-                                    fontSize: 13.5, fontWeight: done || active || error ? 600 : 400,
-                                    color: done ? '#4caf50' : error ? '#d32f2f' : active ? RED : '#bbb'
-                                }}>
-                                    {label}
-                                </Typography>
-                                {(active && !error) && (
+                {/* Refined Timeline */}
+                <Box sx={{ mb: 5, p: 4, borderRadius: 4, bgcolor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 800, color: '#334155', textAlign: 'left', textTransform: 'uppercase', fontSize: 12, letterSpacing: '0.05em' }}>
+                        Processing Timeline
+                    </Typography>
+
+                    <Box sx={{ position: 'relative' }}>
+                        {steps2.map(({ icon, label, done, active, error }, i) => (
+                            <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: i < steps2.length - 1 ? 3 : 0, position: 'relative' }}>
+                                {/* Connector Line */}
+                                {i < steps2.length - 1 && (
                                     <Box sx={{
-                                        mt: 0.5, height: 3, borderRadius: 4, overflow: 'hidden',
-                                        background: `linear-gradient(90deg,${RED},${alpha(RED, 0.3)},${RED})`,
-                                        backgroundSize: '400px 3px', animation: `${shimmer} 1.8s linear infinite`
+                                        position: 'absolute', left: 21, top: 46, width: '2px', height: 'calc(100% - 30px)',
+                                        bgcolor: done ? '#10b981' : '#cbd5e1', zIndex: 0
                                     }} />
                                 )}
+
+                                <Box sx={{
+                                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: done ? '#10b981' : error ? '#ef4444' : active ? iconColor : '#fff',
+                                    color: done || active || error ? '#fff' : '#94a3b8',
+                                    border: done ? 'none' : error ? 'none' : active ? 'none' : '2px solid #e2e8f0',
+                                    zIndex: 1, boxShadow: done || active ? `0 4px 12px ${alpha(done ? '#10b981' : iconColor, 0.3)}` : 'none',
+                                    transition: 'all .4s ease'
+                                }}>
+                                    {done ? <CheckIcon sx={{ fontSize: 20 }} /> : icon}
+                                </Box>
+
+                                <Box sx={{ flex: 1, pt: 1 }}>
+                                    <Typography sx={{
+                                        fontSize: 14, fontWeight: 700,
+                                        color: done ? '#059669' : error ? '#dc2626' : active ? iconColor : '#64748b',
+                                        transition: 'all .3s'
+                                    }}>
+                                        {label}
+                                    </Typography>
+                                    {active && !error && (
+                                        <Box sx={{
+                                            mt: 1.5, height: 4, borderRadius: 4, overflow: 'hidden',
+                                            bgcolor: alpha(iconColor, 0.15), width: '60%'
+                                        }}>
+                                            <Box sx={{
+                                                height: '100%', width: '40%', borderRadius: 4,
+                                                bgcolor: iconColor, animation: `${shimmer} 2s linear infinite`
+                                            }} />
+                                        </Box>
+                                    )}
+                                </Box>
+                                {done && <CheckCircleIcon sx={{ color: '#10b981', fontSize: 20, mt: 1 }} />}
                             </Box>
-                            {done && <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 18, flexShrink: 0 }} />}
+                        ))}
+                    </Box>
+                </Box>
+
+                {/* Support/Footer Box */}
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 2.5, height: '100%', borderRadius: 3, bgcolor: '#fff', border: '1px solid #e2e8f0', textAlign: 'left', display: 'flex', gap: 2 }}>
+                            <HelpOutlineIcon sx={{ color: '#64748b', mt: 0.5 }} />
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={800} color="#1e293b">Account Guidance</Typography>
+                                <Typography variant="caption" color="text.secondary">Detailed activation steps have been sent to your email.</Typography>
+                            </Box>
                         </Box>
-                    ))}
-                </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <Box sx={{ p: 2.5, height: '100%', borderRadius: 3, bgcolor: '#fff', border: '1px solid #e2e8f0', textAlign: 'left', display: 'flex', gap: 2 }}>
+                            <SupportAgentIcon sx={{ color: '#64748b', mt: 0.5 }} />
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={800} color="#1e293b">Need Support?</Typography>
+                                <Typography variant="caption" color="text.secondary">Contact us at support@bookmyevent.ae for assistance.</Typography>
+                            </Box>
+                        </Box>
+                    </Grid>
+                </Grid>
 
-                <Box sx={{ p: 2.5, borderRadius: 14, background: 'linear-gradient(135deg,#fff9f9,#fff)', border: `1px solid ${alpha(RED, 0.15)}`, mb: 3 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-                        {status === 'approved' ? (
-                            <>✅ &nbsp;Logging in will take you directly to your dashboard.</>
-                        ) : status === 'rejected' ? (
-                            <>⚠️ &nbsp;Please verify your details and try applying again or reach out to our team.</>
-                        ) : (
-                            <>📧 &nbsp;Check your inbox for a <strong>registration confirmation email.</strong><br />
-                                Once approved, you can log in with your registered credentials.</>
-                        )}
-                    </Typography>
-                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" alignItems="center">
+                    <Button component={Link} to="/pages/login" variant="contained"
+                        sx={{
+                            borderRadius: 3, px: 5, py: 1.8, fontWeight: 800, fontSize: 14, textTransform: 'none',
+                            bgcolor: '#1e293b', color: '#fff', boxShadow: '0 10px 20px rgba(30,41,59,0.2)',
+                            '&:hover': { bgcolor: '#0f172a', transform: 'translateY(-2px)' },
+                            transition: 'all .3s ease'
+                        }}>
+                        Return to Login
+                    </Button>
 
-                <Button component={Link} to="/pages/login" variant="outlined"
-                    sx={{
-                        borderRadius: 12, px: 4, py: 1.4, fontWeight: 700, fontSize: 14, textTransform: 'none',
-                        borderColor: RED, color: RED, textDecoration: 'none',
-                        '&:hover': { background: RED_BG, borderColor: RED_DARK }
-                    }}>
-                    Back to Login
-                </Button>
+                    {status === 'rejected' && (
+                        <Button component={Link} to="/pages/register" variant="outlined"
+                            sx={{
+                                borderRadius: 3, px: 5, py: 1.8, fontWeight: 800, fontSize: 14, textTransform: 'none',
+                                borderColor: '#e2e8f0', color: '#64748b',
+                                '&:hover': { bgcolor: '#f1f5f9', borderColor: '#cbd5e1' }
+                            }}>
+                            Re-submit Application
+                        </Button>
+                    )}
+                </Stack>
             </RegCard>
+
+            <Typography variant="caption" sx={{ mt: 4, color: '#94a3b8', fontWeight: 600 }}>
+                &copy; {new Date().getFullYear()} BookMyEvent Technology. All rights reserved.
+            </Typography>
         </PageWrap>
     );
 }
