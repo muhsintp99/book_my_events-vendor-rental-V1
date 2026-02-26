@@ -10,6 +10,7 @@ import PhotographyIndex from '../../../photographydashboard';
 import CakeIndex from '../../../cakedashboard';
 import OrnamentsIndex from '../../../ornamentsdashboard';
 import MehandiIndex from '../../../mehandidashboard';
+import InvitationIndex from '../../../invitationdashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -49,6 +50,7 @@ export default function Dashboard() {
     if (activeModule.toLowerCase() === 'cake') return <CakeIndex isLoading={isLoading} />;
     if (['ornaments', 'ornament'].includes(activeModule.toLowerCase())) return <OrnamentsIndex isLoading={isLoading} />;
     if (activeModule.toLowerCase() === 'mehandi' || activeModule.toLowerCase() === 'mehandi artist') return <MehandiIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase().includes('invitation')) return <InvitationIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

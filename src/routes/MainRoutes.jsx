@@ -246,6 +246,16 @@ const MehandiCompleted = Loadable(lazy(() => import('../views/mehandi/Mehandicom
 const MehandiCancelled = Loadable(lazy(() => import('../views/mehandi/Mehandicancelled.jsx')));
 const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/MehandiPaymentFailed.jsx')));
 
+// invitation/////////////////////////
+const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
+const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
+const InvitationChat = Loadable(lazy(() => import('../views/invitation/InvitationChat.jsx')));
+const InvitationUpgrade = Loadable(lazy(() => import('../views/invitation/InvitationUpgrade.jsx')));
+const InvitationBookings = Loadable(lazy(() => import('../views/invitation/InvitationBookings.jsx')));
+const InvitationCategories = Loadable(lazy(() => import('../views/invitation/Categories.jsx')));
+const Schedulesinvitation = Loadable(lazy(() => import('../views/invitation/Schedulesinvitation.jsx')));
+const InvitationPortfolio = Loadable(lazy(() => import('../views/invitation/Portfolio.jsx')));
+
 import ErrorBoundary from 'ui-component/ErrorBoundary';
 
 // ===========================|| MAIN ROUTING ||============================ //
@@ -495,6 +505,36 @@ const MainRoutes = {
             { path: 'enquiry', element: <CateringEnquiry /> },
             { path: 'enquiries', element: <CateringEnquiry /> },
             { path: 'enquirychat', element: <CateringEnquiryChat /> }
+          ]
+        },
+
+        // INVITATION
+        {
+          path: 'invitation',
+          children: [
+            { path: 'dashboard', element: <DashboardDefault /> },
+            { path: 'add-package', element: <AddinvitationPackage /> },
+            { path: 'edit-package/:id', element: <AddinvitationPackage /> },
+            { path: 'edit/:id', element: <AddinvitationPackage /> },
+            { path: 'list', element: <InvitationList /> },
+            { path: 'enquiry', element: <InvitationChat /> },
+            { path: 'upgrade', element: <InvitationUpgrade /> },
+            { path: 'categories', element: <InvitationCategories /> },
+            { path: 'schedules', element: <Schedulesinvitation /> },
+            { path: 'portfolio', element: <InvitationPortfolio /> },
+            { path: 'review', element: <Review /> }
+          ]
+        },
+        {
+          path: 'bookings',
+          children: [
+            // ... existing bookings ...
+            { path: 'allinvitation', element: <InvitationBookings initialTab="All" /> },
+            { path: 'pendinginvitation', element: <InvitationBookings initialTab="Pending" /> },
+            { path: 'invitationconfirmed', element: <InvitationBookings initialTab="Accepted" /> },
+            { path: 'completedinvitation', element: <InvitationBookings initialTab="Completed" /> },
+            { path: 'cancelledinvitation', element: <InvitationBookings initialTab="Cancelled" /> },
+            { path: 'paymentfailedinvitation', element: <InvitationBookings initialTab="Payment Failed" /> }
           ]
         },
 

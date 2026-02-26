@@ -122,7 +122,12 @@ import cakeManagementMenu from './cakes/managementcake';
 import tripmanagement from './vendors/tripmanagement';
 import ornamentsManagementMenu from './ornaments/managementornaments';
 import ornamentsmanagement from './ornaments/ornamentsmanagement';
-import ornamentsection from './ornaments/ornamentssections';
+import ornamentssections from './ornaments/ornamentssections';
+
+// invitation
+import invitationmanagement from './invitation/invitationmanagement';
+import managementinvitation from './invitation/managementinvitation';
+import invitationsections from './invitation/invitationsections';
 import boutiqueManagementMenu from './boutique/managementboutique';
 import boutiquemanagement from './boutique/boutiquemanagement';
 import mehandiManagementMenu from './mehandi/managementmehandi';
@@ -166,6 +171,8 @@ if (logRes === 'transport') {
 } else if (logRes === 'boutique') {
   // specificSections = [cakeManagementMenu,cakemanagement,Cakesection,Employeesection,Reportsection];
   specificSections = [boutiqueManagementMenu, boutiquemanagement];
+} else if (logRes.includes('invitation')) {
+  specificSections = [managementinvitation, invitationmanagement, invitationsections, Reportsection, Employee];
 }
 
 const menuItems = {
