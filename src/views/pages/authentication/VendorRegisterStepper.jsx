@@ -845,7 +845,7 @@ export default function VendorRegisterStepper() {
 
                     {plans.length === 0 && !plansLoading && (
                         <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, background: '#f9faff', border: `1px solid ${alpha(RED, 0.15)}`, textAlign: 'center' }}>
-                            <Typography variant="body2" color="text.secondary">No paid plans available for this module. You can continue with the Free plan.</Typography>
+                            <Typography variant="body2" color="text.secondary">No plans available for this module. You can continue with the Free plan.</Typography>
                         </Box>
                     )}
 
