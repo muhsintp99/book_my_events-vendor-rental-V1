@@ -246,6 +246,23 @@ const MehandiCompleted = Loadable(lazy(() => import('../views/mehandi/Mehandicom
 const MehandiCancelled = Loadable(lazy(() => import('../views/mehandi/Mehandicancelled.jsx')));
 const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/MehandiPaymentFailed.jsx')));
 
+// florist/////////////////////////
+const AddfloristPackage = Loadable(lazy(() => import('../views/florist/Addflorist.jsx')));
+const Floristlist = Loadable(lazy(() => import('../views/florist/Floristlist.jsx')));
+const FloristChat = Loadable(lazy(() => import('../views/florist/FloristChat.jsx')));
+const Floristupgrade = Loadable(lazy(() => import('../views/florist/Floristupgrade.jsx')));
+const Floristenquiry = Loadable(lazy(() => import('../views/florist/Floristenquiries.jsx')));
+const Floristenquirychat = Loadable(lazy(() => import('../views/florist/EnquiryChatPage.jsx')));
+const FloristSchedules = Loadable(lazy(() => import('../views/florist/Schedulesflorist.jsx')));
+const Floristcategories = Loadable(lazy(() => import('../views/florist/Categories.jsx')));
+const Floristportfolio = Loadable(lazy(() => import('../views/florist/Portfolio.jsx')));
+const Allflorist = Loadable(lazy(() => import('../views/florist/Floristbookings.jsx')));
+const FloristPending = Loadable(lazy(() => import('../views/florist/Floristpending.jsx')));
+const FloristConfirmed = Loadable(lazy(() => import('../views/florist/Floristconfirmed.jsx')));
+const FloristCompleted = Loadable(lazy(() => import('../views/florist/Floristcompleted.jsx')));
+const FloristCancelled = Loadable(lazy(() => import('../views/florist/Floristcancelled.jsx')));
+const FloristPaymentFailed = Loadable(lazy(() => import('../views/florist/FloristPaymentFailed.jsx')));
+
 // invitation/////////////////////////
 const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
 const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
@@ -447,7 +464,15 @@ const MainRoutes = {
             { path: 'mehandiconfirmed', element: <MehandiConfirmed /> },
             { path: 'completedmehandi', element: <MehandiCompleted /> },
             { path: 'cancelledmehandi', element: <MehandiCancelled /> },
-            { path: 'paymentfailedmehandi', element: <MehandiPaymentFailed /> }
+            { path: 'paymentfailedmehandi', element: <MehandiPaymentFailed /> },
+
+            // florist BOOKINGS///////////////
+            { path: 'allflorist', element: <Allflorist /> },
+            { path: 'pendingflorist', element: <FloristPending /> },
+            { path: 'floristconfirmed', element: <FloristConfirmed /> },
+            { path: 'completedflorist', element: <FloristCompleted /> },
+            { path: 'cancelledflorist', element: <FloristCancelled /> },
+            { path: 'paymentfailedflorist', element: <FloristPaymentFailed /> }
           ]
         },
 
@@ -635,6 +660,22 @@ const MainRoutes = {
             { path: 'categories', element: <Mehandicategories /> }
           ]
         },
+
+        {
+          path: 'florist',
+          children: [
+            { path: 'addpackage', element: <AddfloristPackage /> },
+            { path: 'edit/:id', element: <AddfloristPackage /> },
+            { path: 'packagelist', element: <Floristlist /> },
+            { path: 'portfolio', element: <Floristportfolio /> },
+            { path: 'upgrade', element: <Floristupgrade /> },
+            { path: 'enquiry', element: <Floristenquiry /> },
+            { path: 'enquirychat', element: <Floristenquirychat /> },
+            { path: 'chat', element: <FloristChat /> },
+            { path: 'schedules', element: <FloristSchedules /> },
+            { path: 'categories', element: <Floristcategories /> }
+          ]
+        }
       ]
     }
   ]

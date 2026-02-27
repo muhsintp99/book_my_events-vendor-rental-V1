@@ -11,6 +11,8 @@ import CakeIndex from '../../../cakedashboard';
 import OrnamentsIndex from '../../../ornamentsdashboard';
 import MehandiIndex from '../../../mehandidashboard';
 import InvitationIndex from '../../../invitationdashboard';
+import FloristIndex from '../../../floristdashboard';
+import BoutiqueIndex from '../../../boutiquedashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -51,6 +53,8 @@ export default function Dashboard() {
     if (['ornaments', 'ornament'].includes(activeModule.toLowerCase())) return <OrnamentsIndex isLoading={isLoading} />;
     if (activeModule.toLowerCase() === 'mehandi' || activeModule.toLowerCase() === 'mehandi artist') return <MehandiIndex isLoading={isLoading} />;
     if (activeModule.toLowerCase().includes('invitation')) return <InvitationIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase().includes('florist')) return <FloristIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase().includes('boutique')) return <BoutiqueIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

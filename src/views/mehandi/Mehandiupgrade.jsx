@@ -101,7 +101,7 @@ export default function UpgradePlanUI() {
 
             // Redirect to portfolio after 2 seconds
             setTimeout(() => {
-              window.location.replace('/makeupartist/portfolio');
+              window.location.replace('/mehandi/portfolio');
             }, 2000);
           }
         } else {
@@ -347,7 +347,7 @@ console.log(
               });
 
               setTimeout(() => {
-                window.location.replace('/makeupartist/portfolio');
+                window.location.replace('/mehandi/portfolio');
               }, 1500);
             } else {
               throw new Error('Verification failed');

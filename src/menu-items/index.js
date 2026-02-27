@@ -132,6 +132,11 @@ import boutiqueManagementMenu from './boutique/managementboutique';
 import boutiquemanagement from './boutique/boutiquemanagement';
 import mehandiManagementMenu from './mehandi/managementmehandi';
 import mehandisection from './mehandi/mehandisections';
+import floristManagementMenu from './florist/managementflorist';
+import floristmanagement from './florist/floristmanagement';
+import floristsection from './florist/floristsections';
+import floristReport from './florist/report';
+import floristEmployee from './florist/employee';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '').toLowerCase().replace(/\s+/g, ''); // remove spaces
@@ -173,6 +178,8 @@ if (logRes === 'transport') {
   specificSections = [boutiqueManagementMenu, boutiquemanagement];
 } else if (logRes.includes('invitation')) {
   specificSections = [managementinvitation, invitationmanagement, invitationsections, Reportsection, Employee];
+} else if (logRes.includes('florist')) {
+  specificSections = [floristManagementMenu, floristmanagement, floristsection, floristReport, floristEmployee];
 }
 
 const menuItems = {

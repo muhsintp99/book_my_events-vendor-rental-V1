@@ -101,7 +101,7 @@ export default function UpgradePlanUI() {
 
             // Redirect to portfolio after 2 seconds
             setTimeout(() => {
-              window.location.replace('/invitation/portfolio');
+              window.location.replace('/mehandi/portfolio');
             }, 2000);
           }
         } else {
@@ -262,31 +262,31 @@ export default function UpgradePlanUI() {
   }, [moduleId]);
 
   // ✅ Load Razorpay Checkout Script
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    // Already loaded
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      // Already loaded
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
 
-    script.onload = () => {
-      console.log("✅ Razorpay SDK loaded");
-      resolve(true);
-    };
+      script.onload = () => {
+        console.log("✅ Razorpay SDK loaded");
+        resolve(true);
+      };
 
-    script.onerror = () => {
-      console.error("❌ Razorpay SDK failed to load");
-      resolve(false);
-    };
+      script.onerror = () => {
+        console.error("❌ Razorpay SDK failed to load");
+        resolve(false);
+      };
 
-    document.body.appendChild(script);
-  });
-};
+      document.body.appendChild(script);
+    });
+  };
 
 
   /* ---------- HANDLE UPGRADE - DIRECT TO PAYMENT ---------- */
@@ -315,10 +315,10 @@ const loadRazorpayScript = () => {
 
       const { razorpay, customer } = res.data;
       console.log("🔑 Razorpay Key:", razorpay.key);
-console.log(
-  "🧪 Razorpay Mode:",
-  razorpay.key.startsWith("rzp_test_") ? "TEST MODE" : "LIVE MODE"
-);
+      console.log(
+        "🧪 Razorpay Mode:",
+        razorpay.key.startsWith("rzp_test_") ? "TEST MODE" : "LIVE MODE"
+      );
 
 
       if (!razorpay?.subscriptionId) {
@@ -347,7 +347,7 @@ console.log(
               });
 
               setTimeout(() => {
-                window.location.replace('/invitation/portfolio');
+                window.location.replace('/florist/portfolio');
               }, 1500);
             } else {
               throw new Error('Verification failed');
