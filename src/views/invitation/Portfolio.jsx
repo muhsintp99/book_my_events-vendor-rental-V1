@@ -1,306 +1,561 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Box,
-    Card,
-    CardContent,
-    Typography,
-    TextField,
-    Button,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TableContainer,
-    Paper,
-    CircularProgress,
-    Alert,
-    Dialog,
-    Divider,
-    Tabs,
-    Tab,
-    Stack,
-    Tooltip,
-    Grid
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
+  Paper,
+  CircularProgress,
+  Alert,
+  Dialog,
+  Divider,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { CloudUpload, Delete, Close, Collections, VideoLibrary, Visibility, Star } from '@mui/icons-material';
+
+import { CloudUpload, Delete, Close, Collections, VideoLibrary } from '@mui/icons-material';
+
 import axios from 'axios';
 
 const API_BASE = 'https://api.bookmyevent.ae';
 const api = axios.create({ baseURL: API_BASE });
-const PRIMARY_COLOR = '#E15B65';
+const RED = '#e53935';
 
-export default function InvitationPortfolio() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const providerId = user?.providerId || user?._id;
-    const moduleId = localStorage.getItem('moduleId');
+export default function PortfolioManagement() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const providerId = user?._id;
+  const moduleId = localStorage.getItem('moduleId');
 
-    const [isPremium, setIsPremium] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [addTab, setAddTab] = useState(0);
-    const [title, setTitle] = useState('');
-    const [desc, setDesc] = useState('');
-    const [tags, setTags] = useState('');
+  const [isPremium, setIsPremium] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const [thumbnail, setThumbnail] = useState(null);
-    const [gallery, setGallery] = useState([]);
-    const [videoFiles, setVideoFiles] = useState([]);
-    const [videoLink, setVideoLink] = useState('');
-    const [videoThumbnail, setVideoThumbnail] = useState(null);
+  /* ---------- ADD STATES ---------- */
+  const [addTab, setAddTab] = useState(0);
+  const [title, setTitle] = useState('');
+  const [desc, setDesc] = useState('');
+  const [tags, setTags] = useState('');
+// EDIT MODE
+const [editId, setEditId] = useState(null);
+const isEditMode = Boolean(editId);
+// EXISTING MEDIA (EDIT MODE)
+const [existingThumbnail, setExistingThumbnail] = useState(null);
+const [existingGallery, setExistingGallery] = useState([]);
 
-    const [listTab, setListTab] = useState(0);
-    const [portfolio, setPortfolio] = useState([]);
-    const [openGallery, setOpenGallery] = useState(false);
-    const [galleryImages, setGalleryImages] = useState([]);
-    const [activeImage, setActiveImage] = useState(0);
+  // images
+  const [thumbnail, setThumbnail] = useState(null);
+  const [gallery, setGallery] = useState([]);
 
-    /* ================= SUBSCRIPTION CHECK ================= */
-    useEffect(() => {
-        if (!providerId || !moduleId) return;
-        api.get(`/api/subscription/status/${providerId}?moduleId=${moduleId}`).then((res) => {
-            const s = res.data?.subscription;
-            setIsPremium(s?.status === 'active' && s?.isCurrent);
-        });
-    }, [providerId, moduleId]);
+  // videos
+  const [videoFiles, setVideoFiles] = useState([]);
+  const [videoLink, setVideoLink] = useState('');
+  const [videoThumbnail, setVideoThumbnail] = useState(null); // ✅ NEW
 
-    /* ================= FETCH PORTFOLIO ================= */
-    const fetchPortfolio = async () => {
-        try {
-            const res = await api.get(`/api/portfolio/provider/${providerId}`);
-            setPortfolio(res.data.data || []);
-        } catch (err) {
-            console.error('Fetch error:', err);
-        }
-    };
+  /* ---------- LIST ---------- */
+  const [listTab, setListTab] = useState(0);
+  const [portfolio, setPortfolio] = useState([]);
 
-    useEffect(() => {
-        if (providerId) fetchPortfolio();
-    }, [providerId]);
+  /* ---------- MODALS ---------- */
+  const [openGallery, setOpenGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [activeImage, setActiveImage] = useState(0);
 
-    /* ================= ADD PORTFOLIO ================= */
-    const addPortfolio = async () => {
-        if (!isPremium) return alert('Upgrade to premium to unlock portfolio features');
-        if (!title.trim()) return alert('Work title is required');
+  const [openVideo, setOpenVideo] = useState(false);
+  const [activeVideo, setActiveVideo] = useState('');
 
-        const fd = new FormData();
-        fd.append('providerId', providerId);
-        fd.append('module', moduleId);
-        fd.append('workTitle', title);
-        fd.append('description', desc);
-        fd.append('tags', tags);
+  /* ================= SUBSCRIPTION ================= */
+  useEffect(() => {
+    if (!providerId || !moduleId) return;
+    api.get(`/api/subscription/status/${providerId}?moduleId=${moduleId}`).then((res) => {
+      const s = res.data?.subscription;
+      setIsPremium(s?.status === 'active' && s?.isCurrent);
+    });
+  }, [providerId, moduleId]);
 
-        if (addTab === 0) {
-            if (!thumbnail) return alert('Thumbnail image is required');
-            fd.append('thumbnail', thumbnail);
-            gallery.forEach((g) => fd.append('images', g));
-        } else {
-            videoFiles.forEach((v) => fd.append('videos', v));
-            if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
-            if (videoThumbnail) fd.append('videoThumbnail', videoThumbnail);
-        }
+  /* ================= FETCH ================= */
+  const fetchPortfolio = async () => {
+    const res = await api.get(`/api/portfolio/provider/${providerId}`);
+    setPortfolio(res.data.data || []);
+  };
 
-        try {
-            setLoading(true);
-            await api.post('/api/portfolio', fd);
-            setTitle(''); setDesc(''); setTags(''); setThumbnail(null); setGallery([]);
-            setVideoFiles([]); setVideoLink(''); setVideoThumbnail(null);
-            fetchPortfolio();
-            alert('Portfolio work added successfully! ✨');
-        } catch (err) {
-            alert('Failed to add portfolio work');
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
 
-    const remove = async (id) => {
-        if (window.confirm('Are you sure you want to delete this work?')) {
-            await api.delete(`/api/portfolio/${id}`);
-            fetchPortfolio();
-        }
-    };
+  const getYoutubeThumbnail = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
+    return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+  };
 
-    const filteredPortfolio = listTab === 0
-        ? portfolio.filter(p => p.media?.some(m => m.type === 'image'))
-        : portfolio.filter(p => p.media?.some(m => m.type === 'video' || m.type === 'videoLink'));
+  /* ================= ADD ================= */
+  const addPortfolio = async () => {
+  if (!isPremium) return alert('Upgrade plan required');
+  if (!title.trim()) return alert('Title required');
 
-    return (
-        <Box sx={{ p: { xs: 2, md: 4 }, minHeight: '100vh', bgcolor: '#fdf6ee' }}>
+  // ✅ ADD THIS BLOCK HERE
+  if (addTab === 1) {
+    if (!videoFiles.length && !videoLink) {
+      return alert('Please upload a video or add a video link');
+    }
 
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                    <Typography variant="h4" fontWeight={800} sx={{ color: '#1a0a00' }}>
-                        Work <Box component="span" sx={{ color: PRIMARY_COLOR }}>Portfolio</Box>
+    if (!videoThumbnail) {
+      return alert('Video thumbnail is required');
+    }
+  }
+
+
+  const fd = new FormData();
+  fd.append('providerId', providerId);
+  fd.append('module', moduleId);
+  fd.append('workTitle', title);
+  fd.append('description', desc);
+  fd.append('tags', tags);
+
+  if (addTab === 0) {
+    if (!thumbnail) return alert('Thumbnail required');
+    fd.append('thumbnail', thumbnail);
+    gallery.forEach((g) => fd.append('images', g));
+  } else {
+    videoFiles.forEach((v) => fd.append('videos', v));
+    if (videoLink) fd.append('videoLinks', JSON.stringify([videoLink]));
+    if (videoThumbnail) fd.append('videoThumbnail', videoThumbnail);
+  }
+
+  setLoading(true);
+if (isEditMode) {
+  await api.put(`/api/portfolio/${editId}`, fd);
+} else {
+  await api.post('/api/portfolio', fd);
+}
+  setLoading(false);
+
+  // reset
+  setTitle('');
+  setDesc('');
+  setTags('');
+  setThumbnail(null);
+  setGallery([]);
+  setVideoFiles([]);
+  setVideoLink('');
+  setVideoThumbnail(null);
+
+  fetchPortfolio();
+   setEditId(null);
+  setAddTab(0);
+  setExistingThumbnail(null);
+setExistingGallery([]);
+
+};
+
+
+  /* ================= DELETE ================= */
+  const remove = async (id) => {
+    if (!window.confirm('Delete portfolio?')) return;
+    await api.delete(`/api/portfolio/${id}`);
+    fetchPortfolio();
+  };
+
+  const handleEdit = (p) => {
+  setEditId(p._id);
+  setTitle(p.workTitle || '');
+  setDesc(p.description || '');
+  setTags(p.tags || '');
+
+  const imageMedia = p.media?.find((m) => m.type === 'image');
+  const videoMedia = p.media?.find(
+    (m) => m.type === 'video' || m.type === 'videoLink'
+  );
+
+  if (imageMedia) {
+  setAddTab(0);
+
+  setExistingThumbnail(imageMedia.thumbnail || null);
+  setExistingGallery(imageMedia.gallery || []);
+
+  setThumbnail(null); // for replacement
+  setGallery([]);     // for new uploads
+}
+
+
+  if (videoMedia) {
+    setAddTab(1);
+    setVideoFiles([]);
+    setVideoLink(videoMedia.videoLinks?.[0] || '');
+    setVideoThumbnail(null);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+  /* ================= FILTER ================= */
+  const filteredPortfolio =
+    listTab === 0
+      ? portfolio.filter((p) => p.media?.some((m) => m.type === 'image'))
+      : portfolio.filter((p) => p.media?.some((m) => m.type === 'video' || m.type === 'videoLink'));
+
+  return (
+    <Box sx={{ p: 3, maxWidth: 1800, mx: 'auto' }}>
+      {!isPremium && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Upgrade to premium to add portfolio works
+        </Alert>
+      )}
+
+      {/* ================= ADD ================= */}
+      <Card sx={{ mb: 5, borderRadius: 3, width: '100%' }}>
+        <CardContent>
+         <Typography variant="h5" fontWeight={700} mb={2}>
+  {isEditMode ? 'Edit Portfolio Work' : 'Add Portfolio Work'}
+</Typography>
+
+
+          <Tabs value={addTab} onChange={(_, v) => setAddTab(v)} sx={{ mb: 3 }}>
+            <Tab label="Images" />
+            <Tab label="Videos" />
+          </Tabs>
+
+          <TextField fullWidth label="Title" value={title} onChange={(e) => setTitle(e.target.value)} sx={{ mb: 3 }} />
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Description"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            sx={{ mb: 3 }}
+          />
+          <TextField fullWidth label="Tags" value={tags} onChange={(e) => setTags(e.target.value)} sx={{ mb: 4 }} />
+
+          {/* IMAGE TAB */}
+          {addTab === 0 && (
+            <>
+              <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
+                <CloudUpload sx={{ mr: 1 }} /> Upload Thumbnail
+                <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
+              </Button>
+
+            {/* EXISTING THUMBNAIL (EDIT MODE) */}
+{existingThumbnail && !thumbnail && (
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="caption">Current Thumbnail</Typography>
+    <img
+      src={`${API_BASE}/${existingThumbnail}`}
+      style={{ width: 180, height: 180, borderRadius: 12 }}
+    />
+  </Box>
+)}
+
+{/* NEW THUMBNAIL PREVIEW */}
+{thumbnail && (
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="caption">New Thumbnail</Typography>
+    <img
+      src={URL.createObjectURL(thumbnail)}
+      style={{ width: 180, height: 180, borderRadius: 12 }}
+    />
+  </Box>
+)}
+
+
+              <Button component="label" variant="outlined" sx={{ mb: 2 }}>
+                <Collections sx={{ mr: 1 }} /> Upload Gallery Images
+                <input hidden multiple type="file" accept="image/*" onChange={(e) => setGallery([...e.target.files])} />
+              </Button>
+
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
+  {/* EXISTING GALLERY */}
+  {existingGallery.map((img, i) => (
+    <img
+      key={`existing-${i}`}
+      src={`${API_BASE}/${img}`}
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        objectFit: 'cover'
+      }}
+    />
+  ))}
+
+  {/* NEW UPLOADS */}
+  {gallery.map((g, i) => (
+    <img
+      key={`new-${i}`}
+      src={URL.createObjectURL(g)}
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        border: '2px solid #4caf50'
+      }}
+    />
+  ))}
+</Box>
+
+            </>
+          )}
+
+          {/* VIDEO TAB ✅ FIXED */}
+          {/* VIDEO TAB */}
+          {addTab === 1 && (
+            <>
+              {/* 🎬 Upload Video */}
+              <Button component="label" variant="contained" sx={{ bgcolor: RED, mb: 2 }}>
+                <VideoLibrary sx={{ mr: 1 }} /> Upload Videos
+                <input hidden multiple type="file" accept="video/*" onChange={(e) => setVideoFiles(Array.from(e.target.files))} />
+              </Button>
+
+              {/* 🎬 Video Preview */}
+              {videoFiles.map((v, i) => (
+                <Box key={i} sx={{ mb: 2 }}>
+                  <video src={URL.createObjectURL(v)} controls style={{ width: 260, borderRadius: 8 }} />
+                  <IconButton color="error" onClick={() => setVideoFiles((prev) => prev.filter((_, idx) => idx !== i))}>
+                    <Delete />
+                  </IconButton>
+                </Box>
+              ))}
+
+              {/* 🖼️ Upload Video Thumbnail */}
+              <Button component="label" variant="outlined" sx={{ mb: 2 }}>
+                <CloudUpload sx={{ mr: 1 }} /> Upload Video Thumbnail
+                <input hidden type="file" accept="image/*" onChange={(e) => setVideoThumbnail(e.target.files[0])} />
+              </Button>
+
+              {/* 🖼️ Thumbnail Preview */}
+              {videoThumbnail && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption">Video Thumbnail Preview</Typography>
+                  <img
+                    src={URL.createObjectURL(videoThumbnail)}
+                    style={{
+                      width: 160,
+                      height: 100,
+                      objectFit: 'cover',
+                      borderRadius: 8,
+                      display: 'block',
+                      marginTop: 8
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* 🔗 Video Link */}
+              <TextField
+                fullWidth
+                label="Video Link (YouTube / Vimeo)"
+                value={videoLink}
+                onChange={(e) => setVideoLink(e.target.value)}
+                sx={{ mb: 3 }}
+              />
+            </>
+          )}
+
+          <Button fullWidth variant="contained" sx={{ bgcolor: RED, py: 1.4 }} onClick={addPortfolio}>
+  {isEditMode ? 'Update Portfolio' : 'Add Portfolio'}
+</Button>
+
+        </CardContent>
+      </Card>
+      {/* ================= LIST ================= */}
+      <Tabs value={listTab} onChange={(_, v) => setListTab(v)} sx={{ mb: 2 }}>
+        <Tab label="Images" />
+        <Tab label="Videos" />
+      </Tabs>
+
+      <TableContainer component={Paper} sx={{ borderRadius: 3, width: '100%' }}>
+        <Table>
+          <TableHead sx={{ bgcolor: '#fdeaea' }}>
+            <TableRow>
+              <TableCell>Work</TableCell>
+              <TableCell>Preview</TableCell>
+              <TableCell align="center">Count</TableCell>
+              <TableCell align="right">Action</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {filteredPortfolio.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  <Typography color="text.secondary">No portfolio items found</Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {filteredPortfolio.map((p) => {
+              const imageMedia = p.media.find((m) => m.type === 'image');
+              const videoMedia = p.media.find((m) => m.type === 'video' || m.type === 'videoLink');
+
+              return (
+                <TableRow key={p._id} hover>
+                  <TableCell>
+                    <Typography fontWeight={600}>{p.workTitle}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {p.description}
                     </Typography>
-                    <Typography color="text.secondary">Showcase your invitation masterpieces to your clients.</Typography>
-                </Box>
-                {!isPremium && (
-                    <Button variant="contained" color="warning" startIcon={<Star />} onClick={() => window.location.href = '/invitation/upgrade'}>
-                        Unlock Premium
-                    </Button>
-                )}
-            </Box>
+                  </TableCell>
 
-            {/* Add New Section */}
-            <Card sx={{ mb: 4, borderRadius: 3, border: `1px solid rgba(225, 91, 101, 0.1)` }}>
-                <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>Add New Project</Typography>
+                  <TableCell>
+                    {/* IMAGE PREVIEW */}
+                    {listTab === 0 && imageMedia && (
+                      <img
+                        src={`${API_BASE}/${imageMedia.thumbnail}`}
+                        style={{
+                          width: 70,
+                          height: 70,
+                          borderRadius: 10,
+                          cursor: 'pointer',
+                          objectFit: 'cover'
+                        }}
+                        onClick={() => {
+                          setGalleryImages(imageMedia.gallery || []);
+                          setActiveImage(0);
+                          setOpenGallery(true);
+                        }}
+                      />
+                    )}
 
-                    <Tabs value={addTab} onChange={(_, v) => setAddTab(v)} sx={{ mb: 4, borderBottom: '1px solid #eee' }}>
-                        <Tab label="Image Highlights" />
-                        <Tab label="Video Showreel" />
-                    </Tabs>
+                    {/* VIDEO PREVIEW */}
+                    {listTab === 1 && videoMedia && (
+                      <Box
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => {
+                          const src = videoMedia.videos?.[0] ? `${API_BASE}/${videoMedia.videos[0]}` : videoMedia.videoLinks?.[0];
+                          setActiveVideo(src);
+                          setOpenVideo(true);
+                        }}
+                      >
+                        {/* ✅ Uploaded video */}
+                        {videoMedia.thumbnail && (
+                          <img
+                            src={`${API_BASE}/${videoMedia.thumbnail}`}
+                            alt="video thumbnail"
+                            style={{
+                              width: 80,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 6
+                            }}
+                          />
+                        )}
 
-                    <Grid container spacing={4}>
-                        <Grid item xs={12} md={7}>
-                            <Stack spacing={3}>
-                                <TextField fullWidth label="Project Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-                                <TextField fullWidth label="Description" multiline rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} />
-                                <TextField fullWidth label="Search Tags (e.g., Wedding, Minimalist, Luxury)" value={tags} onChange={(e) => setTags(e.target.value)} />
-                            </Stack>
-                        </Grid>
+                        {/* ✅ YouTube video */}
+                        {!videoMedia.videos?.length && videoMedia.videoLinks?.[0] && (
+                          <img
+                            src={getYoutubeThumbnail(videoMedia.videoLinks[0]) || '/video-placeholder.png'}
+                            alt="video thumbnail"
+                            style={{
+                              width: 80,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 6
+                            }}
+                          />
+                        )}
+                      </Box>
+                    )}
+                  </TableCell>
 
-                        <Grid item xs={12} md={5}>
-                            <Box sx={{ p: 4, bgcolor: '#FFFBF7', borderRadius: '16px', border: '2px dashed rgba(225, 91, 101, 0.2)', textAlign: 'center', minHeight: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease', '&:hover': { borderColor: PRIMARY_COLOR, bgcolor: 'rgba(225, 91, 101, 0.04)' } }}>
-                                {addTab === 0 ? (
-                                    <Stack spacing={2} alignItems="center">
-                                        <Stack direction="row" spacing={2}>
-                                            <Button component="label" variant="contained" size="small" sx={{ bgcolor: PRIMARY_COLOR, borderRadius: '10px' }}>
-                                                <CloudUpload sx={{ mr: 1, fontSize: 18 }} /> Thumbnail
-                                                <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
-                                            </Button>
-                                            <Button component="label" variant="outlined" size="small" color="primary" sx={{ borderRadius: '10px' }}>
-                                                <Collections sx={{ mr: 1, fontSize: 18 }} /> Add Gallery
-                                                <input hidden multiple type="file" accept="image/*" onChange={(e) => setGallery([...e.target.files])} />
-                                            </Button>
-                                        </Stack>
-                                        {(thumbnail || gallery.length > 0) ? (
-                                            <Typography variant="caption" sx={{ color: PRIMARY_COLOR, fontWeight: 700 }}>
-                                                {thumbnail ? '✓ Thumbnail' : ''} {gallery.length > 0 ? `• ${gallery.length} Images` : ''}
-                                            </Typography>
-                                        ) : (
-                                            <Typography variant="body2" color="text.secondary">Upload main thumbnail and project highlights</Typography>
-                                        )}
-                                    </Stack>
-                                ) : (
-                                    <Stack spacing={2} sx={{ width: '100%' }}>
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Video Link (YouTube/Vimeo)"
-                                            value={videoLink}
-                                            onChange={(e) => setVideoLink(e.target.value)}
-                                            placeholder="https://..."
-                                        />
-                                        <Divider>
-                                            <Typography variant="caption" color="text.secondary">OR</Typography>
-                                        </Divider>
-                                        <Button component="label" variant="outlined" size="small" color="primary" sx={{ borderRadius: '10px' }}>
-                                            <VideoLibrary sx={{ mr: 1, fontSize: 18 }} /> Upload MP4 Video
-                                            <input hidden multiple type="file" accept="video/*" onChange={(e) => setVideoFiles(Array.from(e.target.files))} />
-                                        </Button>
-                                        {videoFiles.length > 0 && <Typography variant="caption" color="primary">✓ {videoFiles.length} video selected</Typography>}
-                                    </Stack>
-                                )}
-                            </Box>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                size="large"
-                                disabled={loading}
-                                onClick={addPortfolio}
-                                sx={{ mt: 2, py: 1.5, bgcolor: PRIMARY_COLOR, boxShadow: '0 8px 16px rgba(225, 91, 101, 0.2)', '&:hover': { bgcolor: '#C2444E' } }}
-                            >
-                                {loading ? <CircularProgress size={24} color="inherit" /> : 'Publish to Portfolio'}
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </CardContent>
-            </Card>
+                  <TableCell align="center">
+                    {listTab === 0
+                      ? imageMedia?.gallery?.length || 0
+                      : (videoMedia?.videos?.length || 0) + (videoMedia?.videoLinks?.length || 0)}
+                  </TableCell>
 
-            {/* List Section */}
-            <Box sx={{ mt: 6 }}>
-                <Tabs value={listTab} onChange={(_, v) => setListTab(v)} sx={{ mb: 3 }}>
-                    <Tab label={`Images (${portfolio.filter(p => p.media?.some(m => m.type === 'image')).length})`} />
-                    <Tab label={`Videos (${portfolio.filter(p => p.media?.some(m => m.type === 'video' || m.type === 'videoLink')).length})`} />
-                </Tabs>
+<TableCell align="right">
+  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+    <IconButton
+      size="small"
+      color="primary"
+      onClick={() => handleEdit(p)}
+    >
+      <EditIcon />
+    </IconButton>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid #efefef' }}>
-                    <Table>
-                        <TableHead sx={{ bgcolor: '#fff9f9' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700 }}>Project Details</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>Preview</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700 }}>Media Count</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredPortfolio.length === 0 ? (
-                                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.secondary' }}>No items added to this section.</TableCell></TableRow>
-                            ) : (
-                                filteredPortfolio.map((p) => {
-                                    const imageMedia = p.media.find(m => m.type === 'image');
-                                    return (
-                                        <TableRow key={p._id} hover>
-                                            <TableCell>
-                                                <Typography variant="subtitle1" fontWeight={700}>{p.workTitle}</Typography>
-                                                <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 300 }}>{p.description}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                {listTab === 0 && imageMedia && (
-                                                    <Box
-                                                        component="img"
-                                                        src={`${API_BASE}/${imageMedia.thumbnail}`}
-                                                        sx={{ width: 80, height: 60, borderRadius: 2, objectFit: 'cover', cursor: 'pointer', border: '1px solid #eee' }}
-                                                        onClick={() => { setGalleryImages(imageMedia.gallery || []); setActiveImage(0); setOpenGallery(true); }}
-                                                    />
-                                                )}
-                                                {listTab === 1 && (
-                                                    <IconButton color="primary"><Visibility /></IconButton>
-                                                )}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                {listTab === 0 ? imageMedia?.gallery?.length || 0 : p.media?.length || 0}
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                    <Tooltip title="Edit"><IconButton size="small"><EditIcon fontSize="small" /></IconButton></Tooltip>
-                                                    <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => remove(p._id)}><Delete fontSize="small" /></IconButton></Tooltip>
-                                                </Stack>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
+    <IconButton
+      size="small"
+      color="error"
+      onClick={() => remove(p._id)}
+    >
+      <Delete />
+    </IconButton>
+  </Box>
+</TableCell>
 
-            {/* Viewer Modal */}
-            <Dialog open={openGallery} onClose={() => setOpenGallery(false)} maxWidth="lg">
-                <Box sx={{ p: 2, bgcolor: '#000', textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                        <IconButton onClick={() => setOpenGallery(false)} sx={{ color: '#fff' }}><Close /></IconButton>
-                    </Box>
-                    <Box component="img" src={`${API_BASE}/${galleryImages[activeImage]}`} sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 2 }} />
-                    <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'center', overflowX: 'auto', p: 1 }}>
-                        {galleryImages.map((img, i) => (
-                            <Box
-                                key={i}
-                                component="img"
-                                src={`${API_BASE}/${img}`}
-                                onClick={() => setActiveImage(i)}
-                                sx={{ width: 60, height: 45, borderRadius: 1, cursor: 'pointer', opacity: activeImage === i ? 1 : 0.5, border: activeImage === i ? '2px solid #fff' : 'none' }}
-                            />
-                        ))}
-                    </Stack>
-                </Box>
-            </Dialog>
 
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* ================= IMAGE GALLERY MODAL ================= */}
+      <Dialog open={openGallery} onClose={() => setOpenGallery(false)} fullScreen>
+        <Box sx={{ bgcolor: '#000', height: '100vh', p: 2 }}>
+          <IconButton onClick={() => setOpenGallery(false)} sx={{ color: '#fff' }}>
+            <Close />
+          </IconButton>
+
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <img src={`${API_BASE}/${galleryImages[activeImage]}`} style={{ maxHeight: '70vh', maxWidth: '100%' }} />
+          </Box>
+
+          <Divider sx={{ my: 2, bgcolor: '#333' }} />
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+            {galleryImages.map((img, i) => (
+              <img
+                key={i}
+                src={`${API_BASE}/${img}`}
+                onClick={() => setActiveImage(i)}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 8,
+                  border: activeImage === i ? '2px solid #fff' : '1px solid #444',
+                  cursor: 'pointer'
+                }}
+              />
+            ))}
+          </Box>
         </Box>
-    );
+      </Dialog>
+
+      {/* ================= VIDEO MODAL ================= */}
+      <Dialog open={openVideo} onClose={() => setOpenVideo(false)} fullScreen>
+        <Box sx={{ bgcolor: '#000', height: '100vh', p: 2 }}>
+          <IconButton onClick={() => setOpenVideo(false)} sx={{ color: '#fff' }}>
+            <Close />
+          </IconButton>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '80%'
+            }}
+          >
+            {activeVideo?.includes('http') ? (
+              <iframe src={activeVideo} width="80%" height="80%" frameBorder="0" allowFullScreen />
+            ) : (
+              <video src={activeVideo} controls style={{ maxWidth: '80%' }} />
+            )}
+          </Box>
+        </Box>
+      </Dialog>
+
+      {loading && <CircularProgress />}
+    </Box>
+  );
 }

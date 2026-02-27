@@ -1,19 +1,23 @@
 import {
-    IconBrush,
-    IconPlus,
-    IconClipboardList,
-    IconCategory,
-    IconCrown,
-    IconCalendarEvent,
-    IconMessageCircle
+    IconPalette,        // Design / Invitation Setup
+    IconPrinter,        // Printing
+    IconPackage,        // Package
+    IconListDetails,    // Package List
+    IconCategory,       // Categories
+    IconCrown,          // Upgrade
+    IconPhoto,          // Portfolio
+    IconCalendarEvent,  // Schedules
+    IconMessageCircle   // Enquiries
 } from '@tabler/icons-react';
 
 const icons = {
-    IconBrush,
-    IconPlus,
-    IconClipboardList,
+    IconPalette,
+    IconPrinter,
+    IconPackage,
+    IconListDetails,
     IconCategory,
     IconCrown,
+    IconPhoto,
     IconCalendarEvent,
     IconMessageCircle
 };
@@ -25,23 +29,23 @@ const invitationmanagement = {
     children: [
         {
             id: 'invitation-setup',
-            title: 'Invitation Setup',
+            title: 'Invitation & Printing Setup',
             type: 'collapse',
-            icon: icons.IconBrush,
+            icon: icons.IconPalette,
             children: [
                 {
                     id: 'add-invitation-package',
                     title: 'Add Package',
                     type: 'item',
                     url: '/invitation/add-package',
-                    icon: icons.IconPlus
+                    icon: icons.IconPackage
                 },
                 {
                     id: 'invitation-package-list',
                     title: 'Package List',
                     type: 'item',
                     url: '/invitation/list',
-                    icon: icons.IconClipboardList
+                    icon: icons.IconListDetails
                 }
             ]
         },
@@ -64,7 +68,7 @@ const invitationmanagement = {
             title: 'Portfolio',
             type: 'item',
             url: '/invitation/portfolio',
-            icon: icons.IconCrown
+            icon: icons.IconPhoto
         },
         {
             id: 'invitation-schedules',
