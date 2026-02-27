@@ -581,105 +581,161 @@ export default function InvitationList() {
                     onClose={() => setViewPackage(null)}
                     maxWidth="lg"
                     fullWidth
-                    PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden' } }}
+                    PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' } }}
                 >
-                    <DialogContent sx={{ p: 0 }}>
+                    <DialogContent sx={{ p: 0, bgcolor: 'white' }}>
                         {viewPackage && (
-                            <Grid container>
-                                {/* Left Side: Media Gallery */}
-                                <Grid item xs={12} md={6} sx={{ bgcolor: '#F7FAFC', p: { xs: 2, md: 4 }, display: 'flex', flexDirection: 'column', minHeight: { xs: 400, md: 600 } }}>
-                                    <Box sx={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', flex: 1, mb: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.05)', bgcolor: 'white' }}>
-                                        <ImageCarousel
-                                            images={viewPackage?.images?.length > 0 ? viewPackage.images : [viewPackage?.thumbnail]}
-                                            baseUrl={API_BASE_URL}
-                                        />
-                                        <IconButton
-                                            onClick={() => setViewPackage(null)}
-                                            sx={{ position: 'absolute', top: 16, right: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', '&:hover': { bgcolor: 'white' } }}
-                                        >
-                                            <Close />
-                                        </IconButton>
-                                        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
-                                            <Chip
-                                                icon={<CollectionsOutlined sx={{ fontSize: '14px !important', color: '#fff !important' }} />}
-                                                label="Gallery"
-                                                size="small"
-                                                sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}
+                            <Box sx={{ position: 'relative' }}>
+                                {/* Close Button */}
+                                <IconButton
+                                    onClick={() => setViewPackage(null)}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 20,
+                                        right: 20,
+                                        zIndex: 10,
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        backdropFilter: 'blur(8px)',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                        '&:hover': { bgcolor: 'white', transform: 'rotate(90deg)' },
+                                        transition: 'all 0.3s'
+                                    }}
+                                >
+                                    <Close />
+                                </IconButton>
+
+                                <Grid container>
+                                    {/* Left Side: Media Gallery */}
+                                    <Grid item xs={12} md={5.5} sx={{ bgcolor: '#F7FAFC', p: { xs: 3, md: 5 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid #edf2f7' }}>
+                                        <Box sx={{
+                                            position: 'relative',
+                                            borderRadius: '28px',
+                                            overflow: 'hidden',
+                                            aspectRatio: '1/1',
+                                            width: '100%',
+                                            maxHeight: '500px',
+                                            mb: 3,
+                                            boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
+                                            bgcolor: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <ImageCarousel
+                                                images={viewPackage?.images?.length > 0 ? viewPackage.images : [viewPackage?.thumbnail]}
+                                                baseUrl={API_BASE_URL}
                                             />
+                                            <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
+                                                <Chip
+                                                    icon={<CollectionsOutlined sx={{ fontSize: '14px !important', color: '#fff !important' }} />}
+                                                    label="Gallery"
+                                                    size="small"
+                                                    sx={{ bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 700 }}
+                                                />
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                </Grid>
 
-                                {/* Right Side: Specification & Details */}
-                                <Grid item xs={12} md={6} sx={{ p: { xs: 4, md: 6 }, bgcolor: 'white' }}>
-                                    <Box sx={{ mb: 4 }}>
-                                        <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2 }}>
-                                            Package Specification
-                                        </Typography>
-                                        <Typography variant="h3" sx={{ fontWeight: 900, color: '#2D3748', mt: 1, mb: 2, fontFamily: "'Playfair Display', serif" }}>
-                                            {viewPackage?.packageName}
-                                        </Typography>
-                                        <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8 }}>
-                                            {viewPackage?.description || 'No description provided.'}
-                                        </Typography>
-                                    </Box>
-
-                                    <Grid container spacing={3} sx={{ mb: 5 }}>
-                                        <Grid item xs={6}><DetailItem icon={<InfoOutlined />} label="Design ID" value={viewPackage?.packageId || 'N/A'} /></Grid>
-                                        <Grid item xs={6}><DetailItem icon={<CategoryOutlined />} label="Category" value={viewPackage?.category?.title || 'Standard'} /></Grid>
-                                        <Grid item xs={6}><DetailItem icon={<DescriptionOutlined />} label="Description" value={viewPackage?.description ? 'Available' : 'No description'} success={!!viewPackage?.description} chip /></Grid>
-                                        <Grid item xs={6}><DetailItem icon={<CheckCircle />} label="Visibility" value={viewPackage?.isActive ? 'Public' : 'Hidden'} success={viewPackage?.isActive} error={!viewPackage?.isActive} chip /></Grid>
+                                        {/* Style Tags for Premium Feel */}
+                                        <Box sx={{ mt: 'auto' }}>
+                                            <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', mb: 1.5, display: 'block' }}>Design Aesthetics</Typography>
+                                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                                <Chip label="Premium" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
+                                                <Chip label="Handcrafted" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
+                                                <Chip label="Bespoke" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
+                                            </Stack>
+                                        </Box>
                                     </Grid>
 
-                                    <Box sx={{ p: 4, bgcolor: '#F7FAFC', borderRadius: '24px', mb: 5 }}>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                                            <Box>
-                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>TOTAL PACKAGE PRICE</Typography>
-                                                <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>₹{viewPackage?.packagePrice}</Typography>
+                                    {/* Right Side: Specification & Details */}
+                                    <Grid item xs={12} md={6.5} sx={{ p: { xs: 4, md: 6 }, display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
+                                        <Box sx={{ mb: 4 }}>
+                                            <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, display: 'block', mb: 1 }}>
+                                                Invitation & Printing
+                                            </Typography>
+                                            <Typography variant="h2" sx={{ fontWeight: 900, color: '#1A202C', mb: 2, fontFamily: "'Playfair Display', serif", fontSize: { xs: '2rem', md: '2.75rem' } }}>
+                                                {viewPackage?.packageName}
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8, fontSize: '1.05rem' }}>
+                                                {viewPackage?.description || 'No description provided for this exquisite design collection.'}
+                                            </Typography>
+                                        </Box>
+
+                                        <Divider sx={{ mb: 4 }} />
+
+                                        <Grid container spacing={3} sx={{ mb: 5 }}>
+                                            <Grid item xs={6} md={6}><DetailItem icon={<InfoOutlined />} label="Design ID" value={viewPackage?.packageId || (viewPackage?._id?.slice(-8).toUpperCase())} /></Grid>
+                                            <Grid item xs={6} md={6}><DetailItem icon={<CategoryOutlined />} label="Category" value={viewPackage?.category?.title || 'Standard'} /></Grid>
+                                            <Grid item xs={6} md={6}><DetailItem icon={<Typography sx={{ fontSize: 18, fontWeight: 900 }}>Q</Typography>} label="Digital Proof" value="Available" success chip /></Grid>
+                                            <Grid item xs={6} md={6}><DetailItem icon={<CheckCircle />} label="Status" value={viewPackage?.isActive ? 'Active' : 'Hidden'} success={viewPackage?.isActive} error={!viewPackage?.isActive} chip /></Grid>
+                                        </Grid>
+
+                                        {/* Premium Price Cards */}
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
+                                            <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: '#1A202C', color: 'white', boxShadow: '0 15px 30px rgba(0,0,0,0.1)' }}>
+                                                <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 800, letterSpacing: 1 }}>TOTAL PACKAGE PRICE</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 900, color: 'white', mt: 0.5 }}>₹{viewPackage?.packagePrice}</Typography>
                                             </Box>
-                                            <Box sx={{ textAlign: 'right' }}>
-                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>ADVANCE BOOKING</Typography>
-                                                <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
+                                            <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: alpha(THEME_COLOR, 0.05), border: `2px solid ${THEME_COLOR}` }}>
+                                                <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, letterSpacing: 1 }}>ADVANCE BOOKING</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1A202C', mt: 0.5 }}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
                                             </Box>
                                         </Stack>
-                                        <Divider sx={{ mb: 2 }} />
-                                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#718096', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <LocalOffer fontSize="inherit" /> Prices are subject to customization requirements and GST.
-                                        </Typography>
-                                    </Box>
 
-                                    <Stack direction="row" spacing={2}>
-                                        <Button
-                                            fullWidth
-                                            variant="contained"
-                                            size="large"
-                                            startIcon={<EditOutlined />}
-                                            onClick={() => {
-                                                const id = viewPackage?._id;
-                                                setViewPackage(null);
-                                                navigate(`/invitation/edit-package/${id}`);
-                                            }}
-                                            sx={{ bgcolor: '#2D3748', color: 'white', borderRadius: '16px', py: 2, fontWeight: 700, '&:hover': { bgcolor: '#1A202C' }, textTransform: 'none' }}
-                                        >
-                                            Edit Design
-                                        </Button>
-                                        <Button
-                                            fullWidth
-                                            variant="outlined"
-                                            size="large"
-                                            startIcon={<DeleteOutline />}
-                                            color="error"
-                                            onClick={() => {
-                                                setDeleteId(viewPackage?._id);
-                                                setViewPackage(null);
-                                            }}
-                                            sx={{ borderRadius: '16px', py: 2, fontWeight: 700, borderColor: '#E2E8F0', textTransform: 'none' }}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </Stack>
+                                        <Box sx={{ mt: 'auto', pt: 4 }}>
+                                            <Stack direction="row" spacing={2}>
+                                                <Button
+                                                    fullWidth
+                                                    variant="contained"
+                                                    size="large"
+                                                    startIcon={<EditOutlined />}
+                                                    onClick={() => {
+                                                        const id = viewPackage?._id;
+                                                        setViewPackage(null);
+                                                        navigate(`/invitation/edit-package/${id}`);
+                                                    }}
+                                                    sx={{
+                                                        bgcolor: '#1A202C',
+                                                        color: 'white',
+                                                        borderRadius: '16px',
+                                                        py: 2.2,
+                                                        fontWeight: 800,
+                                                        '&:hover': { bgcolor: '#000', transform: 'translateY(-2px)' },
+                                                        textTransform: 'none',
+                                                        transition: 'all 0.3s'
+                                                    }}
+                                                >
+                                                    Modify Design
+                                                </Button>
+                                                <Button
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    size="large"
+                                                    startIcon={<DeleteOutline />}
+                                                    color="error"
+                                                    onClick={() => {
+                                                        setDeleteId(viewPackage?._id);
+                                                        setViewPackage(null);
+                                                    }}
+                                                    sx={{
+                                                        borderRadius: '16px',
+                                                        py: 2.2,
+                                                        fontWeight: 800,
+                                                        borderColor: '#E2E8F0',
+                                                        textTransform: 'none',
+                                                        '&:hover': { bgcolor: alpha('#f44336', 0.05), borderColor: '#f44336' }
+                                                    }}
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </Stack>
+                                            <Typography variant="caption" sx={{ mt: 2, display: 'block', textAlign: 'center', color: '#718096', fontWeight: 500 }}>
+                                                <Diamond sx={{ fontSize: 12, verticalAlign: 'middle', mr: 0.5, color: THEME_COLOR }} />
+                                                Managed via BookMyEvents Premium Vendor Suite
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
+                            </Box>
                         )}
                     </DialogContent>
                 </Dialog>

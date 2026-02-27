@@ -381,180 +381,176 @@ export default function AddInvitationPackage() {
                             {errors.category && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.category}</FormHelperText>}
                         </Paper>
 
-                        <Grid container spacing={3}>
+                        <Stack spacing={3}>
                             {/* Thumbnail Section */}
-                            <Grid item xs={12} md={6}>
-                                <Paper elevation={0} sx={{ ...card, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <SL>Package Thumbnail</SL>
-                                    <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                                        Main image displayed in catalogs and lists.
-                                    </Typography>
-                                    <Box
-                                        component="label"
-                                        htmlFor="thumb-img"
-                                        sx={{
-                                            flexGrow: 1,
-                                            border: '2px dashed',
-                                            borderColor: errors.thumbnail ? '#dc2626' : 'rgba(225, 91, 101, 0.2)',
-                                            borderRadius: '16px',
-                                            p: 2,
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            bgcolor: '#FFFBF7',
-                                            transition: 'all 0.3s ease',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            minHeight: 220,
-                                            '&:hover': {
-                                                borderColor: '#E15B65',
-                                                bgcolor: 'rgba(225, 91, 101, 0.04)',
-                                                transform: 'scale(1.01)'
-                                            }
-                                        }}
-                                    >
-                                        <input id="thumb-img" type="file" accept="image/*" hidden onChange={(e) => handleThumbnailUpload(e.target.files[0])} />
+                            <Paper elevation={0} sx={card}>
+                                <SL>Package Thumbnail</SL>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                                    Main image displayed in catalogs and lists.
+                                </Typography>
+                                <Box
+                                    component="label"
+                                    htmlFor="thumb-img"
+                                    sx={{
+                                        width: '100%',
+                                        border: '2px dashed',
+                                        borderColor: errors.thumbnail ? '#dc2626' : 'rgba(225, 91, 101, 0.2)',
+                                        borderRadius: '16px',
+                                        p: 2,
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        bgcolor: '#FFFBF7',
+                                        transition: 'all 0.3s ease',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: 220,
+                                        '&:hover': {
+                                            borderColor: '#E15B65',
+                                            bgcolor: 'rgba(225, 91, 101, 0.04)',
+                                            transform: 'scale(1.01)'
+                                        }
+                                    }}
+                                >
+                                    <input id="thumb-img" type="file" accept="image/*" hidden onChange={(e) => handleThumbnailUpload(e.target.files[0])} />
 
-                                        {thumbnailPreview ? (
-                                            <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 180 }}>
-                                                <Box
-                                                    component="img"
-                                                    src={thumbnailPreview}
-                                                    sx={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        maxHeight: 220,
-                                                        objectFit: 'cover',
-                                                        borderRadius: '10px'
-                                                    }}
-                                                />
-                                                <IconButton
-                                                    size="small"
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        bgcolor: 'rgba(255,255,255,0.9)',
-                                                        '&:hover': { bgcolor: '#fff' }
-                                                    }}
-                                                    onClick={(e) => { e.preventDefault(); setThumbnailPreview(null); setThumbnailFile(null); }}
-                                                >
-                                                    <Close fontSize="small" />
-                                                </IconButton>
+                                    {thumbnailPreview ? (
+                                        <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 180 }}>
+                                            <Box
+                                                component="img"
+                                                src={thumbnailPreview}
+                                                sx={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    maxHeight: 280,
+                                                    objectFit: 'contain',
+                                                    borderRadius: '10px'
+                                                }}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 8,
+                                                    right: 8,
+                                                    bgcolor: 'rgba(255,255,255,0.9)',
+                                                    '&:hover': { bgcolor: '#fff' }
+                                                }}
+                                                onClick={(e) => { e.preventDefault(); setThumbnailPreview(null); setThumbnailFile(null); }}
+                                            >
+                                                <Close fontSize="small" />
+                                            </IconButton>
+                                        </Box>
+                                    ) : (
+                                        <Stack alignItems="center" spacing={1.5}>
+                                            <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 56, height: 56 }}>
+                                                <CloudUpload />
+                                            </Avatar>
+                                            <Box>
+                                                <Typography variant="subtitle2" fontWeight={700}>Click to upload thumbnail</Typography>
+                                                <Typography variant="caption" color="text.secondary">PNG, JPG or JPEG (Max 5MB)</Typography>
                                             </Box>
-                                        ) : (
-                                            <Stack alignItems="center" spacing={1.5}>
-                                                <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 56, height: 56 }}>
-                                                    <CloudUpload />
-                                                </Avatar>
-                                                <Box>
-                                                    <Typography variant="subtitle2" fontWeight={700}>Click to upload thumbnail</Typography>
-                                                    <Typography variant="caption" color="text.secondary">PNG, JPG or JPEG (Max 5MB)</Typography>
-                                                </Box>
-                                            </Stack>
-                                        )}
-                                    </Box>
-                                    {errors.thumbnail && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.thumbnail}</FormHelperText>}
-                                </Paper>
-                            </Grid>
+                                        </Stack>
+                                    )}
+                                </Box>
+                                {errors.thumbnail && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.thumbnail}</FormHelperText>}
+                            </Paper>
 
                             {/* Gallery Section */}
-                            <Grid item xs={12} md={6}>
-                                <Paper elevation={0} sx={{ ...card, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <SL>Gallery</SL>
-                                    <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                                        Additional photos showcasing details and variations.
-                                    </Typography>
-                                    <Box
-                                        component="label"
-                                        htmlFor="gallery-imgs"
-                                        sx={{
-                                            flexGrow: 1,
-                                            border: '2px dashed rgba(225, 91, 101, 0.2)',
-                                            borderRadius: '16px',
-                                            p: 2,
-                                            textAlign: 'center',
-                                            cursor: 'pointer',
-                                            bgcolor: '#FFFBF7',
-                                            transition: 'all 0.3s ease',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            minHeight: 220,
-                                            '&:hover': {
-                                                borderColor: '#E15B65',
-                                                bgcolor: 'rgba(225, 91, 101, 0.04)'
-                                            }
-                                        }}
-                                    >
-                                        <input id="gallery-imgs" type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
+                            <Paper elevation={0} sx={card}>
+                                <SL>Gallery</SL>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                                    Additional photos showcasing details and variations.
+                                </Typography>
+                                <Box
+                                    component="label"
+                                    htmlFor="gallery-imgs"
+                                    sx={{
+                                        width: '100%',
+                                        border: '2px dashed rgba(225, 91, 101, 0.2)',
+                                        borderRadius: '16px',
+                                        p: 2,
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        bgcolor: '#FFFBF7',
+                                        transition: 'all 0.3s ease',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        minHeight: 220,
+                                        '&:hover': {
+                                            borderColor: '#E15B65',
+                                            bgcolor: 'rgba(225, 91, 101, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    <input id="gallery-imgs" type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
 
-                                        {imagePreviews.length > 0 ? (
-                                            <Grid container spacing={1.5}>
-                                                {imagePreviews.map((p, i) => (
-                                                    <Grid item xs={4} key={i}>
-                                                        <Box sx={{ position: 'relative', pt: '100%' }}>
-                                                            <Box
-                                                                component="img"
-                                                                src={p}
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    top: 0,
-                                                                    left: 0,
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                    objectFit: 'cover',
-                                                                    borderRadius: '8px',
-                                                                    border: '1px solid rgba(0,0,0,0.05)'
-                                                                }}
-                                                            />
-                                                            <IconButton
-                                                                size="small"
-                                                                sx={{
-                                                                    position: 'absolute',
-                                                                    top: 4,
-                                                                    right: 4,
-                                                                    bgcolor: 'rgba(255,255,255,0.8)',
-                                                                    p: 0.3,
-                                                                    '&:hover': { bgcolor: '#fff' }
-                                                                }}
-                                                                onClick={(e) => { e.preventDefault(); removeImage(i); }}
-                                                            >
-                                                                <Close sx={{ fontSize: 14 }} />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Grid>
-                                                ))}
-                                                <Grid item xs={4}>
-                                                    <Box sx={{
-                                                        pt: '100%',
-                                                        position: 'relative',
-                                                        border: '2px dashed rgba(225, 91, 101, 0.15)',
-                                                        borderRadius: '8px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        '&:hover': { bgcolor: 'rgba(225, 91, 101, 0.05)' }
-                                                    }}>
-                                                        <AddPhotoAlternate color="primary" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.6 }} />
+                                    {imagePreviews.length > 0 ? (
+                                        <Grid container spacing={2}>
+                                            {imagePreviews.map((p, i) => (
+                                                <Grid item xs={6} sm={4} md={3} lg={2.4} key={i}>
+                                                    <Box sx={{ position: 'relative', pt: '100%' }}>
+                                                        <Box
+                                                            component="img"
+                                                            src={p}
+                                                            sx={{
+                                                                position: 'absolute',
+                                                                top: 0,
+                                                                left: 0,
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover',
+                                                                borderRadius: '8px',
+                                                                border: '1px solid rgba(0,0,0,0.05)'
+                                                            }}
+                                                        />
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{
+                                                                position: 'absolute',
+                                                                top: 4,
+                                                                right: 4,
+                                                                bgcolor: 'rgba(255,255,255,0.8)',
+                                                                p: 0.3,
+                                                                '&:hover': { bgcolor: '#fff' }
+                                                            }}
+                                                            onClick={(e) => { e.preventDefault(); removeImage(i); }}
+                                                        >
+                                                            <Close sx={{ fontSize: 14 }} />
+                                                        </IconButton>
                                                     </Box>
                                                 </Grid>
-                                            </Grid>
-                                        ) : (
-                                            <Stack alignItems="center" spacing={1.5} sx={{ my: 'auto' }}>
-                                                <Avatar sx={{ bgcolor: 'rgba(212, 160, 23, 0.1)', color: '#D4A017', width: 56, height: 56 }}>
-                                                    <AddPhotoAlternate />
-                                                </Avatar>
-                                                <Box>
-                                                    <Typography variant="subtitle2" fontWeight={700}>Add Gallery Images</Typography>
-                                                    <Typography variant="caption" color="text.secondary">Upload up to 10 gallery photos</Typography>
+                                            ))}
+                                            <Grid item xs={6} sm={4} md={3} lg={2.4}>
+                                                <Box sx={{
+                                                    pt: '100%',
+                                                    position: 'relative',
+                                                    border: '2px dashed rgba(225, 91, 101, 0.15)',
+                                                    borderRadius: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    '&:hover': { bgcolor: 'rgba(225, 91, 101, 0.05)' }
+                                                }}>
+                                                    <AddPhotoAlternate color="primary" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.6 }} />
                                                 </Box>
-                                            </Stack>
-                                        )}
-                                    </Box>
-                                </Paper>
-                            </Grid>
-                        </Grid>
+                                            </Grid>
+                                        </Grid>
+                                    ) : (
+                                        <Stack alignItems="center" spacing={1.5} sx={{ my: 'auto' }}>
+                                            <Avatar sx={{ bgcolor: 'rgba(212, 160, 23, 0.1)', color: '#D4A017', width: 56, height: 56 }}>
+                                                <AddPhotoAlternate />
+                                            </Avatar>
+                                            <Box>
+                                                <Typography variant="subtitle2" fontWeight={700}>Add Gallery Images</Typography>
+                                                <Typography variant="caption" color="text.secondary">Upload up to 10 gallery photos</Typography>
+                                            </Box>
+                                        </Stack>
+                                    )}
+                                </Box>
+                            </Paper>
+                        </Stack>
 
                         <Stack direction="row" spacing={2} pt={2}>
                             <Button type="submit" variant="contained" size="large" fullWidth startIcon={<AutoAwesome />} disabled={busy} sx={{ py: 1.5, background: 'linear-gradient(135deg, #E15B65 0%, #C2444E 100%)' }}>
