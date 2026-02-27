@@ -92,7 +92,7 @@ const card = {
 };
 
 export default function AddInvitationPackage() {
-    const [form, setForm] = useState({ name: '', description: '', price: '', advance: '' });
+    const [form, setForm] = useState({ name: '', description: '', price: '', advance: '', category: '' });
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [images, setImages] = useState([]);
@@ -100,6 +100,8 @@ export default function AddInvitationPackage() {
     const [errors, setErrors] = useState({});
     const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
     const [busy, setBusy] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [fetchingCategories, setFetchingCategories] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = Boolean(id);
@@ -112,7 +114,7 @@ export default function AddInvitationPackage() {
         const fetchPackage = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await fetch(`${API_BASE_URL}/api/invitation/${id}`, {
+                const res = await fetch(`${API_BASE_URL}/api/invitation-printing/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -122,7 +124,8 @@ export default function AddInvitationPackage() {
                         name: pkg.packageName || '',
                         description: pkg.description || '',
                         price: pkg.packagePrice != null ? String(pkg.packagePrice) : '',
-                        advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : ''
+                        advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : '',
+                        category: pkg.category?._id || pkg.category || ''
                     });
                     if (pkg.thumbnail) {
                         setThumbnailPreview(`${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
@@ -142,6 +145,27 @@ export default function AddInvitationPackage() {
         setForm((f) => ({ ...f, [k]: v }));
         if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }));
     };
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setFetchingCategories(true);
+                const moduleId = localStorage.getItem('moduleId');
+                if (!moduleId) return;
+
+                const res = await fetch(`${API_BASE_URL}/api/categories/modules/${moduleId}`);
+                const data = await res.json();
+                if (data.success) {
+                    setCategories(data.data || []);
+                }
+            } catch (err) {
+                console.error('Fetch categories error:', err);
+            } finally {
+                setFetchingCategories(false);
+            }
+        };
+        fetchCategories();
+    }, [API_BASE_URL]);
 
     const handleThumbnailUpload = (file) => {
         if (!file?.type.startsWith('image/')) return;
@@ -177,6 +201,7 @@ export default function AddInvitationPackage() {
         if (!form.description.trim()) e.description = 'Required';
         if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
         if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+        if (!form.category) e.category = 'Please select a category';
         if (!isEditMode && !thumbnailFile) e.thumbnail = 'Please upload a thumbnail';
         return e;
     };
@@ -206,11 +231,12 @@ export default function AddInvitationPackage() {
             formData.append('description', form.description);
             formData.append('packagePrice', form.price);
             formData.append('advanceBookingAmount', form.advance);
+            formData.append('category', form.category);
 
             if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
             images.forEach(img => formData.append('images', img));
 
-            const url = isEditMode ? `${API_BASE_URL}/api/invitation/${id}` : `${API_BASE_URL}/api/invitation/create`;
+            const url = isEditMode ? `${API_BASE_URL}/api/invitation-printing/${id}` : `${API_BASE_URL}/api/invitation-printing/create`;
             const response = await fetch(url, {
                 method: isEditMode ? 'PUT' : 'POST',
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -222,7 +248,7 @@ export default function AddInvitationPackage() {
 
             setSnack({ open: true, msg: 'Invitation package published! 🎉', severity: 'success' });
             if (!isEditMode) {
-                setForm({ name: '', description: '', price: '', advance: '' });
+                setForm({ name: '', description: '', price: '', advance: '', category: '' });
                 setThumbnailFile(null);
                 setThumbnailPreview(null);
                 setImages([]);
@@ -280,6 +306,79 @@ export default function AddInvitationPackage() {
                                 <TextField label="Base Price *" placeholder="0" fullWidth type="number" value={form.price} onChange={(e) => set('price', e.target.value)} error={!!errors.price} helperText={errors.price} InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="primary.main" fontWeight={700}>₹</Typography></InputAdornment> }} />
                                 <TextField label="Advance Amount *" placeholder="0" fullWidth type="number" value={form.advance} onChange={(e) => set('advance', e.target.value)} error={!!errors.advance} helperText={errors.advance} InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="secondary.main" fontWeight={700}>₹</Typography></InputAdornment> }} />
                             </Stack>
+                        </Paper>
+
+                        <Paper elevation={0} sx={{ ...card, bgcolor: '#fff' }}>
+                            <SL>Select Category</SL>
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                                Choose the type of invitation service you provide.
+                            </Typography>
+
+                            {fetchingCategories ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                                    <CircularProgress size={24} />
+                                </Box>
+                            ) : categories.length > 0 ? (
+                                <Grid container spacing={2}>
+                                    {categories.map((cat) => (
+                                        <Grid item xs={12} sm={6} md={4} key={cat._id}>
+                                            <Box
+                                                onClick={() => set('category', cat._id)}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    p: 2,
+                                                    borderRadius: '12px',
+                                                    border: '1px solid',
+                                                    borderColor: form.category === cat._id ? '#E15B65' : 'rgba(0,0,0,0.06)',
+                                                    bgcolor: form.category === cat._id ? 'rgba(225, 91, 101, 0.04)' : '#fff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 2,
+                                                    transition: 'all 0.2s ease',
+                                                    '&:hover': {
+                                                        borderColor: '#E15B65',
+                                                        transform: 'translateY(-2px)',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                                                    }
+                                                }}
+                                            >
+                                                <Avatar
+                                                    src={cat.image ? (cat.image.startsWith('http') ? cat.image : `${API_BASE_URL}${cat.image}`) : ''}
+                                                    sx={{
+                                                        width: 40,
+                                                        height: 40,
+                                                        borderRadius: '8px',
+                                                        bgcolor: 'rgba(225, 91, 101, 0.1)',
+                                                        color: '#E15B65'
+                                                    }}
+                                                >
+                                                    {!cat.image && <BookmarkBorder fontSize="small" />}
+                                                </Avatar>
+                                                <Box sx={{ flexGrow: 1 }}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: form.category === cat._id ? '#E15B65' : 'inherit' }}>
+                                                        {cat.title}
+                                                    </Typography>
+                                                    {cat.description && (
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                            {cat.description}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                                {form.category === cat._id && (
+                                                    <Avatar sx={{ width: 20, height: 20, bgcolor: '#E15B65', color: '#fff' }}>
+                                                        <Box component="span" sx={{ fontSize: '12px' }}>✓</Box>
+                                                    </Avatar>
+                                                )}
+                                            </Box>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            ) : (
+                                <Alert severity="info" sx={{ borderRadius: '12px' }}>
+                                    No categories found for this module. Please contact administrator.
+                                </Alert>
+                            )}
+                            {errors.category && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.category}</FormHelperText>}
                         </Paper>
 
                         <Grid container spacing={3}>
@@ -363,7 +462,7 @@ export default function AddInvitationPackage() {
                             {/* Gallery Section */}
                             <Grid item xs={12} md={6}>
                                 <Paper elevation={0} sx={{ ...card, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <SL>Work Portfolio (Gallery)</SL>
+                                    <SL>Gallery</SL>
                                     <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                                         Additional photos showcasing details and variations.
                                     </Typography>
@@ -447,7 +546,7 @@ export default function AddInvitationPackage() {
                                                     <AddPhotoAlternate />
                                                 </Avatar>
                                                 <Box>
-                                                    <Typography variant="subtitle2" fontWeight={700}>Add Project Images</Typography>
+                                                    <Typography variant="subtitle2" fontWeight={700}>Add Gallery Images</Typography>
                                                     <Typography variant="caption" color="text.secondary">Upload up to 10 gallery photos</Typography>
                                                 </Box>
                                             </Stack>
@@ -461,7 +560,7 @@ export default function AddInvitationPackage() {
                             <Button type="submit" variant="contained" size="large" fullWidth startIcon={<AutoAwesome />} disabled={busy} sx={{ py: 1.5, background: 'linear-gradient(135deg, #E15B65 0%, #C2444E 100%)' }}>
                                 {busy ? 'Processing...' : isEditMode ? 'Update Package' : 'Publish Invitation'}
                             </Button>
-                            {!isEditMode && <Button variant="outlined" size="large" fullWidth startIcon={<RotateLeft />} onClick={() => { setForm({ name: '', description: '', price: '', advance: '' }); setThumbnailPreview(null); setImagePreviews([]); }}>Reset</Button>}
+                            {!isEditMode && <Button variant="outlined" size="large" fullWidth startIcon={<RotateLeft />} onClick={() => { setForm({ name: '', description: '', price: '', advance: '', category: '' }); setThumbnailPreview(null); setImagePreviews([]); }}>Reset</Button>}
                         </Stack>
                     </Stack>
                 </Box>
