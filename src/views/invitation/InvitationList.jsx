@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ThemeProvider,
@@ -26,8 +26,13 @@ import {
     Alert,
     Tooltip,
     Fade,
+    Zoom,
     Paper,
-    Divider
+    Divider,
+    Switch,
+    Container,
+    alpha,
+    useTheme
 } from '@mui/material';
 import {
     Add,
@@ -41,58 +46,107 @@ import {
     CategoryOutlined,
     DescriptionOutlined,
     Close,
-    CollectionsOutlined
+    CollectionsOutlined,
+    Diamond,
+    CheckCircle,
+    Inventory as InventoryIcon,
+    Palette,
+    Description,
+    AttachMoney,
+    LocalOffer,
+    Visibility
 } from '@mui/icons-material';
 
-// ── Theme ─────────────────────────────────────────────────
+// ── Theme & Styles ──────────────────────────────────────────
+const THEME_COLOR = '#E15B65';
+const SECONDARY_COLOR = '#c14a54';
+const ACCENT_COLOR = '#FFD700';
+const DARK_BG = '#1A202C';
+const GLASS_BG = 'rgba(255, 255, 255, 0.9)';
+
 const theme = createTheme({
     palette: {
-        primary: { main: '#E15B65', dark: '#C2444E', light: '#F09898', contrastText: '#fff' },
+        primary: { main: THEME_COLOR, dark: SECONDARY_COLOR, light: '#F09898', contrastText: '#fff' },
         secondary: { main: '#D4A017' },
-        background: { default: '#FDF6EE', paper: '#fff' },
-        text: { primary: '#1A0A00', secondary: '#7A5C4A' }
+        background: { default: '#F0F2F5', paper: '#fff' },
+        text: { primary: '#2D3748', secondary: '#718096' }
     },
     typography: {
         fontFamily: "'DM Sans', sans-serif",
-        h4: { fontFamily: "'Playfair Display', serif" }
+        h4: { fontFamily: "'Playfair Display', serif" },
+        h2: { fontFamily: "'Playfair Display', serif" }
     },
-    shape: { borderRadius: 14 }
+    shape: { borderRadius: 16 }
 });
 
-// ── Components ──────────────────────────────────────────
-const SectionLabel = ({ label, icon }) => (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, opacity: 0.8 }}>
-        {icon}
-        <Typography variant="overline" sx={{ fontWeight: 900, fontSize: '0.65rem', letterSpacing: '1px', color: 'text.secondary' }}>
-            {label}
-        </Typography>
-    </Stack>
+const DetailItem = ({ icon, label, value, chip, success, error }) => (
+    <Box sx={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 2,
+        py: 1.5,
+        borderBottom: '1px solid #f0f0f0',
+        '&:hover': { bgcolor: alpha(THEME_COLOR, 0.02) },
+        transition: '0.2s'
+    }}>
+        <Box sx={{ color: THEME_COLOR, mt: 0.5, display: 'flex' }}>{icon}</Box>
+        <Box sx={{ flex: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {label}
+            </Typography>
+            {chip ? (
+                <Box sx={{ mt: 0.5 }}>
+                    <Chip
+                        label={value}
+                        size="small"
+                        color={success ? 'success' : error ? 'error' : 'default'}
+                        sx={{ fontWeight: 700 }}
+                    />
+                </Box>
+            ) : (
+                <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.3, color: '#2D3748' }}>
+                    {value || 'Not specified'}
+                </Typography>
+            )}
+        </Box>
+    </Box>
 );
 
 const ImageCarousel = ({ images, baseUrl }) => {
     const [active, setActive] = useState(0);
-    if (!images || images.length === 0) return null;
+    const [error, setError] = useState(false);
+
+    if (!images || images.length === 0) return (
+        <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F7FAFC' }}>
+            <CollectionsOutlined sx={{ fontSize: 60, color: '#CBD5E0' }} />
+        </Box>
+    );
+
+    const currentImg = images[active];
+    const fullPath = currentImg ? (currentImg.startsWith('http') ? currentImg : `${baseUrl}${currentImg.startsWith('/') ? '' : '/'}${currentImg}`) : 'https://placehold.co/600x400?text=No+Image';
 
     return (
-        <Box sx={{ position: 'relative', height: '100%', width: '100%', bgcolor: '#000' }}>
-            <CardMedia
-                component="img"
-                image={images[active] ? `${baseUrl}${images[active].startsWith('/') ? '' : '/'}${images[active]}` : 'https://placehold.co/600x400?text=No+Image'}
-                sx={{ height: '100%', width: '100%', objectFit: 'contain' }}
-            />
+        <Box sx={{ position: 'relative', height: '100%', width: '100%', bgcolor: '#FAF8F6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Fade in={true} key={active} timeout={500}>
+                <CardMedia
+                    component="img"
+                    image={fullPath}
+                    sx={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                />
+            </Fade>
             {images.length > 1 && (
-                <Box sx={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1, zIndex: 5 }}>
+                <Box sx={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1, zIndex: 5, bgcolor: 'rgba(0,0,0,0.2)', px: 1.5, py: 0.8, borderRadius: 10, backdropFilter: 'blur(10px)' }}>
                     {images.map((_, i) => (
                         <Box
                             key={i}
                             onClick={() => setActive(i)}
                             sx={{
-                                width: i === active ? 24 : 8,
-                                height: 8,
-                                borderRadius: 4,
-                                bgcolor: i === active ? 'primary.main' : 'rgba(255,255,255,0.5)',
+                                width: i === active ? 20 : 6,
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: i === active ? 'primary.main' : 'rgba(255,255,255,0.6)',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                             }}
                         />
                     ))}
@@ -110,10 +164,11 @@ export default function InvitationList() {
     const [viewPackage, setViewPackage] = useState(null);
     const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
     const navigate = useNavigate();
+    const muiTheme = useTheme();
 
     const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
 
-    const fetchPackages = async () => {
+    const fetchPackages = useCallback(async () => {
         try {
             setLoading(true);
             const moduleId = localStorage.getItem('moduleId');
@@ -135,6 +190,23 @@ export default function InvitationList() {
             setSnack({ open: true, msg: 'Failed to fetch packages', severity: 'error' });
         } finally {
             setLoading(false);
+        }
+    }, [API_BASE_URL]);
+
+    const handleToggleStatus = async (id, current) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/invitation-printing/${id}/toggle-active`, {
+                method: 'PATCH',
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            const data = await response.json();
+            if (data.success) {
+                setPackages(prev => prev.map(p => p._id === id ? { ...p, isActive: !current } : p));
+                setSnack({ open: true, msg: 'Status updated successfully', severity: 'success' });
+            }
+        } catch (err) {
+            setSnack({ open: true, msg: 'Failed to update status', severity: 'error' });
         }
     };
 
@@ -163,320 +235,452 @@ export default function InvitationList() {
         }
     };
 
-    const filtered = packages.filter(p =>
-        p.packageName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = useMemo(() => {
+        return packages.filter(p =>
+            p.packageName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [packages, searchTerm]);
 
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box sx={{ width: '100%', bgcolor: '#FDF6EE', minHeight: '100vh', p: { xs: 2.5, sm: 4 } }}>
+            <Box sx={{ bgcolor: '#F0F2F5', minHeight: '100vh', pb: 8 }}>
+                {/* ── Premium Header with Glassmorphism ── */}
+                <Box sx={{
+                    position: 'relative',
+                    height: '350px',
+                    background: 'linear-gradient(135deg, #2D3748 0%, #1A202C 100%)',
+                    color: 'white',
+                    pt: 8,
+                    px: { xs: 2, md: 4 },
+                    overflow: 'hidden'
+                }}>
+                    <Box sx={{
+                        position: 'absolute',
+                        top: '-10%',
+                        right: '-5%',
+                        width: '400px',
+                        height: '400px',
+                        background: `radial-gradient(circle, ${alpha(THEME_COLOR, 0.15)} 0%, transparent 70%)`,
+                        borderRadius: '50%',
+                        zIndex: 0
+                    }} />
+                    <Box sx={{
+                        position: 'absolute',
+                        bottom: '-20%',
+                        left: '10%',
+                        width: '300px',
+                        height: '300px',
+                        background: `radial-gradient(circle, ${alpha(ACCENT_COLOR, 0.1)} 0%, transparent 70%)`,
+                        borderRadius: '50%',
+                        zIndex: 0
+                    }} />
 
-                {/* Header Section */}
-                <Grid container alignItems="center" justifyContent="space-between" spacing={3} sx={{ mb: 5 }}>
-                    <Grid item xs={12} sm={6}>
-                        <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.75rem', sm: '2.2rem' } }}>
-                            My{' '}
-                            <Box component="span" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
-                                Invitation
-                            </Box>{' '}
-                            Gallery
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" mt={0.5} fontSize="14px">
-                            Manage and showcase your exquisite invitation collections.
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} textAlign={{ xs: 'left', sm: 'right' }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<Add />}
-                            onClick={() => navigate('/invitation/add-package')}
-                            sx={{
-                                px: 3.5,
-                                py: 1.5,
-                                boxShadow: '0 8px 16px rgba(225, 91, 101, 0.25)',
-                                background: 'linear-gradient(135deg, #E15B65 0%, #C2444E 100%)',
-                                '&:hover': { boxShadow: '0 12px 20px rgba(225, 91, 101, 0.35)' }
-                            }}
-                        >
-                            Add New Design
-                        </Button>
-                    </Grid>
-                </Grid>
-
-                {/* Search & Stats Section */}
-                <Paper elevation={0} sx={{ mb: 4, p: 2, borderRadius: 4, bgcolor: '#fff', border: '1px solid rgba(225, 91, 101, 0.08)', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                    <TextField
-                        placeholder="Search designs..."
-                        size="small"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        InputProps={{
-                            startAdornment: <InputAdornment position="start"><Search color="primary" /></InputAdornment>
-                        }}
-                    />
-                    <Chip
-                        icon={<AutoAwesome sx={{ fontSize: '16px !important' }} />}
-                        label={`${filtered.length} Packages Total`}
-                        sx={{ bgcolor: '#FFFBF7', color: '#E15B65', fontWeight: 700, border: '1px solid rgba(225, 91, 101, 0.1)' }}
-                    />
-                </Paper>
-
-                {/* Content Area */}
-                {loading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
-                        <CircularProgress color="primary" />
-                    </Box>
-                ) : filtered.length === 0 ? (
-                    <Box textAlign="center" py={10} sx={{ borderRadius: 6, bgcolor: '#fff', border: '2px dashed rgba(225, 91, 101, 0.15)' }}>
-                        <BookmarkBorder sx={{ fontSize: 60, color: 'primary.light', mb: 2, opacity: 0.5 }} />
-                        <Typography variant="h6" color="text.primary" fontWeight={600}>No Designs Found</Typography>
-                        <Typography variant="body2" color="text.secondary">Start by adding your first invitation package.</Typography>
-                    </Box>
-                ) : (
-                    <Grid container spacing={3.5}>
-                        {filtered.map((pkg, idx) => (
-                            <Grid item xs={12} sm={6} md={4} key={pkg._id}>
-                                <Fade in timeout={400 + idx * 100}>
-                                    <Card sx={{
-                                        borderRadius: 5,
-                                        overflow: 'hidden',
-                                        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-                                        border: '1px solid rgba(225, 91, 101, 0.05)',
-                                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        position: 'relative',
-                                        bgcolor: '#fff',
-                                        '&:hover': {
-                                            transform: 'translateY(-10px)',
-                                            boxShadow: '0 20px 40px rgba(225, 91, 101, 0.12)',
-                                            '& .card-actions': { opacity: 1, transform: 'translateY(0)' }
-                                        }
-                                    }}>
-                                        <Box sx={{ position: 'relative', height: 260, overflow: 'hidden' }}>
-                                            <CardMedia
-                                                component="img"
-                                                image={pkg.thumbnail ? `${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}` : 'https://placehold.co/600x400?text=No+Image'}
-                                                alt={pkg.packageName}
-                                                sx={{
-                                                    height: '100%',
-                                                    width: '100%',
-                                                    objectFit: 'cover',
-                                                    transition: 'transform 0.6s ease'
-                                                }}
-                                            />
-                                            <Box
-                                                className="card-actions"
-                                                sx={{
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    bgcolor: 'rgba(26, 10, 0, 0.4)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: 1.5,
-                                                    opacity: 0,
-                                                    transform: 'translateY(20px)',
-                                                    transition: 'all 0.3s ease',
-                                                    backdropFilter: 'blur(3px)'
-                                                }}
-                                            >
-                                                <Tooltip title="Quick View">
-                                                    <IconButton
-                                                        onClick={() => setViewPackage(pkg)}
-                                                        sx={{ bgcolor: '#fff', color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: '#fff' } }}
-                                                    >
-                                                        <VisibilityOutlined />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Edit Package">
-                                                    <IconButton
-                                                        onClick={() => navigate(`/invitation/edit-package/${pkg._id}`)}
-                                                        sx={{ bgcolor: '#fff', color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: '#fff' } }}
-                                                    >
-                                                        <EditOutlined />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Delete">
-                                                    <IconButton
-                                                        onClick={() => setDeleteId(pkg._id)}
-                                                        sx={{ bgcolor: '#fff', color: '#dc2626', '&:hover': { bgcolor: '#dc2626', color: '#fff' } }}
-                                                    >
-                                                        <DeleteOutline />
-                                                    </IconButton>
-                                                </Tooltip>
+                    <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+                        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
+                            <Box>
+                                <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-1px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                                    Invitation Gallery
+                                </Typography>
+                                <Typography variant="h6" sx={{ opacity: 0.8, fontWeight: 400, mb: 4, maxWidth: 600 }}>
+                                    Manage your exquisite invitation collections. Showcase your designs with elegance and precision.
+                                </Typography>
+                                <Stack direction="row" spacing={3}>
+                                    {[
+                                        { label: 'Total Designs', value: packages.length, icon: <CollectionsOutlined /> },
+                                        { label: 'Active Collection', value: packages.filter(o => o.isActive).length, icon: <CheckCircle /> },
+                                    ].map((stat, i) => (
+                                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.2), color: THEME_COLOR, width: 56, height: 56 }}>
+                                                {stat.icon}
+                                            </Avatar>
+                                            <Box>
+                                                <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1 }}>{stat.value}</Typography>
+                                                <Typography variant="caption" sx={{ opacity: 0.7, fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</Typography>
                                             </Box>
-                                            <Chip
-                                                label={`₹${pkg.packagePrice}`}
-                                                sx={{
-                                                    position: 'absolute',
-                                                    top: 16,
-                                                    left: 16,
-                                                    bgcolor: 'rgba(255,255,255,0.95)',
-                                                    color: 'primary.main',
-                                                    fontWeight: 800,
-                                                    fontSize: '0.9rem',
-                                                    backdropFilter: 'blur(4px)',
-                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                                }}
-                                            />
                                         </Box>
-                                        <CardContent sx={{ p: 3 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                                                <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Playfair Display', serif", fontSize: '1.25rem', lineHeight: 1.2 }}>
-                                                    {pkg.packageName}
-                                                </Typography>
-                                            </Box>
-                                            <Typography variant="body2" color="text.secondary" sx={{
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical',
-                                                overflow: 'hidden',
-                                                height: '40px',
-                                                lineHeight: 1.5,
-                                                mb: 2
-                                            }}>
-                                                {pkg.description}
-                                            </Typography>
-                                            <Stack direction="row" spacing={1} sx={{ mt: 'auto' }}>
+                                    ))}
+                                </Stack>
+                            </Box>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                startIcon={<Add />}
+                                onClick={() => navigate('/invitation/add-package')}
+                                sx={{
+                                    bgcolor: THEME_COLOR,
+                                    color: 'white',
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    px: 4,
+                                    py: 1.8,
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    boxShadow: `0 12px 24px ${alpha(THEME_COLOR, 0.3)}`,
+                                    '&:hover': {
+                                        bgcolor: SECONDARY_COLOR,
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: `0 16px 32px ${alpha(THEME_COLOR, 0.4)}`,
+                                    },
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                Add New Design
+                            </Button>
+                        </Stack>
+                    </Container>
+                </Box>
+
+                <Container maxWidth="xl" sx={{ mt: -8, position: 'relative', zIndex: 10 }}>
+                    {/* ── Standalone Search Bar ── */}
+                    <Paper elevation={4} sx={{
+                        borderRadius: '24px',
+                        p: 1,
+                        mb: 6,
+                        background: GLASS_BG,
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}>
+                        <TextField
+                            fullWidth
+                            variant="standard"
+                            placeholder="Search by package name or category..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            InputProps={{
+                                disableUnderline: true,
+                                startAdornment: (
+                                    <InputAdornment position="start" sx={{ pl: 3 }}>
+                                        <Search sx={{ color: '#718096', fontSize: 28 }} />
+                                    </InputAdornment>
+                                ),
+                                sx: { height: 70, fontSize: '1.1rem', fontWeight: 500, color: '#2D3748' }
+                            }}
+                        />
+                        <Divider orientation="vertical" flexItem sx={{ mx: 2, my: 1 }} />
+                        <Box sx={{ pr: 2 }}>
+                            <Tooltip title="Collections">
+                                <IconButton sx={{ bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                                    <CollectionsOutlined sx={{ color: THEME_COLOR }} />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    </Paper>
+
+                    {loading ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 15 }}>
+                            <CircularProgress size={64} thickness={4} sx={{ color: THEME_COLOR }} />
+                            <Typography variant="h6" sx={{ mt: 3, fontWeight: 600, color: 'text.secondary' }}>Loading your gallery...</Typography>
+                        </Box>
+                    ) : filtered.length === 0 ? (
+                        <Fade in={true}>
+                            <Paper sx={{
+                                borderRadius: '32px',
+                                textAlign: 'center',
+                                py: 12,
+                                px: 4,
+                                bgcolor: 'white',
+                                border: '2px dashed #E2E8F0'
+                            }}>
+                                <Avatar sx={{ bgcolor: '#F7FAFC', width: 120, height: 120, mx: 'auto', mb: 4 }}>
+                                    <InventoryIcon sx={{ fontSize: 60, color: '#CBD5E0' }} />
+                                </Avatar>
+                                <Typography variant="h3" sx={{ fontWeight: 800, color: '#2D3748', mb: 2 }}>
+                                    {packages.length === 0 ? "Inventory is Empty" : "No Designs Found"}
+                                </Typography>
+                                <Typography variant="h6" color="text.secondary" sx={{ mb: 6, maxWidth: 500, mx: 'auto', fontWeight: 400 }}>
+                                    {packages.length === 0
+                                        ? "Start building your digital showroom by adding your first invitation design."
+                                        : "We couldn't find any designs matching your search. Please try different keywords."}
+                                </Typography>
+                                {packages.length === 0 && (
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => navigate('/invitation/add-package')}
+                                        sx={{
+                                            bgcolor: THEME_COLOR,
+                                            px: 6,
+                                            py: 2,
+                                            borderRadius: '16px',
+                                            fontWeight: 700,
+                                            fontSize: '1.1rem',
+                                            '&:hover': { bgcolor: SECONDARY_COLOR }
+                                        }}
+                                    >
+                                        Create Your First Piece
+                                    </Button>
+                                )}
+                            </Paper>
+                        </Fade>
+                    ) : (
+                        <Grid container spacing={4}>
+                            {filtered.map((pkg, index) => (
+                                <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={pkg._id}>
+                                    <Zoom in={true} style={{ transitionDelay: `${index * 40}ms` }}>
+                                        <Card sx={{
+                                            height: '100%',
+                                            borderRadius: '28px',
+                                            bgcolor: 'white',
+                                            overflow: 'hidden',
+                                            transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+                                            position: 'relative',
+                                            border: '1px solid #E2E8F0',
+                                            '&:hover': {
+                                                transform: 'translateY(-12px)',
+                                                boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
+                                                borderColor: THEME_COLOR,
+                                                '& .action-btns': { opacity: 1, transform: 'translateY(0)' }
+                                            }
+                                        }}>
+                                            {/* Badge Overlay */}
+                                            <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
                                                 <Chip
+                                                    label={pkg.isActive ? 'Active' : 'Hidden'}
                                                     size="small"
-                                                    label={pkg.category?.title || 'Invitation'}
-                                                    variant="outlined"
-                                                    sx={{ borderRadius: '6px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', borderColor: 'rgba(225, 91, 101, 0.2)', color: 'text.secondary' }}
+                                                    sx={{
+                                                        bgcolor: pkg.isActive ? alpha('#48BB78', 0.9) : alpha('#A0AEC0', 0.9),
+                                                        color: 'white',
+                                                        fontWeight: 800,
+                                                        fontSize: '0.65rem',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: 0.5,
+                                                        backdropFilter: 'blur(4px)'
+                                                    }}
                                                 />
-                                            </Stack>
-                                        </CardContent>
-                                    </Card>
-                                </Fade>
-                            </Grid>
-                        ))}
-                    </Grid>
-                )}
+                                            </Box>
 
-                {/* Delete Confirmation */}
-                <Dialog open={Boolean(deleteId)} onClose={() => setDeleteId(null)} PaperProps={{ sx: { borderRadius: 5, width: '100%', maxWidth: 400, p: 1 } }}>
-                    <DialogTitle sx={{ fontWeight: 800, pb: 1, fontSize: '1.4rem' }}>Confirm Removal?</DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                            This will permanently delete <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>"{packages.find(p => p._id === deleteId)?.packageName}"</Box> from your gallery.
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
-                        <Button onClick={() => setDeleteId(null)} sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'none' }}>Cancel</Button>
-                        <Button onClick={handleDelete} variant="contained" sx={{ px: 3, borderRadius: 3, bgcolor: '#dc2626', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: '#b91c1c' } }}>Delete Permanently</Button>
-                    </DialogActions>
-                </Dialog>
+                                            {/* Image Showcase */}
+                                            <Box sx={{ position: 'relative', paddingTop: '100%', bgcolor: '#FAF8F6' }}>
+                                                <CardMedia
+                                                    component="img"
+                                                    image={pkg.thumbnail ? (pkg.thumbnail.startsWith('http') ? pkg.thumbnail : `${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`) : 'https://placehold.co/600x400?text=No+Image'}
+                                                    alt={pkg.packageName}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}
+                                                />
+                                                {/* Floating Actions */}
+                                                <Stack
+                                                    direction="row"
+                                                    className="action-btns"
+                                                    spacing={1}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        bottom: 16,
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%) translateY(20px)',
+                                                        opacity: 0,
+                                                        transition: '0.3s all',
+                                                        zIndex: 5
+                                                    }}
+                                                >
+                                                    {[
+                                                        { icon: <VisibilityOutlined fontSize="small" />, color: DARK_BG, onClick: () => setViewPackage(pkg), tip: 'Quick View' },
+                                                        { icon: <EditOutlined fontSize="small" />, color: '#2B6CB0', onClick: () => navigate(`/invitation/edit-package/${pkg._id}`), tip: 'Edit' },
+                                                        { icon: <DeleteOutline fontSize="small" />, color: '#C53030', onClick: () => setDeleteId(pkg._id), tip: 'Delete' }
+                                                    ].map((btn, i) => (
+                                                        <Tooltip key={i} title={btn.tip}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={(e) => { e.stopPropagation(); btn.onClick(); }}
+                                                                sx={{
+                                                                    bgcolor: 'white',
+                                                                    color: btn.color,
+                                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                                    '&:hover': { bgcolor: btn.color, color: 'white' }
+                                                                }}
+                                                            >
+                                                                {btn.icon}
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    ))}
+                                                </Stack>
+                                            </Box>
 
-                {/* Detail View Modal */}
+                                            {/* Information Content */}
+                                            <CardContent sx={{ p: 3 }}>
+                                                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#2D3748', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Playfair Display', serif" }}>
+                                                        {pkg.packageName}
+                                                    </Typography>
+                                                    <Switch
+                                                        size="small"
+                                                        checked={pkg.isActive}
+                                                        onChange={(e) => { e.stopPropagation(); handleToggleStatus(pkg._id, pkg.isActive); }}
+                                                        color="success"
+                                                    />
+                                                </Stack>
+
+                                                <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                                                    <Chip label={pkg.category?.title || 'Invitation'} size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, height: 20 }} />
+                                                </Stack>
+
+                                                <Divider sx={{ mb: 2, borderStyle: 'dashed' }} />
+
+                                                <Grid container spacing={1}>
+                                                    <Grid item xs={6}>
+                                                        <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Package Price</Typography>
+                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: THEME_COLOR }}>
+                                                            ₹{pkg.packagePrice}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Advance</Typography>
+                                                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#48BB78' }}>
+                                                            ₹{pkg.advanceBookingAmount || 0}
+                                                        </Typography>
+                                                    </Grid>
+                                                </Grid>
+                                            </CardContent>
+                                        </Card>
+                                    </Zoom>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    )}
+                </Container>
+
+                {/* ── Split-View Detail Dialog ── */}
                 <Dialog
                     open={Boolean(viewPackage)}
                     onClose={() => setViewPackage(null)}
-                    maxWidth="md"
+                    maxWidth="lg"
                     fullWidth
-                    PaperProps={{ sx: { borderRadius: 6, overflow: 'hidden' } }}
+                    PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden' } }}
                 >
-                    <Box sx={{ position: 'relative' }}>
-                        <IconButton
-                            onClick={() => setViewPackage(null)}
-                            sx={{ position: 'absolute', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', '&:hover': { bgcolor: '#fff' } }}
-                        >
-                            <Close />
-                        </IconButton>
-                        <Grid container>
-                            <Grid item xs={12} md={6}>
-                                <Box sx={{ height: { xs: 300, md: '100%' }, position: 'relative' }}>
-                                    <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
-                                        <Chip
-                                            icon={<CollectionsOutlined sx={{ fontSize: '14px !important', color: '#fff !important' }} />}
-                                            label="Gallery"
-                                            size="small"
-                                            sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}
+                    <DialogContent sx={{ p: 0 }}>
+                        {viewPackage && (
+                            <Grid container>
+                                {/* Left Side: Media Gallery */}
+                                <Grid item xs={12} md={6} sx={{ bgcolor: '#F7FAFC', p: { xs: 2, md: 4 }, display: 'flex', flexDirection: 'column', minHeight: { xs: 400, md: 600 } }}>
+                                    <Box sx={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', flex: 1, mb: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.05)', bgcolor: 'white' }}>
+                                        <ImageCarousel
+                                            images={viewPackage?.images?.length > 0 ? viewPackage.images : [viewPackage?.thumbnail]}
+                                            baseUrl={API_BASE_URL}
                                         />
-                                    </Box>
-                                    <ImageCarousel
-                                        images={viewPackage?.images?.length > 0 ? viewPackage.images : [viewPackage?.thumbnail]}
-                                        baseUrl={API_BASE_URL}
-                                    />
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Box sx={{ p: { xs: 3, md: 5 } }}>
-                                    <Stack spacing={3}>
-                                        <Box>
+                                        <IconButton
+                                            onClick={() => setViewPackage(null)}
+                                            sx={{ position: 'absolute', top: 16, right: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', '&:hover': { bgcolor: 'white' } }}
+                                        >
+                                            <Close />
+                                        </IconButton>
+                                        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
                                             <Chip
-                                                label={viewPackage?.category?.title || 'Invitation Design'}
+                                                icon={<CollectionsOutlined sx={{ fontSize: '14px !important', color: '#fff !important' }} />}
+                                                label="Gallery"
                                                 size="small"
-                                                sx={{ mb: 1.5, bgcolor: 'rgba(225, 91, 101, 0.1)', color: 'primary.main', fontWeight: 700, borderRadius: '8px' }}
+                                                sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}
                                             />
-                                            <Typography variant="h3" sx={{ fontWeight: 900, fontFamily: "'Playfair Display', serif", mb: 1 }}>
-                                                {viewPackage?.packageName}
-                                            </Typography>
-                                            <Typography variant="h4" color="primary.main" sx={{ fontWeight: 900 }}>
-                                                ₹{viewPackage?.packagePrice}
-                                            </Typography>
                                         </Box>
+                                    </Box>
+                                </Grid>
 
-                                        <Divider />
+                                {/* Right Side: Specification & Details */}
+                                <Grid item xs={12} md={6} sx={{ p: { xs: 4, md: 6 }, bgcolor: 'white' }}>
+                                    <Box sx={{ mb: 4 }}>
+                                        <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2 }}>
+                                            Package Specification
+                                        </Typography>
+                                        <Typography variant="h3" sx={{ fontWeight: 900, color: '#2D3748', mt: 1, mb: 2, fontFamily: "'Playfair Display', serif" }}>
+                                            {viewPackage?.packageName}
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8 }}>
+                                            {viewPackage?.description || 'No description provided.'}
+                                        </Typography>
+                                    </Box>
 
-                                        <Box>
-                                            <SectionLabel label="Description" icon={<DescriptionOutlined sx={{ fontSize: 18 }} />} />
-                                            <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                                                {viewPackage?.description}
-                                            </Typography>
-                                        </Box>
+                                    <Grid container spacing={3} sx={{ mb: 5 }}>
+                                        <Grid item xs={6}><DetailItem icon={<InfoOutlined />} label="Design ID" value={viewPackage?.packageId || 'N/A'} /></Grid>
+                                        <Grid item xs={6}><DetailItem icon={<CategoryOutlined />} label="Category" value={viewPackage?.category?.title || 'Standard'} /></Grid>
+                                        <Grid item xs={6}><DetailItem icon={<DescriptionOutlined />} label="Description" value={viewPackage?.description ? 'Available' : 'No description'} success={!!viewPackage?.description} chip /></Grid>
+                                        <Grid item xs={6}><DetailItem icon={<CheckCircle />} label="Visibility" value={viewPackage?.isActive ? 'Public' : 'Hidden'} success={viewPackage?.isActive} error={!viewPackage?.isActive} chip /></Grid>
+                                    </Grid>
 
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={6}>
-                                                <Box sx={{ p: 2, bgcolor: '#F9FAFB', borderRadius: 4 }}>
-                                                    <SectionLabel label="Advance" icon={<CurrencyRupee sx={{ fontSize: 16 }} />} />
-                                                    <Typography variant="h6" fontWeight={800}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
-                                                </Box>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Box sx={{ p: 2, bgcolor: '#F9FAFB', borderRadius: 4 }}>
-                                                    <SectionLabel label="Category" icon={<CategoryOutlined sx={{ fontSize: 16 }} />} />
-                                                    <Typography variant="h6" fontWeight={800} noWrap>{viewPackage?.category?.title || 'Standard'}</Typography>
-                                                </Box>
-                                            </Grid>
-                                        </Grid>
-
-                                        <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
-                                            <Button
-                                                fullWidth
-                                                variant="contained"
-                                                startIcon={<EditOutlined />}
-                                                onClick={() => {
-                                                    const id = viewPackage?._id;
-                                                    setViewPackage(null);
-                                                    navigate(`/invitation/edit-package/${id}`);
-                                                }}
-                                                sx={{ py: 1.5, borderRadius: 3, fontWeight: 700, textTransform: 'none' }}
-                                            >
-                                                Edit Design
-                                            </Button>
-                                            <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                startIcon={<DeleteOutline />}
-                                                color="error"
-                                                onClick={() => {
-                                                    setDeleteId(viewPackage?._id);
-                                                    setViewPackage(null);
-                                                }}
-                                                sx={{ py: 1.5, borderRadius: 3, fontWeight: 700, textTransform: 'none' }}
-                                            >
-                                                Delete
-                                            </Button>
+                                    <Box sx={{ p: 4, bgcolor: '#F7FAFC', borderRadius: '24px', mb: 5 }}>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                                            <Box>
+                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>TOTAL PACKAGE PRICE</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>₹{viewPackage?.packagePrice}</Typography>
+                                            </Box>
+                                            <Box sx={{ textAlign: 'right' }}>
+                                                <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>ADVANCE BOOKING</Typography>
+                                                <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
+                                            </Box>
                                         </Stack>
+                                        <Divider sx={{ mb: 2 }} />
+                                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#718096', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <LocalOffer fontSize="inherit" /> Prices are subject to customization requirements and GST.
+                                        </Typography>
+                                    </Box>
+
+                                    <Stack direction="row" spacing={2}>
+                                        <Button
+                                            fullWidth
+                                            variant="contained"
+                                            size="large"
+                                            startIcon={<EditOutlined />}
+                                            onClick={() => {
+                                                const id = viewPackage?._id;
+                                                setViewPackage(null);
+                                                navigate(`/invitation/edit-package/${id}`);
+                                            }}
+                                            sx={{ bgcolor: '#2D3748', color: 'white', borderRadius: '16px', py: 2, fontWeight: 700, '&:hover': { bgcolor: '#1A202C' }, textTransform: 'none' }}
+                                        >
+                                            Edit Design
+                                        </Button>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            size="large"
+                                            startIcon={<DeleteOutline />}
+                                            color="error"
+                                            onClick={() => {
+                                                setDeleteId(viewPackage?._id);
+                                                setViewPackage(null);
+                                            }}
+                                            sx={{ borderRadius: '16px', py: 2, fontWeight: 700, borderColor: '#E2E8F0', textTransform: 'none' }}
+                                        >
+                                            Delete
+                                        </Button>
                                     </Stack>
-                                </Box>
+                                </Grid>
                             </Grid>
-                        </Grid>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* ── Styled Delete Confirmation ── */}
+                <Dialog
+                    open={Boolean(deleteId)}
+                    onClose={() => setDeleteId(null)}
+                    PaperProps={{ sx: { borderRadius: '28px', p: 3, maxWidth: 400 } }}
+                >
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                        <Avatar sx={{ width: 80, height: 80, bgcolor: alpha('#C53030', 0.1), color: '#C53030', mx: 'auto', mb: 3 }}>
+                            <DeleteOutline sx={{ fontSize: 40 }} />
+                        </Avatar>
+                        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5 }}>Delete Design?</Typography>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                            Are you sure you want to permanently remove <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>"{packages.find(p => p._id === deleteId)?.packageName}"</Box>? This action is irreversible.
+                        </Typography>
+                        <Stack direction="row" spacing={2}>
+                            <Button fullWidth onClick={() => setDeleteId(null)} sx={{ color: '#718096', fontWeight: 700, textTransform: 'none' }}>Cancel</Button>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={handleDelete}
+                                sx={{ bgcolor: '#C53030', color: 'white', borderRadius: '12px', fontWeight: 700, '&:hover': { bgcolor: '#9B2C2C' }, textTransform: 'none' }}
+                            >
+                                Confirm Delete
+                            </Button>
+                        </Stack>
                     </Box>
                 </Dialog>
 
@@ -484,7 +688,6 @@ export default function InvitationList() {
                 <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
                     <Alert severity={snack.severity} variant="filled" sx={{ borderRadius: 3 }}>{snack.msg}</Alert>
                 </Snackbar>
-
             </Box>
         </ThemeProvider>
     );
