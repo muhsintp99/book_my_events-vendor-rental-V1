@@ -248,12 +248,15 @@ export default function InvitationList() {
                 {/* ── Premium Header with Glassmorphism ── */}
                 <Box sx={{
                     position: 'relative',
-                    height: '350px',
-                    background: 'linear-gradient(135deg, #2D3748 0%, #1A202C 100%)',
+                    minHeight: { xs: '450px', md: '480px' },
+                    background: `linear-gradient(135deg, #1A202C 0%, #2D3748 100%)`,
                     color: 'white',
-                    pt: 8,
+                    pt: { xs: 6, md: 10 },
+                    pb: { xs: 12, md: 15 },
                     px: { xs: 2, md: 4 },
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center'
                 }}>
                     <Box sx={{
                         position: 'absolute',
@@ -285,20 +288,45 @@ export default function InvitationList() {
                                 <Typography variant="h6" sx={{ opacity: 0.8, fontWeight: 400, mb: 4, maxWidth: 600 }}>
                                     Manage your exquisite invitation collections. Showcase your designs with elegance and precision.
                                 </Typography>
-                                <Stack direction="row" spacing={3}>
+                                <Stack direction="row" spacing={3} sx={{ mt: 2 }}>
                                     {[
                                         { label: 'Total Designs', value: packages.length, icon: <CollectionsOutlined /> },
                                         { label: 'Active Collection', value: packages.filter(o => o.isActive).length, icon: <CheckCircle /> },
                                     ].map((stat, i) => (
-                                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                            <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.2), color: THEME_COLOR, width: 56, height: 56 }}>
+                                        <Paper
+                                            key={i}
+                                            elevation={0}
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 2,
+                                                px: 3,
+                                                py: 1.5,
+                                                borderRadius: '20px',
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                transition: 'transform 0.3s ease',
+                                                '&:hover': {
+                                                    transform: 'translateY(-5px)',
+                                                    background: 'rgba(255, 255, 255, 0.1)',
+                                                }
+                                            }}
+                                        >
+                                            <Avatar sx={{
+                                                bgcolor: alpha(THEME_COLOR, 0.2),
+                                                color: THEME_COLOR,
+                                                width: 48,
+                                                height: 48,
+                                                boxShadow: `0 0 20px ${alpha(THEME_COLOR, 0.3)}`
+                                            }}>
                                                 {stat.icon}
                                             </Avatar>
                                             <Box>
-                                                <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1 }}>{stat.value}</Typography>
-                                                <Typography variant="caption" sx={{ opacity: 0.7, fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 800, lineHeight: 1, color: 'white' }}>{stat.value}</Typography>
+                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: 'white', display: 'block', mt: 0.5 }}>{stat.label}</Typography>
                                             </Box>
-                                        </Box>
+                                        </Paper>
                                     ))}
                                 </Stack>
                             </Box>
@@ -331,7 +359,7 @@ export default function InvitationList() {
                     </Container>
                 </Box>
 
-                <Container maxWidth="xl" sx={{ mt: -8, position: 'relative', zIndex: 10 }}>
+                <Container maxWidth="xl" sx={{ mt: { xs: -6, md: -8 }, position: 'relative', zIndex: 10 }}>
                     {/* ── Standalone Search Bar ── */}
                     <Paper elevation={4} sx={{
                         borderRadius: '24px',
