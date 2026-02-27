@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 
 // project imports
-import OrnamentsAreaChartCard from './OrnamentsAreaChartCard';
+import BoutiqueAreaChartCard from './BoutiqueAreaChartCard';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonPopularCard from 'ui-component/cards/Skeleton/PopularCard';
 import { gridSpacing } from 'store/constant';
@@ -21,7 +21,7 @@ import { gridSpacing } from 'store/constant';
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
 import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 
-export default function PopularCard({ isLoading }) {
+export default function BoutiquePopularCard({ isLoading }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {
@@ -44,7 +44,7 @@ export default function PopularCard({ isLoading }) {
               <Grid item xs={12}>
                 <Grid container alignItems="center" justifyContent="space-between">
                   <Typography variant="h4">
-                    Top Booked Ornaments
+                    Top Booked Boutique Items
                   </Typography>
 
                   <IconButton size="small" onClick={handleClick}>
@@ -67,7 +67,7 @@ export default function PopularCard({ isLoading }) {
 
               {/* CHART (KEPT) */}
               <Grid item xs={12} sx={{ mt: -1 }}>
-                <OrnamentsAreaChartCard />
+                <BoutiqueAreaChartCard />
               </Grid>
 
               {/* ❌ PACKAGE LIST REMOVED */}
@@ -76,16 +76,17 @@ export default function PopularCard({ isLoading }) {
 
           <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
             <Button size="small" disableElevation sx={{ color: '#E15B65' }}>
-              View All Ornaments
+              View All Boutique Items
               <ChevronRightOutlinedIcon />
             </Button>
           </CardActions>
-        </MainCard>
-      )}
+        </MainCard >
+      )
+      }
     </>
   );
 }
 
-PopularCard.propTypes = {
+BoutiquePopularCard.propTypes = {
   isLoading: PropTypes.bool
 };

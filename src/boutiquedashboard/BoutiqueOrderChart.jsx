@@ -22,7 +22,7 @@ import SkeletonTotalOrderCard from 'ui-component/cards/Skeleton/EarningCard';
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-export default function OrnamentsOrderChart({ isLoading }) {
+export default function BoutiqueOrderChart({ isLoading }) {
   const theme = useTheme();
 
   const [timeValue, setTimeValue] = React.useState(false);
@@ -167,4 +167,4 @@ export default function OrnamentsOrderChart({ isLoading }) {
   );
 }
 
-OrnamentsOrderChart.propTypes = { isLoading: PropTypes.bool };
+BoutiqueOrderChart.propTypes = { isLoading: PropTypes.bool };

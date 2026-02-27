@@ -14,7 +14,7 @@ import chartData from './cards/chartdata/areachart';
 
 // ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
 
-export default function OrnamentsAreaChartCard() {
+export default function BoutiqueAreaChartCard() {
   // const theme = useTheme();
 
   // Custom coral-red color theme
@@ -63,7 +63,7 @@ export default function OrnamentsAreaChartCard() {
           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Grid item>
               <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
-                Ornaments
+                Boutique
               </Typography>
             </Grid>
             <Grid item>

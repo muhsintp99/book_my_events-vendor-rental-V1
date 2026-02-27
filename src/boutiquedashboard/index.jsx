@@ -5,21 +5,21 @@ import Grid from '@mui/material/Grid';
 
 // project imports
 import WelcomeBanner from './WelcomeBanner';
-import OrnamentsEarningCard from './OrnamentsEarningCard';
-import OrnamentsPopularCard from './OrnamentsPopularCard';
-import OrnamentsOrderChart from './OrnamentsOrderChart';
-import OrnamentsIncomeLightCard from './cards/OrnamentsIncomeLightCard';
-import OrnamentsIncomeDarkCard from './cards/OrnamentsIncomeDarkCard';
-import OrnamentsGrowthBarChart from './OrnamentsGrowthBarChart';
+import BoutiqueEarningCard from './BoutiqueEarningCard';
+import BoutiquePopularCard from './BoutiquePopularCard';
+import BoutiqueOrderChart from './BoutiqueOrderChart';
+import BoutiqueIncomeLightCard from './cards/BoutiqueIncomeLightCard';
+import BoutiqueIncomeDarkCard from './cards/BoutiqueIncomeDarkCard';
+import BoutiqueGrowthBarChart from './BoutiqueGrowthBarChart';
 
 import { gridSpacing } from 'store/constant';
 
 // assets
 import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 
-// ==============================|| ORNAMENTS DASHBOARD ||============================== //
+// ==============================|| BOUTIQUE DASHBOARD ||============================== //
 
-export default function OrnamentsDashboard() {
+export default function BoutiqueDashboard() {
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,21 +38,21 @@ export default function OrnamentsDashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <OrnamentsEarningCard isLoading={isLoading} />
+            <BoutiqueEarningCard isLoading={isLoading} />
           </Grid>
 
           <Grid size={{ lg: 4, md: 6, sm: 6, xs: 12 }}>
-            <OrnamentsOrderChart isLoading={isLoading} />
+            <BoutiqueOrderChart isLoading={isLoading} />
           </Grid>
 
           <Grid size={{ lg: 4, md: 12, sm: 12, xs: 12 }}>
             <Grid container spacing={gridSpacing}>
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <OrnamentsIncomeDarkCard isLoading={isLoading} />
+                <BoutiqueIncomeDarkCard isLoading={isLoading} />
               </Grid>
 
               <Grid size={{ sm: 6, xs: 12, md: 6, lg: 12 }}>
-                <OrnamentsIncomeLightCard
+                <BoutiqueIncomeLightCard
                   {...{
                     isLoading,
                     total: '0.00',
@@ -70,11 +70,11 @@ export default function OrnamentsDashboard() {
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <OrnamentsGrowthBarChart isLoading={isLoading} />
+            <BoutiqueGrowthBarChart isLoading={isLoading} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <OrnamentsPopularCard isLoading={isLoading} />
+            <BoutiquePopularCard isLoading={isLoading} />
           </Grid>
         </Grid>
       </Grid>

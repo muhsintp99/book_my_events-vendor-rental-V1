@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
 
 // ==============================|| COMPONENT ||============================== //
 
-export default function TotalGrowthBarChart({ isLoading }) {
+export default function BoutiqueGrowthBarChart({ isLoading }) {
   const theme = useTheme();
   const [value, setValue] = useState('today');
 
@@ -87,6 +87,6 @@ export default function TotalGrowthBarChart({ isLoading }) {
   );
 }
 
-TotalGrowthBarChart.propTypes = {
+BoutiqueGrowthBarChart.propTypes = {
   isLoading: PropTypes.bool
 };

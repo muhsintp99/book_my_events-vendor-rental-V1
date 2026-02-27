@@ -40,7 +40,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   }
 }));
 
-export default function TotalIncomeLightCard({ isLoading, total, icon, label }) {
+export default function BoutiqueIncomeLightCard({ isLoading, total, icon, label }) {
   const theme = useTheme();
 
   return (
@@ -83,4 +83,4 @@ export default function TotalIncomeLightCard({ isLoading, total, icon, label }) 
   );
 }
 
-TotalIncomeLightCard.propTypes = { isLoading: PropTypes.bool, total: PropTypes.number, icon: PropTypes.node, label: PropTypes.string };
+BoutiqueIncomeLightCard.propTypes = { isLoading: PropTypes.bool, total: PropTypes.number, icon: PropTypes.node, label: PropTypes.string };
