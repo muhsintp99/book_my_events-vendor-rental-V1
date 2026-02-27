@@ -263,6 +263,23 @@ const FloristCompleted = Loadable(lazy(() => import('../views/florist/Floristcom
 const FloristCancelled = Loadable(lazy(() => import('../views/florist/Floristcancelled.jsx')));
 const FloristPaymentFailed = Loadable(lazy(() => import('../views/florist/FloristPaymentFailed.jsx')));
 
+// light/////////////////////////
+const AddlightPackage = Loadable(lazy(() => import('../views/light/Addlight.jsx')));
+const Lightlist = Loadable(lazy(() => import('../views/light/Lightlist.jsx')));
+const LightChat = Loadable(lazy(() => import('../views/light/LightChat.jsx')));
+const Lightupgrade = Loadable(lazy(() => import('../views/light/Lightupgrade.jsx')));
+const Lightenquiry = Loadable(lazy(() => import('../views/light/Lightenquiries.jsx')));
+const Lightenquirychat = Loadable(lazy(() => import('../views/light/EnquiryChatPage.jsx')));
+const LightSchedules = Loadable(lazy(() => import('../views/light/Scheduleslight.jsx')));
+const Lightcategories = Loadable(lazy(() => import('../views/light/Categories.jsx')));
+const Lightportfolio = Loadable(lazy(() => import('../views/light/Portfolio.jsx')));
+const Alllight = Loadable(lazy(() => import('../views/light/Alllight.jsx')));
+const LightPending = Loadable(lazy(() => import('../views/light/Lightpending.jsx')));
+const LightConfirmed = Loadable(lazy(() => import('../views/light/Lightconfirmed.jsx')));
+const LightCompleted = Loadable(lazy(() => import('../views/light/Lightcompleted.jsx')));
+const LightCancelled = Loadable(lazy(() => import('../views/light/Lightcancelled.jsx')));
+const LightPaymentFailed = Loadable(lazy(() => import('../views/light/LightPaymentFailed.jsx')));
+
 // invitation/////////////////////////
 const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
 const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
@@ -472,7 +489,15 @@ const MainRoutes = {
             { path: 'floristconfirmed', element: <FloristConfirmed /> },
             { path: 'completedflorist', element: <FloristCompleted /> },
             { path: 'cancelledflorist', element: <FloristCancelled /> },
-            { path: 'paymentfailedflorist', element: <FloristPaymentFailed /> }
+            { path: 'paymentfailedflorist', element: <FloristPaymentFailed /> },
+
+            // light BOOKINGS///////////////
+            { path: 'alllight', element: <Alllight /> },
+            { path: 'pendinglight', element: <LightPending /> },
+            { path: 'lightconfirmed', element: <LightConfirmed /> },
+            { path: 'completedlight', element: <LightCompleted /> },
+            { path: 'cancelledlight', element: <LightCancelled /> },
+            { path: 'paymentfailedlight', element: <LightPaymentFailed /> }
           ]
         },
 
@@ -674,6 +699,23 @@ const MainRoutes = {
             { path: 'chat', element: <FloristChat /> },
             { path: 'schedules', element: <FloristSchedules /> },
             { path: 'categories', element: <Floristcategories /> }
+          ]
+        },
+
+        {
+          path: 'light',
+          children: [
+            { path: 'addpackage', element: <AddlightPackage /> },
+            { path: 'edit/:id', element: <AddlightPackage /> },
+            { path: 'packagelist', element: <Lightlist /> },
+            { path: 'portfolio', element: <Lightportfolio /> },
+            { path: 'upgrade', element: <Lightupgrade /> },
+            { path: 'enquiry', element: <Lightenquiry /> },
+            { path: 'enquiries', element: <Lightenquiry /> },
+            { path: 'enquirychat', element: <Lightenquirychat /> },
+            { path: 'chat', element: <LightChat /> },
+            { path: 'schedules', element: <LightSchedules /> },
+            { path: 'categories', element: <Lightcategories /> }
           ]
         }
       ]

@@ -137,6 +137,9 @@ import floristmanagement from './florist/floristmanagement';
 import floristsection from './florist/floristsections';
 import floristReport from './florist/report';
 import floristEmployee from './florist/employee';
+import lightManagementMenu from './light/managementlight';
+import lightmanagement from './light/lightmanagement';
+import lightsection from './light/lightsections';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '').toLowerCase().replace(/\s+/g, ''); // remove spaces
@@ -180,6 +183,9 @@ if (logRes === 'transport') {
   specificSections = [managementinvitation, invitationmanagement, invitationsections, Reportsection, Employee];
 } else if (logRes.includes('florist')) {
   specificSections = [floristManagementMenu, floristmanagement, floristsection, floristReport, floristEmployee];
+}
+else if (logRes.includes('light')) {
+  specificSections = [lightManagementMenu, lightmanagement,lightsection ];
 }
 
 const menuItems = {

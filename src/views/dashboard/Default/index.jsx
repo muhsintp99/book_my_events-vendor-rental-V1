@@ -13,6 +13,7 @@ import MehandiIndex from '../../../mehandidashboard';
 import InvitationIndex from '../../../invitationdashboard';
 import FloristIndex from '../../../floristdashboard';
 import BoutiqueIndex from '../../../boutiquedashboard';
+import LightIndex from '../../../lightdashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -55,6 +56,7 @@ export default function Dashboard() {
     if (activeModule.toLowerCase().includes('invitation')) return <InvitationIndex isLoading={isLoading} />;
     if (activeModule.toLowerCase().includes('florist')) return <FloristIndex isLoading={isLoading} />;
     if (activeModule.toLowerCase().includes('boutique')) return <BoutiqueIndex isLoading={isLoading} />;
+    if (activeModule.toLowerCase().includes('light')) return <LightIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

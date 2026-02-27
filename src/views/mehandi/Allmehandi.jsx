@@ -1,8 +1,8 @@
 import React from 'react';
-import BoutiqueBookings from './BoutiqueBookings';
+import Mehandibookings from './Mehandibookings';
 
-const Allboutique = () => {
-  return <BoutiqueBookings initialTab="All" />;
+const Allmehandi = () => {
+  return <Mehandibookings initialTab="All" />;
 };
 
-export default Allboutique;
+export default Allmehandi;
