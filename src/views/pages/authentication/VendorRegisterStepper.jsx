@@ -92,15 +92,28 @@ const MENU_PROPS = {
 };
 
 /* ── styled wrappers ── */
-const PageWrap = styled(Box)({
-    minHeight: '100vh', background: 'linear-gradient(135deg,#f0f2f8 0%,#e8eaf3 100%)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 16px 64px',
-});
-const RegCard = styled(Paper)({
-    width: '100%', maxWidth: 880, borderRadius: 24,
-    boxShadow: '0 8px 48px rgba(0,0,0,0.10)', border: '1px solid rgba(0,0,0,0.05)',
-    padding: '40px 44px', background: '#fff',
-});
+const PageWrap = styled(Box)(({ theme }) => ({
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    padding: '24px 12px 64px',
+    [theme.breakpoints.up('sm')]: {
+        padding: '48px 24px 80px',
+    },
+}));
+
+const RegCard = styled(Paper)(({ theme }) => ({
+    width: '100%',
+    maxWidth: 920,
+    borderRadius: 24,
+    boxShadow: '0 12px 48px rgba(30, 41, 59, 0.08)',
+    border: '1px solid rgba(226, 232, 240, 0.8)',
+    padding: '28px 20px',
+    background: '#fff',
+    [theme.breakpoints.up('sm')]: {
+        padding: '48px 52px',
+    },
+}));
 const PBtn = styled(Button)({
     background: `linear-gradient(135deg,${RED},${RED_DARK})`,
     color: '#fff', borderRadius: 12, padding: '13px 36px',
@@ -574,28 +587,28 @@ export default function VendorRegisterStepper() {
     const content = [
 
         /* STEP 1 */
-        <Box key={0} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box key={0} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             {/* Row: First Name | Last Name */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField fullWidth label="First Name *" value={form.firstName}
                     onChange={e => set('firstName', e.target.value)} size="medium"
                     error={!!errors.firstName} helperText={errors.firstName} sx={INPUT_SX} />
                 <TextField fullWidth label="Last Name *" value={form.lastName}
                     onChange={e => set('lastName', e.target.value)} size="medium"
                     error={!!errors.lastName} helperText={errors.lastName} sx={INPUT_SX} />
-            </Box>
+            </Stack>
             {/* Row: Email | Phone */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField fullWidth label="Email Address *" type="email" value={form.email}
                     onChange={e => set('email', e.target.value)} size="medium"
                     error={!!errors.email} helperText={errors.email} sx={INPUT_SX} />
                 <TextField fullWidth label="Phone Number *" value={form.phone}
                     onChange={e => set('phone', e.target.value)} size="medium"
                     error={!!errors.phone} helperText={errors.phone} sx={INPUT_SX} />
-            </Box>
+            </Stack>
             {/* Row: Vendor Type | (half spacer) */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                <Box sx={{ flex: '0 0 calc(50% - 8px)' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Box sx={{ flex: { xs: '1', sm: '0 0 calc(50% - 8px)' } }}>
                     <FormControl fullWidth size="medium">
                         <InputLabel sx={LB_SX}>Vendor Type</InputLabel>
                         <Select value={form.vendorType} label="Vendor Type" onChange={e => set('vendorType', e.target.value)}
@@ -605,8 +618,8 @@ export default function VendorRegisterStepper() {
                         </Select>
                     </FormControl>
                 </Box>
-                <Box sx={{ flex: 1 }} /> {/* spacer */}
-            </Box>
+                <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }} /> {/* spacer */}
+            </Stack>
             {/* Row: Service Module — FULL WIDTH always */}
             <FormControl fullWidth size="medium" error={!!errors.module}>
                 <InputLabel sx={LB_SX}>Service Module *</InputLabel>
@@ -629,7 +642,7 @@ export default function VendorRegisterStepper() {
                 {errors.module && <FormHelperText>{errors.module}</FormHelperText>}
             </FormControl>
             {/* Row: Password | Confirm Password */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField fullWidth label="Password *" size="medium"
                     type={showPass ? 'text' : 'password'} value={form.password}
                     onChange={e => set('password', e.target.value)}
@@ -656,7 +669,7 @@ export default function VendorRegisterStepper() {
                             </InputAdornment>
                         )
                     }} />
-            </Box>
+            </Stack>
         </Box>,
 
         /* STEP 2 */
@@ -666,13 +679,13 @@ export default function VendorRegisterStepper() {
                 onChange={e => set('storeName', e.target.value)} size="medium"
                 error={!!errors.storeName} helperText={errors.storeName} sx={INPUT_SX} />
             {/* Row: Business TIN | TIN Expiry */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField fullWidth label="Business TIN (optional)" value={form.businessTIN}
                     onChange={e => set('businessTIN', e.target.value)} size="medium" sx={INPUT_SX} />
                 <TextField fullWidth label="TIN Expiry Date" type="date" value={form.tinExpireDate}
                     onChange={e => set('tinExpireDate', e.target.value)} size="medium"
                     InputLabelProps={{ shrink: true }} sx={INPUT_SX} />
-            </Box>
+            </Stack>
             {/* Row: Zone — FULL WIDTH always */}
             <FormControl fullWidth size="medium">
                 <InputLabel sx={LB_SX}>Zone / Area (optional)</InputLabel>
@@ -686,7 +699,7 @@ export default function VendorRegisterStepper() {
 
         /* STEP 3 */
         <Box key={2} sx={{ animation: `${fadeUp} .35s ease` }}>
-            <Grid container spacing={2.5}>
+            <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <TextField fullWidth label="Full Address" value={form.storeAddress.fullAddress}
                         onChange={e => setAddr('fullAddress', e.target.value)} size="medium"
@@ -798,34 +811,42 @@ export default function VendorRegisterStepper() {
 
         /* STEP 6 – Review */
         <Box key={5} sx={{ animation: `${fadeUp} .35s ease` }}>
-            {[
-                { title: 'Personal', icon: <PersonOutlineIcon sx={{ fontSize: 15 }} />, goTo: 0, rows: [['Name', `${form.firstName} ${form.lastName}`], ['Email', form.email], ['Phone', form.phone], ['Type', form.vendorType === 'individual' ? 'Individual' : 'Company'], ['Module', selModule?.title || '—']] },
-                { title: 'Business', icon: <BusinessCenterOutlinedIcon sx={{ fontSize: 15 }} />, goTo: 1, rows: [['Store', form.storeName || '—'], ['TIN', form.businessTIN || '—'], ['Zone', selZone?.name || '—']] },
-                { title: 'Location', icon: <LocationOnOutlinedIcon sx={{ fontSize: 15 }} />, goTo: 2, rows: [['City', form.storeAddress.city || '—'], ['State', form.storeAddress.state || '—'], ['ZIP', form.storeAddress.zipCode || '—']] },
-                { title: 'Plan', icon: <StarOutlineIcon sx={{ fontSize: 15 }} />, goTo: 3, rows: [['Plan', selPlan?.name || 'Free'], ['Price', selPlan?.price === 0 ? 'Free' : `₹${selPlan?.price}`]] },
-                { title: 'Media', icon: <PermMediaOutlinedIcon sx={{ fontSize: 15 }} />, goTo: 4, rows: [['Logo', form.logo?.name || 'Not uploaded'], ['Cover', form.coverImage?.name || 'Not uploaded'], ['Cert', form.tinCertificate?.name || 'Not uploaded']] },
-            ].map(({ title, icon, goTo, rows }) => (
-                <Box key={title} sx={{ mb: 2, p: 2.5, border: '1px solid #eef0f8', borderRadius: 14, background: '#fafcff' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: RED }}>{icon}
-                            <Typography sx={{ fontWeight: 700, fontSize: 13, color: '#333' }}>{title}</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                {[
+                    { title: 'Personal', icon: <PersonOutlineIcon sx={{ fontSize: 16 }} />, goTo: 0, rows: [['Name', `${form.firstName} ${form.lastName}`], ['Email', form.email], ['Phone', form.phone], ['Type', form.vendorType === 'individual' ? 'Individual' : 'Company'], ['Module', selModule?.title || '—']] },
+                    { title: 'Business', icon: <BusinessCenterOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 1, rows: [['Store', form.storeName || '—'], ['TIN', form.businessTIN || '—'], ['Zone', selZone?.name || '—']] },
+                    { title: 'Location', icon: <LocationOnOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 2, rows: [['City', form.storeAddress.city || '—'], ['State', form.storeAddress.state || '—'], ['ZIP', form.storeAddress.zipCode || '—']] },
+                    { title: 'Plan', icon: <StarOutlineIcon sx={{ fontSize: 16 }} />, goTo: 3, rows: [['Plan', selPlan?.name || 'Free'], ['Price', selPlan?.price === 0 ? 'Free' : `₹${selPlan?.price}`]] },
+                    { title: 'Media', icon: <PermMediaOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 4, rows: [['Logo', form.logo?.name || 'Not uploaded'], ['Cover', form.coverImage?.name || 'Not uploaded'], ['Cert', form.tinCertificate?.name || 'Not uploaded']] },
+                ].map(({ title, icon, goTo, rows }) => (
+                    <Box key={title} sx={{
+                        p: { xs: 2.5, sm: 3 },
+                        border: '1px solid #f1f5f9',
+                        borderRadius: 4,
+                        background: '#f8fafc',
+                        transition: 'all .2s ease',
+                        '&:hover': { borderColor: alpha(RED, 0.2), background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }
+                    }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Box sx={{ p: 0.8, borderRadius: 1, bgcolor: alpha(RED, 0.1), color: RED, display: 'flex' }}>{icon}</Box>
+                                <Typography sx={{ fontWeight: 800, fontSize: 14, color: '#1e293b' }}>{title}</Typography>
+                            </Box>
+                            <IconButton size="small" onClick={() => setStep(goTo)} sx={{ color: '#94a3b8', '&:hover': { color: RED, bgcolor: alpha(RED, 0.05) } }}>
+                                <EditIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
                         </Box>
-                        <Box onClick={() => setStep(goTo)} sx={{ cursor: 'pointer', color: '#bbb', '&:hover': { color: RED }, display: 'flex' }}>
-                            <EditIcon sx={{ fontSize: 15 }} />
-                        </Box>
-                    </Box>
-                    <Grid container rowSpacing={.8} columnSpacing={2}>
-                        {rows.map(([k, v]) => (
-                            <Grid item xs={12} sm={6} key={k}>
-                                <Box sx={{ display: 'flex', gap: .8 }}>
-                                    <Typography sx={{ fontSize: 12, color: '#aab', minWidth: 72, fontWeight: 500 }}>{k}:</Typography>
-                                    <Typography sx={{ fontSize: 12, color: '#333', fontWeight: 600, wordBreak: 'break-all' }}>{v}</Typography>
+                        <Stack spacing={1.2}>
+                            {rows.map(([k, v]) => (
+                                <Box key={k} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                                    <Typography sx={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>{k}</Typography>
+                                    <Typography sx={{ fontSize: 13, color: '#1e293b', fontWeight: 600, textAlign: 'right', wordBreak: 'break-all' }}>{v}</Typography>
                                 </Box>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Box>
-            ))}
+                            ))}
+                        </Stack>
+                    </Box>
+                ))}
+            </Box>
 
             {submitErr && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{submitErr}</Alert>}
             <Box sx={{ mt: 2, p: 2, border: '1px solid #eef0f8', borderRadius: 14, background: '#fafcff' }}>
@@ -842,21 +863,21 @@ export default function VendorRegisterStepper() {
 
     return (
         <PageWrap>
-            <Box sx={{ mb: 3.5, textAlign: 'center' }}>
+            <Box sx={{ mb: { xs: 2.5, sm: 4 }, textAlign: 'center' }}>
                 <Link to="/pages/login">
-                    <img src={bookLogo} alt="BookMyEvent" style={{ height: 44, objectFit: 'contain' }} />
+                    <img src={bookLogo} alt="BookMyEvent" style={{ height: 48, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.06))' }} />
                 </Link>
-                <Typography sx={{ fontSize: 10.5, letterSpacing: 2, color: '#aab', textTransform: 'uppercase', mt: .5 }}>
+                <Typography sx={{ fontSize: 11, letterSpacing: 3, color: '#94a3b8', textTransform: 'uppercase', mt: 1, fontWeight: 700 }}>
                     Vendor Registration Portal
                 </Typography>
             </Box>
 
             <RegCard elevation={0}>
-                <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Typography variant="h4" fontWeight={800} sx={{ color: '#1a1a2e', letterSpacing: '-0.5px' }}>
+                <Box sx={{ textAlign: 'center', mb: { xs: 4, sm: 6 } }}>
+                    <Typography variant="h4" fontWeight={900} sx={{ color: '#0f172a', letterSpacing: '-0.025em', fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
                         Join as a Vendor
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: .5 }}>
+                    <Typography variant="body1" sx={{ mt: 1, color: '#64748b', fontSize: { xs: 14, sm: 16 } }}>
                         Complete the steps below to create your vendor account
                     </Typography>
                 </Box>
@@ -871,8 +892,9 @@ export default function VendorRegisterStepper() {
                                     StepIconComponent={() => <Bubble Icon={Icon} active={active} done={done} />}
                                     sx={{
                                         '& .MuiStepLabel-label': {
-                                            fontSize: 11.5, fontWeight: active ? 700 : 500,
-                                            color: active ? RED : done ? '#4caf50' : '#bbb', mt: .5
+                                            display: { xs: 'none', sm: 'block' },
+                                            fontSize: 12, fontWeight: active ? 800 : 600,
+                                            color: active ? RED : done ? '#10b981' : '#94a3b8', mt: 1
                                         }
                                     }}
                                 >{label}</StepLabel>
@@ -882,22 +904,22 @@ export default function VendorRegisterStepper() {
                 </Stepper>
 
                 {/* Progress rail */}
-                <Box sx={{ display: 'flex', mb: 4, mt: 1.5, px: .5 }}>
+                <Box sx={{ display: 'flex', mb: { xs: 4, sm: 6 }, mt: { xs: 3, sm: 1.5 }, px: .5 }}>
                     {STEPS.map((_, i) => (
                         <Box key={i} sx={{
-                            flex: 1, height: 3, borderRadius: 4,
-                            background: i < step ? '#4caf50' : i === step ? RED : '#eef0f8',
-                            mx: .3, transition: 'background .3s'
+                            flex: 1, height: { xs: 4, sm: 3 }, borderRadius: 4,
+                            background: i < step ? '#10b981' : i === step ? RED : '#f1f5f9',
+                            mx: .5, transition: 'all .3s ease'
                         }} />
                     ))}
                 </Box>
 
                 {/* Step header */}
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#1a1a2e', fontSize: 17 }}>
+                <Box sx={{ mb: 4 }}>
+                    <Typography variant="h6" fontWeight={800} sx={{ color: '#1e293b', fontSize: { xs: 18, sm: 20 }, letterSpacing: '-0.01em' }}>
                         {['Personal Information', 'Business Details', 'Location', 'Choose Your Plan', 'Media & Documents', 'Review & Submit'][step]}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: .3, fontSize: 13 }}>
+                    <Typography variant="body2" sx={{ mt: 0.5, fontSize: { xs: 13, sm: 14.5 }, color: '#64748b', lineHeight: 1.6 }}>
                         {['Tell us about yourself and your service category', 'Provide your business details', 'Where is your business located?', 'Select the best plan for your needs', 'Upload your business media and documents', 'Review everything before submitting'][step]}
                     </Typography>
                 </Box>
@@ -908,24 +930,29 @@ export default function VendorRegisterStepper() {
                 <Box sx={{ minHeight: 280 }}>{content[step]}</Box>
 
                 {/* Nav */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4, pt: 3, borderTop: '1px solid #f0f2f8' }}>
-                    <SBtn variant="outlined" onClick={() => setStep(s => s - 1)} disabled={step === 0}>← Back</SBtn>
-                    <Box sx={{ display: 'flex', gap: .7 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 5, pt: 4, borderTop: '1px solid #f1f5f9' }}>
+                    <SBtn variant="outlined" onClick={() => setStep(s => s - 1)} disabled={step === 0} sx={{ minWidth: { xs: 90, sm: 120 } }}>
+                        ← Back
+                    </SBtn>
+
+                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
                         {STEPS.map((_, i) => (
                             <Box key={i} sx={{
-                                width: step === i ? 22 : 7, height: 7, borderRadius: 4,
-                                background: step === i ? RED : step > i ? '#4caf50' : '#e0e5f0', transition: 'all .3s'
+                                width: step === i ? 24 : 8, height: 8, borderRadius: 4,
+                                background: step === i ? RED : step > i ? '#10b981' : '#e2e8f0',
+                                transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)'
                             }} />
                         ))}
                     </Box>
+
                     {step < STEPS.length - 1
-                        ? <PBtn onClick={next}>Continue →</PBtn>
-                        : <PBtn onClick={submit} disabled={loading}
+                        ? <PBtn onClick={next} sx={{ minWidth: { xs: 110, sm: 160 } }}>Continue →</PBtn>
+                        : <PBtn onClick={submit} disabled={loading} sx={{ minWidth: { xs: 140, sm: 200 } }}
                             startIcon={loading ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : null}>
-                            {loading ? 'Submitting…' : '🎉 Submit Registration'}
+                            {loading ? 'Submitting…' : '🎉 Submit'}
                         </PBtn>
                     }
-                </Box>
+                </Stack>
 
                 <Box sx={{ textAlign: 'center', mt: 2.5 }}>
                     <Typography variant="body2" color="text.secondary">
