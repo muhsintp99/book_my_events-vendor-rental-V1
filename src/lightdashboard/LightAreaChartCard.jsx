@@ -20,10 +20,10 @@ export default function LightAreaChartCard({
 }) {
     const theme = useTheme();
 
-    // Purple theme colors
-    const purpleMain = '#673ab7';
-    const purpleDark = '#5e35b1';
-    const purpleLight = '#7e57c2';
+    // Red theme colors for Light dashboard (same as Mehandi)
+    const coralMain = '#dd666eff';
+    const coralDark = '#A33A43';
+    const coralLight = '#FF8A92';
 
     const [config, setConfig] = useState(null);
 
@@ -34,7 +34,7 @@ export default function LightAreaChartCard({
             ...chartConfig,
             options: {
                 ...chartConfig.options,
-                colors: [purpleMain],
+                colors: [coralMain],
                 tooltip: {
                     ...chartConfig.options?.tooltip,
                     theme: 'light'
@@ -47,9 +47,9 @@ export default function LightAreaChartCard({
                         opacityTo: 0.2,
                         stops: [0, 90, 100],
                         colorStops: [
-                            { offset: 0, color: purpleLight, opacity: 0.8 },
-                            { offset: 50, color: purpleMain, opacity: 0.6 },
-                            { offset: 100, color: purpleDark, opacity: 0.3 }
+                            { offset: 0, color: coralLight, opacity: 0.8 },
+                            { offset: 50, color: coralMain, opacity: 0.6 },
+                            { offset: 100, color: coralDark, opacity: 0.3 }
                         ]
                     }
                 }
@@ -60,15 +60,15 @@ export default function LightAreaChartCard({
     return (
         <Card
             sx={{
-                bgcolor: purpleLight,
-                border: `1px solid ${purpleMain}`,
-                boxShadow: `0 4px 12px rgba(103, 58, 183, 0.3)`,
+                bgcolor: coralLight,
+                border: `1px solid ${coralMain}`,
+                boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
                 borderRadius: 3
             }}
         >
             {/* ================= HEADER ================= */}
             <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-                <Grid xs={12}>
+                <Grid size={12}>
                     <Grid container alignItems="center" justifyContent="space-between">
                         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                             {title}

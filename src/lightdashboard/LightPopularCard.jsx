@@ -48,7 +48,7 @@ export default function LightPopularCard({
                     <CardContent>
                         <Grid container spacing={gridSpacing}>
                             {/* ================= HEADER ================= */}
-                            <Grid item xs={12}>
+                            <Grid xs={12}>
                                 <Grid container alignItems="center" justifyContent="space-between">
                                     <Typography variant="h4">{title}</Typography>
 
@@ -71,12 +71,12 @@ export default function LightPopularCard({
                             </Grid>
 
                             {/* ================= CHART ================= */}
-                            <Grid item xs={12} sx={{ mt: -1 }}>
+                            <Grid xs={12} sx={{ mt: -1 }}>
                                 <LightAreaChartCard chartConfig={lightAreaChartConfig} />
                             </Grid>
 
                             {/* ================= PACKAGE LIST ================= */}
-                            <Grid item xs={12}>
+                            <Grid xs={12}>
                                 {packages.length === 0 ? (
                                     <Typography
                                         variant="subtitle2"

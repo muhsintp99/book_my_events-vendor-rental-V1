@@ -45,7 +45,7 @@ export default function LightGrowthBarChart({
     useEffect(() => {
         setChartOptions((prev) => ({
             ...prev,
-            colors: ['#5e35b1', '#673ab7', '#9575cd', '#ede7f6'],
+            colors: ['#C2444E', '#F09898', '#ff7f87ff', '#FCE9E9'],
             xaxis: {
                 ...prev.xaxis,
                 labels: { style: { colors: textPrimary } }

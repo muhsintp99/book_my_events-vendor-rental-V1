@@ -140,6 +140,9 @@ import floristEmployee from './florist/employee';
 import lightManagementMenu from './light/managementlight';
 import lightmanagement from './light/lightmanagement';
 import lightsection from './light/lightsections';
+import bouncersManagementMenu from './bouncers/managementbouncers';
+import bouncersmanagement from './bouncers/bouncersmanagement';
+import bouncerssection from './bouncers/bouncerssections';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '').toLowerCase().replace(/\s+/g, ''); // remove spaces
@@ -186,6 +189,9 @@ if (logRes === 'transport') {
 }
 else if (logRes.includes('light')) {
   specificSections = [lightManagementMenu, lightmanagement,lightsection ];
+}
+else if (logRes.includes('bouncers')) {
+  specificSections = [bouncersManagementMenu, bouncersmanagement, bouncerssection ];
 }
 
 const menuItems = {

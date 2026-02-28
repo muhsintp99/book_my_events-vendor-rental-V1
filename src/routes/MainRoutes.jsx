@@ -280,6 +280,24 @@ const LightCompleted = Loadable(lazy(() => import('../views/light/Lightcompleted
 const LightCancelled = Loadable(lazy(() => import('../views/light/Lightcancelled.jsx')));
 const LightPaymentFailed = Loadable(lazy(() => import('../views/light/LightPaymentFailed.jsx')));
 
+
+// bouncers/////////////////////////
+const AddBouncersPackage = Loadable(lazy(() => import('../views/bouncers/Addbouncers.jsx')));
+const BouncersList = Loadable(lazy(() => import('../views/bouncers/Bouncerslist.jsx')));
+const BouncersChat = Loadable(lazy(() => import('../views/bouncers/BouncersChat.jsx')));
+const BouncersUpgrade = Loadable(lazy(() => import('../views/bouncers/Bouncersupgrade.jsx')));
+const BouncersEnquiry = Loadable(lazy(() => import('../views/bouncers/bouncersenquiries.jsx')));
+const BouncersEnquirychat = Loadable(lazy(() => import('../views/bouncers/BouncersEnquiryChat.jsx')));
+const BouncersSchedules = Loadable(lazy(() => import('../views/bouncers/SchedulesBouncers.jsx')));
+const BouncersCategories = Loadable(lazy(() => import('../views/bouncers/Categories.jsx')));
+const BouncersPortfolio = Loadable(lazy(() => import('../views/bouncers/Portfolio.jsx')));
+const AllBouncers = Loadable(lazy(() => import('../views/bouncers/Allbouncers.jsx')));
+const BouncersPending = Loadable(lazy(() => import('../views/bouncers/Bouncerspending.jsx')));
+const BouncersConfirmed = Loadable(lazy(() => import('../views/bouncers/Bouncersconfirmed.jsx')));
+const BouncersCompleted = Loadable(lazy(() => import('../views/bouncers/Bouncerscompleted.jsx')));
+const BouncersCancelled = Loadable(lazy(() => import('../views/bouncers/Bouncerscancelled.jsx')));
+const BouncersPaymentFailed = Loadable(lazy(() => import('../views/bouncers/BouncersPaymentFailed.jsx')));
+
 // invitation/////////////////////////
 const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
 const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
@@ -497,7 +515,16 @@ const MainRoutes = {
             { path: 'lightconfirmed', element: <LightConfirmed /> },
             { path: 'completedlight', element: <LightCompleted /> },
             { path: 'cancelledlight', element: <LightCancelled /> },
-            { path: 'paymentfailedlight', element: <LightPaymentFailed /> }
+            { path: 'paymentfailedlight', element: <LightPaymentFailed /> },
+
+
+            // bouncers BOOKINGS///////////////
+            { path: 'allbouncers', element: <AllBouncers /> },
+            { path: 'pendingbouncers', element: <BouncersPending /> },
+            { path: 'bouncersconfirmed', element: <BouncersConfirmed /> },
+            { path: 'completedbouncers', element: <BouncersCompleted /> },
+            { path: 'cancelledbouncers', element: <BouncersCancelled /> },
+            { path: 'paymentfailedbouncers', element: <BouncersPaymentFailed /> }
           ]
         },
 
@@ -716,6 +743,24 @@ const MainRoutes = {
             { path: 'chat', element: <LightChat /> },
             { path: 'schedules', element: <LightSchedules /> },
             { path: 'categories', element: <Lightcategories /> }
+          ]
+        },
+
+
+        {
+          path: 'bouncers',
+          children: [
+            { path: 'addpackage', element: <AddBouncersPackage /> },
+            { path: 'edit/:id', element: <AddBouncersPackage /> },
+            { path: 'packagelist', element: <BouncersList /> },
+            { path: 'portfolio', element: <BouncersPortfolio /> },
+            { path: 'upgrade', element: <BouncersUpgrade /> },
+            { path: 'enquiry', element: <BouncersEnquiry /> },
+            { path: 'enquiries', element: <BouncersEnquiry /> },
+            { path: 'enquirychat', element: <BouncersEnquirychat /> },
+            { path: 'chat', element: <BouncersChat /> },
+            { path: 'schedules', element: <BouncersSchedules /> },
+            { path: 'categories', element: <BouncersCategories /> }
           ]
         }
       ]

@@ -18,8 +18,8 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 // styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    backgroundColor: '#4527a0',
-    color: '#fff',
+    backgroundColor: '#E15B65',
+    color: theme.palette.primary.light,
     overflow: 'hidden',
     position: 'relative',
     '&:after': {
@@ -27,7 +27,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
         position: 'absolute',
         width: 210,
         height: 210,
-        background: `linear-gradient(210.04deg, ${theme.palette.primary[200]} -50.94%, #b39ddb 83.49%)`,
+        background: `linear-gradient(210.04deg, ${theme.palette.primary[200]} -50.94%, #e6ccceff, 0) 83.49%)`,
         borderRadius: '50%',
         top: -30,
         right: -180
@@ -62,7 +62,7 @@ export default function LightIncomeDarkCard({ isLoading }) {
                                         sx={{
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.largeAvatar,
-                                            bgcolor: '#311b92',
+                                            bgcolor: '#8d1e27ff',
                                             color: '#fff'
                                         }}
                                     >

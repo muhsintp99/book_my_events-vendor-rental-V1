@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
-import axios from 'axios';
 
 // dashboards
 import VehicleIndex from '../../../vehicledashboard';
@@ -14,6 +13,7 @@ import InvitationIndex from '../../../invitationdashboard';
 import FloristIndex from '../../../floristdashboard';
 import BoutiqueIndex from '../../../boutiquedashboard';
 import LightIndex from '../../../lightdashboard';
+import BouncersIndex from '../../../bouncersdashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -33,7 +33,6 @@ import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
 
-
   const Module = localStorage.getItem('logRes');
 
   // ================= INITIAL LOAD =================
@@ -46,17 +45,20 @@ export default function Dashboard() {
     const activeModule = (Module || '').trim();
     console.log('Dashboard Module Identified:', activeModule);
 
-    if (activeModule.toLowerCase() === 'transport') return <VehicleIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase() === 'catering') return <CateringIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase() === 'makeup artist' || activeModule.toLowerCase() === 'makeup') return <MakeupIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase() === 'photography') return <PhotographyIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase() === 'cake') return <CakeIndex isLoading={isLoading} />;
-    if (['ornaments', 'ornament'].includes(activeModule.toLowerCase())) return <OrnamentsIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase() === 'mehandi' || activeModule.toLowerCase() === 'mehandi artist') return <MehandiIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase().includes('invitation')) return <InvitationIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase().includes('florist')) return <FloristIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase().includes('boutique')) return <BoutiqueIndex isLoading={isLoading} />;
-    if (activeModule.toLowerCase().includes('light')) return <LightIndex isLoading={isLoading} />;
+    const moduleKey = activeModule.toLowerCase();
+
+    if (moduleKey === 'transport') return <VehicleIndex isLoading={isLoading} />;
+    if (moduleKey === 'catering') return <CateringIndex isLoading={isLoading} />;
+    if (moduleKey === 'makeup artist' || moduleKey === 'makeup') return <MakeupIndex isLoading={isLoading} />;
+    if (moduleKey === 'photography') return <PhotographyIndex isLoading={isLoading} />;
+    if (moduleKey === 'cake') return <CakeIndex isLoading={isLoading} />;
+    if (['ornaments', 'ornament'].includes(moduleKey)) return <OrnamentsIndex isLoading={isLoading} />;
+    if (moduleKey === 'mehandi' || moduleKey === 'mehandi artist') return <MehandiIndex isLoading={isLoading} />;
+    if (moduleKey.includes('invitation')) return <InvitationIndex isLoading={isLoading} />;
+    if (moduleKey.includes('florist')) return <FloristIndex isLoading={isLoading} />;
+    if (moduleKey.includes('boutique')) return <BoutiqueIndex isLoading={isLoading} />;
+    if (moduleKey.includes('light')) return <LightIndex isLoading={isLoading} />;
+    if (moduleKey.includes('bouncers')) return <BouncersIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

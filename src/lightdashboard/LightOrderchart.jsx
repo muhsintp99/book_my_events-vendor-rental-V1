@@ -44,7 +44,7 @@ export default function LightOrderchart({
                     border={false}
                     content={false}
                     sx={{
-                        bgcolor: '#673ab7',
+                        bgcolor: '#E15B65',
                         color: '#fff',
                         overflow: 'hidden',
                         position: 'relative',
@@ -54,7 +54,7 @@ export default function LightOrderchart({
                             position: 'absolute',
                             width: 210,
                             height: 210,
-                            background: '#5e35b1',
+                            background: '#C2444E',
                             borderRadius: '50%',
                             top: -85,
                             right: -95
@@ -64,7 +64,7 @@ export default function LightOrderchart({
                             position: 'absolute',
                             width: 210,
                             height: 210,
-                            background: '#b39ddb',
+                            background: '#FF8A8A',
                             borderRadius: '50%',
                             top: -125,
                             right: -15,
@@ -81,7 +81,7 @@ export default function LightOrderchart({
                                     sx={{
                                         ...theme.typography.commonAvatar,
                                         ...theme.typography.largeAvatar,
-                                        bgcolor: '#4527a0',
+                                        bgcolor: '#C41E3A',
                                         color: '#fff',
                                         mt: 1
                                     }}
@@ -102,8 +102,8 @@ export default function LightOrderchart({
                                         size="small"
                                         variant={!isMonth ? 'contained' : 'text'}
                                         sx={{
-                                            color: '#4527a0',
-                                            backgroundColor: !isMonth ? '#d1c4e9' : 'transparent'
+                                            color: '#A33A43',
+                                            backgroundColor: !isMonth ? '#F1C6C6' : 'transparent'
                                         }}
                                         onClick={() => setIsMonth(false)}
                                     >
@@ -133,8 +133,8 @@ export default function LightOrderchart({
                                             <Avatar
                                                 sx={{
                                                     ...theme.typography.smallAvatar,
-                                                    bgcolor: '#ede7f6',
-                                                    color: '#5e35b1'
+                                                    bgcolor: '#FAEBEB',
+                                                    color: 'primary.dark'
                                                 }}
                                             >
                                                 <TrendIcon fontSize="inherit" />

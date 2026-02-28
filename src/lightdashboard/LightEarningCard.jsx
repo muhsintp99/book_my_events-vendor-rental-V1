@@ -48,7 +48,7 @@ export default function LightEarningCard({
                     border={false}
                     content={false}
                     sx={{
-                        bgcolor: '#673ab7',
+                        bgcolor: '#E15B65',
                         color: '#fff',
                         overflow: 'hidden',
                         position: 'relative',
@@ -57,7 +57,7 @@ export default function LightEarningCard({
                             position: 'absolute',
                             width: 210,
                             height: 210,
-                            background: '#5e35b1',
+                            background: '#C2444E',
                             borderRadius: '50%',
                             top: -85,
                             right: -95
@@ -67,7 +67,7 @@ export default function LightEarningCard({
                             position: 'absolute',
                             width: 210,
                             height: 210,
-                            background: '#b39ddb',
+                            background: '#fba7adff',
                             borderRadius: '50%',
                             top: -125,
                             right: -15,
@@ -84,7 +84,7 @@ export default function LightEarningCard({
                                     sx={{
                                         ...theme.typography.commonAvatar,
                                         ...theme.typography.largeAvatar,
-                                        bgcolor: '#5e35b1',
+                                        bgcolor: '#cf2836ff',
                                         mt: 1
                                     }}
                                 >
@@ -101,7 +101,7 @@ export default function LightEarningCard({
                                     sx={{
                                         ...theme.typography.commonAvatar,
                                         ...theme.typography.mediumAvatar,
-                                        bgcolor: '#4527a0',
+                                        bgcolor: '#ad2430ff',
                                         cursor: 'pointer'
                                     }}
                                     onClick={handleClick}
@@ -148,8 +148,8 @@ export default function LightEarningCard({
                                 <Avatar
                                     sx={{
                                         ...theme.typography.smallAvatar,
-                                        bgcolor: '#d1c4e9',
-                                        color: '#4527a0'
+                                        bgcolor: '#f0c4c8ff',
+                                        color: 'secondary.dark'
                                     }}
                                 >
                                     <TrendIcon fontSize="inherit" />
