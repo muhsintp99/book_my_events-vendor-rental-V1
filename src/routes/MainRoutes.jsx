@@ -304,7 +304,7 @@ const Emceelist = Loadable(lazy(() => import('../views/emcee/Emceelist.jsx')));
 const EmceeChat = Loadable(lazy(() => import('../views/emcee/EmceeChat.jsx')));
 const EmceeUpgrade = Loadable(lazy(() => import('../views/emcee/Emceeupgrade.jsx')));
 const EmceeEnquiry = Loadable(lazy(() => import('../views/emcee/emceeenquiries.jsx')));
-const EmceeEnquirychat = Loadable(lazy(() => import('../views/emcee/EmceeEnquiryChat.jsx')));
+const EmceeEnquiryChat = Loadable(lazy(() => import('../views/emcee/EmceeEnquiryChat.jsx')));
 const EmceeSchedules = Loadable(lazy(() => import('../views/emcee/SchedulesEmcee.jsx')));
 const EmceeCategories = Loadable(lazy(() => import('../views/emcee/Categories.jsx')));
 const EmceePortfolio = Loadable(lazy(() => import('../views/emcee/Portfolio.jsx')));
