@@ -298,6 +298,57 @@ const BouncersCompleted = Loadable(lazy(() => import('../views/bouncers/Bouncers
 const BouncersCancelled = Loadable(lazy(() => import('../views/bouncers/Bouncerscancelled.jsx')));
 const BouncersPaymentFailed = Loadable(lazy(() => import('../views/bouncers/BouncersPaymentFailed.jsx')));
 
+// emcee/////////////////////////
+const AddemceePackage = Loadable(lazy(() => import('../views/emcee/Addemcee.jsx')));
+const Emceelist = Loadable(lazy(() => import('../views/emcee/Emceelist.jsx')));
+const EmceeChat = Loadable(lazy(() => import('../views/emcee/EmceeChat.jsx')));
+const EmceeUpgrade = Loadable(lazy(() => import('../views/emcee/Emceeupgrade.jsx')));
+const EmceeEnquiry = Loadable(lazy(() => import('../views/emcee/emceeenquiries.jsx')));
+const EmceeEnquirychat = Loadable(lazy(() => import('../views/emcee/EmceeEnquiryChat.jsx')));
+const EmceeSchedules = Loadable(lazy(() => import('../views/emcee/SchedulesEmcee.jsx')));
+const EmceeCategories = Loadable(lazy(() => import('../views/emcee/Categories.jsx')));
+const EmceePortfolio = Loadable(lazy(() => import('../views/emcee/Portfolio.jsx')));
+const AllEmcee = Loadable(lazy(() => import('../views/emcee/Allemcee.jsx')));
+const EmceePending = Loadable(lazy(() => import('../views/emcee/Emceepending.jsx')));
+const EmceeConfirmed = Loadable(lazy(() => import('../views/emcee/Emceeconfirmed.jsx')));
+const EmceeCompleted = Loadable(lazy(() => import('../views/emcee/Emceecompleted.jsx')));
+const EmceeCancelled = Loadable(lazy(() => import('../views/emcee/Emceecancelled.jsx')));
+const EmceePaymentFailed = Loadable(lazy(() => import('../views/emcee/EmceePaymentFailed.jsx')));
+
+// panthal/////////////////////////
+const AddpanthalPackage = Loadable(lazy(() => import('../views/panthal/Addpanthal.jsx')));
+const Panthallist = Loadable(lazy(() => import('../views/panthal/Panthallist.jsx')));
+const PanthalChat = Loadable(lazy(() => import('../views/panthal/PanthalChat.jsx')));
+const PanthalUpgrade = Loadable(lazy(() => import('../views/panthal/Panthalupgrade.jsx')));
+const PanthalEnquiry = Loadable(lazy(() => import('../views/panthal/panthalenquiries.jsx')));
+const PanthalEnquiryChat = Loadable(lazy(() => import('../views/panthal/PanthalEnquiryChat.jsx')));
+const PanthalSchedules = Loadable(lazy(() => import('../views/panthal/SchedulesPanthal.jsx')));
+const PanthalCategories = Loadable(lazy(() => import('../views/panthal/Categories.jsx')));
+const PanthalPortfolio = Loadable(lazy(() => import('../views/panthal/Portfolio.jsx')));
+const AllPanthal = Loadable(lazy(() => import('../views/panthal/Allpanthal.jsx')));
+const PanthalPending = Loadable(lazy(() => import('../views/panthal/Panthalpending.jsx')));
+const PanthalConfirmed = Loadable(lazy(() => import('../views/panthal/Panthalconfirmed.jsx')));
+const PanthalCompleted = Loadable(lazy(() => import('../views/panthal/Panthalcompleted.jsx')));
+const PanthalCancelled = Loadable(lazy(() => import('../views/panthal/Panthalcancelled.jsx')));
+const PanthalPaymentFailed = Loadable(lazy(() => import('../views/panthal/PanthalPaymentFailed.jsx')));
+
+// eventprofessionals/////////////////////////
+const AddeventproPackage = Loadable(lazy(() => import('../views/eventprofessionals/Addeventpro.jsx')));
+const Eventprolist = Loadable(lazy(() => import('../views/eventprofessionals/Eventprolist.jsx')));
+const EventproChat = Loadable(lazy(() => import('../views/eventprofessionals/EventproChat.jsx')));
+const EventproUpgrade = Loadable(lazy(() => import('../views/eventprofessionals/Eventproupgrade.jsx')));
+const EventproEnquiry = Loadable(lazy(() => import('../views/eventprofessionals/eventproenquiries.jsx')));
+const EventproEnquiryChat = Loadable(lazy(() => import('../views/eventprofessionals/EventproEnquiryChat.jsx')));
+const EventproSchedules = Loadable(lazy(() => import('../views/eventprofessionals/SchedulesEventpro.jsx')));
+const EventproCategories = Loadable(lazy(() => import('../views/eventprofessionals/Categories.jsx')));
+const EventproPortfolio = Loadable(lazy(() => import('../views/eventprofessionals/Portfolio.jsx')));
+const AllEventpro = Loadable(lazy(() => import('../views/eventprofessionals/Alleventpro.jsx')));
+const EventproPending = Loadable(lazy(() => import('../views/eventprofessionals/Eventpropending.jsx')));
+const EventproConfirmed = Loadable(lazy(() => import('../views/eventprofessionals/Eventproconfirmed.jsx')));
+const EventproCompleted = Loadable(lazy(() => import('../views/eventprofessionals/Eventprocompleted.jsx')));
+const EventproCancelled = Loadable(lazy(() => import('../views/eventprofessionals/Eventprocancelled.jsx')));
+const EventproPaymentFailed = Loadable(lazy(() => import('../views/eventprofessionals/EventproPaymentFailed.jsx')));
+
 // invitation/////////////////////////
 const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
 const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
@@ -524,7 +575,31 @@ const MainRoutes = {
             { path: 'bouncersconfirmed', element: <BouncersConfirmed /> },
             { path: 'completedbouncers', element: <BouncersCompleted /> },
             { path: 'cancelledbouncers', element: <BouncersCancelled /> },
-            { path: 'paymentfailedbouncers', element: <BouncersPaymentFailed /> }
+            { path: 'paymentfailedbouncers', element: <BouncersPaymentFailed /> },
+
+            // EMCEE BOOKINGS///////////////
+            { path: 'allemcee', element: <AllEmcee /> },
+            { path: 'pendingemcee', element: <EmceePending /> },
+            { path: 'emceeconfirmed', element: <EmceeConfirmed /> },
+            { path: 'completedemcee', element: <EmceeCompleted /> },
+            { path: 'cancelledemcee', element: <EmceeCancelled /> },
+            { path: 'paymentfailedemcee', element: <EmceePaymentFailed /> },
+
+            // PANTHAL BOOKINGS///////////////
+            { path: 'allpanthal', element: <AllPanthal /> },
+            { path: 'pendingpanthal', element: <PanthalPending /> },
+            { path: 'panthalconfirmed', element: <PanthalConfirmed /> },
+            { path: 'completedpanthal', element: <PanthalCompleted /> },
+            { path: 'cancelledpanthal', element: <PanthalCancelled /> },
+            { path: 'paymentfailedpanthal', element: <PanthalPaymentFailed /> },
+
+            // EVENT PRO BOOKINGS///////////////
+            { path: 'alleventpro', element: <AllEventpro /> },
+            { path: 'pendingeventpro', element: <EventproPending /> },
+            { path: 'eventproconfirmed', element: <EventproConfirmed /> },
+            { path: 'completedeventpro', element: <EventproCompleted /> },
+            { path: 'cancelledeventpro', element: <EventproCancelled /> },
+            { path: 'paymentfailedeventpro', element: <EventproPaymentFailed /> }
           ]
         },
 
@@ -611,7 +686,23 @@ const MainRoutes = {
             { path: 'invitationconfirmed', element: <InvitationBookings initialTab="Accepted" /> },
             { path: 'completedinvitation', element: <InvitationBookings initialTab="Completed" /> },
             { path: 'cancelledinvitation', element: <InvitationBookings initialTab="Cancelled" /> },
-            { path: 'paymentfailedinvitation', element: <InvitationBookings initialTab="Payment Failed" /> }
+            { path: 'paymentfailedinvitation', element: <InvitationBookings initialTab="Payment Failed" /> },
+
+            // Bouncers bookings
+            { path: 'allbouncers', element: <AllBouncers /> },
+            { path: 'pendingbouncers', element: <BouncersPending /> },
+            { path: 'bouncersconfirmed', element: <BouncersConfirmed /> },
+            { path: 'completedbouncers', element: <BouncersCompleted /> },
+            { path: 'cancelledbouncers', element: <BouncersCancelled /> },
+            { path: 'paymentfailedbouncers', element: <BouncersPaymentFailed /> },
+
+            // Emcee bookings
+            { path: 'allemcee', element: <AllEmcee /> },
+            { path: 'pendingemcee', element: <EmceePending /> },
+            { path: 'emceeconfirmed', element: <EmceeConfirmed /> },
+            { path: 'completedemcee', element: <EmceeCompleted /> },
+            { path: 'cancelledemcee', element: <EmceeCancelled /> },
+            { path: 'paymentfailedemcee', element: <EmceePaymentFailed /> }
           ]
         },
 
@@ -761,6 +852,55 @@ const MainRoutes = {
             { path: 'chat', element: <BouncersChat /> },
             { path: 'schedules', element: <BouncersSchedules /> },
             { path: 'categories', element: <BouncersCategories /> }
+          ]
+        },
+
+        {
+          path: 'emcee',
+          children: [
+            { path: 'addpackage', element: <AddemceePackage /> },
+            { path: 'edit/:id', element: <AddemceePackage /> },
+            { path: 'packagelist', element: <Emceelist /> },
+            { path: 'portfolio', element: <EmceePortfolio /> },
+            { path: 'upgrade', element: <EmceeUpgrade /> },
+            { path: 'enquiry', element: <EmceeEnquiry /> },
+            { path: 'enquiries', element: <EmceeEnquiry /> },
+            { path: 'enquirychat', element: <EmceeEnquiryChat /> },
+            { path: 'chat', element: <EmceeChat /> },
+            { path: 'schedules', element: <EmceeSchedules /> },
+            { path: 'categories', element: <EmceeCategories /> }
+          ]
+        },
+        {
+          path: 'panthal',
+          children: [
+            { path: 'addpackage', element: <AddpanthalPackage /> },
+            { path: 'edit/:id', element: <AddpanthalPackage /> },
+            { path: 'packagelist', element: <Panthallist /> },
+            { path: 'portfolio', element: <PanthalPortfolio /> },
+            { path: 'upgrade', element: <PanthalUpgrade /> },
+            { path: 'enquiry', element: <PanthalEnquiry /> },
+            { path: 'enquiries', element: <PanthalEnquiry /> },
+            { path: 'enquirychat', element: <PanthalEnquiryChat /> },
+            { path: 'chat', element: <PanthalChat /> },
+            { path: 'schedules', element: <PanthalSchedules /> },
+            { path: 'categories', element: <PanthalCategories /> }
+          ]
+        },
+        {
+          path: 'eventprofessionals',
+          children: [
+            { path: 'addpackage', element: <AddeventproPackage /> },
+            { path: 'edit/:id', element: <AddeventproPackage /> },
+            { path: 'packagelist', element: <Eventprolist /> },
+            { path: 'portfolio', element: <EventproPortfolio /> },
+            { path: 'upgrade', element: <EventproUpgrade /> },
+            { path: 'enquiry', element: <EventproEnquiry /> },
+            { path: 'enquiries', element: <EventproEnquiry /> },
+            { path: 'enquirychat', element: <EventproEnquiryChat /> },
+            { path: 'chat', element: <EventproChat /> },
+            { path: 'schedules', element: <EventproSchedules /> },
+            { path: 'categories', element: <EventproCategories /> }
           ]
         }
       ]

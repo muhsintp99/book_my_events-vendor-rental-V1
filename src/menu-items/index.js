@@ -143,6 +143,15 @@ import lightsection from './light/lightsections';
 import bouncersManagementMenu from './bouncers/managementbouncers';
 import bouncersmanagement from './bouncers/bouncersmanagement';
 import bouncerssection from './bouncers/bouncerssections';
+import emceeManagementMenu from './emcee/managementemcee';
+import emceemanagement from './emcee/emceemanagement';
+import emceesection from './emcee/emceesections';
+import panthalManagementMenu from './panthal/managementpanthal';
+import panthalmanagement from './panthal/panthalmanagement';
+import panthalsection from './panthal/panthalsections';
+import eventproManagementMenu from './eventprofessionals/managementeventpro';
+import eventpromanagement from './eventprofessionals/eventpromanagement';
+import eventprosection from './eventprofessionals/eventprosections';
 
 // ==============================|| MENU ITEMS ||============================== //
 const logRes = (localStorage.getItem('logRes') || '').toLowerCase().replace(/\s+/g, ''); // remove spaces
@@ -188,10 +197,19 @@ if (logRes === 'transport') {
   specificSections = [floristManagementMenu, floristmanagement, floristsection, floristReport, floristEmployee];
 }
 else if (logRes.includes('light')) {
-  specificSections = [lightManagementMenu, lightmanagement,lightsection ];
+  specificSections = [lightManagementMenu, lightmanagement, lightsection];
 }
 else if (logRes.includes('bouncers')) {
-  specificSections = [bouncersManagementMenu, bouncersmanagement, bouncerssection ];
+  specificSections = [bouncersManagementMenu, bouncersmanagement, bouncerssection];
+}
+else if (logRes.includes('emcee')) {
+  specificSections = [emceeManagementMenu, emceemanagement, emceesection];
+}
+else if (logRes.includes('panthal')) {
+  specificSections = [panthalManagementMenu, panthalmanagement, panthalsection];
+}
+else if (logRes.includes('event professionals') || logRes.includes('eventprofessionals')) {
+  specificSections = [eventproManagementMenu, eventpromanagement, eventprosection];
 }
 
 const menuItems = {

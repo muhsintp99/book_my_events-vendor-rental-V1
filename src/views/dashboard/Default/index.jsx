@@ -14,6 +14,9 @@ import FloristIndex from '../../../floristdashboard';
 import BoutiqueIndex from '../../../boutiquedashboard';
 import LightIndex from '../../../lightdashboard';
 import BouncersIndex from '../../../bouncersdashboard';
+import EmceeIndex from '../../../emceedashboard';
+import PanthalIndex from '../../../panthaldashboard';
+import EventproIndex from '../../../eventprodashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -59,6 +62,9 @@ export default function Dashboard() {
     if (moduleKey.includes('boutique')) return <BoutiqueIndex isLoading={isLoading} />;
     if (moduleKey.includes('light')) return <LightIndex isLoading={isLoading} />;
     if (moduleKey.includes('bouncers')) return <BouncersIndex isLoading={isLoading} />;
+    if (moduleKey.includes('emcee')) return <EmceeIndex isLoading={isLoading} />;
+    if (moduleKey.includes('panthal')) return <PanthalIndex isLoading={isLoading} />;
+    if (moduleKey.includes('event professionals') || moduleKey.includes('eventprofessionals')) return <EventproIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>
