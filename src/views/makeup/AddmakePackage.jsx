@@ -278,6 +278,7 @@ const AddmakePackage = () => {
     if (!makeupType) return setError('Select makeup type');
     if (!basePrice) return setError('Base price required');
     if (!description.trim()) return setError('Description required');
+    if (!advanceBookingAmount) return setError('Advance booking amount required');
 
     const formData = new FormData();
 
@@ -447,7 +448,11 @@ const AddmakePackage = () => {
             />
             <TextField
               fullWidth
-              label="Advance Booking Amount"
+              label={
+                <span>
+                  Advance Booking Amount <span style={{ color: 'red' }}>*</span>
+                </span>
+              }
               value={advanceBookingAmount}
               onChange={(e) => setAdvanceBookingAmount(e.target.value)}
             />

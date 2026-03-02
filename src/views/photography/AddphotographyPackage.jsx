@@ -271,12 +271,12 @@ const AddPhotographyPackage = () => {
       prev.map(sec =>
         sec.id === id
           ? {
-              ...sec,
-              [field]:
-                field === 'items'
-                  ? value.split(',').map(i => i.trim()).filter(Boolean)
-                  : value,
-            }
+            ...sec,
+            [field]:
+              field === 'items'
+                ? value.split(',').map(i => i.trim()).filter(Boolean)
+                : value,
+          }
           : sec
       )
     );
@@ -289,8 +289,8 @@ const AddPhotographyPackage = () => {
   };
 
   const handleAddonToggle = (addonId) => {
-    setSelectedAddons(prev => 
-      prev.includes(addonId) 
+    setSelectedAddons(prev =>
+      prev.includes(addonId)
         ? prev.filter(id => id !== addonId)
         : [...prev, addonId]
     );
@@ -323,6 +323,7 @@ const AddPhotographyPackage = () => {
     if (selectedCategories.length === 0) return setError('Select at least one category');
     if (!price) return setError('Price required');
     if (!description.trim()) return setError('Description required');
+    if (!advanceBookingAmount) return setError('Advance booking amount required');
 
     const formData = new FormData();
 
@@ -361,7 +362,7 @@ const AddPhotographyPackage = () => {
       } else {
         await axios.post(`${API_BASE}/api/photography-packages`, formData);
         setSuccessMessage('Package created successfully!');
-        
+
         // Reset form after successful creation
         setTimeout(() => {
           resetForm();
@@ -392,7 +393,7 @@ const AddPhotographyPackage = () => {
   // ------------------------------
   return (
     <Box sx={{ bgcolor: '#f9f9fc', minHeight: '100vh' }}>
-      
+
       {/* HEADER */}
       <Box sx={{ bgcolor: 'white', borderBottom: '1px solid #eee', p: 2, px: 4, position: 'sticky', top: 0, zIndex: 10 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -419,12 +420,12 @@ const AddPhotographyPackage = () => {
         <Paper elevation={3} sx={{ borderRadius: 3, p: { xs: 3, md: 6 } }}>
 
           {/* Package Title */}
-          <TextField 
-            fullWidth 
+          <TextField
+            fullWidth
             label={<span>Package Title <span style={{ color: 'red' }}>*</span></span>}
-            value={packageTitle} 
-            onChange={e => setPackageTitle(e.target.value)} 
-            sx={{ mb: 3 }} 
+            value={packageTitle}
+            onChange={e => setPackageTitle(e.target.value)}
+            sx={{ mb: 3 }}
           />
 
           {/* Categories */}
@@ -447,39 +448,39 @@ const AddPhotographyPackage = () => {
                 {photographyCategories.length === 0
                   ? <MenuItem disabled>No categories available</MenuItem>
                   : photographyCategories.map(cat => (
-                      <MenuItem key={cat._id} value={cat._id}>{cat.title}</MenuItem>
-                    ))}
+                    <MenuItem key={cat._id} value={cat._id}>{cat.title}</MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Stack>
 
           {/* Price + Advance Booking */}
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-            <TextField 
-              fullWidth 
+            <TextField
+              fullWidth
               label={<span>Price <span style={{ color: 'red' }}>*</span></span>}
-              type="number" 
-              value={price} 
-              onChange={e => setPrice(e.target.value)} 
+              type="number"
+              value={price}
+              onChange={e => setPrice(e.target.value)}
             />
-            <TextField 
-              fullWidth 
-              label="Advance Booking Amount" 
-              value={advanceBookingAmount} 
-              onChange={e => setAdvanceBookingAmount(e.target.value)} 
+            <TextField
+              fullWidth
+              label={<span>Advance Booking Amount <span style={{ color: 'red' }}>*</span></span>}
+              value={advanceBookingAmount}
+              onChange={e => setAdvanceBookingAmount(e.target.value)}
               placeholder="e.g. 15000"
             />
           </Stack>
 
           {/* Description */}
-          <TextField 
-            fullWidth 
+          <TextField
+            fullWidth
             label={<span>Description <span style={{ color: 'red' }}>*</span></span>}
-            multiline 
-            rows={4} 
-            value={description} 
-            onChange={e => setDescription(e.target.value)} 
-            sx={{ mb: 4 }} 
+            multiline
+            rows={4}
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            sx={{ mb: 4 }}
           />
 
           {/* Basic Add-ons Section */}
@@ -517,10 +518,10 @@ const AddPhotographyPackage = () => {
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography variant="h6" sx={{ color: PINK }}>Custom Service Sections</Typography>
-              <Button 
-                variant="contained" 
-                startIcon={<AddIcon />} 
-                sx={{ bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }} 
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                sx={{ bgcolor: PINK, '&:hover': { bgcolor: '#c2185b' } }}
                 onClick={handleAddSection}
               >
                 Add Section
@@ -538,25 +539,25 @@ const AddPhotographyPackage = () => {
           </Box>
 
           {/* Cancellation Policy */}
-          <TextField 
-            fullWidth 
-            label="Cancellation Policy" 
-            multiline 
-            rows={3} 
-            value={cancellationPolicy} 
-            onChange={e => setCancellationPolicy(e.target.value)} 
-            sx={{ mb: 4 }} 
+          <TextField
+            fullWidth
+            label="Cancellation Policy"
+            multiline
+            rows={3}
+            value={cancellationPolicy}
+            onChange={e => setCancellationPolicy(e.target.value)}
+            sx={{ mb: 4 }}
             placeholder="e.g. No refund within 48 hours of event"
           />
 
           {/* Toggles */}
           <Stack direction="row" spacing={6} alignItems="center" sx={{ mb: 4 }}>
-            <FormControlLabel 
-              control={<PinkSwitch checked={travelToVenue} onChange={() => setTravelToVenue(prev => !prev)} />} 
+            <FormControlLabel
+              control={<PinkSwitch checked={travelToVenue} onChange={() => setTravelToVenue(prev => !prev)} />}
               label={<Typography fontWeight="medium">Travel to Venue</Typography>}
             />
-            <FormControlLabel 
-              control={<PinkSwitch checked={isActive} onChange={() => setIsActive(prev => !prev)} />} 
+            <FormControlLabel
+              control={<PinkSwitch checked={isActive} onChange={() => setIsActive(prev => !prev)} />}
               label={<Typography fontWeight="medium">Package Active</Typography>}
             />
           </Stack>
@@ -565,36 +566,36 @@ const AddPhotographyPackage = () => {
           <Typography variant="h6" sx={{ color: PINK, mb: 2 }}>Gallery (Max 10)</Typography>
           <Paper
             onClick={() => document.getElementById('gallery-input').click()}
-            sx={{ 
-              border: '2px dashed #ddd', 
-              borderRadius: 2, 
-              p: 4, 
-              textAlign: 'center', 
-              cursor: 'pointer', 
+            sx={{
+              border: '2px dashed #ddd',
+              borderRadius: 2,
+              p: 4,
+              textAlign: 'center',
+              cursor: 'pointer',
               mb: 4,
               '&:hover': { borderColor: PINK }
             }}
           >
-            <input 
-              id="gallery-input" 
-              type="file" 
-              hidden 
-              multiple 
-              accept="image/*" 
-              onChange={handleGalleryUpload} 
+            <input
+              id="gallery-input"
+              type="file"
+              hidden
+              multiple
+              accept="image/*"
+              onChange={handleGalleryUpload}
             />
 
             {(galleryImages.length > 0 || existingGallery.length > 0) ? (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
                 {existingGallery.map((img, i) => (
                   <Box key={`ex-${i}`} sx={{ position: 'relative' }}>
-                    <img 
-                      src={img} 
-                      alt="" 
-                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} 
+                    <img
+                      src={img}
+                      alt=""
+                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
                     />
-                    <IconButton 
-                      onClick={(e) => { e.stopPropagation(); removeExistingImage(i); }} 
+                    <IconButton
+                      onClick={(e) => { e.stopPropagation(); removeExistingImage(i); }}
                       sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 2 }}
                       size="small"
                     >
@@ -605,13 +606,13 @@ const AddPhotographyPackage = () => {
 
                 {galleryImages.map((file, i) => (
                   <Box key={`new-${i}`} sx={{ position: 'relative' }}>
-                    <img 
-                      src={URL.createObjectURL(file)} 
-                      alt="" 
-                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} 
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt=""
+                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
                     />
-                    <IconButton 
-                      onClick={(e) => { e.stopPropagation(); removeNewImage(i); }} 
+                    <IconButton
+                      onClick={(e) => { e.stopPropagation(); removeNewImage(i); }}
                       sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 2 }}
                       size="small"
                     >
@@ -640,9 +641,9 @@ const AddPhotographyPackage = () => {
             size="large"
             onClick={handleSubmit}
             disabled={submitting || !currentVendor}
-            sx={{ 
-              py: 2, 
-              bgcolor: PINK, 
+            sx={{
+              py: 2,
+              bgcolor: PINK,
               '&:hover': { bgcolor: '#c2185b' },
               '&:disabled': { bgcolor: '#ccc' }
             }}

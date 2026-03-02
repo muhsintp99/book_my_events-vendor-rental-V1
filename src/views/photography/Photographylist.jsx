@@ -259,6 +259,10 @@ export default function PhotographyList() {
   };
 
   const handleEditSave = async () => {
+    if (!editForm.advanceBookingAmount) {
+      setToast({ open: true, message: 'Advance booking amount required', severity: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       const formData = new FormData();
@@ -412,7 +416,7 @@ export default function PhotographyList() {
             variant="contained"
             startIcon={<Add />}
             sx={{ bgcolor: PINK, '&:hover': { bgcolor: '#c14a54' } }}
-onClick={() => navigate("/photography/new")}
+            onClick={() => navigate("/photography/new")}
           >
             Add New Package
           </Button>
@@ -527,15 +531,15 @@ onClick={() => navigate("/photography/new")}
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                    <Tooltip title="Edit Package">
-  <IconButton
-    size="small"
-    color="primary"
-    onClick={() => navigate(`/photography/edit/${p._id}`)}
-  >
-    <Edit fontSize="small" />
-  </IconButton>
-</Tooltip>
+                      <Tooltip title="Edit Package">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => navigate(`/photography/edit/${p._id}`)}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
 
                       <Tooltip title="Delete">
                         <IconButton
@@ -777,7 +781,8 @@ onClick={() => navigate("/photography/new")}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Advance Booking Amount"
+                label={<span>Advance Booking Amount <span style={{ color: 'red' }}>*</span></span>}
+                required
                 value={editForm.advanceBookingAmount}
                 onChange={(e) => setEditForm({ ...editForm, advanceBookingAmount: e.target.value })}
               />
