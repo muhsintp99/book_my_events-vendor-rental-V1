@@ -59,7 +59,7 @@ import {
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'https://api.bookmyevent.ae/api/mehandi';
+const API_BASE_URL = 'https://api.bookmyevent.ae/api/florist';
 export default function FloristList() {
   const navigate = useNavigate();
   const [floristList, setFloristList] = useState([]);
@@ -68,8 +68,8 @@ export default function FloristList() {
   const [searchQuery, setPendingSearch] = useState('');
   const [openView, setOpenView] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [selectedMakeup, setSelectedMakeup] = useState(null);
-  const [makeupToDelete, setMakeupToDelete] = useState(null);
+  const [selectedFlorist, setSelectedFlorist] = useState(null);
+  const [floristToDelete, setFloristToDelete] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const token = localStorage.getItem('token');
@@ -89,7 +89,7 @@ export default function FloristList() {
       maximumFractionDigits: 0
     }).format(value || 0);
 
-  const fetchMakeup = useCallback(async () => {
+  const fetchFlorist = useCallback(async () => {
     if (!providerId || !token) {
       setToast({ open: true, message: 'Please login again', severity: 'error' });
       setLoading(false);
@@ -111,11 +111,11 @@ export default function FloristList() {
   }, [providerId, token]);
 
   useEffect(() => {
-    fetchMakeup();
-  }, [fetchMakeup]);
+    fetchFlorist();
+  }, [fetchFlorist]);
 
-  const handleView = (makeup) => {
-    setSelectedMakeup(makeup);
+  const handleView = (florist) => {
+    setSelectedFlorist(florist);
     setSelectedImageIndex(0);
     setOpenView(true);
   };
@@ -138,7 +138,7 @@ export default function FloristList() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/${makeupToDelete}`, {
+      const res = await fetch(`${API_BASE_URL}/${floristToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -151,11 +151,11 @@ export default function FloristList() {
       setToast({ open: true, message: 'Delete failed', severity: 'error' });
     } finally {
       setOpenConfirm(false);
-      setMakeupToDelete(null);
+      setFloristToDelete(null);
     }
   };
 
-  const filteredMakeups = useMemo(() => {
+  const filteredFlorists = useMemo(() => {
     return floristList.filter((m) => {
       if (!searchQuery) return true;
 
@@ -213,7 +213,7 @@ export default function FloristList() {
               variant="contained"
               size="large"
               startIcon={<Add />}
-              onClick={() => navigate('/makeupartist/addpackage')}
+              onClick={() => navigate('/florist/addpackage')}
               sx={{
                 bgcolor: 'white',
                 color: '#E15B65',
@@ -273,7 +273,7 @@ export default function FloristList() {
         )}
 
         {/* Empty State */}
-        {!loading && filteredMakeups.length === 0 && (
+        {!loading && filteredFlorists.length === 0 && (
           <Card
             sx={{
               borderRadius: 3,
@@ -308,8 +308,8 @@ export default function FloristList() {
 
         {/* Package Cards Grid */}
         <Grid container spacing={3}>
-          {filteredMakeups.map((makeup) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={makeup._id}>
+          {filteredFlorists.map((florist) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={florist._id}>
               <Card
                 sx={{
                   height: '100%',
@@ -325,11 +325,25 @@ export default function FloristList() {
               >
                 {/* Image Section */}
                 <Box sx={{ position: 'relative', paddingTop: '75%', bgcolor: '#f5f5f5' }}>
-                  {makeup.image ? (
+                  {florist.thumbnail ? (
                     <CardMedia
                       component="img"
-                      image={getImageUrl(makeup.image)}
-                      alt={makeup.packageName}
+                      image={getImageUrl(florist.thumbnail)}
+                      alt={florist.packageName}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : florist.image ? (
+                    <CardMedia
+                      component="img"
+                      image={getImageUrl(florist.image)}
+                      alt={florist.packageName}
                       sx={{
                         position: 'absolute',
                         top: 0,
@@ -360,10 +374,10 @@ export default function FloristList() {
                   {/* Status Badge */}
                   <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
                     <Chip
-                      label={makeup.isActive ? 'Active' : 'Inactive'}
+                      label={florist.isActive ? 'Active' : 'Inactive'}
                       size="small"
                       sx={{
-                        bgcolor: makeup.isActive ? '#4caf50' : '#757575',
+                        bgcolor: florist.isActive ? '#4caf50' : '#757575',
                         color: 'white',
                         fontWeight: 600,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
@@ -372,7 +386,7 @@ export default function FloristList() {
                   </Box>
 
                   {/* Top Pick Badge */}
-                  {makeup.isTopPick && (
+                  {florist.isTopPick && (
                     <Box sx={{ position: 'absolute', top: 12, left: 12 }}>
                       <Chip
                         icon={<EventAvailable sx={{ color: 'white !important' }} />}
@@ -402,28 +416,14 @@ export default function FloristList() {
                       color: '#2c3e50'
                     }}
                   >
-                    {makeup.packageName}
+                    {florist.packageName}
                   </Typography>
 
                   {/* Categories */}
                   <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2, minHeight: 28 }}>
-                    {makeup.categories?.slice(0, 2).map((cat, idx) => (
+                    {florist.category && (
                       <Chip
-                        key={cat._id || idx}
-                        label={typeof cat === 'string' ? 'Category' : cat.title}
-                        size="small"
-                        sx={{
-                          bgcolor: '#E15B6510',
-                          color: '#E15B65',
-                          fontWeight: 500,
-                          height: 24,
-                          fontSize: '0.75rem'
-                        }}
-                      />
-                    ))}
-                    {makeup.categories?.length > 2 && (
-                      <Chip
-                        label={`+${makeup.categories.length - 2}`}
+                        label={typeof florist.category === 'string' ? 'Category' : florist.category.title}
                         size="small"
                         sx={{
                           bgcolor: '#E15B6510',
@@ -441,7 +441,7 @@ export default function FloristList() {
                   {/* Price Section */}
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, color: '#E15B65', mb: 0.5 }}>
-                      {formatINR(makeup.packagePrice)}
+                      {formatINR(florist.packagePrice)}
                     </Typography>
                   </Box>
 
@@ -451,7 +451,7 @@ export default function FloristList() {
                       fullWidth
                       variant="outlined"
                       startIcon={<Visibility />}
-                      onClick={() => handleView(makeup)}
+                      onClick={() => handleView(florist)}
                       sx={{
                         borderColor: '#E15B65',
                         color: '#E15B65',
@@ -465,7 +465,7 @@ export default function FloristList() {
                     </Button>
                     <IconButton
                       color="primary"
-                      onClick={() => navigate(`/florist/edit/${makeup._id}`)}
+                      onClick={() => navigate(`/florist/edit/${florist._id}`)}
                       sx={{
                         border: '1px solid #e0e0e0',
                         '&:hover': { bgcolor: '#f5f5f5' }
@@ -476,7 +476,7 @@ export default function FloristList() {
                     <IconButton
                       color="error"
                       onClick={() => {
-                        setMakeupToDelete(makeup._id);
+                        setFloristToDelete(florist._id);
                         setOpenConfirm(true);
                       }}
                       sx={{
@@ -503,8 +503,8 @@ export default function FloristList() {
                       Package Status
                     </Typography>
                     <Switch
-                      checked={makeup.isActive}
-                      onChange={() => handleToggleStatus(makeup._id, makeup.isActive)}
+                      checked={florist.isActive}
+                      onChange={() => handleToggleStatus(florist._id, florist.isActive)}
                       sx={{
                         '& .MuiSwitch-switchBase.Mui-checked': {
                           color: '#4caf50'
@@ -549,7 +549,7 @@ export default function FloristList() {
           <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 0.5 }}>
-                {selectedMakeup?.packageName}
+                {selectedFlorist?.packageName}
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
@@ -564,7 +564,7 @@ export default function FloristList() {
                   }}
                 />
                 <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  ID: {selectedMakeup?.packageId}
+                  ID: {selectedFlorist?.packageId}
                 </Typography>
               </Stack>
             </Box>
@@ -582,7 +582,7 @@ export default function FloristList() {
         </DialogTitle>
 
         <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
-          {selectedMakeup && (
+          {selectedFlorist && (
             <Grid container>
               {/* Left Column: Media & Quick Stats */}
               <Grid item xs={12} md={5} sx={{ borderRight: { md: '1px solid #f0f0f0' } }}>
@@ -599,11 +599,18 @@ export default function FloristList() {
                         maxHeight: '280px'
                       }}
                     >
-                      {selectedMakeup.image ? (
+                      {selectedFlorist.thumbnail ? (
                         <CardMedia
                           component="img"
-                          image={getImageUrl(selectedMakeup.image)}
-                          alt={selectedMakeup.packageName}
+                          image={getImageUrl(selectedFlorist.thumbnail)}
+                          alt={selectedFlorist.packageName}
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : selectedFlorist.image ? (
+                        <CardMedia
+                          component="img"
+                          image={getImageUrl(selectedFlorist.image)}
+                          alt={selectedFlorist.packageName}
                           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : (
@@ -638,7 +645,7 @@ export default function FloristList() {
                         }}
                       >
                         <Typography sx={{ fontWeight: 800, color: '#E15B65', fontSize: '1.2rem' }}>
-                          ₹{selectedMakeup.packagePrice?.toLocaleString()}
+                          ₹{selectedFlorist.packagePrice?.toLocaleString()}
                         </Typography>
                       </Box>
                     </Card>
@@ -655,18 +662,18 @@ export default function FloristList() {
                         </Avatar>
                         <Box>
                           <Typography variant="caption" color="text.secondary">Advance Payment</Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{selectedMakeup.advanceBookingAmount?.toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{selectedFlorist.advanceBookingAmount?.toLocaleString()}</Typography>
                         </Box>
                       </Box>
 
-                      <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: selectedMakeup.isActive ? '#E8F5E9' : '#F5F5F5', borderRadius: '16px' }}>
-                        <Avatar sx={{ bgcolor: selectedMakeup.isActive ? '#4CAF50' : '#757575', width: 40, height: 40 }}>
-                          {selectedMakeup.isActive ? <CheckCircle fontSize="small" /> : <Close fontSize="small" />}
+                      <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: selectedFlorist.isActive ? '#E8F5E9' : '#F5F5F5', borderRadius: '16px' }}>
+                        <Avatar sx={{ bgcolor: selectedFlorist.isActive ? '#4CAF50' : '#757575', width: 40, height: 40 }}>
+                          {selectedFlorist.isActive ? <CheckCircle fontSize="small" /> : <Close fontSize="small" />}
                         </Avatar>
                         <Box>
                           <Typography variant="caption" color="text.secondary">Current Status</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {selectedMakeup.isActive ? 'Live on Platform' : 'Currently Hidden'}
+                            {selectedFlorist.isActive ? 'Live on Platform' : 'Currently Hidden'}
                           </Typography>
                         </Box>
                       </Box>
@@ -683,7 +690,7 @@ export default function FloristList() {
                       <Info sx={{ color: '#E15B65' }} /> Package Overview
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.7, fontSize: '0.95rem' }}>
-                      {selectedMakeup.description || 'No detailed description provided for this package.'}
+                      {selectedFlorist.description || 'No detailed description provided for this package.'}
                     </Typography>
                   </section>
 
@@ -698,7 +705,7 @@ export default function FloristList() {
                         <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: '16px', border: '1px solid #eee' }}>
                           <Typography variant="caption" color="text.secondary">Full Price</Typography>
                           <Typography variant="h6" sx={{ fontWeight: 800, color: '#2c3e50' }}>
-                            ₹{selectedMakeup.packagePrice?.toLocaleString()}
+                            ₹{selectedFlorist.packagePrice?.toLocaleString()}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -706,7 +713,7 @@ export default function FloristList() {
                         <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: '16px', border: '1px solid #eee' }}>
                           <Typography variant="caption" color="text.secondary">Booking Fee</Typography>
                           <Typography variant="h6" sx={{ fontWeight: 800, color: '#C4572A' }}>
-                            ₹{selectedMakeup.advanceBookingAmount?.toLocaleString()}
+                            ₹{selectedFlorist.advanceBookingAmount?.toLocaleString()}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -718,16 +725,16 @@ export default function FloristList() {
                       <Category sx={{ color: '#E15B65' }} /> Service Info
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selectedMakeup.module && (
+                      {selectedFlorist.secondaryModule && (
                         <Chip
                           icon={<Spa fontSize="small" />}
-                          label={`Module: ${selectedMakeup.module.title}`}
+                          label={`Module: ${selectedFlorist.secondaryModule.title}`}
                           sx={{ borderRadius: '8px', fontWeight: 600, py: 2.5 }}
                         />
                       )}
                       <Chip
                         icon={<Schedule fontSize="small" />}
-                        label={`Updated: ${new Date(selectedMakeup.updatedAt).toLocaleDateString()}`}
+                        label={`Updated: ${new Date(selectedFlorist.updatedAt).toLocaleDateString()}`}
                         sx={{ borderRadius: '8px', fontWeight: 600, py: 2.5 }}
                       />
                     </Box>
@@ -755,9 +762,9 @@ export default function FloristList() {
             disableElevation
             startIcon={<Edit />}
             onClick={() => {
-              if (!selectedMakeup?._id) return;
+              if (!selectedFlorist?._id) return;
               setOpenView(false);
-              navigate(`/florist/edit/${selectedMakeup._id}`);
+              navigate(`/florist/edit/${selectedFlorist._id}`);
             }}
             sx={{
               px: 4,

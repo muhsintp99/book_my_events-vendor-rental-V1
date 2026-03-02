@@ -120,7 +120,7 @@ export default function AddFloristPackage() {
           const formatted = data.data
             .filter((cat) => cat.isActive)
             .map((cat) => ({
-              id: cat.categoryId || cat._id,
+              id: cat._id,
               label: cat.title,
               image: cat.image ? `${API_BASE_URL}${cat.image}` : null
             }));
@@ -144,7 +144,7 @@ export default function AddFloristPackage() {
       try {
         const token = localStorage.getItem('token');
 
-        const res = await fetch(`https://api.bookmyevent.ae/api/mehandi/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/api/florist/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -162,10 +162,12 @@ export default function AddFloristPackage() {
             advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : ''
           });
 
-          setSelectedServices(pkg.services || []);
+          setSelectedServices(pkg.category ? [pkg.category._id || pkg.category] : []);
 
-          if (pkg.image) {
-            setImagePreview(`https://api.bookmyevent.ae${pkg.image.startsWith('/') ? '' : '/'}${pkg.image}`);
+          if (pkg.thumbnail) {
+            setImagePreview(`${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
+          } else if (pkg.image) {
+            setImagePreview(`${API_BASE_URL}${pkg.image.startsWith('/') ? '' : '/'}${pkg.image}`);
           }
         }
       } catch (err) {
@@ -181,7 +183,8 @@ export default function AddFloristPackage() {
   };
 
   const toggleService = (id) => {
-    setSelectedServices((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    // Picking a single category since the backend model requires one
+    setSelectedServices([id]);
     if (errors.services) setErrors((e) => ({ ...e, services: '' }));
   };
 
@@ -205,7 +208,7 @@ export default function AddFloristPackage() {
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
     if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
 
-    // ✅ Only require image in ADD mode
+    if (selectedServices.length === 0) e.services = 'Please select a category';
     if (!isEditMode && !imageFile) {
       e.image = 'Please upload a package image';
     }
@@ -253,15 +256,17 @@ export default function AddFloristPackage() {
       formData.append('packagePrice', form.price);
       formData.append('advanceBookingAmount', form.advance);
 
-      // Optional: send selected services
-      formData.append('services', JSON.stringify(selectedServices));
+      // Send selected category (pick the first one)
+      if (selectedServices.length > 0) {
+        formData.append('category', selectedServices[0]);
+      }
 
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append('thumbnail', imageFile);
       }
       const url = isEditMode
-        ? `https://api.bookmyevent.ae/api/mehandi/${id}`
-        : `https://api.bookmyevent.ae/api/mehandi/create`;
+        ? `${API_BASE_URL}/api/florist/${id}`
+        : `${API_BASE_URL}/api/florist/create`;
 
       const method = isEditMode ? 'PUT' : 'POST';
 
@@ -442,6 +447,77 @@ export default function AddFloristPackage() {
             </Paper>
 
 
+
+            {/* ── 4. Category Selection ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Select Category *</SL>
+              {svcLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+                  <CircularProgress size={18} thickness={5} sx={{ color: 'primary.main' }} />
+                  <Typography variant="body2" color="text.secondary">Fetching categories...</Typography>
+                </Box>
+              ) : svcError ? (
+                <Alert severity="error" sx={{ py: 0 }}>{svcError}</Alert>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mt: 1 }}>
+                    {services.map((s) => {
+                      const active = selectedServices.includes(s.id);
+                      return (
+                        <Box
+                          key={s.id}
+                          onClick={() => toggleService(s.id)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.25,
+                            px: 1.75,
+                            py: 1.25,
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            border: '1.5px solid',
+                            borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.12)',
+                            bgcolor: active ? 'rgba(196,87,42,0.06)' : '#fff',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            '&:hover': {
+                              borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.3)',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 3px 10px rgba(196,87,42,0.08)'
+                            }
+                          }}
+                        >
+                          {s.image && (
+                            <Avatar
+                              src={s.image}
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                border: '1px solid rgba(196,87,42,0.1)',
+                                bgcolor: '#fff'
+                              }}
+                            />
+                          )}
+                          <Typography
+                            sx={{
+                              fontSize: '13.5px',
+                              fontWeight: active ? 700 : 500,
+                              color: active ? 'primary.main' : 'text.secondary'
+                            }}
+                          >
+                            {s.label}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                  {errors.services && (
+                    <FormHelperText error sx={{ mt: 1.5, ml: 0.5, fontWeight: 500 }}>
+                      {errors.services}
+                    </FormHelperText>
+                  )}
+                </>
+              )}
+            </Paper>
 
             {/* ── 5. Package Image ── */}
             <Paper elevation={0} sx={card}>
