@@ -16,6 +16,7 @@ import {
     DialogContent,
     DialogActions,
     Snackbar,
+    Alert,
     Avatar,
     InputAdornment,
     Grid,
@@ -106,7 +107,7 @@ export default function EmceeList() {
 
     const handleToggleStatus = async (id, current) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/${id}/toggle-active`, {
+            const res = await fetch(`${API_BASE_URL}/toggle-active/${id}`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -252,7 +253,31 @@ export default function EmceeList() {
                                     </Box>
                                     <CardContent sx={{ p: 2.5 }}>
                                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }} noWrap>{pkg.packageName}</Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 2 }}>{formatINR(pkg.packagePrice)}</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 1 }}>{formatINR(pkg.packagePrice)}</Typography>
+
+                                        {/* Categories Display */}
+                                        <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {pkg.services && pkg.services.length > 0 ? (
+                                                pkg.services.map((svc) => (
+                                                    <Chip
+                                                        key={svc._id}
+                                                        label={svc.title}
+                                                        avatar={
+                                                            svc.image ? (
+                                                                <Avatar src={getImageUrl(svc.image)} />
+                                                            ) : (
+                                                                <Avatar><Category sx={{ fontSize: 14 }} /></Avatar>
+                                                            )
+                                                        }
+                                                        size="small"
+                                                        sx={{ fontSize: '0.65rem', height: '28px', bgcolor: 'rgba(221, 102, 110, 0.1)', color: THEME_COLOR }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="caption" color="text.disabled">No categories</Typography>
+                                            )}
+                                        </Box>
+
                                         <Stack direction="row" spacing={1}>
                                             <Button fullWidth variant="outlined" startIcon={<Visibility />} onClick={() => handleView(pkg)}>View</Button>
                                             <IconButton color="primary" onClick={() => navigate(`/emcee/edit/${pkg._id}`)}><Edit /></IconButton>
@@ -293,6 +318,29 @@ export default function EmceeList() {
                                     <Typography variant="body1">Full Price: <b>{formatINR(selectedPackage.packagePrice)}</b></Typography>
                                     <Typography variant="body1">Advance: <b>{formatINR(selectedPackage.advanceBookingAmount)}</b></Typography>
                                 </Stack>
+
+                                {selectedPackage.services && selectedPackage.services.length > 0 && (
+                                    <Box sx={{ mt: 3 }}>
+                                        <Typography variant="h6" gutterBottom>Categories</Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {selectedPackage.services.map((svc) => (
+                                                <Chip
+                                                    key={svc._id}
+                                                    label={svc.title}
+                                                    avatar={
+                                                        svc.image ? (
+                                                            <Avatar src={getImageUrl(svc.image)} />
+                                                        ) : (
+                                                            <Avatar><Category /></Avatar>
+                                                        )
+                                                    }
+                                                    variant="outlined"
+                                                    color="primary"
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
                             </Grid>
                         </Grid>
                     )}

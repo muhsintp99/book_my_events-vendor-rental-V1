@@ -120,9 +120,9 @@ export default function AddEmceePackage() {
           const formatted = data.data
             .filter((cat) => cat.isActive)
             .map((cat) => ({
-              id: cat.categoryId || cat._id,
+              id: cat._id,
               label: cat.title,
-              image: cat.image ? `${API_BASE_URL}${cat.image}` : null
+              image: cat.image ? `${API_BASE_URL}${cat.image.startsWith('/') ? '' : '/'}${cat.image}` : null
             }));
           setServices(formatted);
         } else {
@@ -203,7 +203,6 @@ export default function AddEmceePackage() {
     if (!form.name.trim()) e.name = 'Required';
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
-    if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
 
     // ✅ Only require image in ADD mode
     if (!isEditMode && !imageFile) {
@@ -397,6 +396,44 @@ export default function AddEmceePackage() {
               />
             </Paper>
 
+            {/* ── 4. Services (Categories) ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Select Services / Categories</SL>
+              {svcLoading ? (
+                <CircularProgress size={24} />
+              ) : svcError ? (
+                <Typography color="error">{svcError}</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                  {services.map((svc) => (
+                    <Chip
+                      key={svc.id}
+                      label={svc.label}
+                      avatar={
+                        svc.image ? (
+                          <Avatar src={svc.image} sx={{ width: 24, height: 24 }} />
+                        ) : (
+                          <Avatar sx={{ width: 24, height: 24, bgcolor: 'rgba(0,0,0,0.1)' }}>
+                            <Category sx={{ fontSize: 14, color: 'text.secondary' }} />
+                          </Avatar>
+                        )
+                      }
+                      onClick={() => toggleService(svc.id)}
+                      variant={selectedServices.includes(svc.id) ? 'filled' : 'outlined'}
+                      color={selectedServices.includes(svc.id) ? 'primary' : 'default'}
+                      sx={{
+                        borderRadius: '12px',
+                        fontWeight: 500,
+                        '&.MuiChip-filled': { bgcolor: 'primary.main', color: '#fff' },
+                        '&.MuiChip-outlined': { borderColor: 'rgba(221, 102, 110, 0.3)', color: 'text.secondary' }
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
+              {errors.services && <Typography sx={{ color: 'error.main', fontSize: '12px', mt: 1 }}>{errors.services}</Typography>}
+            </Paper>
+
 
             {/* ── 3. Pricing — 50/50 ── */}
             <Paper elevation={0} sx={card}>
@@ -421,25 +458,7 @@ export default function AddEmceePackage() {
                     }}
                   />
                 </Box>
-                {/* <Box sx={{ flex: 1 }}>
-                  <TextField
-                    label="Advance Booking Amount *"
-                    placeholder="0"
-                    fullWidth
-                    type="number"
-                    value={form.advance}
-                    onChange={(e) => set('advance', e.target.value)}
-                    error={!!errors.advance}
-                    helperText={errors.advance}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography sx={{ color: 'secondary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                </Box> */}
+
               </Box>
             </Paper>
 

@@ -164,7 +164,7 @@ function BouncersSchedules() {
 
     const fetchBouncersPackages = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/bouncers/vendor/${providerId}`);
+            const response = await fetch(`${API_BASE_URL}/api/bouncers-security/vendor/${providerId}`);
             const data = await response.json();
             if (data.success) {
                 setPackages(data.data || []);

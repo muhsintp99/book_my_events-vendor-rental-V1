@@ -22,7 +22,8 @@ import {
     Divider,
     Container,
     Typography,
-    Paper
+    Paper,
+    alpha
 } from '@mui/material';
 import {
     Visibility,
@@ -44,7 +45,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'https://api.bookmyevent.ae/api/mehandi'; // Backend uses mehandi endpoint for many service modules
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
+const API_BASE_URL = `${API_BASE}/api/bouncers-security`;
 
 export default function BouncersList() {
     const navigate = useNavigate();
@@ -64,7 +66,7 @@ export default function BouncersList() {
     const getImageUrl = (path) => {
         if (!path) return null;
         const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-        return `https://api.bookmyevent.ae/${cleanPath}`;
+        return `${API_BASE}/${cleanPath}`;
     };
 
     const formatINR = (value) =>
@@ -106,7 +108,7 @@ export default function BouncersList() {
 
     const handleToggleStatus = async (id, current) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/${id}/toggle-active`, {
+            const res = await fetch(`${API_BASE_URL}/toggle-active/${id}`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -121,18 +123,26 @@ export default function BouncersList() {
     };
 
     const handleDelete = async () => {
+        if (!bouncerToDelete) return;
+
         try {
             const res = await fetch(`${API_BASE_URL}/${bouncerToDelete}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
+
             const data = await res.json();
-            if (data.success) {
+
+            if (res.ok && data.success) {
                 setBouncersList((prev) => prev.filter((m) => m._id !== bouncerToDelete));
-                setToast({ open: true, message: 'Package deleted', severity: 'success' });
+                setToast({ open: true, message: 'Package deleted successfully', severity: 'success' });
+            } else {
+                throw new Error(data.message || 'Failed to delete package');
             }
-        } catch {
-            setToast({ open: true, message: 'Delete failed', severity: 'error' });
+        } catch (err) {
+            setToast({ open: true, message: err.message || 'Delete failed', severity: 'error' });
         } finally {
             setOpenConfirm(false);
             setBouncerToDelete(null);
@@ -252,6 +262,7 @@ export default function BouncersList() {
                                     </Box>
                                     <CardContent sx={{ p: 2.5 }}>
                                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }} noWrap>{bouncer.packageName}</Typography>
+
                                         <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 2 }}>{formatINR(bouncer.packagePrice)}</Typography>
                                         <Stack direction="row" spacing={1}>
                                             <Button fullWidth variant="outlined" startIcon={<Visibility />} onClick={() => handleView(bouncer)}>View</Button>
