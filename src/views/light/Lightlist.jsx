@@ -43,7 +43,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = 'https://api.bookmyevent.ae/api/mehandi'; // Backend uses mehandi endpoint for many service modules
+const API_BASE_URL = 'https://api.bookmyevent.ae/api/light-and-sound';
 
 export default function LightList() {
     const navigate = useNavigate();
@@ -62,8 +62,7 @@ export default function LightList() {
 
     const getImageUrl = (path) => {
         if (!path) return null;
-        const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-        return `https://api.bookmyevent.ae/${cleanPath}`;
+        return `https://api.bookmyevent.ae${path}`;
     };
 
     const formatINR = (value) =>
@@ -105,7 +104,7 @@ export default function LightList() {
 
     const handleToggleStatus = async (id, current) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/${id}/toggle-active`, {
+            const res = await fetch(`${API_BASE_URL}/toggle-active/${id}`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -234,10 +233,10 @@ export default function LightList() {
                             <Grid item xs={12} sm={6} md={4} lg={3} key={light._id}>
                                 <Card sx={{ height: '100%', borderRadius: 3, transition: '0.3s', '&:hover': { transform: 'translateY(-8px)' } }}>
                                     <Box sx={{ position: 'relative', pt: '75%', bgcolor: '#f5f5f5' }}>
-                                        {light.image ? (
+                                        {light.thumbnail ? (
                                             <CardMedia
                                                 component="img"
-                                                image={getImageUrl(light.image)}
+                                                image={getImageUrl(light.thumbnail)}
                                                 alt={light.packageName}
                                                 sx={{ position: 'absolute', top: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
@@ -279,7 +278,7 @@ export default function LightList() {
                     {selectedLight && (
                         <Grid container spacing={3}>
                             <Grid item xs={12} md={5}>
-                                {selectedLight.image && <img src={getImageUrl(selectedLight.image)} alt={selectedLight.packageName} style={{ width: '100%', borderRadius: '12px' }} />}
+                                {selectedLight.thumbnail && <img src={getImageUrl(selectedLight.thumbnail)} alt={selectedLight.packageName} style={{ width: '100%', borderRadius: '12px' }} />}
                             </Grid>
                             <Grid item xs={12} md={7}>
                                 <Typography variant="h6" gutterBottom>Description</Typography>

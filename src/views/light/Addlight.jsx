@@ -120,7 +120,7 @@ export default function AddLightPackage() {
           const formatted = data.data
             .filter((cat) => cat.isActive)
             .map((cat) => ({
-              id: cat.categoryId || cat._id,
+              id: cat._id,
               label: cat.title,
               image: cat.image ? `${API_BASE_URL}${cat.image}` : null
             }));
@@ -144,7 +144,7 @@ export default function AddLightPackage() {
       try {
         const token = localStorage.getItem('token');
 
-        const res = await fetch(`https://api.bookmyevent.ae/api/mehandi/${id}`, {
+        const res = await fetch(`https://api.bookmyevent.ae/api/light-and-sound/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -164,8 +164,8 @@ export default function AddLightPackage() {
 
           setSelectedServices(pkg.services || []);
 
-          if (pkg.image) {
-            setImagePreview(`https://api.bookmyevent.ae${pkg.image.startsWith('/') ? '' : '/'}${pkg.image}`);
+          if (pkg.thumbnail) {
+            setImagePreview(`https://api.bookmyevent.ae${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
           }
         }
       } catch (err) {
@@ -203,11 +203,16 @@ export default function AddLightPackage() {
     if (!form.name.trim()) e.name = 'Required';
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
-    if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+
+    // if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
 
     // ✅ Only require image in ADD mode
     if (!isEditMode && !imageFile) {
       e.image = 'Please upload a package image';
+    }
+
+    if (selectedServices.length === 0) {
+      e.services = 'Please select at least one category';
     }
 
     return e;
@@ -254,14 +259,17 @@ export default function AddLightPackage() {
       formData.append('advanceBookingAmount', form.advance);
 
       // Optional: send selected services
+      if (selectedServices.length > 0) {
+        formData.append('category', selectedServices[0]);
+      }
       formData.append('services', JSON.stringify(selectedServices));
 
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append('thumbnail', imageFile);
       }
       const url = isEditMode
-        ? `https://api.bookmyevent.ae/api/mehandi/${id}`
-        : `https://api.bookmyevent.ae/api/mehandi/create`;
+        ? `https://api.bookmyevent.ae/api/light-and-sound/${id}`
+        : `https://api.bookmyevent.ae/api/light-and-sound/create`;
 
       const method = isEditMode ? 'PUT' : 'POST';
 
@@ -441,6 +449,62 @@ export default function AddLightPackage() {
                   />
                 </Box> */}
               </Box>
+            </Paper>
+
+            {/* ── 4. Categories Selection ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Category *</SL>
+              {svcLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
+                  <CircularProgress size={20} color="primary" />
+                  <Typography variant="body2" color="text.secondary">Loading categories...</Typography>
+                </Box>
+              ) : svcError ? (
+                <Typography color="error" variant="body2">{svcError}</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1 }}>
+                  {services.map((svc) => {
+                    const active = selectedServices.includes(svc.id);
+                    return (
+                      <Box
+                        key={svc.id}
+                        onClick={() => toggleService(svc.id)}
+                        sx={{
+                          cursor: 'pointer',
+                          px: 2,
+                          py: 1,
+                          borderRadius: '10px',
+                          border: '1.5px solid',
+                          borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.15)',
+                          bgcolor: active ? 'rgba(196,87,42,0.06)' : '#fff',
+                          color: active ? 'primary.main' : 'text.primary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.25,
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: 'rgba(196,87,42,0.03)'
+                          }
+                        }}
+                      >
+                        {svc.image && (
+                          <Avatar
+                            src={svc.image}
+                            sx={{ width: 24, height: 24, borderRadius: '6px' }}
+                          />
+                        )}
+                        <Typography variant="body2" fontWeight={active ? 600 : 400}>
+                          {svc.label}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+              {errors.services && (
+                <FormHelperText error sx={{ mt: 1 }}>{errors.services}</FormHelperText>
+              )}
             </Paper>
 
 

@@ -100,13 +100,13 @@ const LightEnquiries = () => {
        SEARCH FILTER
     =============================== */
     const filteredEnquiries = enquiries.filter((e) => {
+        const isLightAndSound = e.moduleId?.title === "Light & Sound" || e.moduleId?.title === "Light and Sound";
+        if (!isLightAndSound) return false;
+
         return (
             (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
             (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
-            (e.contact || "").includes(search) ||
-            (e.moduleId?.title || "")
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            (e.contact || "").includes(search)
         );
     });
 

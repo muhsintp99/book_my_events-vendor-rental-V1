@@ -6,17 +6,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 const Review = () => {
-  const [reviews, setReviews] = useState([
-    {
-      id: 100031,
-      vehicle: 'Mercedes-B... Trip ID #100031',
-      reviewer: 'Jonathan Jack +8************',
-      rating: 5,
-      review: 'Booked a luxury car for a business event, and it was top-notch. The car was cle...',
-      date: '06 Feb 2025 05:23:pm',
-      replyDate: 'Not replied Yet',
-    },
-  ]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [openReplyModal, setOpenReplyModal] = useState(false);
   const [selectedReview, setSelectedReview] = useState(null);
@@ -24,13 +15,36 @@ const Review = () => {
   const [updateMessage, setUpdateMessage] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
 
+  const fetchReviews = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      const providerId = userData?.providerId || userData?._id;
+      if (!providerId) return;
+
+      const res = await fetch(`https://api.bookmyevent.ae/api/reviews/vendor/${providerId}`);
+      const data = await res.json();
+      if (data.success) {
+        setReviews(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchReviews();
+  }, []);
+
   const filteredReviews = reviews.filter(review =>
-    review.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
+    (review.targetType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (review.comment || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenReplyModal = (review) => {
     setSelectedReview(review);
-    setReplyText(review.replyDate !== 'Not replied Yet' ? 'Reply updated on ' + review.replyDate : '');
+    setReplyText(review.replyFromOwner || '');
     setOpenReplyModal(true);
   };
 
@@ -40,15 +54,28 @@ const Review = () => {
     setReplyText('');
   };
 
-  const handleUpdateReply = () => {
+  const handleUpdateReply = async () => {
     if (selectedReview && replyText) {
-      const updatedReviews = reviews.map(review =>
-        review.id === selectedReview.id ? { ...review, replyDate: new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) } : review
-      );
-      setReviews(updatedReviews);
-      setUpdateMessage('Review reply updated');
-      setTimeout(() => setUpdateMessage(''), 3000);
-      handleCloseReplyModal();
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`https://api.bookmyevent.ae/api/reviews/${selectedReview._id}/reply`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ replyText })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setUpdateMessage('Review reply updated');
+          fetchReviews();
+          setTimeout(() => setUpdateMessage(''), 3000);
+          handleCloseReplyModal();
+        }
+      } catch (err) {
+        console.error('Failed to update reply:', err);
+      }
     }
   };
 
@@ -93,11 +120,11 @@ const Review = () => {
           <Button
             variant="outlined" color='#E15B65'
             size="small"
-            sx={{ textTransform: 'none',color:'#E15B65' }}
+            sx={{ textTransform: 'none', color: '#E15B65' }}
             onClick={handleExportClick}>
             Export
             <span style={{ marginLeft: '5px' }}>▼</span>
-          </Button> 
+          </Button>
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -138,35 +165,30 @@ const Review = () => {
               filteredReviews.map((review, index) => (
                 <TableRow key={review.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{review.id}</TableCell>
+                  <TableCell>{review._id.slice(-6).toUpperCase()}</TableCell>
                   <TableCell>
-                    <img
-                      src="https://via.placeholder.com/50"
-                      alt={review.vehicle}
-                      style={{ marginRight: '10px', verticalAlign: 'middle' }}
-                    />
-                    {review.vehicle}
+                    {review.targetType}
                   </TableCell>
-                  <TableCell>{review.reviewer}</TableCell>
+                  <TableCell>{review.user?.firstName} {review.user?.lastName}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       {[...Array(review.rating)].map((_, i) => (
                         <StarIcon key={i} sx={{ color: '#FFD700', fontSize: 18 }} />
                       ))}
-                      <Typography sx={{ ml: 1 }}>{review.review}</Typography>
+                      <Typography sx={{ ml: 1 }}>{review.comment}</Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{review.date}</TableCell>
-                  <TableCell>{review.replyDate}</TableCell>
+                  <TableCell>{new Date(review.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{review.replyFromOwner ? new Date(review.repliedAt).toLocaleDateString() : 'Not replied Yet'}</TableCell>
                   <TableCell>
                     <Button
                       variant="contained"
                       color="primary"
                       startIcon={<ReplyIcon />}
-                      sx={{ textTransform: 'none', bgcolor:'#E15B65' }}
+                      sx={{ textTransform: 'none', bgcolor: '#E15B65' }}
                       onClick={() => handleOpenReplyModal(review)}
                     >
-                      {review.replyDate !== 'Not replied Yet' ? 'View Reply' : 'Give Reply'}
+                      {review.replyFromOwner ? 'View Reply' : 'Give Reply'}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -195,12 +217,7 @@ const Review = () => {
             </Button>
           </Box>
           <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-            <img
-              src="https://via.placeholder.com/50"
-              alt={selectedReview?.vehicle}
-              style={{ marginRight: '10px', verticalAlign: 'middle' }}
-            />
-            <Typography variant="h6">{selectedReview?.vehicle}</Typography>
+            <Typography variant="h6">{selectedReview?.targetType}</Typography>
           </Box>
           <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
             {/* <Typography sx={{ mr: 1 }}>{selectedReview?.reviewer}</Typography> */}
@@ -210,7 +227,7 @@ const Review = () => {
               ))}
             </Box>
           </Box>
-          <Typography sx={{ mb: 2 }}>{selectedReview?.review}</Typography>
+          <Typography sx={{ mb: 2 }}>{selectedReview?.comment}</Typography>
           <TextField
             fullWidth
             multiline
@@ -221,14 +238,14 @@ const Review = () => {
             InputProps={{
               readOnly: selectedReview?.replyDate !== 'Not replied Yet',
             }}
-            placeholder={selectedReview?.replyDate !== 'Not replied Yet' ? '' : 'Write your reply here'}
+            placeholder={selectedReview?.replyFromOwner ? '' : 'Write your reply here'}
           />
-          {selectedReview?.replyDate === 'Not replied Yet' && (
+          {!selectedReview?.replyFromOwner && (
             <Button
               variant="contained"
               color="primary"
               onClick={handleUpdateReply}
-              sx={{ alignSelf: 'flex-end', textTransform: 'none', backgroundColor:'#E15B65' }}
+              sx={{ alignSelf: 'flex-end', textTransform: 'none', backgroundColor: '#E15B65' }}
             >
               Update Reply
             </Button>

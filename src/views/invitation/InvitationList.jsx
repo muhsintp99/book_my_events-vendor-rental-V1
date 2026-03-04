@@ -79,19 +79,39 @@ const theme = createTheme({
     shape: { borderRadius: 16 }
 });
 
-const DetailItem = ({ icon, label, value, chip, success, error }) => (
+const SectionTitle = ({ title, sx }) => (
+    <Typography
+        variant="overline"
+        sx={{
+            display: 'block',
+            color: THEME_COLOR,
+            fontWeight: 900,
+            fontSize: '12px',
+            letterSpacing: '1.5px',
+            mb: 2,
+            pb: 0.5,
+            borderBottom: `2px solid ${alpha(THEME_COLOR, 0.1)}`,
+            width: 'fit-content',
+            ...sx
+        }}
+    >
+        {title}
+    </Typography>
+);
+
+const DetailItem = ({ icon, label, value, chip, success, error, bold, color }) => (
     <Box sx={{
         display: 'flex',
         alignItems: 'flex-start',
         gap: 2,
-        py: 1.5,
+        py: 1.2,
         borderBottom: '1px solid #f0f0f0',
         '&:hover': { bgcolor: alpha(THEME_COLOR, 0.02) },
         transition: '0.2s'
     }}>
         <Box sx={{ color: THEME_COLOR, mt: 0.5, display: 'flex' }}>{icon}</Box>
         <Box sx={{ flex: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '10px' }}>
                 {label}
             </Typography>
             {chip ? (
@@ -100,11 +120,11 @@ const DetailItem = ({ icon, label, value, chip, success, error }) => (
                         label={value}
                         size="small"
                         color={success ? 'success' : error ? 'error' : 'default'}
-                        sx={{ fontWeight: 700 }}
+                        sx={{ fontWeight: 800, fontSize: '10px', height: 20 }}
                     />
                 </Box>
             ) : (
-                <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.3, color: '#2D3748' }}>
+                <Typography variant="body2" sx={{ fontWeight: bold ? 800 : 600, mt: 0.2, color: color || '#2D3748', fontSize: '0.9rem' }}>
                     {value || 'Not specified'}
                 </Typography>
             )}
@@ -112,46 +132,56 @@ const DetailItem = ({ icon, label, value, chip, success, error }) => (
     </Box>
 );
 
-const ImageCarousel = ({ images, baseUrl }) => {
-    const [active, setActive] = useState(0);
-    const [error, setError] = useState(false);
+const SpecBox = ({ icon, label, value, color }) => (
+    <Box sx={{
+        p: 2,
+        borderRadius: '16px',
+        bgcolor: '#fff',
+        border: '1px solid #f1f5f9',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.5,
+        height: '100%',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+        '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+            borderColor: THEME_COLOR
+        }
+    }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {icon}
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '10px' }}>
+                {label}
+            </Typography>
+        </Box>
+        <Typography variant="body2" sx={{ fontWeight: 800, color: color || '#1e293b', fontSize: '0.9rem' }}>
+            {value}
+        </Typography>
+    </Box>
+);
 
+const ImageCarousel = ({ images, baseUrl, active, setActive }) => {
     if (!images || images.length === 0) return (
         <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F7FAFC' }}>
             <CollectionsOutlined sx={{ fontSize: 60, color: '#CBD5E0' }} />
         </Box>
     );
 
-    const currentImg = images[active];
+    const currentImg = images[active || 0];
     const fullPath = currentImg ? (currentImg.startsWith('http') ? currentImg : `${baseUrl}${currentImg.startsWith('/') ? '' : '/'}${currentImg}`) : 'https://placehold.co/600x400?text=No+Image';
 
     return (
         <Box sx={{ position: 'relative', height: '100%', width: '100%', bgcolor: '#FAF8F6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Fade in={true} key={active} timeout={500}>
+            <Fade in={true} key={active || 0} timeout={500}>
                 <CardMedia
                     component="img"
                     image={fullPath}
                     sx={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                 />
             </Fade>
-            {images.length > 1 && (
-                <Box sx={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1, zIndex: 5, bgcolor: 'rgba(0,0,0,0.2)', px: 1.5, py: 0.8, borderRadius: 10, backdropFilter: 'blur(10px)' }}>
-                    {images.map((_, i) => (
-                        <Box
-                            key={i}
-                            onClick={() => setActive(i)}
-                            sx={{
-                                width: i === active ? 20 : 6,
-                                height: 6,
-                                borderRadius: 3,
-                                bgcolor: i === active ? 'primary.main' : 'rgba(255,255,255,0.6)',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                            }}
-                        />
-                    ))}
-                </Box>
-            )}
         </Box>
     );
 };
@@ -162,9 +192,14 @@ export default function InvitationList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteId, setDeleteId] = useState(null);
     const [viewPackage, setViewPackage] = useState(null);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
     const navigate = useNavigate();
     const muiTheme = useTheme();
+
+    useEffect(() => {
+        if (viewPackage) setActiveImageIndex(0);
+    }, [viewPackage]);
 
     const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
 
@@ -575,13 +610,20 @@ export default function InvitationList() {
                     )}
                 </Container>
 
-                {/* ── Split-View Detail Dialog ── */}
+                {/* ── LUXURY Split-View Detail Dialog ── */}
                 <Dialog
                     open={Boolean(viewPackage)}
                     onClose={() => setViewPackage(null)}
                     maxWidth="lg"
                     fullWidth
-                    PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' } }}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '32px',
+                            overflow: 'hidden',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2)',
+                            maxHeight: '95vh'
+                        }
+                    }}
                 >
                     <DialogContent sx={{ p: 0, bgcolor: 'white' }}>
                         {viewPackage && (
@@ -591,8 +633,8 @@ export default function InvitationList() {
                                     onClick={() => setViewPackage(null)}
                                     sx={{
                                         position: 'absolute',
-                                        top: 20,
-                                        right: 20,
+                                        top: 24,
+                                        right: 24,
                                         zIndex: 10,
                                         bgcolor: 'rgba(255,255,255,0.9)',
                                         backdropFilter: 'blur(8px)',
@@ -606,14 +648,14 @@ export default function InvitationList() {
 
                                 <Grid container>
                                     {/* Left Side: Media Gallery */}
-                                    <Grid item xs={12} md={5.5} sx={{ bgcolor: '#F7FAFC', p: { xs: 3, md: 5 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid #edf2f7' }}>
+                                    <Grid item xs={12} md={5} sx={{ bgcolor: '#fbfbfb', p: { xs: 2.5, md: 4 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid #edf2f7' }}>
                                         <Box sx={{
                                             position: 'relative',
-                                            borderRadius: '28px',
+                                            borderRadius: '24px',
                                             overflow: 'hidden',
-                                            aspectRatio: '1/1',
+                                            aspectRatio: '0.85/1',
                                             width: '100%',
-                                            maxHeight: '500px',
+                                            maxHeight: '450px',
                                             mb: 3,
                                             boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
                                             bgcolor: 'white',
@@ -622,66 +664,107 @@ export default function InvitationList() {
                                             justifyContent: 'center'
                                         }}>
                                             <ImageCarousel
-                                                images={viewPackage?.images?.length > 0 ? viewPackage.images : [viewPackage?.thumbnail]}
+                                                images={[viewPackage?.thumbnail, ...(viewPackage?.images || [])].filter(Boolean)}
                                                 baseUrl={API_BASE_URL}
+                                                active={activeImageIndex}
+                                                setActive={setActiveImageIndex}
                                             />
                                             <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
                                                 <Chip
                                                     icon={<CollectionsOutlined sx={{ fontSize: '14px !important', color: '#fff !important' }} />}
-                                                    label="Gallery"
+                                                    label="Luxury Gallery"
                                                     size="small"
-                                                    sx={{ bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 700 }}
+                                                    sx={{ bgcolor: alpha(THEME_COLOR, 0.9), color: '#fff', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 800, fontSize: '10px' }}
                                                 />
                                             </Box>
                                         </Box>
 
-                                        {/* Style Tags for Premium Feel */}
-                                        <Box sx={{ mt: 'auto' }}>
-                                            <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', mb: 1.5, display: 'block' }}>Design Aesthetics</Typography>
+                                        {/* Polished Thumbnails Row */}
+                                        {(viewPackage?.images?.length > 0) && (
+                                            <Stack
+                                                direction="row"
+                                                spacing={1.5}
+                                                sx={{
+                                                    overflowX: 'auto',
+                                                    pb: 1.5,
+                                                    px: 0.5,
+                                                    '&::-webkit-scrollbar': { height: '4px' },
+                                                    '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: '10px' }
+                                                }}
+                                            >
+                                                {[viewPackage.thumbnail, ...(viewPackage.images || [])].filter(Boolean).map((img, i) => (
+                                                    <Box
+                                                        key={i}
+                                                        onClick={() => setActiveImageIndex(i)}
+                                                        sx={{
+                                                            width: 72, height: 72, borderRadius: '14px', overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
+                                                            border: activeImageIndex === i ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
+                                                            boxShadow: activeImageIndex === i ? `0 8px 16px ${alpha(THEME_COLOR, 0.2)}` : 'none',
+                                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                            transform: activeImageIndex === i ? 'translateY(-4px)' : 'none'
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={img?.startsWith('http') ? img : `${API_BASE_URL}${img?.startsWith('/') ? '' : '/'}${img}`}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        />
+                                                    </Box>
+                                                ))}
+                                            </Stack>
+                                        )}
+
+                                        {/* Style Tags */}
+                                        <Box sx={{ mt: 3 }}>
+                                            <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', mb: 1.5, display: 'block', fontSize: '10px' }}>Design Aesthetics</Typography>
                                             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                                <Chip label="Premium" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
-                                                <Chip label="Handcrafted" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
-                                                <Chip label="Bespoke" size="small" variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
+                                                {['Premium', 'Handcrafted', 'Bespoke', 'Luxury'].map((tag) => (
+                                                    <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ borderRadius: '6px', fontWeight: 700, fontSize: '10px', height: 22, color: '#4A5568', borderColor: '#E2E8F0' }} />
+                                                ))}
                                             </Stack>
                                         </Box>
                                     </Grid>
 
                                     {/* Right Side: Specification & Details */}
-                                    <Grid item xs={12} md={6.5} sx={{ p: { xs: 4, md: 6 }, display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
-                                        <Box sx={{ mb: 4 }}>
-                                            <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, display: 'block', mb: 1 }}>
-                                                Invitation & Printing
-                                            </Typography>
-                                            <Typography variant="h2" sx={{ fontWeight: 900, color: '#1A202C', mb: 2, fontFamily: "'Playfair Display', serif", fontSize: { xs: '2rem', md: '2.75rem' } }}>
+                                    <Grid item xs={12} md={7} sx={{ p: { xs: 3, md: 4 }, display: 'flex', flexDirection: 'column', bgcolor: 'white', overflowY: 'auto' }}>
+                                        <Box sx={{ mb: 3 }}>
+                                            <SectionTitle title={viewPackage?.category?.title || 'Invitation & Printing'} />
+                                            <Typography variant="h2" sx={{ fontWeight: 900, color: '#1A202C', mb: 1.5, fontFamily: "'Playfair Display', serif", fontSize: { xs: '1.75rem', md: '2.25rem' }, letterSpacing: '-0.5px' }}>
                                                 {viewPackage?.packageName}
                                             </Typography>
-                                            <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8, fontSize: '1.05rem' }}>
-                                                {viewPackage?.description || 'No description provided for this exquisite design collection.'}
+                                            <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.6, fontSize: '0.95rem', fontWeight: 500 }}>
+                                                {viewPackage?.description || 'A timeless invitation collection crafted for life\'s most precious moments.'}
                                             </Typography>
                                         </Box>
 
-                                        <Divider sx={{ mb: 4 }} />
+                                        <Divider sx={{ mb: 3, opacity: 0.6 }} />
 
-                                        <Grid container spacing={3} sx={{ mb: 5 }}>
-                                            <Grid item xs={6} md={6}><DetailItem icon={<InfoOutlined />} label="Design ID" value={viewPackage?.packageId || (viewPackage?._id?.slice(-8).toUpperCase())} /></Grid>
-                                            <Grid item xs={6} md={6}><DetailItem icon={<CategoryOutlined />} label="Category" value={viewPackage?.category?.title || 'Standard'} /></Grid>
-                                            <Grid item xs={6} md={6}><DetailItem icon={<Typography sx={{ fontSize: 18, fontWeight: 900 }}>Q</Typography>} label="Digital Proof" value="Available" success chip /></Grid>
-                                            <Grid item xs={6} md={6}><DetailItem icon={<CheckCircle />} label="Status" value={viewPackage?.isActive ? 'Active' : 'Hidden'} success={viewPackage?.isActive} error={!viewPackage?.isActive} chip /></Grid>
+                                        {/* Specs Grid */}
+                                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                                            <Grid item xs={6} sm={4}>
+                                                <SpecBox icon={<InfoOutlined sx={{ fontSize: 18, color: THEME_COLOR }} />} label="Design ID" value={viewPackage?.packageId || (viewPackage?._id?.slice(-8).toUpperCase())} />
+                                            </Grid>
+                                            <Grid item xs={6} sm={4}>
+                                                <SpecBox icon={<CategoryOutlined sx={{ fontSize: 18, color: '#3b82f6' }} />} label="Category" value={viewPackage?.category?.title || 'Boutique'} />
+                                            </Grid>
+                                            <Grid item xs={12} sm={4}>
+                                                <SpecBox icon={<CheckCircle sx={{ fontSize: 18, color: '#10b981' }} />} label="Digital Proof" value="Available" color="#10b981" />
+                                            </Grid>
                                         </Grid>
 
-                                        {/* Premium Price Cards */}
-                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
-                                            <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: '#1A202C', color: 'white', boxShadow: '0 15px 30px rgba(0,0,0,0.1)' }}>
-                                                <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 800, letterSpacing: 1 }}>TOTAL PACKAGE PRICE</Typography>
-                                                <Typography variant="h3" sx={{ fontWeight: 900, color: 'white', mt: 0.5 }}>₹{viewPackage?.packagePrice}</Typography>
+                                        {/* Pricing Section */}
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+                                            <Box sx={{ flex: 1, p: 2.5, borderRadius: '24px', bgcolor: '#1A202C', color: 'white', boxShadow: '0 15px 35px rgba(0,0,0,0.15)', position: 'relative', overflow: 'hidden' }}>
+                                                <Box sx={{ position: 'absolute', top: -10, right: -10, width: 60, height: 60, borderRadius: '50%', background: alpha('#ffffff', 0.05) }} />
+                                                <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', fontSize: '10px' }}>TOTAL PACKAGE PRICE</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 900, color: 'white', mt: 0.5, fontSize: '1.5rem' }}>₹{viewPackage?.packagePrice}</Typography>
                                             </Box>
-                                            <Box sx={{ flex: 1, p: 3, borderRadius: '24px', bgcolor: alpha(THEME_COLOR, 0.05), border: `2px solid ${THEME_COLOR}` }}>
-                                                <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, letterSpacing: 1 }}>ADVANCE BOOKING</Typography>
-                                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1A202C', mt: 0.5 }}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
+                                            <Box sx={{ flex: 1, p: 2.5, borderRadius: '24px', bgcolor: alpha(THEME_COLOR, 0.03), border: `2px solid ${alpha(THEME_COLOR, 0.1)}`, position: 'relative' }}>
+                                                <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', fontSize: '10px' }}>ADVANCE BOOKING</Typography>
+                                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1A202C', mt: 0.5, fontSize: '1.5rem' }}>₹{viewPackage?.advanceBookingAmount || 0}</Typography>
                                             </Box>
                                         </Stack>
 
-                                        <Box sx={{ mt: 'auto', pt: 4 }}>
+                                        <Box sx={{ mt: 'auto', pt: 2 }}>
                                             <Stack direction="row" spacing={2}>
                                                 <Button
                                                     fullWidth
@@ -697,14 +780,15 @@ export default function InvitationList() {
                                                         bgcolor: '#1A202C',
                                                         color: 'white',
                                                         borderRadius: '16px',
-                                                        py: 2.2,
+                                                        py: 1.8,
                                                         fontWeight: 800,
-                                                        '&:hover': { bgcolor: '#000', transform: 'translateY(-2px)' },
+                                                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                                        '&:hover': { bgcolor: '#000', transform: 'translateY(-2px)', boxShadow: '0 15px 30px rgba(0,0,0,0.15)' },
                                                         textTransform: 'none',
                                                         transition: 'all 0.3s'
                                                     }}
                                                 >
-                                                    Modify Design
+                                                    Modify Collection
                                                 </Button>
                                                 <Button
                                                     fullWidth
@@ -718,18 +802,19 @@ export default function InvitationList() {
                                                     }}
                                                     sx={{
                                                         borderRadius: '16px',
-                                                        py: 2.2,
+                                                        py: 1.8,
                                                         fontWeight: 800,
                                                         borderColor: '#E2E8F0',
                                                         textTransform: 'none',
-                                                        '&:hover': { bgcolor: alpha('#f44336', 0.05), borderColor: '#f44336' }
+                                                        '&:hover': { bgcolor: alpha('#C53030', 0.05), borderColor: '#C53030', transform: 'translateY(-2px)' },
+                                                        transition: 'all 0.3s'
                                                     }}
                                                 >
-                                                    Remove
+                                                    Remove Design
                                                 </Button>
                                             </Stack>
-                                            <Typography variant="caption" sx={{ mt: 2, display: 'block', textAlign: 'center', color: '#718096', fontWeight: 500 }}>
-                                                <Diamond sx={{ fontSize: 12, verticalAlign: 'middle', mr: 0.5, color: THEME_COLOR }} />
+                                            <Typography variant="caption" sx={{ mt: 3, display: 'block', textAlign: 'center', color: '#A0AEC0', fontWeight: 600, letterSpacing: 0.5 }}>
+                                                <Diamond sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.8, color: THEME_COLOR }} />
                                                 Managed via BookMyEvents Premium Vendor Suite
                                             </Typography>
                                         </Box>
