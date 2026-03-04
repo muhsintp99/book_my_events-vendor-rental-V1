@@ -19,51 +19,54 @@ import {
   LinearProgress,
   Chip,
   CircularProgress,
-  Grid,
-  alpha,
-  Tooltip,
-  Divider
+  Container
 } from '@mui/material';
-import { CloudUpload, Close, AddPhotoAlternate, AutoAwesome, RotateLeft, BookmarkBorder, Collections, Delete, Info, Stars } from '@mui/icons-material';
+import { CloudUpload, Close, AddPhotoAlternate, AutoAwesome, RotateLeft, BookmarkBorder } from '@mui/icons-material';
 
 // ── Theme ─────────────────────────────────────────────────
-const THEME_COLOR = '#673ab7'; // Deep Purple
-const SECONDARY_COLOR = '#4527a0';
-const ACCENT_COLOR = '#FFB300'; // Amber/Gold
-
 const theme = createTheme({
   palette: {
-    primary: { main: THEME_COLOR, dark: SECONDARY_COLOR, light: '#9575cd', contrastText: '#fff' },
-    secondary: { main: ACCENT_COLOR },
-    background: { default: '#F0F2F5', paper: '#fff' },
-    text: { primary: '#1a103d', secondary: '#4A5568' }
+    primary: { main: '#C4572A', dark: '#8B3A0F', light: '#E07A52', contrastText: '#fff' },
+    secondary: { main: '#D4A017' },
+    background: { default: '#FDF6EE', paper: '#fff' },
+    text: { primary: '#1A0A00', secondary: '#7A5C4A' }
   },
   typography: {
     fontFamily: "'DM Sans', sans-serif",
-    h4: { fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }
+    h4: { fontFamily: "'Playfair Display', serif" }
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 14 },
   components: {
     MuiCssBaseline: {
-      styleOverrides: `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');`
+      styleOverrides: `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');`
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          backgroundColor: '#fff',
+          borderRadius: 12,
+          backgroundColor: '#FFFBF7',
           fontFamily: "'DM Sans', sans-serif",
-          fontSize: '15px',
-          '& fieldset': { borderColor: 'rgba(103,58,183,0.15)' },
-          '&:hover fieldset': { borderColor: 'rgba(103,58,183,0.3) !important' },
-          '&.Mui-focused fieldset': { borderColor: THEME_COLOR + ' !important', borderWidth: '2px' }
+          fontSize: '14.5px',
+          '& fieldset': { borderColor: 'rgba(196,87,42,0.2)' },
+          '&:hover fieldset': { borderColor: 'rgba(196,87,42,0.5) !important' },
+          '&.Mui-focused fieldset': { borderColor: '#C4572A !important', borderWidth: '2px' }
         },
-        input: { padding: '16px 20px' }
+        input: { padding: '15px 16px' }
+      }
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: '14px',
+          color: '#8B3A0F',
+          '&.Mui-focused': { color: '#C4572A' }
+        }
       }
     },
     MuiButton: {
       styleOverrides: {
-        root: { textTransform: 'none', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, borderRadius: 16 }
+        root: { textTransform: 'none', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, borderRadius: 12 }
       }
     }
   }
@@ -71,7 +74,7 @@ const theme = createTheme({
 
 // Section label
 const SL = ({ children }) => (
-  <Typography sx={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME_COLOR, mb: 1.5 }}>
+  <Typography sx={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: '#C4572A', mb: 1.25 }}>
     {children}
   </Typography>
 );
@@ -79,12 +82,10 @@ const SL = ({ children }) => (
 // Shared card style
 const card = {
   bgcolor: '#fff',
-  border: '1px solid rgba(103,58,183,0.1)',
-  borderRadius: '24px',
-  p: { xs: 3, sm: 4 },
-  boxShadow: '0 4px 20px rgba(103,58,183,0.05)',
-  transition: '0.3s',
-  '&:hover': { boxShadow: '0 8px 30px rgba(103,58,183,0.08)' }
+  border: '1px solid rgba(196,87,42,0.11)',
+  borderRadius: '16px',
+  p: { xs: 2.5, sm: 3 },
+  boxShadow: '0 2px 14px rgba(196,87,42,0.05)'
 };
 
 export default function AddLightPackage() {
@@ -93,18 +94,12 @@ export default function AddLightPackage() {
   const [services, setServices] = useState([]);
   const [svcLoading, setSvcLoading] = useState(true);
   const [svcError, setSvcError] = useState(null);
-
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
-  const [galleryFiles, setGalleryFiles] = useState([]);
-  const [galleryPreviews, setGalleryPreviews] = useState([]);
-
   const [errors, setErrors] = useState({});
   const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
-  const [galleryDrag, setGalleryDrag] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
@@ -173,10 +168,6 @@ export default function AddLightPackage() {
           if (pkg.thumbnail) {
             setImagePreview(`https://api.bookmyevent.ae${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
           }
-
-          if (pkg.images && Array.isArray(pkg.images)) {
-            setGalleryPreviews(pkg.images.map(img => `https://api.bookmyevent.ae${img.startsWith('/') ? '' : '/'}${img}`));
-          }
         }
       } catch (err) {
         console.error(err);
@@ -185,7 +176,6 @@ export default function AddLightPackage() {
 
     fetchPackage();
   }, [id]);
-
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }));
@@ -198,35 +188,15 @@ export default function AddLightPackage() {
 
   const loadImg = (file) => {
     if (!file?.type.startsWith('image/')) return;
-    setImageFile(file);
+
+    setImageFile(file); // ✅ store real file
+
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setImagePreview(ev.target.result);
+      setImagePreview(ev.target.result); // preview only
       setErrors((e) => ({ ...e, image: '' }));
     };
     reader.readAsDataURL(file);
-  };
-
-  const loadGallery = (files) => {
-    const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (newFiles.length === 0) return;
-
-    setGalleryFiles(prev => [...prev, ...newFiles]);
-
-    newFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setGalleryPreviews(prev => [...prev, ev.target.result]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeGalleryItem = (index) => {
-    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
-    // If it was a new file, remove it from galleryFiles too
-    // This logic is a bit tricky because previews might contain both existing (URLs) and new (DataURLs)
-    // For simplicity, we'll just handle it by reconstructng in submit
   };
 
   const validate = () => {
@@ -234,8 +204,18 @@ export default function AddLightPackage() {
     if (!form.name.trim()) e.name = 'Required';
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
-    if (!isEditMode && !imageFile) e.image = 'Please upload a package image';
-    if (selectedServices.length === 0) e.services = 'Please select at least one category';
+
+    // if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+
+    // ✅ Only require image in ADD mode
+    if (!isEditMode && !imageFile) {
+      e.image = 'Please upload a package image';
+    }
+
+    if (selectedServices.length === 0) {
+      e.services = 'Please select at least one category';
+    }
+
     return e;
   };
 
@@ -288,12 +268,6 @@ export default function AddLightPackage() {
       if (imageFile) {
         formData.append('thumbnail', imageFile);
       }
-
-      if (galleryFiles.length > 0) {
-        galleryFiles.forEach(file => {
-          formData.append('images', file);
-        });
-      }
       const url = isEditMode
         ? `https://api.bookmyevent.ae/api/light-and-sound/${id}`
         : `https://api.bookmyevent.ae/api/light-and-sound/create`;
@@ -344,329 +318,357 @@ export default function AddLightPackage() {
     setSelectedServices([]);
     setImageFile(null);
     setImagePreview(null);
-    setGalleryFiles([]);
-    setGalleryPreviews([]);
     setErrors({});
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ width: '100%', bgcolor: '#F0F2F5', minHeight: '100%', py: { xs: 4, md: 6 }, px: { xs: 2, sm: 4, md: 8 } }}>
-        <Container maxWidth="lg">
-          {/* Header Section */}
-          <Box sx={{ mb: 6, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'flex-end' }, gap: 3 }}>
-            <Box>
-              <Typography variant="h2" sx={{ fontWeight: 900, color: '#1a103d', letterSpacing: '-1.5px', mb: 1, fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
-                {isEditMode ? 'Refine' : 'Create'} <Box component="span" sx={{ color: THEME_COLOR }}>Package</Box>
-              </Typography>
-              <Typography variant="h6" sx={{ color: '#4A5568', fontWeight: 400, maxWidth: 500 }}>
-                {isEditMode ? 'Enhance your existing package details and visuals.' : 'Set up a new premium light & sound experience for your clients.'}
-              </Typography>
-            </Box>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/light/list')}
-              startIcon={<RotateLeft />}
-              sx={{ borderRadius: '16px', px: 4, py: 1.5, borderWidth: 2, fontWeight: 700, '&:hover': { borderWidth: 2 } }}
-            >
-              Back to Fleet
-            </Button>
+      <Box sx={{ width: '100%', bgcolor: '#FDF6EE', minHeight: '100%', py: { xs: 3, sm: 4 }, px: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Page Heading */}
+        <Box sx={{ mb: 3.5 }}>
+          <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.65rem', sm: '2rem' }, lineHeight: 1.2 }}>
+            Add{' '}
+            <Box component="em" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
+              Light
+            </Box>{' '}
+            Package
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={0.75} fontSize="13.5px">
+            Fill in the details below to create and publish a new package.
+          </Typography>
+        </Box>
+
+        {/* Dark Header */}
+        <Box
+          sx={{
+            bgcolor: '#1A0A00',
+            px: { xs: 2.5, sm: 3.5 },
+            py: 2.25,
+            borderRadius: '16px 16px 0 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <Avatar sx={{ bgcolor: 'rgba(196,87,42,0.3)', borderRadius: '10px', width: 38, height: 38, fontSize: '15px' }}>✦</Avatar>
+          <Box>
+            <Typography sx={{ color: '#F7EDE0', fontFamily: "'Playfair Display', serif", fontSize: '1.05rem' }}>Package Details</Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '11.5px' }}>All * fields are required</Typography>
           </Box>
+        </Box>
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={4}>
-              {/* Left Column - Details */}
-              <Grid item xs={12} md={7}>
-                <Stack spacing={4}>
-                  {/* Basic Info */}
-                  <Paper sx={card}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
-                      <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }}>
-                        <Info />
-                      </Avatar>
-                      <Typography variant="h5" sx={{ fontWeight: 800 }}>Basic Information</Typography>
-                    </Stack>
+        {busy && <LinearProgress color="primary" />}
 
-                    <Stack spacing={3}>
-                      <Box>
-                        <SL>Package Excellence Name</SL>
-                        <TextField
-                          placeholder="e.g. Cinematic Stage Lighting Bundle"
-                          fullWidth
-                          value={form.name}
-                          onChange={(e) => set('name', e.target.value)}
-                          error={!!errors.name}
-                          helperText={errors.name}
-                        />
-                      </Box>
+        {/* Form */}
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{
+            border: '1px solid rgba(196,87,42,0.11)',
+            borderTop: 'none',
+            borderRadius: '0 0 16px 16px',
+            bgcolor: '#FDF6EE',
+            p: { xs: 2, sm: 3 },
+            boxShadow: '0 4px 24px rgba(196,87,42,0.06)'
+          }}
+        >
+          <Stack spacing={2.5}>
+            {/* ── 1. Package Name ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Package Name</SL>
+              <TextField
+                label="Package Name *"
+                placeholder="e.g. Royal Stage Light & Sound"
+                fullWidth
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                error={!!errors.name}
+                helperText={errors.name}
+              />
+            </Paper>
 
-                      <Box>
-                        <SL>Experience Description</SL>
-                        <TextField
-                          placeholder="Describe the atmosphere, equipment specs, and unique value..."
-                          fullWidth
-                          multiline
-                          rows={6}
-                          value={form.description}
-                          onChange={(e) => set('description', e.target.value)}
-                          error={!!errors.description}
-                          helperText={errors.description}
-                        />
-                      </Box>
-                    </Stack>
-                  </Paper>
+            {/* ── 2. Description ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Description</SL>
+              <TextField
+                label="Description *"
+                placeholder="Describe lighting effects, sound system capacity, occasion suitability…"
+                fullWidth
+                multiline
+                rows={4}
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                error={!!errors.description}
+                helperText={errors.description}
+                sx={{ '& .MuiOutlinedInput-root .MuiOutlinedInput-input': { padding: '4px 2px' } }}
+              />
+            </Paper>
 
-                  {/* Pricing & Category */}
-                  <Paper sx={card}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
-                      <Avatar sx={{ bgcolor: alpha(ACCENT_COLOR, 0.1), color: ACCENT_COLOR }}>
-                        <Stars />
-                      </Avatar>
-                      <Typography variant="h5" sx={{ fontWeight: 800 }}>Pricing & Category</Typography>
-                    </Stack>
 
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                      <Grid item xs={12} sm={6}>
-                        <SL>Package Price</SL>
-                        <TextField
-                          placeholder="0.00"
-                          fullWidth
-                          type="number"
-                          value={form.price}
-                          onChange={(e) => set('price', e.target.value)}
-                          error={!!errors.price}
-                          helperText={errors.price}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <Typography sx={{ color: THEME_COLOR, fontWeight: 900 }}>₹</Typography>
-                              </InputAdornment>
-                            )
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <SL>Advance Amount</SL>
-                        <TextField
-                          placeholder="0.00"
-                          fullWidth
-                          type="number"
-                          value={form.advance}
-                          onChange={(e) => set('advance', e.target.value)}
-                          error={!!errors.advance}
-                          helperText={errors.advance}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <Typography sx={{ color: '#48BB78', fontWeight: 900 }}>₹</Typography>
-                              </InputAdornment>
-                            )
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
+            {/* ── 3. Pricing — 50/50 ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Pricing</SL>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2.5 }}>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    label="Package Price *"
+                    placeholder="0"
+                    fullWidth
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => set('price', e.target.value)}
+                    error={!!errors.price}
+                    helperText={errors.price}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Box>
+                {/* <Box sx={{ flex: 1 }}>
+                  <TextField
+                    label="Advance Booking Amount *"
+                    placeholder="0"
+                    fullWidth
+                    type="number"
+                    value={form.advance}
+                    onChange={(e) => set('advance', e.target.value)}
+                    error={!!errors.advance}
+                    helperText={errors.advance}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ color: 'secondary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Box> */}
+              </Box>
+            </Paper>
 
-                    <Divider sx={{ mb: 4, borderStyle: 'dashed' }} />
-
-                    <Box>
-                      <SL>Service Categories</SL>
-                      {svcLoading ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-                          <CircularProgress size={24} thickness={5} />
-                          <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>Loading categories...</Typography>
-                        </Box>
-                      ) : (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                          {services.map((svc) => {
-                            const active = selectedServices.includes(svc.id);
-                            return (
-                              <Chip
-                                key={svc.id}
-                                label={svc.label}
-                                avatar={svc.image ? <Avatar src={svc.image} /> : null}
-                                onClick={() => toggleService(svc.id)}
-                                sx={{
-                                  height: 48,
-                                  borderRadius: '16px',
-                                  px: 1,
-                                  fontWeight: active ? 800 : 500,
-                                  fontSize: '0.95rem',
-                                  bgcolor: active ? THEME_COLOR : 'white',
-                                  color: active ? 'white' : 'text.primary',
-                                  border: `2px solid ${active ? THEME_COLOR : alpha(THEME_COLOR, 0.1)}`,
-                                  '&:hover': {
-                                    bgcolor: active ? SECONDARY_COLOR : alpha(THEME_COLOR, 0.05),
-                                    borderColor: THEME_COLOR
-                                  },
-                                  '& .MuiChip-avatar': { width: 32, height: 32 }
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      )}
-                      {errors.services && (
-                        <FormHelperText error sx={{ mt: 2, fontWeight: 600 }}>{errors.services}</FormHelperText>
-                      )}
-                    </Box>
-                  </Paper>
-                </Stack>
-              </Grid>
-
-              {/* Right Column - Visuals */}
-              <Grid item xs={12} md={5}>
-                <Stack spacing={4}>
-                  {/* Hero Thumbnail */}
-                  <Paper sx={card}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
-                      <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }}>
-                        <AddPhotoAlternate />
-                      </Avatar>
-                      <Typography variant="h5" sx={{ fontWeight: 800 }}>Hero Thumbnail</Typography>
-                    </Stack>
-
-                    <Box
-                      onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-                      onDragLeave={() => setDrag(false)}
-                      onDrop={(e) => { e.preventDefault(); setDrag(false); loadImg(e.dataTransfer.files[0]); }}
-                      sx={{
-                        position: 'relative',
-                        borderRadius: '24px',
-                        overflow: 'hidden',
-                        height: 300,
-                        bgcolor: '#F7FAFC',
-                        border: `2px dashed ${drag ? THEME_COLOR : alpha(THEME_COLOR, 0.2)}`,
-                        transition: '0.3s',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        '&:hover': { borderColor: THEME_COLOR, bgcolor: alpha(THEME_COLOR, 0.02) }
-                      }}
-                      component="label"
-                    >
-                      <input type="file" accept="image/*" hidden onChange={(e) => loadImg(e.target.files[0])} />
-
-                      {imagePreview ? (
-                        <>
-                          <Box component="img" src={imagePreview} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImageFile(null); setImagePreview(null); }}
-                              sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'white', color: 'error.main' } }}
-                            >
-                              <Close />
-                            </IconButton>
-                          </Box>
-                        </>
-                      ) : (
-                        <>
-                          <Avatar sx={{ width: 80, height: 80, bgcolor: alpha(THEME_COLOR, 0.05), mb: 2 }}>
-                            <CloudUpload sx={{ fontSize: 40, color: THEME_COLOR }} />
-                          </Avatar>
-                          <Typography sx={{ fontWeight: 700 }}>Upload Hero Image</Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>Drag and drop or click</Typography>
-                        </>
-                      )}
-                    </Box>
-                    {errors.image && <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block', fontWeight: 600 }}>{errors.image}</Typography>}
-                  </Paper>
-
-                  {/* Gallery Section */}
-                  <Paper sx={card}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 4 }}>
-                      <Avatar sx={{ bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR }}>
-                        <Collections />
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 800 }}>Work Gallery</Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>Multiple images showcasing the experience</Typography>
-                      </Box>
-                      <Button
-                        component="label"
-                        size="small"
-                        startIcon={<AddPhotoAlternate />}
-                        sx={{ borderRadius: '12px' }}
+            {/* ── 4. Categories Selection ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Category *</SL>
+              {svcLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
+                  <CircularProgress size={20} color="primary" />
+                  <Typography variant="body2" color="text.secondary">Loading categories...</Typography>
+                </Box>
+              ) : svcError ? (
+                <Typography color="error" variant="body2">{svcError}</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1 }}>
+                  {services.map((svc) => {
+                    const active = selectedServices.includes(svc.id);
+                    return (
+                      <Box
+                        key={svc.id}
+                        onClick={() => toggleService(svc.id)}
+                        sx={{
+                          cursor: 'pointer',
+                          px: 2,
+                          py: 1,
+                          borderRadius: '10px',
+                          border: '1.5px solid',
+                          borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.15)',
+                          bgcolor: active ? 'rgba(196,87,42,0.06)' : '#fff',
+                          color: active ? 'primary.main' : 'text.primary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.25,
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: 'rgba(196,87,42,0.03)'
+                          }
+                        }}
                       >
-                        Add Images
-                        <input type="file" multiple accept="image/*" hidden onChange={(e) => loadGallery(e.target.files)} />
-                      </Button>
-                    </Stack>
+                        {svc.image && (
+                          <Avatar
+                            src={svc.image}
+                            sx={{ width: 24, height: 24, borderRadius: '6px' }}
+                          />
+                        )}
+                        <Typography variant="body2" fontWeight={active ? 600 : 400}>
+                          {svc.label}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+              {errors.services && (
+                <FormHelperText error sx={{ mt: 1 }}>{errors.services}</FormHelperText>
+              )}
+            </Paper>
 
-                    <Box
-                      onDragOver={(e) => { e.preventDefault(); setGalleryDrag(true); }}
-                      onDragLeave={() => setGalleryDrag(false)}
-                      onDrop={(e) => { e.preventDefault(); setGalleryDrag(false); loadGallery(e.dataTransfer.files); }}
-                      sx={{
-                        minHeight: 120,
-                        borderRadius: '20px',
-                        p: 2,
-                        bgcolor: galleryDrag ? alpha(THEME_COLOR, 0.05) : '#F7FAFC',
-                        border: `2px dashed ${galleryDrag ? THEME_COLOR : alpha(THEME_COLOR, 0.1)}`,
-                        transition: '0.3s'
-                      }}
-                    >
-                      {galleryPreviews.length === 0 ? (
-                        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>No gallery images added</Typography>
-                        </Box>
-                      ) : (
-                        <Grid container spacing={1.5}>
-                          {galleryPreviews.map((preview, i) => (
-                            <Grid item xs={4} key={i}>
-                              <Box sx={{ position: 'relative', pt: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
-                                <Box component="img" src={preview} sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                <IconButton
-                                  size="small"
-                                  onClick={() => removeGalleryItem(i)}
-                                  sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.8)', color: 'error.main', width: 20, height: 20, '&:hover': { bgcolor: 'white' } }}
-                                >
-                                  <Close sx={{ fontSize: 14 }} />
-                                </IconButton>
-                              </Box>
-                            </Grid>
-                          ))}
-                        </Grid>
-                      )}
-                    </Box>
-                  </Paper>
 
-                  {/* Actions */}
-                  <Stack spacing={2} pt={2}>
-                    <Button
-                      fullWidth
-                      type="submit"
-                      variant="contained"
-                      disabled={busy}
-                      size="large"
-                      startIcon={<AutoAwesome />}
-                      sx={{
-                        py: 2.5,
-                        fontSize: '1.1rem',
-                        bgcolor: THEME_COLOR,
-                        boxShadow: `0 12px 24px ${alpha(THEME_COLOR, 0.3)}`,
-                        '&:hover': { bgcolor: SECONDARY_COLOR, transform: 'translateY(-2px)' }
-                      }}
-                    >
-                      {busy ? 'Processing...' : isEditMode ? 'Update Royal Package' : 'Publish New Experience'}
-                    </Button>
-                    <Button
-                      fullWidth
-                      variant="text"
-                      onClick={handleReset}
-                      sx={{ py: 1.5, color: '#718096', fontWeight: 600 }}
-                    >
-                      Reset All Fields
-                    </Button>
+
+            {/* ── 5. Package Image ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Package Image</SL>
+
+              {imagePreview ? (
+                <Box sx={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="preview"
+                    sx={{
+                      width: '100%',
+                      height: { xs: 200, sm: 260, md: 300 },
+                      objectFit: 'cover',
+                      display: 'block',
+                      borderRadius: '12px',
+                      border: '1.5px solid rgba(196,87,42,0.15)'
+                    }}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }}
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      '&:hover': { bgcolor: 'primary.main' }
+                    }}
+                  >
+                    <Close fontSize="small" />
+                  </IconButton>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 10,
+                      left: 10,
+                      bgcolor: 'rgba(0,0,0,0.55)',
+                      borderRadius: '8px',
+                      px: 1.5,
+                      py: 0.5,
+                      backdropFilter: 'blur(6px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75
+                    }}
+                  >
+                    <AddPhotoAlternate sx={{ color: '#fff', fontSize: 13 }} />
+                    <Typography sx={{ color: '#fff', fontSize: '11.5px' }}>Package Image</Typography>
+                  </Box>
+                </Box>
+              ) : (
+                <Box
+                  component="label"
+                  htmlFor="pkg-img"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDrag(true);
+                  }}
+                  onDragLeave={() => setDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDrag(false);
+                    loadImg(e.dataTransfer.files[0]);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `2px dashed ${errors.image ? '#d32f2f' : drag ? '#C4572A' : 'rgba(196,87,42,0.28)'}`,
+                    borderRadius: '12px',
+                    py: { xs: 4.5, sm: 5.5 },
+                    px: 3,
+                    cursor: 'pointer',
+                    bgcolor: drag ? 'rgba(196,87,42,0.04)' : '#FFFBF7',
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    '&:hover': { borderColor: '#C4572A', bgcolor: 'rgba(196,87,42,0.03)' }
+                  }}
+                >
+                  <input id="pkg-img" type="file" accept="image/*" hidden onChange={(e) => loadImg(e.target.files[0])} />
+                  <Avatar sx={{ bgcolor: 'rgba(196,87,42,0.1)', width: 52, height: 52, mb: 1.75, borderRadius: '13px' }}>
+                    <CloudUpload sx={{ color: '#C4572A', fontSize: 24 }} />
+                  </Avatar>
+                  <Typography fontWeight={600} fontSize="15px" color="text.primary" mb={0.5}>
+                    Click to upload image
+                  </Typography>
+                  <Typography fontSize="13px" color="text.secondary" mb={2}>
+                    Drag & drop also supported
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} flexWrap="wrap" justifyContent="center">
+                    {['JPG', 'PNG', 'WEBP', 'Max 5MB'].map((f) => (
+                      <Chip
+                        key={f}
+                        label={f}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(196,87,42,0.08)', color: '#8B3A0F', fontSize: '11px', height: 24 }}
+                      />
+                    ))}
                   </Stack>
-                </Stack>
-              </Grid>
-            </Grid>
-          </form>
-        </Container>
+                </Box>
+              )}
+              {errors.image && <Typography sx={{ color: 'error.main', fontSize: '12px', mt: 0.75 }}>{errors.image}</Typography>}
+            </Paper>
+
+            {/* ── Buttons ── */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} pt={0.5}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={busy}
+                startIcon={<AutoAwesome />}
+                sx={{
+                  flex: { sm: 1 },
+                  py: 1.65,
+                  fontSize: '15px',
+                  background: 'linear-gradient(135deg, #C4572A 0%, #8B3A0F 100%)',
+                  boxShadow: '0 4px 18px rgba(196,87,42,0.32)',
+                  '&:hover': { boxShadow: '0 6px 24px rgba(196,87,42,0.44)', transform: 'translateY(-1px)' },
+                  transition: 'all 0.2s'
+                }}
+              >
+                {busy
+                  ? isEditMode
+                    ? 'Updating…'
+                    : 'Publishing…'
+                  : isEditMode
+                    ? 'Update Package'
+                    : 'Add Package'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outlined"
+                size="large"
+                onClick={handleReset}
+                startIcon={<RotateLeft />}
+                sx={{
+                  flex: { sm: 1 },
+                  py: 1.65,
+                  fontSize: '15px',
+                  borderColor: 'rgba(196,87,42,0.28)',
+                  color: 'primary.dark',
+                  '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(196,87,42,0.04)' }
+                }}
+              >
+                Reset
+              </Button>
+
+
+            </Stack>
+          </Stack>
+        </Box>
       </Box>
 
       <Snackbar

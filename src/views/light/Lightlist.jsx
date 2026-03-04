@@ -20,14 +20,14 @@ import {
     InputAdornment,
     Grid,
     Divider,
-    Container,
     Typography,
+    Container,
     Paper,
-    useTheme,
-    alpha,
-    Zoom,
     Fade,
-    Tooltip
+    Zoom,
+    Tooltip,
+    useTheme,
+    alpha
 } from '@mui/material';
 import {
     Visibility,
@@ -36,31 +36,33 @@ import {
     Search,
     Add,
     Close,
-    AttachMoney,
     Schedule,
     Info,
     Image as ImageIcon,
     CheckCircle,
-    LocalOffer,
-    EventAvailable,
-    Payment,
     Category,
-    Inventory as InventoryIcon,
-    Stars,
-    TrendingUp,
-    Star
+    LocalOffer,
+    Star,
+    Campaign,
+    SurroundSound,
+    LightMode,
+    Inventory as InventoryIcon
 } from '@mui/icons-material';
+import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae/api/light-and-sound';
 
-const THEME_COLOR = '#673ab7'; // Deep Purple
-const SECONDARY_COLOR = '#4527a0';
-const ACCENT_COLOR = '#FFB300'; // Amber/Gold for premium feel
+const THEME_COLOR = '#7C3AED';
+const SECONDARY_COLOR = '#5B21B6';
+const ACCENT_COLOR = '#F59E0B';
 const GLASS_BG = 'rgba(255, 255, 255, 0.9)';
+const DARK_BG = '#1A202C';
 
 export default function LightList() {
     const navigate = useNavigate();
+    const theme = useTheme();
+
     const [lightList, setLightList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
@@ -69,7 +71,7 @@ export default function LightList() {
     const [openConfirm, setOpenConfirm] = useState(false);
     const [selectedLight, setSelectedLight] = useState(null);
     const [lightToDelete, setLightToDelete] = useState(null);
-    const [activeImage, setActiveImage] = useState(0);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const token = localStorage.getItem('token');
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -77,7 +79,9 @@ export default function LightList() {
 
     const getImageUrl = (path) => {
         if (!path) return null;
-        return `https://api.bookmyevent.ae${path}`;
+        if (path.startsWith('http')) return path;
+        const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+        return `https://api.bookmyevent.ae/${cleanPath}`;
     };
 
     const formatINR = (value) =>
@@ -114,7 +118,7 @@ export default function LightList() {
 
     const handleView = (light) => {
         setSelectedLight(light);
-        setActiveImage(0);
+        setSelectedImageIndex(0);
         setOpenView(true);
     };
 
@@ -127,7 +131,7 @@ export default function LightList() {
             const data = await res.json();
             if (data.success) {
                 setLightList((prev) => prev.map((m) => (m._id === id ? { ...m, isActive: !current } : m)));
-                setToast({ open: true, message: 'Status updated', severity: 'success' });
+                setToast({ open: true, message: 'Status updated successfully', severity: 'success' });
             }
         } catch {
             setToast({ open: true, message: 'Failed to update status', severity: 'error' });
@@ -143,7 +147,7 @@ export default function LightList() {
             const data = await res.json();
             if (data.success) {
                 setLightList((prev) => prev.filter((m) => m._id !== lightToDelete));
-                setToast({ open: true, message: 'Package deleted', severity: 'success' });
+                setToast({ open: true, message: 'Package deleted successfully', severity: 'success' });
             }
         } catch {
             setToast({ open: true, message: 'Delete failed', severity: 'error' });
@@ -164,16 +168,48 @@ export default function LightList() {
         });
     }, [lightList, searchQuery]);
 
+    const DetailItem = ({ icon, label, value, chip, success, error }) => (
+        <Box sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 2,
+            py: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            '&:hover': { bgcolor: alpha(THEME_COLOR, 0.02) },
+            transition: '0.2s'
+        }}>
+            <Box sx={{ color: THEME_COLOR, mt: 0.5, display: 'flex' }}>{icon}</Box>
+            <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {label}
+                </Typography>
+                {chip ? (
+                    <Box sx={{ mt: 0.5 }}>
+                        <Chip
+                            label={value}
+                            size="small"
+                            color={success ? 'success' : error ? 'error' : 'default'}
+                            sx={{ fontWeight: 700 }}
+                        />
+                    </Box>
+                ) : (
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.3, color: '#2D3748' }}>
+                        {value || 'Not specified'}
+                    </Typography>
+                )}
+            </Box>
+        </Box>
+    );
+
     return (
         <Box sx={{ bgcolor: '#F0F2F5', minHeight: '100vh', pb: 8 }}>
             {/* Premium Header with Glassmorphism */}
             <Box sx={{
                 position: 'relative',
-                height: { xs: 'auto', md: '350px' },
-                background: `linear-gradient(135deg, ${SECONDARY_COLOR} 0%, #1a103d 100%)`,
+                height: '350px',
+                background: `linear-gradient(135deg, ${SECONDARY_COLOR} 0%, #1A202C 100%)`,
                 color: 'white',
-                pt: { xs: 4, md: 8 },
-                pb: { xs: 12, md: 0 },
+                pt: 8,
                 px: 4,
                 overflow: 'hidden'
             }}>
@@ -184,7 +220,7 @@ export default function LightList() {
                     right: '-5%',
                     width: '400px',
                     height: '400px',
-                    background: `radial-gradient(circle, ${alpha(ACCENT_COLOR, 0.15)} 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, ${alpha(THEME_COLOR, 0.2)} 0%, transparent 70%)`,
                     borderRadius: '50%',
                     zIndex: 0
                 }} />
@@ -194,7 +230,7 @@ export default function LightList() {
                     left: '10%',
                     width: '300px',
                     height: '300px',
-                    background: `radial-gradient(circle, ${alpha(THEME_COLOR, 0.2)} 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, ${alpha(ACCENT_COLOR, 0.12)} 0%, transparent 70%)`,
                     borderRadius: '50%',
                     zIndex: 0
                 }} />
@@ -202,52 +238,48 @@ export default function LightList() {
                 <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
                     <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
                         <Box>
-                            <Typography variant="h1" sx={{ fontWeight: 900, mb: 1, color: 'white', position: 'relative', zIndex: 1, letterSpacing: '-2.5px', textShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-                                Light & <Box component="span" sx={{ color: ACCENT_COLOR }}>Sound</Box>
+                            <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, color: 'white', letterSpacing: '-1px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                                Light & Sound
                             </Typography>
-                            <Typography variant="h6" sx={{ color: 'white', opacity: 0.95, maxWidth: '600px', mb: 5, position: 'relative', zIndex: 1, fontWeight: 500, lineHeight: 1.6 }}>
-                                Manage your specialized equipment and sound packages. Track your inventory and performance in real time.
+                            <Typography variant="h6" sx={{ color: 'white', opacity: 0.9, fontWeight: 400, mb: 4, maxWidth: 600 }}>
+                                Manage your premium lighting & sound packages. Create unforgettable experiences with professional setups.
                             </Typography>
-                            <Stack direction="row" spacing={4}>
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: ACCENT_COLOR, width: 60, height: 60, boxShadow: '0 8px 20px rgba(0,0,0,0.2)' }}>
-                                        <InventoryIcon sx={{ fontSize: 32 }} />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h3" sx={{ color: 'white', fontWeight: 900, lineHeight: 1 }}>{lightList.length}</Typography>
-                                        <Typography variant="caption" sx={{ color: 'white', fontWeight: 700, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 1.5 }}>Total Packages</Typography>
+                            <Stack direction="row" spacing={3}>
+                                {[
+                                    { label: 'Total Packages', value: lightList.length, icon: <SurroundSound /> },
+                                    { label: 'Active', value: lightList.filter(o => o.isActive).length, icon: <CheckCircle /> },
+                                ].map((stat, i) => (
+                                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', width: 56, height: 56 }}>
+                                            {stat.icon}
+                                        </Avatar>
+                                        <Box>
+                                            <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1, color: '#FFFFFF' }}>{stat.value}</Typography>
+                                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</Typography>
+                                        </Box>
                                     </Box>
-                                </Stack>
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#48BB78', width: 60, height: 60, boxShadow: '0 8px 20px rgba(0,0,0,0.2)' }}>
-                                        <CheckCircle sx={{ fontSize: 32 }} />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h3" sx={{ color: 'white', fontWeight: 900, lineHeight: 1 }}>{lightList.filter(l => l.isActive).length}</Typography>
-                                        <Typography variant="caption" sx={{ color: 'white', fontWeight: 700, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 1.5 }}>Active Items</Typography>
-                                    </Box>
-                                </Stack>
+                                ))}
                             </Stack>
                         </Box>
                         <Button
                             variant="contained"
                             size="large"
                             startIcon={<Add />}
-                            onClick={() => navigate("/light/addpackage")}
+                            onClick={() => navigate('/light/addpackage')}
                             sx={{
-                                bgcolor: ACCENT_COLOR,
-                                color: '#1a103d',
-                                fontWeight: 800,
+                                bgcolor: THEME_COLOR,
+                                color: 'white',
+                                fontWeight: 700,
                                 fontSize: '1rem',
                                 px: 4,
                                 py: 1.8,
                                 borderRadius: '16px',
                                 textTransform: 'none',
-                                boxShadow: `0 12px 24px ${alpha(ACCENT_COLOR, 0.3)}`,
+                                boxShadow: `0 12px 24px ${alpha(THEME_COLOR, 0.3)}`,
                                 '&:hover': {
-                                    bgcolor: '#FFA000',
+                                    bgcolor: SECONDARY_COLOR,
                                     transform: 'translateY(-4px)',
-                                    boxShadow: `0 16px 32px ${alpha(ACCENT_COLOR, 0.4)}`,
+                                    boxShadow: `0 16px 32px ${alpha(THEME_COLOR, 0.4)}`,
                                 },
                                 transition: 'all 0.3s'
                             }}
@@ -259,11 +291,11 @@ export default function LightList() {
             </Box>
 
             <Container maxWidth="xl" sx={{ mt: -8, position: 'relative', zIndex: 10 }}>
-                {/* Professional Search & Filter Bar */}
+                {/* Glassmorphism Search Bar */}
                 <Paper elevation={4} sx={{
                     borderRadius: '24px',
                     p: 1,
-                    mb: 4,
+                    mb: 6,
                     background: GLASS_BG,
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255,255,255,0.3)',
@@ -273,14 +305,14 @@ export default function LightList() {
                     <TextField
                         fullWidth
                         variant="standard"
-                        placeholder="Search by package name or description..."
+                        placeholder="Search packages by name or description..."
                         value={searchQuery}
                         onChange={(e) => setPendingSearch(e.target.value)}
                         InputProps={{
                             disableUnderline: true,
                             startAdornment: (
                                 <InputAdornment position="start" sx={{ pl: 3 }}>
-                                    <Search sx={{ color: THEME_COLOR, fontSize: 28 }} />
+                                    <Search sx={{ color: '#718096', fontSize: 28 }} />
                                 </InputAdornment>
                             ),
                             sx: { height: 70, fontSize: '1.1rem', fontWeight: 500, color: '#2D3748' }
@@ -299,7 +331,7 @@ export default function LightList() {
                 {loading ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 15 }}>
                         <CircularProgress size={64} thickness={4} sx={{ color: THEME_COLOR }} />
-                        <Typography variant="h6" sx={{ mt: 3, fontWeight: 600, color: 'text.secondary' }}>Loading your collection...</Typography>
+                        <Typography variant="h6" sx={{ mt: 3, fontWeight: 600, color: 'text.secondary' }}>Loading your packages...</Typography>
                     </Box>
                 ) : filteredLights.length === 0 ? (
                     <Fade in={true}>
@@ -312,20 +344,20 @@ export default function LightList() {
                             border: '2px dashed #E2E8F0'
                         }}>
                             <Avatar sx={{ bgcolor: '#F7FAFC', width: 120, height: 120, mx: 'auto', mb: 4 }}>
-                                <InventoryIcon sx={{ fontSize: 60, color: '#CBD5E0' }} />
+                                <LightMode sx={{ fontSize: 60, color: '#CBD5E0' }} />
                             </Avatar>
                             <Typography variant="h3" sx={{ fontWeight: 800, color: '#2D3748', mb: 2 }}>
                                 {lightList.length === 0 ? "No Packages Yet" : "No Results Found"}
                             </Typography>
                             <Typography variant="h6" color="text.secondary" sx={{ mb: 6, maxWidth: 500, mx: 'auto', fontWeight: 400 }}>
                                 {lightList.length === 0
-                                    ? "Start building your digital showroom by adding your first light & sound package."
+                                    ? "Start building your light & sound portfolio by adding your first package."
                                     : "We couldn't find any packages matching your search. Please try different keywords."}
                             </Typography>
                             {lightList.length === 0 && (
                                 <Button
                                     variant="contained"
-                                    onClick={() => navigate("/light/addpackage")}
+                                    onClick={() => navigate('/light/addpackage')}
                                     sx={{
                                         bgcolor: THEME_COLOR,
                                         px: 6,
@@ -344,7 +376,7 @@ export default function LightList() {
                 ) : (
                     <Grid container spacing={4}>
                         {filteredLights.map((light, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={light._id}>
+                            <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={light._id}>
                                 <Zoom in={true} style={{ transitionDelay: `${index * 40}ms` }}>
                                     <Card sx={{
                                         height: '100%',
@@ -357,7 +389,7 @@ export default function LightList() {
                                         '&:hover': {
                                             transform: 'translateY(-12px)',
                                             boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
-                                            borderColor: ACCENT_COLOR,
+                                            borderColor: THEME_COLOR,
                                             '& .action-btns': { opacity: 1, transform: 'translateY(0)' }
                                         }
                                     }}>
@@ -409,8 +441,8 @@ export default function LightList() {
                                                 }}
                                             >
                                                 {[
-                                                    { icon: <Visibility fontSize="small" />, color: '#1a103d', onClick: () => handleView(light), tip: 'Quick View' },
-                                                    { icon: <Edit fontSize="small" />, color: THEME_COLOR, onClick: () => navigate(`/light/edit/${light._id}`), tip: 'Edit' },
+                                                    { icon: <Visibility fontSize="small" />, color: DARK_BG, onClick: () => handleView(light), tip: 'Quick View' },
+                                                    { icon: <Edit fontSize="small" />, color: '#2B6CB0', onClick: () => navigate(`/light/edit/${light._id}`), tip: 'Edit' },
                                                     { icon: <Delete fontSize="small" />, color: '#C53030', onClick: () => { setLightToDelete(light._id); setOpenConfirm(true); }, tip: 'Delete' }
                                                 ].map((btn, i) => (
                                                     <Tooltip key={i} title={btn.tip}>
@@ -431,7 +463,7 @@ export default function LightList() {
                                             </Stack>
                                         </Box>
 
-                                        {/* Content */}
+                                        {/* Card Content */}
                                         <CardContent sx={{ p: 3 }}>
                                             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
                                                 <Typography variant="h5" sx={{ fontWeight: 800, color: '#2D3748', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -445,38 +477,38 @@ export default function LightList() {
                                                 />
                                             </Stack>
 
-                                            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                                            <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
                                                 <Chip
                                                     icon={<Category sx={{ fontSize: '14px !important' }} />}
                                                     label={light.category?.title || 'Light & Sound'}
                                                     size="small"
                                                     sx={{
-                                                        borderRadius: '8px',
+                                                        borderRadius: '6px',
                                                         fontSize: '0.7rem',
-                                                        fontWeight: 700,
-                                                        bgcolor: alpha(THEME_COLOR, 0.08),
-                                                        color: THEME_COLOR,
-                                                        px: 0.5
+                                                        fontWeight: 600,
+                                                        height: 20,
+                                                        bgcolor: alpha(THEME_COLOR, 0.1),
+                                                        color: THEME_COLOR
                                                     }}
                                                 />
                                             </Stack>
 
                                             <Divider sx={{ mb: 2, borderStyle: 'dashed' }} />
 
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block' }}>Package Price</Typography>
-                                                    <Typography variant="h4" sx={{ fontWeight: 900, color: THEME_COLOR }}>
+                                            <Grid container spacing={1}>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Package Price</Typography>
+                                                    <Typography variant="h6" sx={{ fontWeight: 900, color: THEME_COLOR }}>
                                                         {formatINR(light.packagePrice)}
                                                     </Typography>
-                                                </Box>
-                                                <Box sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block' }}>Advance</Typography>
-                                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#48BB78' }}>
+                                                </Grid>
+                                                <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Advance</Typography>
+                                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#48BB78' }}>
                                                         {formatINR(light.advanceBookingAmount)}
                                                     </Typography>
-                                                </Box>
-                                            </Box>
+                                                </Grid>
+                                            </Grid>
                                         </CardContent>
                                     </Card>
                                 </Zoom>
@@ -486,170 +518,171 @@ export default function LightList() {
                 )}
             </Container>
 
-            {/* Luxury Detail View Dialog */}
+            {/* Premium Detail View Dialog */}
             <Dialog
                 open={openView}
                 onClose={() => setOpenView(false)}
                 maxWidth="lg"
                 fullWidth
-                PaperProps={{
-                    sx: { borderRadius: '32px', overflow: 'hidden', bgcolor: '#F7FAFC' }
-                }}
+                PaperProps={{ sx: { borderRadius: '32px', overflow: 'hidden' } }}
             >
-                <Box sx={{ position: 'relative' }}>
-                    <IconButton
-                        onClick={() => setOpenView(false)}
-                        sx={{ position: 'absolute', right: 16, top: 16, zIndex: 10, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
-                    >
-                        <Close />
-                    </IconButton>
-
-                    <Grid container>
-                        {/* Visuals - Left Side */}
-                        <Grid item xs={12} md={7} sx={{ bgcolor: 'white', p: 4 }}>
-                            <Box sx={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', mb: 3 }}>
-                                <Fade in={true} key={activeImage}>
-                                    <Box
-                                        component="img"
-                                        src={getImageUrl(activeImage === 0 ? selectedLight?.thumbnail : selectedLight?.images[activeImage - 1])}
-                                        sx={{ width: '100%', height: { md: '500px' }, objectFit: 'cover' }}
+                <DialogContent sx={{ p: 0 }}>
+                    {selectedLight && (
+                        <Grid container>
+                            {/* Left Side: Image Gallery */}
+                            <Grid item xs={12} md={6} sx={{ bgcolor: '#F7FAFC', p: 4, display: 'flex', flexDirection: 'column' }}>
+                                <Box sx={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', flex: 1, mb: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.05)' }}>
+                                    <img
+                                        src={getImageUrl(selectedLight.thumbnail)}
+                                        style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white' }}
+                                        alt="Package View"
                                     />
-                                </Fade>
-                            </Box>
-
-                            {/* Thumbnail Strip */}
-                            <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
-                                {[selectedLight?.thumbnail, ...(selectedLight?.images || [])].filter(Boolean).map((img, i) => (
-                                    <Box
-                                        key={i}
-                                        onClick={() => setActiveImage(i)}
-                                        sx={{
-                                            width: 80,
-                                            height: 80,
-                                            borderRadius: '12px',
-                                            cursor: 'pointer',
-                                            border: `3px solid ${activeImage === i ? ACCENT_COLOR : 'transparent'}`,
-                                            overflow: 'hidden',
-                                            transition: '0.2s',
-                                            flexShrink: 0
-                                        }}
+                                    <IconButton
+                                        onClick={() => setOpenView(false)}
+                                        sx={{ position: 'absolute', top: 16, right: 16, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
                                     >
-                                        <img src={getImageUrl(img)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </Box>
-                                ))}
-                            </Stack>
-                        </Grid>
-
-                        {/* Content - Right Side */}
-                        <Grid item xs={12} md={5} sx={{ p: { xs: 4, md: 6 } }}>
-                            <Box sx={{ mb: 4 }}>
-                                <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                                    {selectedLight?.category?.title || 'Premium Package'}
-                                </Typography>
-                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1a103d', mt: 1, mb: 2 }}>
-                                    {selectedLight?.packageName}
-                                </Typography>
-                                <Typography variant="body1" sx={{ color: '#4A5568', lineHeight: 1.8, fontSize: '1.05rem' }}>
-                                    {selectedLight?.description}
-                                </Typography>
-                            </Box>
-
-                            {/* Specification Grid */}
-                            <Grid container spacing={2} sx={{ mb: 4 }}>
-                                {[
-                                    { icon: <Category />, label: 'Category', value: selectedLight?.category?.title || 'Default' },
-                                    { icon: <Schedule />, label: 'Status', value: selectedLight?.isActive ? 'Active' : 'Inactive' },
-                                    { icon: <Stars />, label: 'Module', value: 'Light & Sound' },
-                                    { icon: <Info />, label: 'Provider', value: userData?.hotelName || 'Premium Partner' }
-                                ].map((spec, i) => (
-                                    <Grid item xs={6} key={i}>
-                                        <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'white', border: '1px solid #E2E8F0', height: '100%' }}>
-                                            <Box sx={{ color: THEME_COLOR, mb: 1 }}>{spec.icon}</Box>
-                                            <Typography variant="caption" sx={{ color: '#A0AEC0', display: 'block', fontWeight: 700 }}>{spec.label}</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#2D3748' }}>{spec.value}</Typography>
-                                        </Paper>
-                                    </Grid>
-                                ))}
+                                        <Close />
+                                    </IconButton>
+                                </Box>
+                                {/* Thumbnail strip for gallery images if available */}
+                                {selectedLight.images && selectedLight.images.length > 0 && (
+                                    <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
+                                        {[selectedLight.thumbnail, ...selectedLight.images].filter(Boolean).map((img, i) => (
+                                            <Avatar
+                                                key={i}
+                                                variant="rounded"
+                                                src={getImageUrl(img)}
+                                                onClick={() => setSelectedImageIndex(i)}
+                                                sx={{
+                                                    width: 70, height: 70, cursor: 'pointer',
+                                                    border: selectedImageIndex === i ? `3px solid ${THEME_COLOR}` : '3px solid transparent',
+                                                    transition: '0.2s', '&:hover': { opacity: 0.8 }
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                )}
                             </Grid>
 
-                            {/* Rich Price Card */}
-                            <Paper sx={{
-                                p: 3,
-                                borderRadius: '24px',
-                                background: `linear-gradient(135deg, ${THEME_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
-                                color: 'white',
-                                boxShadow: `0 20px 40px ${alpha(THEME_COLOR, 0.3)}`
-                            }} elevation={0}>
-                                <Stack spacing={2}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, opacity: 0.9 }}>Booking Amount</Typography>
-                                        <Typography variant="h3" sx={{ fontWeight: 900 }}>{formatINR(selectedLight?.packagePrice)}</Typography>
-                                    </Box>
-                                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, opacity: 0.9 }}>Minimum Advance</Typography>
-                                        <Typography variant="h5" sx={{ fontWeight: 800, color: ACCENT_COLOR }}>{formatINR(selectedLight?.advanceBookingAmount)}</Typography>
-                                    </Box>
-                                </Stack>
-                            </Paper>
+                            {/* Right Side: Package Details */}
+                            <Grid item xs={12} md={6} sx={{ p: { xs: 4, md: 6 }, bgcolor: 'white' }}>
+                                <Box sx={{ mb: 4 }}>
+                                    <Typography variant="caption" sx={{ color: THEME_COLOR, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2 }}>
+                                        Package Details
+                                    </Typography>
+                                    <Typography variant="h3" sx={{ fontWeight: 900, color: '#2D3748', mt: 1, mb: 2 }}>
+                                        {selectedLight.packageName}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ color: '#718096', lineHeight: 1.8 }}>
+                                        {selectedLight.description || 'No description provided.'}
+                                    </Typography>
+                                </Box>
 
-                            <Stack direction="row" spacing={2} sx={{ mt: 6 }}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    onClick={() => navigate(`/light/edit/${selectedLight?._id}`)}
-                                    sx={{
-                                        borderRadius: '16px',
-                                        py: 1.5,
-                                        borderWidth: 2,
-                                        fontWeight: 700,
-                                        '&:hover': { borderWidth: 2 }
-                                    }}
-                                >
-                                    Edit Details
-                                </Button>
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    onClick={() => setOpenView(false)}
-                                    sx={{ borderRadius: '16px', py: 1.5, bgcolor: '#1a103d', fontWeight: 700 }}
-                                >
-                                    Close
-                                </Button>
-                            </Stack>
+                                <Grid container spacing={3} sx={{ mb: 5 }}>
+                                    <Grid item xs={6}>
+                                        <DetailItem icon={<Category />} label="Category" value={selectedLight.category?.title || 'Light & Sound'} />
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <DetailItem
+                                            icon={<CheckCircle />}
+                                            label="Status"
+                                            value={selectedLight.isActive ? 'Active' : 'Inactive'}
+                                            chip
+                                            success={selectedLight.isActive}
+                                            error={!selectedLight.isActive}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <DetailItem icon={<SurroundSound />} label="Module" value="Light & Sound" />
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <DetailItem icon={<Info />} label="Provider" value={userData?.hotelName || 'Premium Partner'} />
+                                    </Grid>
+                                </Grid>
+
+                                {/* Price Card */}
+                                <Box sx={{ p: 4, bgcolor: '#F7FAFC', borderRadius: '24px', mb: 5 }}>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                                        <Box>
+                                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>PACKAGE PRICE</Typography>
+                                            <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedLight.packagePrice)}</Typography>
+                                        </Box>
+                                        <Box sx={{ textAlign: 'right' }}>
+                                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>ADVANCE</Typography>
+                                            <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>{formatINR(selectedLight.advanceBookingAmount)}</Typography>
+                                        </Box>
+                                    </Stack>
+                                    <Divider sx={{ mb: 2 }} />
+                                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#718096', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <LocalOffer fontSize="inherit" /> Pricing includes setup and professional handling.
+                                    </Typography>
+                                </Box>
+
+                                <Stack direction="row" spacing={2}>
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        size="large"
+                                        startIcon={<Edit />}
+                                        onClick={() => navigate(`/light/edit/${selectedLight._id}`)}
+                                        sx={{ bgcolor: '#2D3748', color: 'white', borderRadius: '16px', py: 2, fontWeight: 700, '&:hover': { bgcolor: '#1A202C' } }}
+                                    >
+                                        Edit Package
+                                    </Button>
+                                    <Button
+                                        fullWidth
+                                        variant="outlined"
+                                        size="large"
+                                        onClick={() => setOpenView(false)}
+                                        sx={{ borderRadius: '16px', py: 2, fontWeight: 700, borderColor: '#E2E8F0', color: '#4A5568' }}
+                                    >
+                                        Close
+                                    </Button>
+                                </Stack>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </Box>
+                    )}
+                </DialogContent>
             </Dialog>
 
-            {/* Premium Delete Dialog */}
+            {/* Premium Delete Confirmation */}
             <Dialog
                 open={openConfirm}
                 onClose={() => setOpenConfirm(false)}
-                PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}
+                PaperProps={{ sx: { borderRadius: '28px', p: 3, maxWidth: 400 } }}
             >
-                <DialogTitle sx={{ fontWeight: 800, fontSize: '1.5rem', pb: 1 }}>Remove Package?</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{ color: '#4A5568' }}>
-                        Are you sure you want to delete <b>{lightList.find(m => m._id === lightToDelete)?.packageName}</b>? This action is permanent and cannot be undone.
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Avatar sx={{ width: 80, height: 80, bgcolor: alpha('#C53030', 0.1), color: '#C53030', mx: 'auto', mb: 3 }}>
+                        <Delete sx={{ fontSize: 40 }} />
+                    </Avatar>
+                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5 }}>Delete Package?</Typography>
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                        Are you sure you want to permanently remove <b>{lightList.find(m => m._id === lightToDelete)?.packageName}</b>? This action is irreversible.
                     </Typography>
-                </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setOpenConfirm(false)} sx={{ fontWeight: 700, color: '#718096' }}>Cancel</Button>
-                    <Button
-                        color="error"
-                        variant="contained"
-                        onClick={handleDelete}
-                        sx={{ borderRadius: '12px', px: 4, fontWeight: 700, bgcolor: '#C53030' }}
-                    >
-                        Delete Package
-                    </Button>
-                </DialogActions>
+                    <Stack direction="row" spacing={2}>
+                        <Button fullWidth onClick={() => setOpenConfirm(false)} sx={{ color: '#718096', fontWeight: 700 }}>Cancel</Button>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleDelete}
+                            sx={{ bgcolor: '#C53030', color: 'white', borderRadius: '12px', fontWeight: 700, '&:hover': { bgcolor: '#9B2C2C' } }}
+                        >
+                            Confirm Delete
+                        </Button>
+                    </Stack>
+                </Box>
             </Dialog>
 
-            <Snackbar open={toast.open} autoHideDuration={6000} onClose={() => setToast({ ...toast, open: false })}>
-                <Typography sx={{ bgcolor: toast.severity === 'success' ? 'success.main' : 'error.main', color: 'white', p: 2, borderRadius: 1 }}>{toast.message}</Typography>
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={4000}
+                onClose={() => setToast({ ...toast, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert severity={toast.severity} variant="filled" sx={{ borderRadius: '12px', fontWeight: 600 }}>
+                    {toast.message}
+                </Alert>
             </Snackbar>
-        </Box >
+        </Box>
     );
 }
