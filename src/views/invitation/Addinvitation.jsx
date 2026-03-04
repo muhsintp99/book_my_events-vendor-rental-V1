@@ -17,13 +17,11 @@ import {
     Avatar,
     IconButton,
     LinearProgress,
-    Chip,
     CircularProgress,
     Grid
 } from '@mui/material';
 import { CloudUpload, Close, AddPhotoAlternate, AutoAwesome, RotateLeft, BookmarkBorder } from '@mui/icons-material';
 
-// project imports
 import { gridSpacing } from 'store/constant';
 
 // ── Theme ─────────────────────────────────────────────────
@@ -75,14 +73,12 @@ const theme = createTheme({
     }
 });
 
-// Section label
 const SL = ({ children }) => (
     <Typography sx={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: '#E15B65', mb: 1.25 }}>
         {children}
     </Typography>
 );
 
-// Shared card style
 const card = {
     bgcolor: '#fff',
     border: '1px solid rgba(225, 91, 101, 0.11)',
@@ -92,7 +88,7 @@ const card = {
 };
 
 export default function AddInvitationPackage() {
-    const [form, setForm] = useState({ name: '', description: '', price: '', advance: '', category: '' });
+    const [form, setForm] = useState({ name: '', description: '', price: '', advance: '', services: [] });
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [images, setImages] = useState([]);
@@ -110,7 +106,6 @@ export default function AddInvitationPackage() {
 
     useEffect(() => {
         if (!id) return;
-
         const fetchPackage = async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -125,7 +120,7 @@ export default function AddInvitationPackage() {
                         description: pkg.description || '',
                         price: pkg.packagePrice != null ? String(pkg.packagePrice) : '',
                         advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : '',
-                        category: pkg.category?._id || pkg.category || ''
+                        services: Array.isArray(pkg.services) ? pkg.services.map(s => s._id || s) : []
                     });
                     if (pkg.thumbnail) {
                         setThumbnailPreview(`${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
@@ -146,18 +141,25 @@ export default function AddInvitationPackage() {
         if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }));
     };
 
+    const toggleService = (sid) => {
+        setForm(f => {
+            const services = f.services.includes(sid)
+                ? f.services.filter(x => x !== sid)
+                : [...f.services, sid];
+            return { ...f, services };
+        });
+        if (errors.category) setErrors(e => ({ ...e, category: '' }));
+    };
+
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setFetchingCategories(true);
                 const moduleId = localStorage.getItem('moduleId');
                 if (!moduleId) return;
-
                 const res = await fetch(`${API_BASE_URL}/api/categories/modules/${moduleId}`);
                 const data = await res.json();
-                if (data.success) {
-                    setCategories(data.data || []);
-                }
+                if (data.success) setCategories(data.data || []);
             } catch (err) {
                 console.error('Fetch categories error:', err);
             } finally {
@@ -181,12 +183,18 @@ export default function AddInvitationPackage() {
     const handleImagesUpload = (files) => {
         const fileList = Array.from(files);
         const validFiles = fileList.filter(f => f.type.startsWith('image/'));
+        if (validFiles.length === 0) return;
+
         setImages(prev => [...prev, ...validFiles]);
 
-        validFiles.forEach(file => {
+        const readPromises = validFiles.map(file => new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onload = (ev) => setImagePreviews(prev => [...prev, ev.target.result]);
+            reader.onload = (ev) => resolve(ev.target.result);
             reader.readAsDataURL(file);
+        }));
+
+        Promise.all(readPromises).then(newPreviews => {
+            setImagePreviews(prev => [...prev, ...newPreviews]);
         });
     };
 
@@ -201,7 +209,7 @@ export default function AddInvitationPackage() {
         if (!form.description.trim()) e.description = 'Required';
         if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
         if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
-        if (!form.category) e.category = 'Please select a category';
+        if (!form.services || form.services.length === 0) e.category = 'Please select at least one category';
         if (!isEditMode && !thumbnailFile) e.thumbnail = 'Please upload a thumbnail';
         return e;
     };
@@ -214,14 +222,12 @@ export default function AddInvitationPackage() {
             setSnack({ open: true, msg: 'Please fix the highlighted fields.', severity: 'error' });
             return;
         }
-
         try {
             setBusy(true);
             const moduleId = localStorage.getItem('moduleId');
             const userData = JSON.parse(localStorage.getItem('user') || '{}');
             const providerId = userData._id;
             const token = localStorage.getItem('token');
-
             if (!moduleId || !providerId) throw new Error('Module or Vendor session missing');
 
             const formData = new FormData();
@@ -231,12 +237,13 @@ export default function AddInvitationPackage() {
             formData.append('description', form.description);
             formData.append('packagePrice', form.price);
             formData.append('advanceBookingAmount', form.advance);
-            formData.append('category', form.category);
-
+            formData.append('services', JSON.stringify(form.services));
             if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
             images.forEach(img => formData.append('images', img));
 
-            const url = isEditMode ? `${API_BASE_URL}/api/invitation-printing/${id}` : `${API_BASE_URL}/api/invitation-printing/create`;
+            const url = isEditMode
+                ? `${API_BASE_URL}/api/invitation-printing/${id}`
+                : `${API_BASE_URL}/api/invitation-printing/create`;
             const response = await fetch(url, {
                 method: isEditMode ? 'PUT' : 'POST',
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -248,7 +255,7 @@ export default function AddInvitationPackage() {
 
             setSnack({ open: true, msg: 'Invitation package published! 🎉', severity: 'success' });
             if (!isEditMode) {
-                setForm({ name: '', description: '', price: '', advance: '', category: '' });
+                setForm({ name: '', description: '', price: '', advance: '', services: [] });
                 setThumbnailFile(null);
                 setThumbnailPreview(null);
                 setImages([]);
@@ -261,16 +268,37 @@ export default function AddInvitationPackage() {
         }
     };
 
+    const uploadZoneBase = {
+        width: '100%',
+        border: '2px dashed',
+        borderRadius: '16px',
+        p: 2,
+        textAlign: 'center',
+        cursor: 'pointer',
+        bgcolor: '#FFFBF7',
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 220,
+        '&:hover': {
+            borderColor: '#E15B65',
+            bgcolor: 'rgba(225, 91, 101, 0.04)',
+            transform: 'scale(1.01)'
+        }
+    };
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Box sx={{ width: '100%', bgcolor: '#FDF6EE', minHeight: '100%', py: { xs: 3, sm: 4 }, px: { xs: 2, sm: 3, md: 4 } }}>
+
+                {/* Header */}
                 <Box sx={{ mb: 3.5 }}>
                     <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.65rem', sm: '2rem' }, lineHeight: 1.2 }}>
-                        Add{' '}
-                        <Box component="em" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
-                            Invitation
-                        </Box>{' '}
+                        {isEditMode ? 'Edit' : 'Add'}{' '}
+                        <Box component="em" sx={{ color: 'primary.main', fontStyle: 'italic' }}>Invitation</Box>{' '}
                         Package
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={0.75} fontSize="13.5px">
@@ -278,6 +306,7 @@ export default function AddInvitationPackage() {
                     </Typography>
                 </Box>
 
+                {/* Dark header bar */}
                 <Box sx={{ bgcolor: '#1A0A00', px: 3.5, py: 2.25, borderRadius: '16px 16px 0 0', display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.3)', borderRadius: '10px', width: 38, height: 38, fontSize: '15px' }}>✦</Avatar>
                     <Box>
@@ -288,32 +317,74 @@ export default function AddInvitationPackage() {
 
                 {busy && <LinearProgress color="primary" />}
 
-                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ border: '1px solid rgba(225, 91, 101, 0.11)', borderTop: 'none', borderRadius: '0 0 16px 16px', bgcolor: '#FDF6EE', p: 3, boxShadow: '0 4px 24px rgba(225, 91, 101, 0.06)' }}>
+                <Box
+                    component="form"
+                    onSubmit={handleSubmit}
+                    noValidate
+                    sx={{
+                        border: '1px solid rgba(225, 91, 101, 0.11)',
+                        borderTop: 'none',
+                        borderRadius: '0 0 16px 16px',
+                        bgcolor: '#FDF6EE',
+                        p: 3,
+                        boxShadow: '0 4px 24px rgba(225, 91, 101, 0.06)'
+                    }}
+                >
                     <Stack spacing={2.5}>
+
+                        {/* Package Name */}
                         <Paper elevation={0} sx={card}>
                             <SL>Package Name</SL>
-                            <TextField label="Package Name *" placeholder="e.g. Premium Laser-Cut Wedding Invite" fullWidth value={form.name} onChange={(e) => set('name', e.target.value)} error={!!errors.name} helperText={errors.name} />
+                            <TextField
+                                label="Package Name *"
+                                placeholder="e.g. Premium Laser-Cut Wedding Invite"
+                                fullWidth
+                                value={form.name}
+                                onChange={(e) => set('name', e.target.value)}
+                                error={!!errors.name}
+                                helperText={errors.name}
+                            />
                         </Paper>
 
+                        {/* Description */}
                         <Paper elevation={0} sx={card}>
                             <SL>Description</SL>
-                            <TextField label="Description *" placeholder="Paper quality, print type, card dimensions, inclusions..." fullWidth multiline rows={4} value={form.description} onChange={(e) => set('description', e.target.value)} error={!!errors.description} helperText={errors.description} />
+                            <TextField
+                                label="Description *"
+                                placeholder="Paper quality, print type, card dimensions, inclusions..."
+                                fullWidth multiline rows={4}
+                                value={form.description}
+                                onChange={(e) => set('description', e.target.value)}
+                                error={!!errors.description}
+                                helperText={errors.description}
+                            />
                         </Paper>
 
+                        {/* Pricing */}
                         <Paper elevation={0} sx={card}>
                             <SL>Pricing</SL>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5}>
-                                <TextField label="Base Price *" placeholder="0" fullWidth type="number" value={form.price} onChange={(e) => set('price', e.target.value)} error={!!errors.price} helperText={errors.price} InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="primary.main" fontWeight={700}>₹</Typography></InputAdornment> }} />
-                                <TextField label="Advance Amount *" placeholder="0" fullWidth type="number" value={form.advance} onChange={(e) => set('advance', e.target.value)} error={!!errors.advance} helperText={errors.advance} InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="secondary.main" fontWeight={700}>₹</Typography></InputAdornment> }} />
+                                <TextField
+                                    label="Base Price *" placeholder="0" fullWidth type="number"
+                                    value={form.price} onChange={(e) => set('price', e.target.value)}
+                                    error={!!errors.price} helperText={errors.price}
+                                    InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="primary.main" fontWeight={700}>₹</Typography></InputAdornment> }}
+                                />
+                                <TextField
+                                    label="Advance Amount *" placeholder="0" fullWidth type="number"
+                                    value={form.advance} onChange={(e) => set('advance', e.target.value)}
+                                    error={!!errors.advance} helperText={errors.advance}
+                                    InputProps={{ startAdornment: <InputAdornment position="start"><Typography color="secondary.main" fontWeight={700}>₹</Typography></InputAdornment> }}
+                                />
                             </Stack>
                         </Paper>
 
+                        {/* Categories */}
                         <Paper elevation={0} sx={{ ...card, bgcolor: '#fff' }}>
                             <SL>Select Category</SL>
                             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                                 Choose the type of invitation service you provide.
                             </Typography>
-
                             {fetchingCategories ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                                     <CircularProgress size={24} />
@@ -323,39 +394,25 @@ export default function AddInvitationPackage() {
                                     {categories.map((cat) => (
                                         <Grid item xs={12} sm={6} md={4} key={cat._id}>
                                             <Box
-                                                onClick={() => set('category', cat._id)}
+                                                onClick={() => toggleService(cat._id)}
                                                 sx={{
-                                                    cursor: 'pointer',
-                                                    p: 2,
-                                                    borderRadius: '12px',
+                                                    cursor: 'pointer', p: 2, borderRadius: '12px',
                                                     border: '1px solid',
-                                                    borderColor: form.category === cat._id ? '#E15B65' : 'rgba(0,0,0,0.06)',
-                                                    bgcolor: form.category === cat._id ? 'rgba(225, 91, 101, 0.04)' : '#fff',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 2,
+                                                    borderColor: form.services.includes(cat._id) ? '#E15B65' : 'rgba(0,0,0,0.06)',
+                                                    bgcolor: form.services.includes(cat._id) ? 'rgba(225, 91, 101, 0.04)' : '#fff',
+                                                    display: 'flex', alignItems: 'center', gap: 2,
                                                     transition: 'all 0.2s ease',
-                                                    '&:hover': {
-                                                        borderColor: '#E15B65',
-                                                        transform: 'translateY(-2px)',
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                                                    }
+                                                    '&:hover': { borderColor: '#E15B65', transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }
                                                 }}
                                             >
                                                 <Avatar
                                                     src={cat.image ? (cat.image.startsWith('http') ? cat.image : `${API_BASE_URL}${cat.image}`) : ''}
-                                                    sx={{
-                                                        width: 40,
-                                                        height: 40,
-                                                        borderRadius: '8px',
-                                                        bgcolor: 'rgba(225, 91, 101, 0.1)',
-                                                        color: '#E15B65'
-                                                    }}
+                                                    sx={{ width: 40, height: 40, borderRadius: '8px', bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65' }}
                                                 >
                                                     {!cat.image && <BookmarkBorder fontSize="small" />}
                                                 </Avatar>
                                                 <Box sx={{ flexGrow: 1 }}>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: form.category === cat._id ? '#E15B65' : 'inherit' }}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: form.services.includes(cat._id) ? '#E15B65' : 'inherit' }}>
                                                         {cat.title}
                                                     </Typography>
                                                     {cat.description && (
@@ -364,7 +421,7 @@ export default function AddInvitationPackage() {
                                                         </Typography>
                                                     )}
                                                 </Box>
-                                                {form.category === cat._id && (
+                                                {form.services.includes(cat._id) && (
                                                     <Avatar sx={{ width: 20, height: 20, bgcolor: '#E15B65', color: '#fff' }}>
                                                         <Box component="span" sx={{ fontSize: '12px' }}>✓</Box>
                                                     </Avatar>
@@ -381,266 +438,224 @@ export default function AddInvitationPackage() {
                             {errors.category && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.category}</FormHelperText>}
                         </Paper>
 
-                        <Stack spacing={3}>
-                            {/* Thumbnail Section */}
-                            <Paper elevation={0} sx={card}>
-                                <SL>Package Thumbnail</SL>
-                                <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                                    Main image displayed in catalogs and lists.
-                                </Typography>
-                                <Box
-                                    component="label"
-                                    htmlFor="thumb-img"
-                                    sx={{
-                                        width: '100%',
-                                        border: '2px dashed',
-                                        borderColor: errors.thumbnail ? '#dc2626' : 'rgba(225, 91, 101, 0.2)',
-                                        borderRadius: '16px',
-                                        p: 2,
-                                        textAlign: 'center',
-                                        cursor: 'pointer',
-                                        bgcolor: '#FFFBF7',
-                                        transition: 'all 0.3s ease',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: 220,
-                                        '&:hover': {
-                                            borderColor: '#E15B65',
-                                            bgcolor: 'rgba(225, 91, 101, 0.04)',
-                                            transform: 'scale(1.01)'
-                                        }
-                                    }}
-                                >
-                                    <input id="thumb-img" type="file" accept="image/*" hidden onChange={(e) => handleThumbnailUpload(e.target.files[0])} />
-
-                                    {thumbnailPreview ? (
-                                        <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 180 }}>
-                                            <Box
-                                                component="img"
-                                                src={thumbnailPreview}
-                                                sx={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    maxHeight: 280,
-                                                    objectFit: 'contain',
-                                                    borderRadius: '10px'
-                                                }}
-                                            />
-                                            <IconButton
-                                                size="small"
-                                                sx={{
-                                                    position: 'absolute',
-                                                    top: 8,
-                                                    right: 8,
-                                                    bgcolor: 'rgba(255,255,255,0.9)',
-                                                    '&:hover': { bgcolor: '#fff' }
-                                                }}
-                                                onClick={(e) => { e.preventDefault(); setThumbnailPreview(null); setThumbnailFile(null); }}
-                                            >
-                                                <Close fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                    ) : (
-                                        <Stack alignItems="center" spacing={1.5}>
-                                            <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 56, height: 56 }}>
-                                                <CloudUpload />
-                                            </Avatar>
-                                            <Box>
-                                                <Typography variant="subtitle2" fontWeight={700}>Click to upload thumbnail</Typography>
-                                                <Typography variant="caption" color="text.secondary">PNG, JPG or JPEG (Max 5MB)</Typography>
-                                            </Box>
-                                        </Stack>
-                                    )}
-                                </Box>
-                                {errors.thumbnail && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.thumbnail}</FormHelperText>}
-                            </Paper>
-
-                            {/* Gallery Section */}
-                            <Paper elevation={0} sx={card}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                    <Box>
-                                        <SL>Gallery</SL>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Additional photos showcasing details and variations.
-                                        </Typography>
+                        {/* ── THUMBNAIL ─────────────────────────────────── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Package Thumbnail</SL>
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                                Main image displayed in catalogs and lists.
+                            </Typography>
+                            <Box
+                                component="label"
+                                htmlFor="thumb-img"
+                                sx={{
+                                    ...uploadZoneBase,
+                                    borderColor: errors.thumbnail ? '#dc2626' : 'rgba(225, 91, 101, 0.2)',
+                                }}
+                            >
+                                <input id="thumb-img" type="file" accept="image/*" hidden onChange={(e) => handleThumbnailUpload(e.target.files[0])} />
+                                {thumbnailPreview ? (
+                                    <Box sx={{ position: 'relative', width: '100%' }}>
+                                        <Box
+                                            component="img"
+                                            src={thumbnailPreview}
+                                            sx={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: '10px', display: 'block' }}
+                                        />
+                                        <IconButton
+                                            size="small"
+                                            sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: '#fff' } }}
+                                            onClick={(e) => { e.preventDefault(); setThumbnailPreview(null); setThumbnailFile(null); }}
+                                        >
+                                            <Close fontSize="small" />
+                                        </IconButton>
                                     </Box>
+                                ) : (
+                                    <Stack alignItems="center" spacing={1.5}>
+                                        <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 56, height: 56 }}>
+                                            <CloudUpload />
+                                        </Avatar>
+                                        <Box>
+                                            <Typography variant="subtitle2" fontWeight={700}>Click to upload thumbnail</Typography>
+                                            <Typography variant="caption" color="text.secondary">PNG, JPG or JPEG (Max 5MB)</Typography>
+                                        </Box>
+                                    </Stack>
+                                )}
+                            </Box>
+                            {errors.thumbnail && <FormHelperText error sx={{ mt: 1, ml: 1 }}>{errors.thumbnail}</FormHelperText>}
+                        </Paper>
+
+                        {/* ── GALLERY ───────────────────────────────────── */}
+                        <Paper elevation={0} sx={card}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                <Box>
+                                    <SL>Gallery</SL>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Additional photos showcasing details and variations.
+                                    </Typography>
+                                </Box>
+                                {imagePreviews.length > 0 && imagePreviews.length < 10 && (
                                     <Button
                                         component="label"
                                         variant="outlined"
                                         size="small"
                                         startIcon={<AddPhotoAlternate />}
-                                        sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}
+                                        sx={{ borderRadius: '10px', fontWeight: 700 }}
                                     >
                                         Add Photos
-                                        <input type="file" accept="image/*" multiple hidden id="gallery-input-btn" onChange={(e) => handleImagesUpload(e.target.files)} />
+                                        <input type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
                                     </Button>
-                                </Stack>
+                                )}
+                            </Stack>
 
+                            {/* Empty state — same dashed upload zone as thumbnail */}
+                            {imagePreviews.length === 0 ? (
                                 <Box
-                                    component={imagePreviews.length === 0 ? "label" : "div"}
-                                    htmlFor={imagePreviews.length === 0 ? "gallery-input-main" : undefined}
-                                    sx={{
-                                        minHeight: 220,
-                                        p: 3,
-                                        borderRadius: '16px',
-                                        bgcolor: '#FFFBF7',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(225, 91, 101, 0.12)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        cursor: imagePreviews.length === 0 ? 'pointer' : 'default',
-                                        transition: 'all 0.3s ease',
-                                        '&:hover': imagePreviews.length === 0 ? {
-                                            borderColor: '#E15B65',
-                                            bgcolor: 'rgba(225, 91, 101, 0.04)',
-                                            transform: 'scale(1.002)'
-                                        } : {}
-                                    }}
+                                    component="label"
+                                    htmlFor="gallery-input-main"
+                                    sx={{ ...uploadZoneBase, borderColor: 'rgba(225, 91, 101, 0.2)' }}
                                 >
-                                    {imagePreviews.length === 0 && (
-                                        <input
-                                            id="gallery-input-main"
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            hidden
-                                            onChange={(e) => handleImagesUpload(e.target.files)}
-                                        />
-                                    )}
-
-                                    {imagePreviews.length > 0 ? (
-                                        <Grid container spacing={2.5} sx={{ width: '100%' }}>
-                                            {imagePreviews.map((p, i) => (
-                                                <Grid item xs={6} sm={4} md={3} lg={2.4} key={i}>
-                                                    <Box sx={{
+                                    <input id="gallery-input-main" type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
+                                    <Stack alignItems="center" spacing={1.5}>
+                                        <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 56, height: 56 }}>
+                                            <CloudUpload />
+                                        </Avatar>
+                                        <Box>
+                                            <Typography variant="subtitle2" fontWeight={700}>Click to upload gallery images</Typography>
+                                            <Typography variant="caption" color="text.secondary">PNG, JPG or JPEG (Max 10 photos)</Typography>
+                                        </Box>
+                                    </Stack>
+                                </Box>
+                            ) : (
+                                /* Filled state — grid of previews */
+                                <Box sx={{ bgcolor: '#FFFBF7', border: '1px solid rgba(225, 91, 101, 0.15)', borderRadius: '16px', p: 2 }}>
+                                    <Grid container spacing={2}>
+                                        {imagePreviews.map((p, i) => (
+                                            <Grid item xs={6} sm={4} md={3} key={`gp-${i}`}>
+                                                {/* Each card is just a relative box with a fixed height — same approach as thumbnail */}
+                                                <Box
+                                                    sx={{
                                                         position: 'relative',
-                                                        pt: '100%',
-                                                        borderRadius: '16px',
+                                                        width: '100%',
+                                                        height: 160,
+                                                        borderRadius: '12px',
                                                         overflow: 'hidden',
-                                                        boxShadow: '0 8px 16px rgba(0,0,0,0.06)',
-                                                        border: '1px solid rgba(0,0,0,0.04)',
-                                                        '&:hover .delete-overlay': { opacity: 1 },
-                                                        transition: 'transform 0.3s ease',
-                                                        '&:hover': { transform: 'translateY(-6px)' }
-                                                    }}>
-                                                        <Box
-                                                            component="img"
-                                                            src={p}
-                                                            sx={{
-                                                                position: 'absolute',
-                                                                top: 0,
-                                                                left: 0,
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover'
-                                                            }}
-                                                        />
-                                                        <Box
-                                                            className="delete-overlay"
-                                                            sx={{
-                                                                position: 'absolute',
-                                                                top: 0,
-                                                                left: 0,
-                                                                right: 0,
-                                                                bottom: 0,
-                                                                bgcolor: 'rgba(0,0,0,0.4)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                opacity: { xs: 1, md: 0 },
-                                                                transition: 'opacity 0.2s',
-                                                                backdropFilter: 'blur(2px)'
-                                                            }}
-                                                        >
-                                                            <IconButton
-                                                                size="small"
-                                                                sx={{
-                                                                    bgcolor: 'rgba(255,255,255,0.95)',
-                                                                    color: '#dc2626',
-                                                                    '&:hover': { bgcolor: '#fff', transform: 'scale(1.1)' },
-                                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                                                    transition: 'all 0.2s'
-                                                                }}
-                                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImage(i); }}
-                                                            >
-                                                                <Close fontSize="small" />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
-                                            {imagePreviews.length < 10 && (
-                                                <Grid item xs={6} sm={4} md={3} lg={2.4}>
+                                                        border: '1px solid rgba(0,0,0,0.08)',
+                                                        bgcolor: '#fff',
+                                                        '&:hover .del-btn': { opacity: 1 }
+                                                    }}
+                                                >
                                                     <Box
-                                                        component="label"
+                                                        component="img"
+                                                        src={p}
+                                                        alt={`Gallery ${i + 1}`}
                                                         sx={{
-                                                            pt: '100%',
-                                                            position: 'relative',
-                                                            borderRadius: '16px',
-                                                            border: '2px dashed rgba(225, 91, 101, 0.25)',
-                                                            display: 'block',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.3s',
-                                                            '&:hover': {
-                                                                bgcolor: 'rgba(225, 91, 101, 0.06)',
-                                                                borderColor: '#E15B65',
-                                                                transform: 'scale(1.02)'
-                                                            }
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            display: 'block'
+                                                        }}
+                                                    />
+                                                    {/* Delete overlay */}
+                                                    <Box
+                                                        className="del-btn"
+                                                        sx={{
+                                                            position: 'absolute', inset: 0,
+                                                            bgcolor: 'rgba(0,0,0,0.38)',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            opacity: 0, transition: 'opacity 0.2s',
+                                                            backdropFilter: 'blur(2px)'
                                                         }}
                                                     >
-                                                        <input type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
-                                                        <Box sx={{
-                                                            position: 'absolute',
-                                                            top: '50%',
-                                                            left: '50%',
-                                                            transform: 'translate(-50%, -50%)',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            gap: 1.5
-                                                        }}>
-                                                            <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.1)', color: '#E15B65', width: 44, height: 44 }}>
-                                                                <AddPhotoAlternate />
-                                                            </Avatar>
-                                                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#E15B65', letterSpacing: 0.5 }}>ADD MORE</Typography>
-                                                        </Box>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{ bgcolor: '#fff', color: '#dc2626', '&:hover': { bgcolor: '#fff' } }}
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImage(i); }}
+                                                        >
+                                                            <Close fontSize="small" />
+                                                        </IconButton>
                                                     </Box>
-                                                </Grid>
-                                            )}
-                                        </Grid>
-                                    ) : (
-                                        <Stack alignItems="center" spacing={2.5} sx={{ py: 4 }}>
-                                            <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.08)', color: '#E15B65', width: 72, height: 72, border: '1px solid rgba(225, 91, 101, 0.1)' }}>
-                                                <CloudUpload sx={{ fontSize: 36 }} />
-                                            </Avatar>
-                                            <Box textAlign="center">
-                                                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1A0A00', mb: 0.5 }}>Click here to upload gallery</Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
-                                                    Upload up to 10 photos of your invitation design variations.
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-                                    )}
-                                </Box>
-                            </Paper>
-                        </Stack>
+                                                </Box>
+                                            </Grid>
+                                        ))}
 
+                                        {/* Add More tile */}
+                                        {imagePreviews.length < 10 && (
+                                            <Grid item xs={6} sm={4} md={3}>
+                                                <Box
+                                                    component="label"
+                                                    sx={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: 1,
+                                                        width: '100%',
+                                                        height: 160,
+                                                        cursor: 'pointer',
+                                                        borderRadius: '12px',
+                                                        border: '2px dashed rgba(225, 91, 101, 0.25)',
+                                                        bgcolor: '#fff',
+                                                        transition: 'all 0.2s ease',
+                                                        '&:hover': { borderColor: '#E15B65', bgcolor: 'rgba(225, 91, 101, 0.04)' }
+                                                    }}
+                                                >
+                                                    <input type="file" accept="image/*" multiple hidden onChange={(e) => handleImagesUpload(e.target.files)} />
+                                                    <Avatar sx={{ bgcolor: 'rgba(225, 91, 101, 0.08)', color: '#E15B65', width: 44, height: 44 }}>
+                                                        <AddPhotoAlternate />
+                                                    </Avatar>
+                                                    <Typography sx={{ fontWeight: 700, color: '#E15B65', fontSize: '11px', letterSpacing: '0.5px' }}>
+                                                        ADD MORE
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                        )}
+                                    </Grid>
+
+                                    <Typography variant="caption" sx={{ mt: 1.5, display: 'block', fontWeight: 600, color: 'text.secondary' }}>
+                                        {imagePreviews.length} / 10 photo{imagePreviews.length !== 1 ? 's' : ''} added
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Paper>
+
+                        {/* Submit / Reset */}
                         <Stack direction="row" spacing={2} pt={2}>
-                            <Button type="submit" variant="contained" size="large" fullWidth startIcon={<AutoAwesome />} disabled={busy} sx={{ py: 1.5, background: 'linear-gradient(135deg, #E15B65 0%, #C2444E 100%)' }}>
+                            <Button
+                                type="submit" variant="contained" size="large" fullWidth
+                                startIcon={<AutoAwesome />} disabled={busy}
+                                sx={{ py: 1.5, background: 'linear-gradient(135deg, #E15B65 0%, #C2444E 100%)' }}
+                            >
                                 {busy ? 'Processing...' : isEditMode ? 'Update Package' : 'Publish Invitation'}
                             </Button>
-                            {!isEditMode && <Button variant="outlined" size="large" fullWidth startIcon={<RotateLeft />} onClick={() => { setForm({ name: '', description: '', price: '', advance: '', category: '' }); setThumbnailPreview(null); setImagePreviews([]); }}>Reset</Button>}
+                            {!isEditMode && (
+                                <Button
+                                    variant="outlined" size="large" fullWidth startIcon={<RotateLeft />}
+                                    onClick={() => {
+                                        setForm({ name: '', description: '', price: '', advance: '', services: [] });
+                                        setThumbnailPreview(null); setThumbnailFile(null);
+                                        setImagePreviews([]); setImages([]);
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+                            )}
                         </Stack>
+
                     </Stack>
                 </Box>
             </Box>
 
-            <Snackbar open={snack.open} autoHideDuration={3500} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-                <Alert severity={snack.severity} variant="filled" onClose={() => setSnack(s => ({ ...s, open: false }))} sx={{ borderRadius: '12px' }}>{snack.msg}</Alert>
+            <Snackbar
+                open={snack.open} autoHideDuration={3500}
+                onClose={() => setSnack(s => ({ ...s, open: false }))}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    severity={snack.severity} variant="filled"
+                    onClose={() => setSnack(s => ({ ...s, open: false }))}
+                    sx={{ borderRadius: '12px' }}
+                >
+                    {snack.msg}
+                </Alert>
             </Snackbar>
         </ThemeProvider>
     );
