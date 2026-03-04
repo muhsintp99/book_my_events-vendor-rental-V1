@@ -162,7 +162,11 @@ export default function AddFloristPackage() {
             advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : ''
           });
 
-          setSelectedServices(pkg.category ? [pkg.category._id || pkg.category] : []);
+          if (pkg.services && Array.isArray(pkg.services)) {
+            setSelectedServices(pkg.services.map(s => s._id || s));
+          } else if (pkg.category) {
+            setSelectedServices([pkg.category._id || pkg.category]);
+          }
 
           if (pkg.thumbnail) {
             setImagePreview(`${API_BASE_URL}${pkg.thumbnail.startsWith('/') ? '' : '/'}${pkg.thumbnail}`);
@@ -183,8 +187,9 @@ export default function AddFloristPackage() {
   };
 
   const toggleService = (id) => {
-    // Picking a single category since the backend model requires one
-    setSelectedServices([id]);
+    setSelectedServices(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
     if (errors.services) setErrors((e) => ({ ...e, services: '' }));
   };
 
@@ -256,9 +261,9 @@ export default function AddFloristPackage() {
       formData.append('packagePrice', form.price);
       formData.append('advanceBookingAmount', form.advance);
 
-      // Send selected category (pick the first one)
+      // Send selected categories
       if (selectedServices.length > 0) {
-        formData.append('category', selectedServices[0]);
+        formData.append('services', JSON.stringify(selectedServices));
       }
 
       if (imageFile) {

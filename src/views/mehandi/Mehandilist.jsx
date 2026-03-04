@@ -60,16 +60,16 @@ import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae/api/mehandi';
-export default function MakeupList() {
+export default function MehandiList() {
   const navigate = useNavigate();
-  const [makeupList, setMakeupList] = useState([]);
+  const [mehandiList, setMehandiList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [searchQuery, setPendingSearch] = useState('');
   const [openView, setOpenView] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [selectedMakeup, setSelectedMakeup] = useState(null);
-  const [makeupToDelete, setMakeupToDelete] = useState(null);
+  const [selectedMehandi, setSelectedMehandi] = useState(null);
+  const [mehandiToDelete, setMehandiToDelete] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const token = localStorage.getItem('token');
@@ -89,7 +89,7 @@ export default function MakeupList() {
       maximumFractionDigits: 0
     }).format(value || 0);
 
-  const fetchMakeup = useCallback(async () => {
+  const fetchMehandi = useCallback(async () => {
     if (!providerId || !token) {
       setToast({ open: true, message: 'Please login again', severity: 'error' });
       setLoading(false);
@@ -102,7 +102,7 @@ export default function MakeupList() {
       });
       if (!res.ok) throw new Error('Failed to load packages');
       const result = await res.json();
-      if (result.success) setMakeupList(result.data || []);
+      if (result.success) setMehandiList(result.data || []);
     } catch (err) {
       setToast({ open: true, message: err.message, severity: 'error' });
     } finally {
@@ -111,11 +111,11 @@ export default function MakeupList() {
   }, [providerId, token]);
 
   useEffect(() => {
-    fetchMakeup();
-  }, [fetchMakeup]);
+    fetchMehandi();
+  }, [fetchMehandi]);
 
-  const handleView = (makeup) => {
-    setSelectedMakeup(makeup);
+  const handleView = (mehandi) => {
+    setSelectedMehandi(mehandi);
     setSelectedImageIndex(0);
     setOpenView(true);
   };
@@ -128,7 +128,7 @@ export default function MakeupList() {
       });
       const data = await res.json();
       if (data.success) {
-        setMakeupList((prev) => prev.map((m) => (m._id === id ? { ...m, isActive: !current } : m)));
+        setMehandiList((prev) => prev.map((m) => (m._id === id ? { ...m, isActive: !current } : m)));
         setToast({ open: true, message: 'Status updated', severity: 'success' });
       }
     } catch {
@@ -138,25 +138,25 @@ export default function MakeupList() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/${makeupToDelete}`, {
+      const res = await fetch(`${API_BASE_URL}/${mehandiToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setMakeupList((prev) => prev.filter((m) => m._id !== makeupToDelete));
+        setMehandiList((prev) => prev.filter((m) => m._id !== mehandiToDelete));
         setToast({ open: true, message: 'Package deleted', severity: 'success' });
       }
     } catch {
       setToast({ open: true, message: 'Delete failed', severity: 'error' });
     } finally {
       setOpenConfirm(false);
-      setMakeupToDelete(null);
+      setMehandiToDelete(null);
     }
   };
 
-  const filteredMakeups = useMemo(() => {
-    return makeupList.filter((m) => {
+  const filteredMehandi = useMemo(() => {
+    return mehandiList.filter((m) => {
       if (!searchQuery) return true;
 
       const query = searchQuery.toLowerCase();
@@ -166,7 +166,7 @@ export default function MakeupList() {
         m.description?.toLowerCase().includes(query)
       );
     });
-  }, [makeupList, searchQuery]);
+  }, [mehandiList, searchQuery]);
 
   const DetailItem = ({ icon, label, value, chip, success, error }) => (
     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, py: 1.5, borderBottom: '1px solid #f0f0f0' }}>
@@ -206,14 +206,14 @@ export default function MakeupList() {
                 Mehandi Packages
               </Typography>
               <Typography variant="body2" sx={{ color: 'white', opacity: 0.9 }}>
-                {makeupList.length} total packages • {makeupList.filter((m) => m.isActive).length} active
+                {mehandiList.length} total packages • {mehandiList.filter((m) => m.isActive).length} active
               </Typography>
             </Box>
             <Button
               variant="contained"
               size="large"
               startIcon={<Add />}
-              onClick={() => navigate('/makeupartist/addpackage')}
+              onClick={() => navigate('/mehandi/addpackage')}
               sx={{
                 bgcolor: 'white',
                 color: '#E15B65',
@@ -273,7 +273,7 @@ export default function MakeupList() {
         )}
 
         {/* Empty State */}
-        {!loading && filteredMakeups.length === 0 && (
+        {!loading && filteredMehandi.length === 0 && (
           <Card
             sx={{
               borderRadius: 3,
@@ -284,12 +284,12 @@ export default function MakeupList() {
           >
             <ImageIcon sx={{ fontSize: 80, color: '#ddd', mb: 2 }} />
             <Typography variant="h5" color="text.secondary" gutterBottom>
-              {makeupList.length === 0 ? 'No packages yet' : 'No packages match your search'}
+              {mehandiList.length === 0 ? 'No packages yet' : 'No packages match your search'}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {makeupList.length === 0 ? 'Create your first makeup package to get started' : 'Try adjusting your search terms'}
+              {mehandiList.length === 0 ? 'Create your first mehandi package to get started' : 'Try adjusting your search terms'}
             </Typography>
-            {makeupList.length === 0 && (
+            {mehandiList.length === 0 && (
               <Button
                 variant="contained"
                 size="large"
@@ -298,7 +298,7 @@ export default function MakeupList() {
                   bgcolor: '#E15B65',
                   '&:hover': { bgcolor: '#c14a54' }
                 }}
-                onClick={() => navigate('/makeupartist/addpackage')}
+                onClick={() => navigate('/mehandi/addpackage')}
               >
                 Create Your First Package
               </Button>
@@ -308,8 +308,8 @@ export default function MakeupList() {
 
         {/* Package Cards Grid */}
         <Grid container spacing={3}>
-          {filteredMakeups.map((makeup) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={makeup._id}>
+          {filteredMehandi.map((mehandi) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={mehandi._id}>
               <Card
                 sx={{
                   height: '100%',
@@ -325,11 +325,11 @@ export default function MakeupList() {
               >
                 {/* Image Section */}
                 <Box sx={{ position: 'relative', paddingTop: '75%', bgcolor: '#f5f5f5' }}>
-                  {makeup.image ? (
+                  {mehandi.image ? (
                     <CardMedia
                       component="img"
-                      image={getImageUrl(makeup.image)}
-                      alt={makeup.packageName}
+                      image={getImageUrl(mehandi.image)}
+                      alt={mehandi.packageName}
                       sx={{
                         position: 'absolute',
                         top: 0,
@@ -360,10 +360,10 @@ export default function MakeupList() {
                   {/* Status Badge */}
                   <Box sx={{ position: 'absolute', top: 12, right: 12 }}>
                     <Chip
-                      label={makeup.isActive ? 'Active' : 'Inactive'}
+                      label={mehandi.isActive ? 'Active' : 'Inactive'}
                       size="small"
                       sx={{
-                        bgcolor: makeup.isActive ? '#4caf50' : '#757575',
+                        bgcolor: mehandi.isActive ? '#4caf50' : '#757575',
                         color: 'white',
                         fontWeight: 600,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
@@ -372,7 +372,7 @@ export default function MakeupList() {
                   </Box>
 
                   {/* Top Pick Badge */}
-                  {makeup.isTopPick && (
+                  {mehandi.isTopPick && (
                     <Box sx={{ position: 'absolute', top: 12, left: 12 }}>
                       <Chip
                         icon={<EventAvailable sx={{ color: 'white !important' }} />}
@@ -402,15 +402,29 @@ export default function MakeupList() {
                       color: '#2c3e50'
                     }}
                   >
-                    {makeup.packageName}
+                    {mehandi.packageName}
                   </Typography>
 
                   {/* Categories */}
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2, minHeight: 28 }}>
-                    {makeup.categories?.slice(0, 2).map((cat, idx) => (
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2, minHeight: 28, gap: 0.5 }}>
+                    {(mehandi.services && mehandi.services.length > 0) ? (
+                      mehandi.services.slice(0, 3).map((cat, idx) => (
+                        <Chip
+                          key={cat._id || idx}
+                          label={cat.title || 'Category'}
+                          size="small"
+                          sx={{
+                            bgcolor: '#E15B6510',
+                            color: '#E15B65',
+                            fontWeight: 500,
+                            height: 24,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))
+                    ) : mehandi.category ? (
                       <Chip
-                        key={cat._id || idx}
-                        label={typeof cat === 'string' ? 'Category' : cat.title}
+                        label={typeof mehandi.category === 'string' ? 'Category' : mehandi.category.title}
                         size="small"
                         sx={{
                           bgcolor: '#E15B6510',
@@ -420,10 +434,10 @@ export default function MakeupList() {
                           fontSize: '0.75rem'
                         }}
                       />
-                    ))}
-                    {makeup.categories?.length > 2 && (
+                    ) : null}
+                    {mehandi.services?.length > 3 && (
                       <Chip
-                        label={`+${makeup.categories.length - 2}`}
+                        label={`+${mehandi.services.length - 3}`}
                         size="small"
                         sx={{
                           bgcolor: '#E15B6510',
@@ -441,7 +455,7 @@ export default function MakeupList() {
                   {/* Price Section */}
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, color: '#E15B65', mb: 0.5 }}>
-                      {formatINR(makeup.packagePrice)}
+                      {formatINR(mehandi.packagePrice)}
                     </Typography>
                   </Box>
 
@@ -451,7 +465,7 @@ export default function MakeupList() {
                       fullWidth
                       variant="outlined"
                       startIcon={<Visibility />}
-                      onClick={() => handleView(makeup)}
+                      onClick={() => handleView(mehandi)}
                       sx={{
                         borderColor: '#E15B65',
                         color: '#E15B65',
@@ -465,7 +479,7 @@ export default function MakeupList() {
                     </Button>
                     <IconButton
                       color="primary"
-                      onClick={() => navigate(`/mehandi/edit/${makeup._id}`)}
+                      onClick={() => navigate(`/mehandi/edit/${mehandi._id}`)}
                       sx={{
                         border: '1px solid #e0e0e0',
                         '&:hover': { bgcolor: '#f5f5f5' }
@@ -476,7 +490,7 @@ export default function MakeupList() {
                     <IconButton
                       color="error"
                       onClick={() => {
-                        setMakeupToDelete(makeup._id);
+                        setMehandiToDelete(mehandi._id);
                         setOpenConfirm(true);
                       }}
                       sx={{
@@ -503,8 +517,8 @@ export default function MakeupList() {
                       Package Status
                     </Typography>
                     <Switch
-                      checked={makeup.isActive}
-                      onChange={() => handleToggleStatus(makeup._id, makeup.isActive)}
+                      checked={mehandi.isActive}
+                      onChange={() => handleToggleStatus(mehandi._id, mehandi.isActive)}
                       sx={{
                         '& .MuiSwitch-switchBase.Mui-checked': {
                           color: '#4caf50'
@@ -549,7 +563,7 @@ export default function MakeupList() {
           <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 0.5 }}>
-                {selectedMakeup?.packageName}
+                {selectedMehandi?.packageName}
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
@@ -564,7 +578,7 @@ export default function MakeupList() {
                   }}
                 />
                 <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  ID: {selectedMakeup?.packageId}
+                  ID: {selectedMehandi?.packageId}
                 </Typography>
               </Stack>
             </Box>
@@ -582,7 +596,7 @@ export default function MakeupList() {
         </DialogTitle>
 
         <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
-          {selectedMakeup && (
+          {selectedMehandi && (
             <Grid container>
               {/* Left Column: Media & Quick Stats */}
               <Grid item xs={12} md={5} sx={{ borderRight: { md: '1px solid #f0f0f0' } }}>
@@ -599,11 +613,11 @@ export default function MakeupList() {
                         maxHeight: '280px'
                       }}
                     >
-                      {selectedMakeup.image ? (
+                      {selectedMehandi.image ? (
                         <CardMedia
                           component="img"
-                          image={getImageUrl(selectedMakeup.image)}
-                          alt={selectedMakeup.packageName}
+                          image={getImageUrl(selectedMehandi.image)}
+                          alt={selectedMehandi.packageName}
                           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : (
@@ -638,7 +652,7 @@ export default function MakeupList() {
                         }}
                       >
                         <Typography sx={{ fontWeight: 800, color: '#E15B65', fontSize: '1.2rem' }}>
-                          ₹{selectedMakeup.packagePrice?.toLocaleString()}
+                          ₹{selectedMehandi.packagePrice?.toLocaleString()}
                         </Typography>
                       </Box>
                     </Card>
@@ -655,18 +669,18 @@ export default function MakeupList() {
                         </Avatar>
                         <Box>
                           <Typography variant="caption" color="text.secondary">Advance Payment</Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{selectedMakeup.advanceBookingAmount?.toLocaleString()}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{selectedMehandi.advanceBookingAmount?.toLocaleString()}</Typography>
                         </Box>
                       </Box>
 
-                      <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: selectedMakeup.isActive ? '#E8F5E9' : '#F5F5F5', borderRadius: '16px' }}>
-                        <Avatar sx={{ bgcolor: selectedMakeup.isActive ? '#4CAF50' : '#757575', width: 40, height: 40 }}>
-                          {selectedMakeup.isActive ? <CheckCircle fontSize="small" /> : <Close fontSize="small" />}
+                      <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: selectedMehandi.isActive ? '#E8F5E9' : '#F5F5F5', borderRadius: '16px' }}>
+                        <Avatar sx={{ bgcolor: selectedMehandi.isActive ? '#4CAF50' : '#757575', width: 40, height: 40 }}>
+                          {selectedMehandi.isActive ? <CheckCircle fontSize="small" /> : <Close fontSize="small" />}
                         </Avatar>
                         <Box>
                           <Typography variant="caption" color="text.secondary">Current Status</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {selectedMakeup.isActive ? 'Live on Platform' : 'Currently Hidden'}
+                            {selectedMehandi.isActive ? 'Live on Platform' : 'Currently Hidden'}
                           </Typography>
                         </Box>
                       </Box>
@@ -683,7 +697,7 @@ export default function MakeupList() {
                       <Info sx={{ color: '#E15B65' }} /> Package Overview
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.7, fontSize: '0.95rem' }}>
-                      {selectedMakeup.description || 'No detailed description provided for this package.'}
+                      {selectedMehandi.description || 'No detailed description provided for this package.'}
                     </Typography>
                   </section>
 
@@ -698,7 +712,7 @@ export default function MakeupList() {
                         <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: '16px', border: '1px solid #eee' }}>
                           <Typography variant="caption" color="text.secondary">Full Price</Typography>
                           <Typography variant="h6" sx={{ fontWeight: 800, color: '#2c3e50' }}>
-                            ₹{selectedMakeup.packagePrice?.toLocaleString()}
+                            ₹{selectedMehandi.packagePrice?.toLocaleString()}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -706,7 +720,7 @@ export default function MakeupList() {
                         <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: '16px', border: '1px solid #eee' }}>
                           <Typography variant="caption" color="text.secondary">Booking Fee</Typography>
                           <Typography variant="h6" sx={{ fontWeight: 800, color: '#C4572A' }}>
-                            ₹{selectedMakeup.advanceBookingAmount?.toLocaleString()}
+                            ₹{selectedMehandi.advanceBookingAmount?.toLocaleString()}
                           </Typography>
                         </Paper>
                       </Grid>
@@ -715,19 +729,32 @@ export default function MakeupList() {
 
                   <section>
                     <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <Category sx={{ color: '#E15B65' }} /> Service Info
+                      <Category sx={{ color: '#E15B65' }} /> Assigned Categories
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selectedMakeup.module && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                      {(selectedMehandi.services && selectedMehandi.services.length > 0) ? (
+                        selectedMehandi.services.map((svc) => (
+                          <Chip
+                            key={svc._id}
+                            avatar={svc.image ? <Avatar src={getImageUrl(svc.image)} /> : svc.icon ? <Avatar>{svc.icon}</Avatar> : undefined}
+                            label={svc.title}
+                            sx={{ borderRadius: '12px', fontWeight: 600, py: 2.5, px: 1, bgcolor: '#f5f5f5' }}
+                          />
+                        ))
+                      ) : selectedMehandi.category ? (
                         <Chip
-                          icon={<Spa fontSize="small" />}
-                          label={`Module: ${selectedMakeup.module.title}`}
-                          sx={{ borderRadius: '8px', fontWeight: 600, py: 2.5 }}
+                          avatar={selectedMehandi.category.image ? <Avatar src={getImageUrl(selectedMehandi.category.image)} /> : undefined}
+                          label={selectedMehandi.category.title || 'Category'}
+                          sx={{ borderRadius: '12px', fontWeight: 600, py: 2.5, px: 1, bgcolor: '#f5f5f5' }}
                         />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">No categories assigned</Typography>
                       )}
+                    </Box>
+                    <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                       <Chip
                         icon={<Schedule fontSize="small" />}
-                        label={`Updated: ${new Date(selectedMakeup.updatedAt).toLocaleDateString()}`}
+                        label={`Updated: ${new Date(selectedMehandi.updatedAt).toLocaleDateString()}`}
                         sx={{ borderRadius: '8px', fontWeight: 600, py: 2.5 }}
                       />
                     </Box>
@@ -755,9 +782,9 @@ export default function MakeupList() {
             disableElevation
             startIcon={<Edit />}
             onClick={() => {
-              if (!selectedMakeup?._id) return;
+              if (!selectedMehandi?._id) return;
               setOpenView(false);
-              navigate(`/mehandi/edit/${selectedMakeup._id}`);
+              navigate(`/mehandi/edit/${selectedMehandi._id}`);
             }}
             sx={{
               px: 4,

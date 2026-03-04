@@ -120,7 +120,7 @@ export default function AddBouncersPackage() {
           const formatted = data.data
             .filter((cat) => cat.isActive)
             .map((cat) => ({
-              id: cat.categoryId || cat._id,
+              id: cat._id,
               label: cat.title,
               image: cat.image ? `${API_BASE_URL}${cat.image}` : null
             }));
@@ -162,7 +162,7 @@ export default function AddBouncersPackage() {
             advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : ''
           });
 
-          setSelectedServices(pkg.category ? [pkg.category._id || pkg.category] : []);
+          setSelectedServices(pkg.services ? pkg.services.map(s => s._id || s) : []);
 
           if (pkg.image) {
             setImagePreview(`https://api.bookmyevent.ae${pkg.image.startsWith('/') ? '' : '/'}${pkg.image}`);
@@ -181,8 +181,10 @@ export default function AddBouncersPackage() {
   };
 
   const toggleService = (id) => {
-    // Pick a single category; allow unselecting if already active
-    setSelectedServices((prev) => (prev.includes(id) ? [] : [id]));
+    // Multi-selection
+    setSelectedServices((prev) =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
     if (errors.services) setErrors((e) => ({ ...e, services: '' }));
   };
 
@@ -255,9 +257,9 @@ export default function AddBouncersPackage() {
       formData.append('packagePrice', form.price);
       formData.append('advanceBookingAmount', form.advance);
 
-      // Send selected category
+      // Send selected categories
       if (selectedServices.length > 0) {
-        formData.append('category', selectedServices[0]);
+        formData.append('services', JSON.stringify(selectedServices));
       }
 
       if (imageFile) {

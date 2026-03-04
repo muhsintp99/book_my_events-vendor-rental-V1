@@ -177,10 +177,10 @@ export default function BouncersList() {
                 <Container maxWidth="xl">
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Box>
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#fff' }}>
                                 Bouncers & Security Packages
                             </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                            <Typography variant="body2" sx={{ opacity: 0.85, color: '#fff' }}>
                                 {bouncersList.length} total packages • {bouncersList.filter((m) => m.isActive).length} active
                             </Typography>
                         </Box>
@@ -263,7 +263,30 @@ export default function BouncersList() {
                                     <CardContent sx={{ p: 2.5 }}>
                                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }} noWrap>{bouncer.packageName}</Typography>
 
-                                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 2 }}>{formatINR(bouncer.packagePrice)}</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 1.5 }}>{formatINR(bouncer.packagePrice)}</Typography>
+
+                                        {/* Categories Display */}
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                                            {bouncer.services && bouncer.services.length > 0 ? (
+                                                bouncer.services.map((svc) => (
+                                                    <Chip
+                                                        key={svc._id}
+                                                        label={svc.title}
+                                                        size="small"
+                                                        sx={{
+                                                            fontSize: '10px',
+                                                            height: 20,
+                                                            bgcolor: alpha(THEME_COLOR, 0.08),
+                                                            color: THEME_COLOR,
+                                                            fontWeight: 600
+                                                        }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="caption" color="text.secondary">No category</Typography>
+                                            )}
+                                        </Box>
+
                                         <Stack direction="row" spacing={1}>
                                             <Button fullWidth variant="outlined" startIcon={<Visibility />} onClick={() => handleView(bouncer)}>View</Button>
                                             <IconButton color="primary" onClick={() => navigate(`/bouncers/edit/${bouncer._id}`)}><Edit /></IconButton>
@@ -303,6 +326,23 @@ export default function BouncersList() {
                                     <Typography variant="h6">Pricing</Typography>
                                     <Typography variant="body1">Full Price: <b>{formatINR(selectedBouncer.packagePrice)}</b></Typography>
                                     <Typography variant="body1">Advance: <b>{formatINR(selectedBouncer.advanceBookingAmount)}</b></Typography>
+
+                                    <Divider sx={{ my: 1.5 }} />
+                                    <Typography variant="h6">Categories</Typography>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        {selectedBouncer.services && selectedBouncer.services.length > 0 ? (
+                                            selectedBouncer.services.map((svc) => (
+                                                <Chip
+                                                    key={svc._id}
+                                                    label={svc.title}
+                                                    avatar={svc.image ? <Avatar src={getImageUrl(svc.image)} /> : null}
+                                                    sx={{ bgcolor: alpha(THEME_COLOR, 0.1), color: THEME_COLOR, fontWeight: 700 }}
+                                                />
+                                            ))
+                                        ) : (
+                                            <Typography variant="body2" color="text.secondary">No categories selected</Typography>
+                                        )}
+                                    </Box>
                                 </Stack>
                             </Grid>
                         </Grid>

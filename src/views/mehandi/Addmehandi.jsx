@@ -120,7 +120,7 @@ export default function AddMehandiPackage() {
           const formatted = data.data
             .filter((cat) => cat.isActive)
             .map((cat) => ({
-              id: cat.categoryId || cat._id,
+              id: cat._id,
               label: cat.title,
               image: cat.image ? `${API_BASE_URL}${cat.image}` : null
             }));
@@ -204,6 +204,8 @@ export default function AddMehandiPackage() {
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
     if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+
+    if (selectedServices.length === 0) e.services = 'Please select at least one category';
 
     // ✅ Only require image in ADD mode
     if (!isEditMode && !imageFile) {
@@ -307,7 +309,8 @@ export default function AddMehandiPackage() {
   const handleReset = () => {
     setForm({ name: '', description: '', price: '', advance: '' });
     setSelectedServices([]);
-    setImage(null);
+    setImageFile(null);
+    setImagePreview(null);
     setErrors({});
   };
 
@@ -441,8 +444,76 @@ export default function AddMehandiPackage() {
               </Box>
             </Paper>
 
-
-
+            {/* ── 4. Category Selection ── */}
+            <Paper elevation={0} sx={card}>
+              <SL>Select Category *</SL>
+              {svcLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+                  <CircularProgress size={18} thickness={5} sx={{ color: 'primary.main' }} />
+                  <Typography variant="body2" color="text.secondary">Fetching categories...</Typography>
+                </Box>
+              ) : svcError ? (
+                <Alert severity="error" sx={{ py: 0 }}>{svcError}</Alert>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mt: 1 }}>
+                    {services.map((s) => {
+                      const active = selectedServices.includes(s.id);
+                      return (
+                        <Box
+                          key={s.id}
+                          onClick={() => toggleService(s.id)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.25,
+                            px: 1.75,
+                            py: 1.25,
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            border: '1.5px solid',
+                            borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.12)',
+                            bgcolor: active ? 'rgba(196,87,42,0.06)' : '#fff',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            '&:hover': {
+                              borderColor: active ? 'primary.main' : 'rgba(196,87,42,0.3)',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 3px 10px rgba(196,87,42,0.08)'
+                            }
+                          }}
+                        >
+                          {s.image && (
+                            <Avatar
+                              src={s.image}
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                border: '1px solid rgba(196,87,42,0.1)',
+                                bgcolor: '#fff'
+                              }}
+                            />
+                          )}
+                          <Typography
+                            sx={{
+                              fontSize: '13.5px',
+                              fontWeight: active ? 700 : 500,
+                              color: active ? 'primary.main' : 'text.secondary'
+                            }}
+                          >
+                            {s.label}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                  {errors.services && (
+                    <FormHelperText error sx={{ mt: 1.5, ml: 0.5, fontWeight: 500 }}>
+                      {errors.services}
+                    </FormHelperText>
+                  )}
+                </>
+              )}
+            </Paper>
             {/* ── 5. Package Image ── */}
             <Paper elevation={0} sx={card}>
               <SL>Package Image</SL>

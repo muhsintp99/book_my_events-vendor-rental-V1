@@ -420,8 +420,23 @@ export default function FloristList() {
                   </Typography>
 
                   {/* Categories */}
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2, minHeight: 28 }}>
-                    {florist.category && (
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 2, minHeight: 28, gap: 0.5 }}>
+                    {(florist.services && florist.services.length > 0) ? (
+                      florist.services.map((svc, idx) => (
+                        <Chip
+                          key={svc._id || idx}
+                          label={svc.title || 'Service'}
+                          size="small"
+                          sx={{
+                            bgcolor: '#E15B6510',
+                            color: '#E15B65',
+                            fontWeight: 500,
+                            height: 24,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))
+                    ) : florist.category ? (
                       <Chip
                         label={typeof florist.category === 'string' ? 'Category' : florist.category.title}
                         size="small"
@@ -433,7 +448,7 @@ export default function FloristList() {
                           fontSize: '0.75rem'
                         }}
                       />
-                    )}
+                    ) : null}
                   </Stack>
 
                   <Divider sx={{ my: 2 }} />
@@ -722,16 +737,29 @@ export default function FloristList() {
 
                   <section>
                     <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <Category sx={{ color: '#E15B65' }} /> Service Info
+                      <Category sx={{ color: '#E15B65' }} /> Assigned Categories
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selectedFlorist.secondaryModule && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                      {(selectedFlorist.services && selectedFlorist.services.length > 0) ? (
+                        selectedFlorist.services.map((svc) => (
+                          <Chip
+                            key={svc._id}
+                            avatar={svc.image ? <Avatar src={getImageUrl(svc.image)} /> : svc.icon ? <Avatar>{svc.icon}</Avatar> : undefined}
+                            label={svc.title}
+                            sx={{ borderRadius: '12px', fontWeight: 600, py: 2.5, px: 1, bgcolor: '#f5f5f5' }}
+                          />
+                        ))
+                      ) : selectedFlorist.category ? (
                         <Chip
-                          icon={<Spa fontSize="small" />}
-                          label={`Module: ${selectedFlorist.secondaryModule.title}`}
-                          sx={{ borderRadius: '8px', fontWeight: 600, py: 2.5 }}
+                          avatar={selectedFlorist.category.image ? <Avatar src={getImageUrl(selectedFlorist.category.image)} /> : undefined}
+                          label={selectedFlorist.category.title || 'Category'}
+                          sx={{ borderRadius: '12px', fontWeight: 600, py: 2.5, px: 1, bgcolor: '#f5f5f5' }}
                         />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">No categories assigned</Typography>
                       )}
+                    </Box>
+                    <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                       <Chip
                         icon={<Schedule fontSize="small" />}
                         label={`Updated: ${new Date(selectedFlorist.updatedAt).toLocaleDateString()}`}
