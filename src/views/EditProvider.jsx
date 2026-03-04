@@ -41,6 +41,9 @@ const EditProvider = () => {
   const [phoneError, setPhoneError] = useState('');
   const [coverPhotoError, setCoverPhotoError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [bioTitle, setBioTitle] = useState('');
+  const [bioSubtitle, setBioSubtitle] = useState('');
+  const [bioDescription, setBioDescription] = useState('');
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
 
@@ -72,7 +75,7 @@ const EditProvider = () => {
       console.log('User fetch response status:', response.status);
       const data = await response.json();
       console.log('User API Response:', data);
-      
+
       if (data.user) {
         setUserData(data.user);
         setEmail(data.user.email || '');
@@ -94,7 +97,7 @@ const EditProvider = () => {
       console.log('Fetch response status:', response.status);
       const data = await response.json();
       console.log('Provider API Response:', data);
-      
+
       if (data.success && data.data) {
         const provider = data.data;
         console.log('Provider data received:', provider);
@@ -103,6 +106,9 @@ const EditProvider = () => {
         setContactNumber(provider.phone || '');
         setCurrentLogoUrl(provider.logo || null);
         setCurrentCoverPhotoUrl(provider.coverPhoto || null);
+        setBioTitle(provider.bio?.title || '');
+        setBioSubtitle(provider.bio?.subtitle || '');
+        setBioDescription(provider.bio?.description || '');
         console.log('States set - Address:', provider.address || 'empty', 'Phone:', provider.phone || 'empty');
       } else {
         console.log('API did not return success/data - response:', data);
@@ -124,7 +130,7 @@ const EditProvider = () => {
     event.preventDefault();
     setFormError('');
     setPhoneError('');
-    
+
     if (!email || !addressDefault || !contactNumber) {
       setFormError('All fields are required.');
       return;
@@ -169,17 +175,17 @@ const EditProvider = () => {
     console.log('Current states - Email:', email, 'Address:', addressDefault, 'Phone:', contactNumber);
     console.log('Logo file:', logoFile?.name || 'none', 'Current logo URL:', currentLogoUrl);
     console.log('Cover file:', coverPhotoFile?.name || 'none', 'Current cover URL:', currentCoverPhotoUrl);
-    
+
     setCoverPhotoError('');
     setFormError('');
     setPhoneError('');
-    
+
     if (!email || !addressDefault || !contactNumber || (!logoFile && !currentLogoUrl) || (!coverPhotoFile && !currentCoverPhotoUrl)) {
       setFormError('All required fields (email, address, contact number, logo, cover photo) must be filled.');
       console.log('Validation failed - missing fields');
       return;
     }
-    
+
     if (!/^\+\d{1,4}\s\d{10}$/.test(contactNumber)) {
       setPhoneError('Please enter a valid 10-digit contact number (e.g., +91 1234567890).');
       console.log('Phone validation failed');
@@ -216,7 +222,10 @@ const EditProvider = () => {
       formData.append('email', email);
       formData.append('address', addressDefault);
       formData.append('phone', contactNumber);
-      
+      formData.append('bioTitle', bioTitle);
+      formData.append('bioSubtitle', bioSubtitle);
+      formData.append('bioDescription', bioDescription);
+
       if (logoFile) {
         formData.append('logo', logoFile);
         console.log('Appending new logo file');
@@ -283,6 +292,7 @@ const EditProvider = () => {
               <Tab label="Basic Info" {...a11yProps(0)} />
               <Tab label="Contact" {...a11yProps(1)} />
               <Tab label="Media" {...a11yProps(2)} />
+              <Tab label="Bios" {...a11yProps(3)} />
             </Tabs>
           </Box>
           <TabPanel value={tabValue} index={0}>
@@ -329,10 +339,10 @@ const EditProvider = () => {
               <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 4, textAlign: 'center', width: '45%' }}>
                 <Typography variant="h6" gutterBottom>Upload Logo *</Typography>
                 <Box sx={{ mb: 2 }}>
-                  <img 
-                    src={logoFile ? URL.createObjectURL(logoFile) : (currentLogoUrl || 'https://via.placeholder.com/100?text=Logo')} 
-                    alt="Logo" 
-                    style={{ width: '100px', height: '100px' }} 
+                  <img
+                    src={logoFile ? URL.createObjectURL(logoFile) : (currentLogoUrl || 'https://via.placeholder.com/100?text=Logo')}
+                    alt="Logo"
+                    style={{ width: '100px', height: '100px' }}
                   />
                 </Box>
                 <Button variant="outlined" component="label">
@@ -346,10 +356,10 @@ const EditProvider = () => {
               <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 4, textAlign: 'center', width: '45%' }}>
                 <Typography variant="h6" gutterBottom>Upload Cover Photo (Ratio 2:1) *</Typography>
                 <Box sx={{ mb: 2 }}>
-                  <img 
-                    src={coverPhotoFile ? URL.createObjectURL(coverPhotoFile) : (currentCoverPhotoUrl || 'https://via.placeholder.com/200x100?text=Cover+Photo')} 
-                    alt="Cover Photo" 
-                    style={{ width: '200px', height: '100px', borderRadius: '8px' }} 
+                  <img
+                    src={coverPhotoFile ? URL.createObjectURL(coverPhotoFile) : (currentCoverPhotoUrl || 'https://via.placeholder.com/200x100?text=Cover+Photo')}
+                    alt="Cover Photo"
+                    style={{ width: '200px', height: '100px', borderRadius: '8px' }}
                   />
                 </Box>
                 <Button variant="outlined" component="label">
@@ -362,11 +372,46 @@ const EditProvider = () => {
               </Box>
             </Box>
           </TabPanel>
+          <TabPanel value={tabValue} index={3}>
+            <TextField
+              fullWidth
+              label="Bio Title"
+              variant="outlined"
+              value={bioTitle}
+              onChange={(e) => setBioTitle(e.target.value)}
+              sx={{ mb: 2 }}
+              multiline
+              rows={2}
+              placeholder="A short title for your bio..."
+            />
+            <TextField
+              fullWidth
+              label="Bio Subtitle"
+              variant="outlined"
+              value={bioSubtitle}
+              onChange={(e) => setBioSubtitle(e.target.value)}
+              sx={{ mb: 2 }}
+              multiline
+              rows={2}
+              placeholder="A quick tagline or summary..."
+            />
+            <TextField
+              fullWidth
+              label="Bio Description"
+              variant="outlined"
+              value={bioDescription}
+              onChange={(e) => setBioDescription(e.target.value)}
+              sx={{ mb: 2 }}
+              multiline
+              rows={5}
+              placeholder="Detailed description of your business and services..."
+            />
+          </TabPanel>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
             <Button variant="contained" color="black" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button variant="contained" color="info" onClick={handleUpdate} sx={{color:'white', bgcolor:'#E15B65'}}>
+            <Button variant="contained" color="info" onClick={handleUpdate} sx={{ color: 'white', bgcolor: '#E15B65' }}>
               Update
             </Button>
           </Box>

@@ -202,10 +202,10 @@ export default function FloristList() {
         <Container maxWidth="xl">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: 'white' }}>
                 Florist Packages
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              <Typography variant="body2" sx={{ color: 'white', opacity: 0.9 }}>
                 {floristList.length} total packages • {floristList.filter((m) => m.isActive).length} active
               </Typography>
             </Box>

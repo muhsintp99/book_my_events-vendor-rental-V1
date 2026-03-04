@@ -240,10 +240,10 @@ export default function OrnamentsList() {
         <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={3}>
             <Box>
-              <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-1px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+              <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, color: 'white', letterSpacing: '-1px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                 Ornaments Collection
               </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.8, fontWeight: 400, mb: 4, maxWidth: 600 }}>
+              <Typography variant="h6" sx={{ color: 'white', opacity: 0.9, fontWeight: 400, mb: 4, maxWidth: 600 }}>
                 Manage your luxury inventory with precision. Track styles, stock, and value in one professional dashboard.
               </Typography>
               <Stack direction="row" spacing={3}>
