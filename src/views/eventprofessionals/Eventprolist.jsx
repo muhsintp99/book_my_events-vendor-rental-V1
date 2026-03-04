@@ -1,150 +1,375 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Box, Card, CardMedia, CardContent, Typography, IconButton, TextField,
-    InputAdornment, Grid, Button, Chip, Switch, Dialog, DialogTitle,
-    DialogActions, Snackbar, Alert, CircularProgress, Stack
+    Box,
+    Button,
+    TextField,
+    Card,
+    CardContent,
+    CardMedia,
+    Switch,
+    IconButton,
+    Stack,
+    Chip,
+    CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Snackbar,
+    Alert,
+    Avatar,
+    InputAdornment,
+    Grid,
+    Divider,
+    Container,
+    Typography,
+    Paper
 } from '@mui/material';
-import { Engineering, Search, Add, Edit, Delete } from '@mui/icons-material';
-import axios from 'axios';
+import {
+    Visibility,
+    Edit,
+    Delete,
+    Search,
+    Add,
+    Close,
+    Engineering,
+    AttachMoney,
+    Schedule,
+    Info,
+    Image as ImageIcon,
+    CheckCircle,
+    LocalOffer,
+    EventAvailable,
+    Payment,
+    Category
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
-const THEME = '#4527A0';
-const THEME_DARK = '#311B92';
-const THEME_LIGHT = '#D1C4E9';
+const API_BASE_URL = 'https://api.bookmyevent.ae/api/event-professional'; // Backend event professional endpoint
 
-export default function Eventprolist() {
+export default function EventproList() {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const providerId = user?._id;
-    const token = localStorage.getItem('token');
-
-    const [packages, setPackages] = useState([]);
-    const [search, setSearch] = useState('');
+    const [eventproPackages, setEventproPackages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+    const [searchQuery, setPendingSearch] = useState('');
+    const [openView, setOpenView] = useState(false);
+    const [openConfirm, setOpenConfirm] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState(null);
     const [packageToDelete, setPackageToDelete] = useState(null);
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    const fetchPackages = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(`${API}/api/eventprofessionals/vendor/${providerId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setPackages(res.data?.data || []);
-        } catch (err) { console.error('Error fetching packages:', err); }
-        finally { setLoading(false); }
+    const token = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const providerId = userData?._id;
+
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+        return `https://api.bookmyevent.ae/${cleanPath}`;
     };
 
-    useEffect(() => { if (providerId) fetchPackages(); }, [providerId]);
+    const formatINR = (value) =>
+        new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(value || 0);
 
-    const filteredPackages = packages.filter(p =>
-        (p.packageName || '').toLowerCase().includes(search.toLowerCase())
-    );
-
-    const handleToggle = async (id, current) => {
+    const fetchPackages = useCallback(async () => {
+        if (!providerId || !token) {
+            setToast({ open: true, message: 'Please login again', severity: 'error' });
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
         try {
-            await axios.put(`${API}/api/eventprofessionals/${id}`, { isActive: !current }, {
+            const res = await fetch(`${API_BASE_URL}/vendor/${providerId}`, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) throw new Error('Failed to load packages');
+            const result = await res.json();
+            if (result.success) setEventproPackages(result.data || []);
+        } catch (err) {
+            setToast({ open: true, message: err.message, severity: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    }, [providerId, token]);
+
+    useEffect(() => {
+        fetchPackages();
+    }, [fetchPackages]);
+
+    const handleView = (pkg) => {
+        setSelectedPackage(pkg);
+        setOpenView(true);
+    };
+
+    const handleToggleStatus = async (id, current) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/toggle-active/${id}`, {
+                method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchPackages();
-            setSnackbar({ open: true, message: `Package ${!current ? 'activated' : 'deactivated'}`, severity: 'success' });
-        } catch { setSnackbar({ open: true, message: 'Toggle failed', severity: 'error' }); }
+            const data = await res.json();
+            if (data.success) {
+                setEventproPackages((prev) => prev.map((m) => (m._id === id ? { ...m, isActive: !current } : m)));
+                setToast({ open: true, message: 'Status updated', severity: 'success' });
+            }
+        } catch {
+            setToast({ open: true, message: 'Failed to update status', severity: 'error' });
+        }
     };
 
     const handleDelete = async () => {
         try {
-            await axios.delete(`${API}/api/eventprofessionals/${packageToDelete}`, {
+            const res = await fetch(`${API_BASE_URL}/${packageToDelete}`, {
+                method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
+            const data = await res.json();
+            if (data.success) {
+                setEventproPackages((prev) => prev.filter((m) => m._id !== packageToDelete));
+                setToast({ open: true, message: 'Package deleted', severity: 'success' });
+            }
+        } catch {
+            setToast({ open: true, message: 'Delete failed', severity: 'error' });
+        } finally {
+            setOpenConfirm(false);
             setPackageToDelete(null);
-            fetchPackages();
-            setSnackbar({ open: true, message: 'Package deleted', severity: 'success' });
-        } catch { setSnackbar({ open: true, message: 'Delete failed', severity: 'error' }); }
+        }
     };
 
+    const filteredPackages = useMemo(() => {
+        return eventproPackages.filter((m) => {
+            if (!searchQuery) return true;
+            const query = searchQuery.toLowerCase();
+            return (
+                m.packageName?.toLowerCase().includes(query) ||
+                m.description?.toLowerCase().includes(query)
+            );
+        });
+    }, [eventproPackages, searchQuery]);
+
+    const THEME_COLOR = '#4527A0'; // Deep purple theme color for Event Professionals
+
     return (
-        <Box sx={{ p: 3, bgcolor: '#fafafa', minHeight: '100vh' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Engineering sx={{ color: THEME, fontSize: 32 }} />
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: THEME }}>
-                        Event Professional Packages
-                    </Typography>
-                </Box>
-                <Button variant="contained" startIcon={<Add />}
-                    sx={{ bgcolor: THEME, '&:hover': { bgcolor: THEME_DARK }, borderRadius: 2, fontWeight: 700, px: 3 }}
-                    onClick={() => navigate('/eventprofessionals/addpackage')}>
-                    Add Package
-                </Button>
+        <Box sx={{ bgcolor: '#f5f7fa', minHeight: '100vh', pb: 4 }}>
+            <Box
+                sx={{
+                    background: `linear-gradient(135deg, ${THEME_COLOR} 0%, #311B92 100%)`,
+                    color: 'white',
+                    py: 4,
+                    px: 3,
+                    borderRadius: '0 0 24px 24px',
+                    boxShadow: '0 4px 20px rgba(69, 39, 160, 0.3)'
+                }}
+            >
+                <Container maxWidth="xl">
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                Event Professional Packages
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                {eventproPackages.length} total packages • {eventproPackages.filter((m) => m.isActive).length} active
+                            </Typography>
+                        </Box>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            startIcon={<Add />}
+                            onClick={() => navigate('/eventprofessionals/addpackage')}
+                            sx={{
+                                bgcolor: 'white',
+                                color: THEME_COLOR,
+                                fontWeight: 600,
+                                px: 3,
+                                '&:hover': { bgcolor: '#f5f5f5', transform: 'translateY(-2px)' },
+                                transition: 'all 0.3s',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                            }}
+                        >
+                            Add New Package
+                        </Button>
+                    </Stack>
+                </Container>
             </Box>
 
-            <TextField fullWidth placeholder="Search event professional packages..."
-                value={search} onChange={e => setSearch(e.target.value)}
-                InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
-                sx={{ mb: 3, bgcolor: '#fff', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
+            <Box sx={{ width: '100%', px: 2, mt: 4 }}>
+                <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+                    <CardContent>
+                        <TextField
+                            fullWidth
+                            placeholder="Search by package name or description..."
+                            value={searchQuery}
+                            onChange={(e) => setPendingSearch(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search sx={{ color: THEME_COLOR, fontSize: 28 }} />
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: 2 }
+                            }}
+                        />
+                    </CardContent>
+                </Card>
 
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                    <CircularProgress sx={{ color: THEME }} />
-                </Box>
-            ) : filteredPackages.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <Engineering sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">No packages found</Typography>
-                </Box>
-            ) : (
-                <Grid container spacing={3}>
-                    {filteredPackages.map(pkg => (
-                        <Grid item xs={12} sm={6} md={4} key={pkg._id}>
-                            <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' } }}>
-                                <CardMedia component="img" height="180"
-                                    image={pkg.image ? `${API}/${pkg.image}` : 'https://via.placeholder.com/300x180?text=Event+Pro'}
-                                    sx={{ objectFit: 'cover' }} />
-                                <CardContent>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
-                                        <Typography variant="h6" fontWeight={700} noWrap sx={{ maxWidth: '70%' }}>
-                                            {pkg.packageName}
-                                        </Typography>
-                                        <Chip label={pkg.isActive ? 'Active' : 'Inactive'} size="small"
-                                            sx={{ bgcolor: pkg.isActive ? '#e8f5e9' : '#ffebee', color: pkg.isActive ? '#2e7d32' : '#c62828', fontWeight: 700 }} />
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                        <CircularProgress size={60} sx={{ color: THEME_COLOR }} />
+                    </Box>
+                ) : filteredPackages.length === 0 ? (
+                    <Card sx={{ textAlign: 'center', py: 8 }}>
+                        <Engineering sx={{ fontSize: 80, color: '#ddd', mb: 2 }} />
+                        <Typography variant="h5" color="text.secondary">No packages found</Typography>
+                        <Button
+                            variant="contained"
+                            sx={{ mt: 3, bgcolor: THEME_COLOR }}
+                            onClick={() => navigate('/eventprofessionals/addpackage')}
+                        >
+                            Create Your First Package
+                        </Button>
+                    </Card>
+                ) : (
+                    <Grid container spacing={3}>
+                        {filteredPackages.map((pkg) => (
+                            <Grid item xs={12} sm={6} md={4} lg={3} key={pkg._id}>
+                                <Card sx={{ height: '100%', borderRadius: 3, transition: '0.3s', '&:hover': { transform: 'translateY(-8px)' } }}>
+                                    <Box sx={{ position: 'relative', pt: '75%', bgcolor: '#f5f5f5' }}>
+                                        {pkg.image ? (
+                                            <CardMedia
+                                                component="img"
+                                                image={getImageUrl(pkg.image)}
+                                                alt={pkg.packageName}
+                                                sx={{ position: 'absolute', top: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        ) : (
+                                            <Box sx={{ position: 'absolute', top: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Engineering sx={{ fontSize: 60, color: '#ccc' }} />
+                                            </Box>
+                                        )}
                                     </Box>
-                                    <Typography variant="h5" fontWeight={800} color={THEME} sx={{ mb: 1 }}>
-                                        ₹{pkg.packagePrice || 0}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                        {pkg.description || 'No description'}
-                                    </Typography>
-                                    <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                                        <Box>
-                                            <IconButton size="small" onClick={() => navigate(`/eventprofessionals/edit/${pkg._id}`)} sx={{ color: THEME }}>
-                                                <Edit fontSize="small" />
-                                            </IconButton>
-                                            <IconButton size="small" onClick={() => setPackageToDelete(pkg._id)} sx={{ color: '#ef5350' }}>
-                                                <Delete fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                        <Switch checked={pkg.isActive} onChange={() => handleToggle(pkg._id, pkg.isActive)}
-                                            sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: THEME }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: THEME } }} />
-                                    </Stack>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-            )}
+                                    <CardContent sx={{ p: 2.5 }}>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }} noWrap>{pkg.packageName}</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLOR, mb: 1 }}>{formatINR(pkg.packagePrice)}</Typography>
 
-            <Dialog open={!!packageToDelete} onClose={() => setPackageToDelete(null)}>
-                <DialogTitle>Delete this package?</DialogTitle>
-                <DialogActions>
-                    <Button onClick={() => setPackageToDelete(null)}>Cancel</Button>
-                    <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
+                                        {/* Categories Display */}
+                                        <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {pkg.services && pkg.services.length > 0 ? (
+                                                pkg.services.map((svc) => (
+                                                    <Chip
+                                                        key={svc._id}
+                                                        label={svc.title}
+                                                        avatar={
+                                                            svc.image ? (
+                                                                <Avatar src={getImageUrl(svc.image)} />
+                                                            ) : (
+                                                                <Avatar><Category sx={{ fontSize: 14 }} /></Avatar>
+                                                            )
+                                                        }
+                                                        size="small"
+                                                        sx={{ fontSize: '0.65rem', height: '28px', bgcolor: 'rgba(69, 39, 160, 0.1)', color: THEME_COLOR }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="caption" color="text.disabled">No categories</Typography>
+                                            )}
+                                        </Box>
+
+                                        <Stack direction="row" spacing={1}>
+                                            <Button fullWidth variant="outlined" startIcon={<Visibility />} onClick={() => handleView(pkg)}>View</Button>
+                                            <IconButton color="primary" onClick={() => navigate(`/eventprofessionals/edit/${pkg._id}`)}><Edit /></IconButton>
+                                            <IconButton color="error" onClick={() => { setPackageToDelete(pkg._id); setOpenConfirm(true); }}><Delete /></IconButton>
+                                        </Stack>
+                                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <Typography variant="body2" fontWeight={500}>Status</Typography>
+                                            <Switch checked={pkg.isActive} onChange={() => handleToggleStatus(pkg._id, pkg.isActive)} />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                )}
+            </Box>
+
+            {/* View Modal */}
+            <Dialog open={openView} onClose={() => setOpenView(false)} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ bgcolor: THEME_COLOR, color: 'white' }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6">{selectedPackage?.packageName}</Typography>
+                        <IconButton onClick={() => setOpenView(false)} sx={{ color: 'white' }}><Close /></IconButton>
+                    </Stack>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {selectedPackage && (
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={5}>
+                                {selectedPackage.image && <img src={getImageUrl(selectedPackage.image)} alt={selectedPackage.packageName} style={{ width: '100%', borderRadius: '12px' }} />}
+                            </Grid>
+                            <Grid item xs={12} md={7}>
+                                <Typography variant="h6" gutterBottom>Description</Typography>
+                                <Typography variant="body1" color="text.secondary" paragraph>{selectedPackage.description}</Typography>
+                                <Divider sx={{ my: 2 }} />
+                                <Stack spacing={1}>
+                                    <Typography variant="h6">Pricing</Typography>
+                                    <Typography variant="body1">Full Price: <b>{formatINR(selectedPackage.packagePrice)}</b></Typography>
+                                    <Typography variant="body1">Advance: <b>{formatINR(selectedPackage.advanceBookingAmount)}</b></Typography>
+                                </Stack>
+
+                                {selectedPackage.services && selectedPackage.services.length > 0 && (
+                                    <Box sx={{ mt: 3 }}>
+                                        <Typography variant="h6" gutterBottom>Categories</Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {selectedPackage.services.map((svc) => (
+                                                <Chip
+                                                    key={svc._id}
+                                                    label={svc.title}
+                                                    avatar={
+                                                        svc.image ? (
+                                                            <Avatar src={getImageUrl(svc.image)} />
+                                                        ) : (
+                                                            <Avatar><Category /></Avatar>
+                                                        )
+                                                    }
+                                                    variant="outlined"
+                                                    color="primary"
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Grid>
+                        </Grid>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setOpenView(false)}>Close</Button>
+                    <Button variant="contained" sx={{ bgcolor: THEME_COLOR }} onClick={() => navigate(`/eventprofessionals/edit/${selectedPackage?._id}`)}>Edit Package</Button>
                 </DialogActions>
             </Dialog>
 
-            <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-                <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+            {/* Delete Dialog */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Delete Package?</DialogTitle>
+                <DialogContent>This action cannot be undone.</DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)}>Cancel</Button>
+                    <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={6000}
+                onClose={() => setToast({ ...toast, open: false })}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert severity={toast.severity} variant="filled" onClose={() => setToast({ ...toast, open: false })}>
+                    {toast.message}
+                </Alert>
             </Snackbar>
         </Box>
     );

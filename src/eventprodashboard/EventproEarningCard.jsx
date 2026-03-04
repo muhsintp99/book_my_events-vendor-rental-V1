@@ -48,7 +48,7 @@ export default function EventproEarningCard({
                     border={false}
                     content={false}
                     sx={{
-                        bgcolor: '#4527A0',
+                        bgcolor: '#E15B65',
                         color: '#fff',
                         overflow: 'hidden',
                         position: 'relative',

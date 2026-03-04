@@ -56,7 +56,7 @@ export default function WelcomeBanner() {
                 sx={{
                     position: 'relative',
                     overflow: 'hidden',
-                    background: 'linear-gradient(135deg, #311B92 0%, #4527A0 45%, #7E57C2 100%)',
+                    background: 'linear-gradient(135deg, #B71C1C 0%, #C62828 45%, #EF5350 100%)',
                     borderRadius: 3,
                     px: { xs: 3, md: 4 },
                     py: { xs: 2.5, md: 3 },
@@ -64,12 +64,12 @@ export default function WelcomeBanner() {
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
-                    boxShadow: '0 14px 35px rgba(69, 39, 160, 0.35)',
+                    boxShadow: '0 14px 35px rgba(198, 40, 40, 0.35)',
                     transition: '0.3s ease',
 
                     '&:hover': {
                         transform: 'translateY(-3px)',
-                        boxShadow: '0 22px 45px rgba(69, 39, 160, 0.45)'
+                        boxShadow: '0 22px 45px rgba(198, 40, 40, 0.45)'
                     }
                 }}
             >
@@ -170,8 +170,8 @@ export default function WelcomeBanner() {
                             width: 42,
                             height: 42,
                             borderRadius: '12px',
-                            background: isSubscribed ? 'rgba(245, 158, 11, 0.1)' : 'rgba(69, 39, 160, 0.08)',
-                            color: isSubscribed ? '#f59e0b' : '#4527A0'
+                            background: isSubscribed ? 'rgba(245, 158, 11, 0.1)' : 'rgba(198, 40, 40, 0.08)',
+                            color: isSubscribed ? '#f59e0b' : '#C62828'
                         }}
                     >
                         {isSubscribed ? (

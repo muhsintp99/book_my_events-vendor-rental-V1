@@ -20,7 +20,7 @@ import {
     Chip,
     CircularProgress
 } from '@mui/material';
-import { CloudUpload, Close, AddPhotoAlternate, AutoAwesome, RotateLeft, BookmarkBorder } from '@mui/icons-material';
+import { CloudUpload, Close, AddPhotoAlternate, AutoAwesome, RotateLeft, BookmarkBorder, Category } from '@mui/icons-material';
 
 // ── Theme ─────────────────────────────────────────────────
 const theme = createTheme({
@@ -48,188 +48,605 @@ const theme = createTheme({
                     fontSize: '14.5px',
                     '& fieldset': { borderColor: 'rgba(198,40,40,0.2)' },
                     '&:hover fieldset': { borderColor: 'rgba(198,40,40,0.5) !important' },
-                    '&.Mui-focused fieldset': { borderColor: '#C62828 !important', borderWidth: 2 },
-                    transition: 'box-shadow .3s',
-                    '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(198,40,40,0.10)' }
+                    '&.Mui-focused fieldset': { borderColor: '#C62828 !important', borderWidth: '2px' }
+                },
+                input: { padding: '15px 16px' }
+            }
+        },
+        MuiInputLabel: {
+            styleOverrides: {
+                root: {
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    '&.Mui-focused': { color: '#0f172a' }
                 }
+            }
+        },
+        MuiButton: {
+            styleOverrides: {
+                root: { textTransform: 'none', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, borderRadius: 12 }
             }
         }
     }
 });
 
-const API = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
+// Section label
+const SL = ({ children }) => (
+    <Typography sx={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: '#0f172a', mb: 1.25 }}>
+        {children}
+    </Typography>
+);
+
+// Shared card style
+const card = {
+    bgcolor: '#fff',
+    border: '1px solid rgba(15,23,42,0.11)',
+    borderRadius: '16px',
+    p: { xs: 2.5, sm: 3 },
+    boxShadow: '0 2px 14px rgba(15,23,42,0.05)'
+};
 
 export default function AddPanthalPackage() {
+    const [form, setForm] = useState({ name: '', description: '', price: '', advance: '' });
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [services, setServices] = useState([]);
+    const [svcLoading, setSvcLoading] = useState(true);
+    const [svcError, setSvcError] = useState(null);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [snack, setSnack] = useState({ open: false, msg: '', severity: 'success' });
+    const [busy, setBusy] = useState(false);
+    const [drag, setDrag] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
-    const isEdit = Boolean(id);
+    const isEditMode = Boolean(id);
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const providerId = user?._id;
-    const moduleId = localStorage.getItem('moduleId');
-    const token = localStorage.getItem('token');
+    const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
 
-    const [form, setForm] = useState({
-        packageName: '', description: '', packagePrice: '', advanceBookingAmount: '', additionalHourPrice: ''
-    });
-    const [image, setImage] = useState(null);
-    const [preview, setPreview] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [fetchLoading, setFetchLoading] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    // ── Fetch categories from API ──────────────────────────
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const moduleId = localStorage.getItem('moduleId');
+                if (!moduleId) throw new Error('Module ID not found');
+
+                const res = await fetch(`${API_BASE_URL}/api/categories/modules/${moduleId}`);
+                if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
+
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) {
+                    const formatted = data.data
+                        .filter((cat) => cat.isActive)
+                        .map((cat) => ({
+                            id: cat._id,
+                            label: cat.title,
+                            image: cat.image ? `${API_BASE_URL}${cat.image.startsWith('/') ? '' : '/'}${cat.image}` : null
+                        }));
+                    setServices(formatted);
+                } else {
+                    setSvcError('No services found');
+                }
+            } catch (err) {
+                setSvcError(err.message);
+            } finally {
+                setSvcLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
 
     useEffect(() => {
-        if (isEdit) {
-            setFetchLoading(true);
-            fetch(`${API}/api/panthal/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-                .then(r => r.json()).then(d => {
-                    const p = d.data || d;
+        if (!id) return;
+
+        const fetchPackage = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                const res = await fetch(`${API_BASE_URL}/api/panthal-decoration/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    const pkg = data.data;
+
                     setForm({
-                        packageName: p.packageName || '',
-                        description: p.description || '',
-                        packagePrice: p.packagePrice || '',
-                        advanceBookingAmount: p.advanceBookingAmount || '',
-                        additionalHourPrice: p.additionalHourPrice || ''
+                        name: pkg.packageName || '',
+                        description: pkg.description || '',
+                        price: pkg.packagePrice != null ? String(pkg.packagePrice) : '',
+                        advance: pkg.advanceBookingAmount != null ? String(pkg.advanceBookingAmount) : ''
                     });
-                    if (p.image) setPreview(`${API}/${p.image}`);
-                }).catch(console.error).finally(() => setFetchLoading(false));
-        }
+
+                    setSelectedServices(pkg.services || []);
+
+                    if (pkg.image) {
+                        setImagePreview(`${API_BASE_URL}${pkg.image.startsWith('/') ? '' : '/'}${pkg.image}`);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchPackage();
     }, [id]);
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setErrors({ ...errors, [e.target.name]: '' });
+    const set = (k, v) => {
+        setForm((f) => ({ ...f, [k]: v }));
+        if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }));
     };
 
-    const handleImage = (e) => {
-        const file = e.target.files?.[0];
-        if (file) { setImage(file); setPreview(URL.createObjectURL(file)); }
+    const toggleService = (id) => {
+        setSelectedServices((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+        if (errors.services) setErrors((e) => ({ ...e, services: '' }));
+    };
+
+    const loadImg = (file) => {
+        if (!file?.type.startsWith('image/')) return;
+
+        setImageFile(file); // ✅ store real file
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setImagePreview(ev.target.result); // preview only
+            setErrors((e) => ({ ...e, image: '' }));
+        };
+        reader.readAsDataURL(file);
     };
 
     const validate = () => {
         const e = {};
-        if (!form.packageName.trim()) e.packageName = 'Package name required';
-        if (!form.packagePrice) e.packagePrice = 'Price required';
-        setErrors(e);
-        return !Object.keys(e).length;
+        if (!form.name.trim()) e.name = 'Required';
+        if (!form.description.trim()) e.description = 'Required';
+        if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
+
+        // ✅ Only require image in ADD mode
+        if (!isEditMode && !imageFile) {
+            e.image = 'Please upload a package image';
+        }
+
+        return e;
     };
 
-    const handleSubmit = async () => {
-        if (!validate()) return;
-        setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const errs = validate();
+        if (Object.keys(errs).length) {
+            setErrors(errs);
+            setSnack({
+                open: true,
+                msg: 'Please fix the highlighted fields.',
+                severity: 'error'
+            });
+            return;
+        }
+
         try {
-            const fd = new FormData();
-            fd.append('packageName', form.packageName);
-            fd.append('description', form.description);
-            fd.append('packagePrice', form.packagePrice);
-            fd.append('advanceBookingAmount', form.advanceBookingAmount);
-            fd.append('additionalHourPrice', form.additionalHourPrice);
-            fd.append('providerId', providerId);
-            fd.append('module', moduleId);
-            if (image) fd.append('image', image);
+            setBusy(true);
 
-            const url = isEdit ? `${API}/api/panthal/${id}` : `${API}/api/panthal`;
-            const method = isEdit ? 'PUT' : 'POST';
-            await fetch(url, { method, headers: { Authorization: `Bearer ${token}` }, body: fd });
+            const moduleId = localStorage.getItem('moduleId');
+            const userData = localStorage.getItem("user");
 
-            setSnackbar({ open: true, message: isEdit ? 'Package updated!' : 'Package created!', severity: 'success' });
-            setTimeout(() => navigate('/panthal/packagelist'), 1200);
-        } catch (err) {
-            setSnackbar({ open: true, message: 'Failed to save package', severity: 'error' });
-        } finally { setLoading(false); }
+            if (!moduleId || !userData) {
+                throw new Error("Module ID or Vendor ID missing in localStorage");
+            }
+
+            const parsedUser = JSON.parse(userData);
+            const providerId = parsedUser._id;
+            const token = localStorage.getItem('token');
+
+            if (!moduleId || !providerId) {
+                throw new Error('Module ID or Vendor ID missing in localStorage');
+            }
+
+            const formData = new FormData();
+
+            formData.append('module', moduleId);
+            formData.append('providerId', providerId);
+            formData.append('packageName', form.name);
+            formData.append('description', form.description);
+            formData.append('packagePrice', form.price);
+            formData.append('advanceBookingAmount', form.advance);
+
+            // Optional: send selected services
+            formData.append('services', JSON.stringify(selectedServices));
+
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            const url = isEditMode
+                ? `${API_BASE_URL}/api/panthal-decoration/${id}`
+                : `${API_BASE_URL}/api/panthal-decoration/create`;
+
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: token
+                    ? {
+                        Authorization: `Bearer ${token}`
+                    }
+                    : undefined,
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Something went wrong');
+            }
+
+            setSnack({
+                open: true,
+                msg: 'Package published successfully 🎉',
+                severity: 'success'
+            });
+
+            // Reset form
+            setForm({ name: '', description: '', price: '', advance: '' });
+            setSelectedServices([]);
+            setImageFile(null);
+            setImagePreview(null);
+            setErrors({});
+        } catch (error) {
+            setSnack({
+                open: true,
+                msg: error.message,
+                severity: 'error'
+            });
+        } finally {
+            setBusy(false);
+        }
     };
 
     const handleReset = () => {
-        setForm({ packageName: '', description: '', packagePrice: '', advanceBookingAmount: '', additionalHourPrice: '' });
-        setImage(null); setPreview(null); setErrors({});
+        setForm({ name: '', description: '', price: '', advance: '' });
+        setSelectedServices([]);
+        setImageFile(null);
+        setImagePreview(null);
+        setErrors({});
     };
 
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-                <Paper sx={{ p: 4, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-                    {loading && <LinearProgress sx={{ mb: 2, borderRadius: 2 }} />}
+            <Box sx={{ width: '100%', bgcolor: '#FFF8F8', minHeight: '100%', py: { xs: 3, sm: 4 }, px: { xs: 2, sm: 3, md: 4 } }}>
+                {/* Page Heading */}
+                <Box sx={{ mb: 3.5 }}>
+                    <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.65rem', sm: '2rem' }, lineHeight: 1.2 }}>
+                        Add{' '}
+                        <Box component="em" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
+                            Panthal & Decoration
+                        </Box>{' '}
+                        Package
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={0.75} fontSize="13.5px">
+                        Fill in the details below to create and publish a new package.
+                    </Typography>
+                </Box>
 
-                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
-                        <Avatar sx={{ bgcolor: '#C62828', width: 56, height: 56 }}>
-                            <AutoAwesome />
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h4" fontWeight={700} color="primary">
-                                {isEdit ? 'Edit Panthal Package' : 'Create Panthal Package'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {isEdit ? 'Update your panthal & decoration package details' : 'Add a new panthal & decoration package for your clients'}
-                            </Typography>
-                        </Box>
-                    </Stack>
+                {/* Dark Header */}
+                <Box
+                    sx={{
+                        bgcolor: '#1A0A00',
+                        px: { xs: 2.5, sm: 3.5 },
+                        py: 2.25,
+                        borderRadius: '16px 16px 0 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2
+                    }}
+                >
+                    <Avatar sx={{ bgcolor: 'rgba(198,40,40,0.3)', borderRadius: '10px', width: 38, height: 38, fontSize: '15px' }}>✦</Avatar>
+                    <Box>
+                        <Typography sx={{ color: '#F7EDE0', fontFamily: "'Playfair Display', serif", fontSize: '1.05rem' }}>Package Details</Typography>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '11.5px' }}>All * fields are required</Typography>
+                    </Box>
+                </Box>
 
-                    {fetchLoading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                            <CircularProgress sx={{ color: '#C62828' }} />
-                        </Box>
-                    ) : (
-                        <Stack spacing={3}>
-                            <TextField fullWidth label="Package Name" name="packageName"
-                                placeholder="Enter panthal & decoration package name"
-                                value={form.packageName} onChange={handleChange}
-                                error={!!errors.packageName} helperText={errors.packageName} />
+                {busy && <LinearProgress color="primary" />}
 
-                            <TextField fullWidth multiline rows={4} label="Description" name="description"
-                                placeholder="Describe your panthal & decoration services, setup types, etc."
-                                value={form.description} onChange={handleChange} />
+                {/* Form */}
+                <Box
+                    component="form"
+                    onSubmit={handleSubmit}
+                    noValidate
+                    sx={{
+                        border: '1px solid rgba(198,40,40,0.11)',
+                        borderTop: 'none',
+                        borderRadius: '0 0 16px 16px',
+                        bgcolor: '#FFF8F8',
+                        p: { xs: 2, sm: 3 },
+                        boxShadow: '0 4px 24px rgba(198,40,40,0.06)'
+                    }}
+                >
+                    <Stack spacing={2.5}>
+                        {/* ── 1. Package Name ── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Package Name</SL>
+                            <TextField
+                                label="Package Name *"
+                                placeholder="e.g. Wedding Panthal Package"
+                                fullWidth
+                                value={form.name}
+                                onChange={(e) => set('name', e.target.value)}
+                                error={!!errors.name}
+                                helperText={errors.name}
+                            />
+                        </Paper>
 
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <TextField fullWidth label="Package Price" name="packagePrice" type="number"
-                                    value={form.packagePrice} onChange={handleChange}
-                                    InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
-                                    error={!!errors.packagePrice} helperText={errors.packagePrice} />
-                                <TextField fullWidth label="Advance Amount" name="advanceBookingAmount" type="number"
-                                    value={form.advanceBookingAmount} onChange={handleChange}
-                                    InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
-                            </Stack>
+                        {/* ── 2. Description ── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Description</SL>
+                            <TextField
+                                label="Description *"
+                                placeholder="Describe your panthal & decoration services, setup types, and specialties..."
+                                fullWidth
+                                multiline
+                                rows={4}
+                                value={form.description}
+                                onChange={(e) => set('description', e.target.value)}
+                                error={!!errors.description}
+                                helperText={errors.description}
+                                sx={{ '& .MuiOutlinedInput-root .MuiOutlinedInput-input': { padding: '4px 2px' } }}
+                            />
+                        </Paper>
 
-                            <TextField fullWidth label="Additional Hour Price" name="additionalHourPrice" type="number"
-                                value={form.additionalHourPrice} onChange={handleChange}
-                                InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                        {/* ── 4. Services (Categories) ── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Select Services / Categories</SL>
+                            {svcLoading ? (
+                                <CircularProgress size={24} />
+                            ) : svcError ? (
+                                <Typography color="error">{svcError}</Typography>
+                            ) : (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                                    {services.map((svc) => (
+                                        <Chip
+                                            key={svc.id}
+                                            label={svc.label}
+                                            avatar={
+                                                svc.image ? (
+                                                    <Avatar src={svc.image} sx={{ width: 24, height: 24 }} />
+                                                ) : (
+                                                    <Avatar sx={{ width: 24, height: 24, bgcolor: 'rgba(0,0,0,0.1)' }}>
+                                                        <Category sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                                    </Avatar>
+                                                )
+                                            }
+                                            onClick={() => toggleService(svc.id)}
+                                            variant={selectedServices.includes(svc.id) ? 'filled' : 'outlined'}
+                                            color={selectedServices.includes(svc.id) ? 'primary' : 'default'}
+                                            sx={{
+                                                borderRadius: '12px',
+                                                fontWeight: 500,
+                                                '&.MuiChip-filled': { bgcolor: 'primary.main', color: '#fff' },
+                                                '&.MuiChip-outlined': { borderColor: 'rgba(198, 40, 40, 0.3)', color: 'text.secondary' }
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+                            {errors.services && <Typography sx={{ color: 'error.main', fontSize: '12px', mt: 1 }}>{errors.services}</Typography>}
+                        </Paper>
 
-                            <Box>
-                                <Button component="label" variant="outlined" startIcon={<CloudUpload />}
-                                    sx={{ borderColor: '#C62828', color: '#C62828', '&:hover': { borderColor: '#8E0000', bgcolor: 'rgba(198,40,40,0.04)' } }}>
-                                    Upload Package Image
-                                    <input hidden type="file" accept="image/*" onChange={handleImage} />
-                                </Button>
-                                {preview && (
-                                    <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
-                                        <img src={preview} alt="preview" style={{ width: 200, height: 140, borderRadius: 12, objectFit: 'cover' }} />
-                                        <IconButton size="small" onClick={() => { setImage(null); setPreview(null); }}
-                                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: '#ef5350', color: '#fff', '&:hover': { bgcolor: '#c62828' } }}>
-                                            <Close fontSize="small" />
-                                        </IconButton>
-                                    </Box>
-                                )}
+
+                        {/* ── 3. Pricing — 50/50 ── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Pricing</SL>
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2.5 }}>
+                                <Box sx={{ flex: 1 }}>
+                                    <TextField
+                                        label="Package Price *"
+                                        placeholder="0"
+                                        fullWidth
+                                        type="number"
+                                        value={form.price}
+                                        onChange={(e) => set('price', e.target.value)}
+                                        error={!!errors.price}
+                                        helperText={errors.price}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </Box>
+
                             </Box>
+                        </Paper>
 
-                            <Stack direction="row" spacing={2}>
-                                <Button fullWidth variant="contained" onClick={handleSubmit} disabled={loading}
-                                    sx={{ py: 1.5, fontWeight: 700, fontSize: '1rem' }}>
-                                    {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : (isEdit ? 'Update Package' : 'Create Package')}
-                                </Button>
-                                <Button fullWidth variant="outlined" onClick={handleReset} startIcon={<RotateLeft />}
-                                    sx={{ py: 1.5, fontWeight: 700 }}>
-                                    Reset
-                                </Button>
-                            </Stack>
+
+
+                        {/* ── 5. Package Image ── */}
+                        <Paper elevation={0} sx={card}>
+                            <SL>Package Image</SL>
+
+                            {imagePreview ? (
+                                <Box sx={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+                                    <Box
+                                        component="img"
+                                        src={imagePreview}
+                                        alt="preview"
+                                        sx={{
+                                            width: '100%',
+                                            height: { xs: 200, sm: 260, md: 300 },
+                                            objectFit: 'cover',
+                                            display: 'block',
+                                            borderRadius: '12px',
+                                            border: '1.5px solid rgba(198,40,40,0.15)'
+                                        }}
+                                    />
+                                    <IconButton
+                                        onClick={() => {
+                                            setImageFile(null);
+                                            setImagePreview(null);
+                                        }}
+                                        size="small"
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 10,
+                                            right: 10,
+                                            bgcolor: 'rgba(0,0,0,0.6)',
+                                            color: '#fff',
+                                            '&:hover': { bgcolor: 'primary.main' }
+                                        }}
+                                    >
+                                        <Close fontSize="small" />
+                                    </IconButton>
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 10,
+                                            left: 10,
+                                            bgcolor: 'rgba(0,0,0,0.55)',
+                                            borderRadius: '8px',
+                                            px: 1.5,
+                                            py: 0.5,
+                                            backdropFilter: 'blur(6px)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 0.75
+                                        }}
+                                    >
+                                        <AddPhotoAlternate sx={{ color: '#fff', fontSize: 13 }} />
+                                        <Typography sx={{ color: '#fff', fontSize: '11.5px' }}>Package Image</Typography>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Box
+                                    component="label"
+                                    htmlFor="pkg-img"
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setDrag(true);
+                                    }}
+                                    onDragLeave={() => setDrag(false)}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setDrag(false);
+                                        loadImg(e.dataTransfer.files[0]);
+                                    }}
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: `2px dashed ${errors.image ? '#d32f2f' : drag ? '#C62828' : 'rgba(198,40,40,0.28)'}`,
+                                        borderRadius: '12px',
+                                        py: { xs: 4.5, sm: 5.5 },
+                                        px: 3,
+                                        cursor: 'pointer',
+                                        bgcolor: drag ? 'rgba(198,40,40,0.04)' : '#FFF8F8',
+                                        textAlign: 'center',
+                                        transition: 'all 0.2s',
+                                        '&:hover': { borderColor: '#C62828', bgcolor: 'rgba(198,40,40,0.03)' }
+                                    }}
+                                >
+                                    <input id="pkg-img" type="file" accept="image/*" hidden onChange={(e) => loadImg(e.target.files[0])} />
+                                    <Avatar sx={{ bgcolor: 'rgba(198,40,40,0.1)', width: 52, height: 52, mb: 1.75, borderRadius: '13px' }}>
+                                        <CloudUpload sx={{ color: '#C62828', fontSize: 24 }} />
+                                    </Avatar>
+                                    <Typography fontWeight={600} fontSize="15px" color="text.primary" mb={0.5}>
+                                        Click to upload image
+                                    </Typography>
+                                    <Typography fontSize="13px" color="text.secondary" mb={2}>
+                                        Drag & drop also supported
+                                    </Typography>
+                                    <Stack direction="row" spacing={0.75} flexWrap="wrap" justifyContent="center">
+                                        {['JPG', 'PNG', 'WEBP', 'Max 5MB'].map((f) => (
+                                            <Chip
+                                                key={f}
+                                                label={f}
+                                                size="small"
+                                                sx={{ bgcolor: 'rgba(198,40,40,0.08)', color: '#8B1A1A', fontSize: '11px', height: 24 }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                </Box>
+                            )}
+                            {errors.image && <Typography sx={{ color: 'error.main', fontSize: '12px', mt: 0.75 }}>{errors.image}</Typography>}
+                        </Paper>
+
+                        {/* ── Buttons ── */}
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} pt={0.5}>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                size="large"
+                                disabled={busy}
+                                startIcon={<AutoAwesome />}
+                                sx={{
+                                    flex: { sm: 1 },
+                                    py: 1.65,
+                                    fontSize: '15px',
+                                    background: 'linear-gradient(135deg, #C62828 0%, #8E0000 100%)',
+                                    boxShadow: '0 4px 18px rgba(198, 40, 40, 0.32)',
+                                    '&:hover': { boxShadow: '0 6px 24px rgba(198, 40, 40, 0.44)', transform: 'translateY(-1px)' },
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {busy
+                                    ? isEditMode
+                                        ? 'Updating…'
+                                        : 'Publishing…'
+                                    : isEditMode
+                                        ? 'Update Package'
+                                        : 'Add Package'}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                size="large"
+                                onClick={handleReset}
+                                startIcon={<RotateLeft />}
+                                sx={{
+                                    flex: { sm: 1 },
+                                    py: 1.65,
+                                    fontSize: '15px',
+                                    borderColor: 'rgba(198,40,40,0.28)',
+                                    color: 'primary.dark',
+                                    '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(198,40,40,0.04)' }
+                                }}
+                            >
+                                Reset
+                            </Button>
+
+
                         </Stack>
-                    )}
-                </Paper>
-
-                <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-                    <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-                </Snackbar>
+                    </Stack>
+                </Box>
             </Box>
+
+            <Snackbar
+                open={snack.open}
+                autoHideDuration={3500}
+                onClose={() => setSnack(s => ({ ...s, open: false }))}
+                anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+                <Alert
+                    severity={snack.severity}
+                    variant="filled"
+                    onClose={() => setSnack(s => ({ ...s, open: false }))}
+                    sx={{
+                        borderRadius: "12px",
+                        fontFamily: "'DM Sans', sans-serif",
+                        minWidth: 280
+                    }}
+                >
+                    {snack.msg}
+                </Alert>
+            </Snackbar>
         </ThemeProvider>
     );
 }

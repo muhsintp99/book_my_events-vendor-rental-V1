@@ -164,7 +164,7 @@ function PanthalSchedules() {
 
     const fetchpanthalPackages = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/panthal/vendor/${providerId}`);
+            const response = await fetch(`${API_BASE_URL}/api/panthal-decoration/vendor/${providerId}`);
             const data = await response.json();
             if (data.success) {
                 setPackages(data.data || []);
