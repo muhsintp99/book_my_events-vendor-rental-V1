@@ -63,14 +63,11 @@ function BookingCalendar() {
     contactNumber: '',
     emailAddress: '',
     address: '',
-    numberOfGuests: '',
     additionalNotes: '',
-    venueId: '',
-    moduleId: '',
     packageId: '',
     bookingDate: new Date().toISOString().split('T')[0],
-    timeSlot: [],
     paymentType: 'Cash',
+    rentalType: 'Rental',
     bookingType: 'Direct'
   });
 
@@ -95,13 +92,13 @@ function BookingCalendar() {
 
   const providerId = getProviderId();
 
- useEffect(() => {
-  if (providerId) {
-    fetchBookings();
-    fetchModules();
-    fetchOrnamentPackages();
-  }
-}, [currentDate, providerId]);
+  useEffect(() => {
+    if (providerId) {
+      fetchBookings();
+      fetchModules();
+      fetchOrnamentPackages();
+    }
+  }, [currentDate, providerId]);
 
 
 
@@ -183,10 +180,10 @@ function BookingCalendar() {
 
       // Filter modules: Only show "Venues" module by default
       // Or filter by modules that this provider has venues for
-    const filteredModules = modulesList.filter(module => {
-  const moduleTitle = (module.title || module.name || '').toLowerCase();
-  return moduleTitle.includes('ornaments');
-});
+      const filteredModules = modulesList.filter(module => {
+        const moduleTitle = (module.title || module.name || '').toLowerCase();
+        return moduleTitle.includes('ornaments');
+      });
 
 
       console.log('Filtered modules for provider:', filteredModules);
@@ -202,23 +199,23 @@ function BookingCalendar() {
     }
   };
 
- const fetchOrnamentPackages = async () => {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/ornaments/provider/${providerId}`
-    );
-    const data = await response.json();
+  const fetchOrnamentPackages = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/ornaments/provider/${providerId}`
+      );
+      const data = await response.json();
 
-    if (data.success) {
-      setPackages(data.data || []);
-    } else {
+      if (data.success) {
+        setPackages(data.data || []);
+      } else {
+        setPackages([]);
+      }
+    } catch (err) {
+      console.error('Fetch ornaments packages error:', err);
       setPackages([]);
     }
-  } catch (err) {
-    console.error('Fetch ornaments packages error:', err);
-    setPackages([]);
-  }
-};
+  };
 
 
 
@@ -278,18 +275,7 @@ function BookingCalendar() {
         );
       });
 
-      // 🔴 count slots instead of bookings
-      const totalSlots = dayBookings.reduce((acc, b) => {
-        return acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1);
-      }, 0);
-
-      if (totalSlots === 0) {
-        status[day] = 'free';
-      } else if (totalSlots >= 2) {
-        status[day] = 'booked'; // 🔴 RED
-      } else {
-        status[day] = 'available'; // 🟡 YELLOW
-      }
+      status[day] = dayBookings.length > 0 ? 'booked' : 'free';
     }
 
     return status;
@@ -327,10 +313,7 @@ function BookingCalendar() {
     switch (status) {
       case 'booked':
         return '#ef5350';
-      case 'available':
-        return '#ffd54f';
       case 'free':
-        return '#66bb6a';
       default:
         return '#66bb6a';
     }
@@ -437,7 +420,7 @@ function BookingCalendar() {
               boxShadow: `0 0 8px ${getStatusColor(status)}80`
             }}
           />
-          {status !== 'free' && (
+          {status === 'booked' && (
             <Typography sx={{
               display: { xs: 'none', md: 'block' },
               fontSize: '10px',
@@ -445,7 +428,7 @@ function BookingCalendar() {
               color: '#999',
               fontWeight: 500
             }}>
-              {status === 'booked' ? 'FULL' : 'SLOTS'}
+              BOOKED
             </Typography>
           )}
         </Box>
@@ -458,10 +441,8 @@ function BookingCalendar() {
   const selectedStatus = bookingStatus[selectedDate] || 'free';
 
   const getStatusText = () => {
-    if (selectedBookings.length === 0) return 'No bookings - All slots available';
-    if (selectedStatus === 'booked') return `${selectedBookings.length} bookings - Fully booked`;
-    if (selectedStatus === 'available') return `${selectedBookings.length} booking - Some slots available`;
-    return 'All slots available';
+    if (selectedBookings.length === 0) return 'Available';
+    return `${selectedBookings.length} booking(s) – Not Available`;
   };
 
   const getDayName = () => {
@@ -490,7 +471,6 @@ function BookingCalendar() {
     setError(null);
 
     try {
-      // ✅ REQUIRED FIELD VALIDATIONS
       if (!formData.fullName.trim()) {
         setError('Full Name is required');
         return;
@@ -498,11 +478,6 @@ function BookingCalendar() {
 
       if (!formData.contactNumber.trim()) {
         setError('Contact Number is required');
-        return;
-      }
-
-      if (!formData.moduleId) {
-        setError('Please select a module');
         return;
       }
 
@@ -516,37 +491,21 @@ function BookingCalendar() {
         return;
       }
 
-      if (!formData.timeSlot.length) {
-        setError('Please select at least one time slot');
-        return;
-      }
+      const resolvedModuleId = modules.length > 0 ? modules[0]._id : undefined;
 
-      if (!formData.numberOfGuests || Number(formData.numberOfGuests) <= 0) {
-        setError('Please enter a valid number of guests');
-        return;
-      }
-
-      // ✅ BUILD PAYLOAD (optional fields only if filled)
       const bookingData = {
-        moduleId: formData.moduleId,
-ornamentPackageId: formData.packageId,
         fullName: formData.fullName,
         contactNumber: formData.contactNumber,
         bookingDate: formData.bookingDate,
-        timeSlot: formData.timeSlot,
         paymentType: formData.paymentType,
-        bookingType: 'Direct'
+        rentalType: formData.rentalType,
+        bookingType: 'Direct',
+        ornamentPackageId: formData.packageId
       };
 
-      // optional fields
+      if (resolvedModuleId) bookingData.moduleId = resolvedModuleId;
       if (formData.emailAddress) bookingData.emailAddress = formData.emailAddress;
       if (formData.address) bookingData.address = formData.address;
-      if (formData.emailAddress) bookingData.emailAddress = formData.emailAddress;
-      if (formData.address) bookingData.address = formData.address;
-      if (formData.additionalNotes) bookingData.additionalNotes = formData.additionalNotes;
-
-      // Ensure numberOfGuests is sent
-      if (formData.numberOfGuests) bookingData.numberOfGuests = Number(formData.numberOfGuests);
       if (formData.additionalNotes) bookingData.additionalNotes = formData.additionalNotes;
 
       const response = await fetch(`${API_BASE_URL}/api/bookings`, {
@@ -579,14 +538,11 @@ ornamentPackageId: formData.packageId,
       contactNumber: '',
       emailAddress: '',
       address: '',
-      numberOfGuests: '',
       additionalNotes: '',
-      venueId: '',
-      moduleId: '',
       packageId: '',
       bookingDate: new Date().toISOString().split('T')[0],
-      timeSlot: [],
       paymentType: 'Cash',
+      rentalType: 'Rental',
       bookingType: 'Direct'
     });
   };
@@ -753,15 +709,11 @@ ornamentPackageId: formData.packageId,
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef5350' }} />
-            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Booked</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ffd54f' }} />
-            <Typography sx={{ fontSize: '15px', color: '#666' }}>Slots Available</Typography>
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Not Available</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Box sx={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#66bb6a' }} />
-            <Typography sx={{ fontSize: '15px', color: '#666' }}>Fully Free</Typography>
+            <Typography sx={{ fontSize: '15px', color: '#666' }}>Available</Typography>
           </Box>
         </Box>
       </Box>
@@ -1177,51 +1129,98 @@ ornamentPackageId: formData.packageId,
                     </Typography>
                     <Grid container spacing={3}>
                       <Grid item xs={12}>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel shrink>Module</InputLabel>
-                          <Select
-                            name="moduleId"
-                            value={formData.moduleId}
-                            onChange={handleInputChange}
-                            label="Module"
-                            displayEmpty
-                            MenuProps={{
-                              PaperProps: { sx: { maxHeight: 300, borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' } }
-                            }}
-                          >
-                            <MenuItem value="" disabled>
-                              <span style={{ color: '#999' }}>Select Module</span>
-                            </MenuItem>
-                            {modules.map(module => (
-                              <MenuItem key={module._id} value={module._id}>
-                                {module.title || module.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel shrink>Package</InputLabel>
+                        <FormControl fullWidth variant="outlined" sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                            backgroundColor: '#fff',
+                            '& fieldset': { borderColor: '#f0f0f0' },
+                            '&:hover fieldset': { borderColor: '#ef5350' },
+                            '&.Mui-focused fieldset': { borderColor: '#ef5350' },
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                          }
+                        }}>
+                          <InputLabel shrink sx={{ color: '#ef5350', fontWeight: 700 }}>Select Package</InputLabel>
                           <Select
                             name="packageId"
                             value={formData.packageId}
                             onChange={handleInputChange}
-                            label="Package"
-                            disabled={packages.length === 0}
+                            label="Select Package"
                             displayEmpty
                             MenuProps={{
-                              PaperProps: { sx: { maxHeight: 300, borderRadius: 2, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' } }
+                              PaperProps: {
+                                sx: {
+                                  maxHeight: 300,
+                                  borderRadius: '20px',
+                                  boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                                  mt: 1,
+                                  border: '1px solid #f0f0f0'
+                                }
+                              }
+                            }}
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <Typography sx={{ color: '#999' }}>Choose a package</Typography>;
+                              }
+                              const pkg = packages.find(p => p._id === selected);
+                              return (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Chip
+                                    label="Package"
+                                    size="small"
+                                    sx={{
+                                      height: '24px',
+                                      bgcolor: 'rgba(239,83,80,0.1)',
+                                      color: '#ef5350',
+                                      fontWeight: 800,
+                                      fontSize: '9px',
+                                      borderRadius: '6px'
+                                    }}
+                                  />
+                                  <Typography sx={{ fontWeight: 700, color: '#333' }}>
+                                    {pkg ? (pkg.packageTitle || pkg.packageName || pkg.name || pkg.title) : 'Unknown Package'}
+                                  </Typography>
+                                </Box>
+                              );
                             }}
                           >
-                            <MenuItem value="" disabled>
-                              <span style={{ color: '#999' }}>
-                                {packages.length === 0 ? 'No packages available' : 'Select Package'}
-                              </span>
+                            <MenuItem value="" disabled sx={{ display: 'none' }}>
+                              Select Package
                             </MenuItem>
                             {packages.map(pkg => (
-                              <MenuItem key={pkg._id} value={pkg._id}>
-                                {pkg.packageTitle || pkg.packageName || pkg.name || pkg.title}
+                              <MenuItem
+                                key={pkg._id}
+                                value={pkg._id}
+                                sx={{
+                                  py: 2,
+                                  px: 2.5,
+                                  borderRadius: '12px',
+                                  mx: 1,
+                                  my: 0.5,
+                                  transition: 'all 0.2s',
+                                  '&:hover': { backgroundColor: 'rgba(239,83,80,0.05)', color: '#ef5350' },
+                                  '&.Mui-selected': {
+                                    backgroundColor: 'rgba(239,83,80,0.1)',
+                                    color: '#ef5350',
+                                    fontWeight: 700,
+                                    '&:hover': { backgroundColor: 'rgba(239,83,80,0.15)' }
+                                  }
+                                }}
+                              >
+                                <Box sx={{ width: '100%' }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                      {pkg.packageTitle || pkg.packageName || pkg.name || pkg.title}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#ef5350' }}>
+                                      AED {pkg.price || 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                  {pkg.description && (
+                                    <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: '#888', whiteSpace: 'normal', lineHeight: 1.4 }}>
+                                      {pkg.description.length > 60 ? `${pkg.description.substring(0, 60)}...` : pkg.description}
+                                    </Typography>
+                                  )}
+                                </Box>
                               </MenuItem>
                             ))}
                           </Select>
@@ -1244,23 +1243,36 @@ ornamentPackageId: formData.packageId,
                           </Alert>
                         </Grid>
                       )}
+                      {/* Rental / Purchase Selector */}
                       <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="numberOfGuests"
-                          label="Number of Guests"
-                          type="number"
-                          variant="outlined"
-                          value={formData.numberOfGuests}
-                          onChange={handleInputChange}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <PeopleIcon sx={{ color: '#999', fontSize: 20 }} />
-                              </InputAdornment>
-                            )
-                          }}
-                        />
+                        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, color: '#555' }}>Booking Type</Typography>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          {['Rental', 'Purchase'].map((type) => (
+                            <Box
+                              key={type}
+                              onClick={() => setFormData(prev => ({ ...prev, rentalType: type }))}
+                              sx={{
+                                flex: 1,
+                                p: 2,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1,
+                                borderRadius: '12px',
+                                border: '2px solid',
+                                borderColor: formData.rentalType === type ? '#ef5350' : '#f0f0f0',
+                                backgroundColor: formData.rentalType === type ? '#fff5f5' : '#fff',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                color: formData.rentalType === type ? '#ef5350' : '#888',
+                                transition: 'all 0.2s',
+                                '&:hover': { borderColor: '#ef5350' }
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>{type}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
                       </Grid>
                     </Grid>
                   </Box>
@@ -1291,28 +1303,7 @@ ornamentPackageId: formData.packageId,
                           value={formData.bookingDate}
                           onChange={handleInputChange}
                           InputLabelProps={{ shrink: true }}
-                          sx={{ mb: 2 }}
                         />
-                        <Typography variant="subtitle2" sx={{ mb: 2, mt: 1, fontWeight: 700, color: '#555' }}>Select Time Slots</Typography>
-                        <Box sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.5,
-                          p: 2,
-                          backgroundColor: '#fcfcfc',
-                          borderRadius: '16px',
-                          border: '1px solid #f5f5f5'
-                        }}>
-                          <FormControlLabel
-                            control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }} />}
-                            label={<Box sx={{ ml: 1 }}><Typography variant="body2" sx={{ fontWeight: 600 }}>Morning Session</Typography><Typography variant="caption" sx={{ color: '#999' }}>9:00 AM - 1:00 PM</Typography></Box>}
-                          />
-                          <Divider sx={{ my: 1, opacity: 0.5 }} />
-                          <FormControlLabel
-                            control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} sx={{ color: '#ef5350', '&.Mui-checked': { color: '#ef5350' } }} />}
-                            label={<Box sx={{ ml: 1 }}><Typography variant="body2" sx={{ fontWeight: 600 }}>Evening Session</Typography><Typography variant="caption" sx={{ color: '#999' }}>6:00 PM - 10:00 PM</Typography></Box>}
-                          />
-                        </Box>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Payment Method</Typography>
