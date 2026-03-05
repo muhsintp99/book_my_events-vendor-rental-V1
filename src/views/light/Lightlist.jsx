@@ -495,20 +495,12 @@ export default function LightList() {
 
                                             <Divider sx={{ mb: 2, borderStyle: 'dashed' }} />
 
-                                            <Grid container spacing={1}>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Package Price</Typography>
-                                                    <Typography variant="h6" sx={{ fontWeight: 900, color: THEME_COLOR }}>
-                                                        {formatINR(light.packagePrice)}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                    <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Advance</Typography>
-                                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#48BB78' }}>
-                                                        {formatINR(light.advanceBookingAmount)}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
+                                            <Box>
+                                                <Typography variant="caption" sx={{ color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Package Price</Typography>
+                                                <Typography variant="h6" sx={{ fontWeight: 900, color: THEME_COLOR }}>
+                                                    {formatINR(light.packagePrice)}
+                                                </Typography>
+                                            </Box>
                                         </CardContent>
                                     </Card>
                                 </Zoom>
@@ -602,16 +594,10 @@ export default function LightList() {
 
                                 {/* Price Card */}
                                 <Box sx={{ p: 4, bgcolor: '#F7FAFC', borderRadius: '24px', mb: 5 }}>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                                        <Box>
-                                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>PACKAGE PRICE</Typography>
-                                            <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedLight.packagePrice)}</Typography>
-                                        </Box>
-                                        <Box sx={{ textAlign: 'right' }}>
-                                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>ADVANCE</Typography>
-                                            <Typography variant="h4" sx={{ fontWeight: 900, color: '#2F855A' }}>{formatINR(selectedLight.advanceBookingAmount)}</Typography>
-                                        </Box>
-                                    </Stack>
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="caption" sx={{ fontWeight: 800, color: '#A0AEC0' }}>PACKAGE PRICE</Typography>
+                                        <Typography variant="h3" sx={{ fontWeight: 900, color: THEME_COLOR }}>{formatINR(selectedLight.packagePrice)}</Typography>
+                                    </Box>
                                     <Divider sx={{ mb: 2 }} />
                                     <Typography variant="caption" sx={{ fontWeight: 600, color: '#718096', display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <LocalOffer fontSize="inherit" /> Pricing includes setup and professional handling.
