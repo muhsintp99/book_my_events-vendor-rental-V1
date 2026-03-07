@@ -28,28 +28,28 @@ const emceemanagement = {
     type: 'group',
     icon: icons.IconMicrophone,
     children: [
-        {
-            id: 'emcee-setup',
-            title: 'Emcee & Event Host',
-            type: 'collapse',
-            icon: icons.IconUsers,
-            children: [
-                {
-                    id: 'add-package',
-                    title: 'Add Package',
-                    type: 'item',
-                    url: '/emcee/addpackage',
-                    icon: icons.IconUserPlus
-                },
-                {
-                    id: 'package-list',
-                    title: 'Package List',
-                    type: 'item',
-                    url: '/emcee/packagelist',
-                    icon: icons.IconListDetails
-                }
-            ]
-        },
+        // {
+        //     id: 'emcee-setup',
+        //     title: 'Emcee & Event Host',
+        //     type: 'collapse',
+        //     icon: icons.IconUsers,
+        //     children: [
+        //         {
+        //             id: 'add-package',
+        //             title: 'Add Package',
+        //             type: 'item',
+        //             url: '/emcee/addpackage',
+        //             icon: icons.IconUserPlus
+        //         },
+        //         {
+        //             id: 'package-list',
+        //             title: 'Package List',
+        //             type: 'item',
+        //             url: '/emcee/packagelist',
+        //             icon: icons.IconListDetails
+        //         }
+        //     ]
+        // },
         {
             id: 'emcee-categories',
             title: 'Categories',

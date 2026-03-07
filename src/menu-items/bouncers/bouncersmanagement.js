@@ -28,28 +28,28 @@ const bouncersmanagement = {
   type: 'group',
   icon: icons.IconShieldCheck,   // 🔥 Security shield for group
   children: [
-    {
-      id: 'bouncers-setup',
-      title: 'Bouncers & Security',
-      type: 'collapse',
-      icon: icons.IconUsers,  // 👥 Bouncers group icon
-      children: [
-        {
-          id: 'add-package',
-          title: 'Add Package',
-          type: 'item',
-          url: '/bouncers/addpackage',
-          icon: icons.IconUserPlus   // ➕ Add person
-        },
-        {
-          id: 'package-list',
-          title: 'Package List',
-          type: 'item',
-          url: '/bouncers/packagelist',
-          icon: icons.IconListDetails  // 📋 List
-        }
-      ]
-    },
+    // {
+    //   id: 'bouncers-setup',
+    //   title: 'Bouncers & Security',
+    //   type: 'collapse',
+    //   icon: icons.IconUsers,  // 👥 Bouncers group icon
+    //   children: [
+    //     {
+    //       id: 'add-package',
+    //       title: 'Add Package',
+    //       type: 'item',
+    //       url: '/bouncers/addpackage',
+    //       icon: icons.IconUserPlus   // ➕ Add person
+    //     },
+    //     {
+    //       id: 'package-list',
+    //       title: 'Package List',
+    //       type: 'item',
+    //       url: '/bouncers/packagelist',
+    //       icon: icons.IconListDetails  // 📋 List
+    //     }
+    //   ]
+    // },
     {
       id: 'bouncers-categories',
       title: 'Categories',

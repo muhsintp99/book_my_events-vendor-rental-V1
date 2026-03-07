@@ -28,28 +28,28 @@ const lightmanagement = {
   type: 'group',
   icon: icons.IconBulb,   // 🔥 Added relevant group icon
   children: [
-    {
-      id: 'light-setup',
-      title: 'Light & Sound',
-      type: 'collapse',
-      icon: icons.IconSpeakerphone,  // 🎵 Sound related
-      children: [
-        {
-          id: 'add-package',
-          title: 'Add Package',
-          type: 'item',
-          url: '/light/addpackage',
-          icon: icons.IconPlus
-        },
-        {
-          id: 'package-list',
-          title: 'Package List',
-          type: 'item',
-          url: '/light/packagelist',
-          icon: icons.IconList
-        }
-      ]
-    },
+    // {
+    //   id: 'light-setup',
+    //   title: 'Light & Sound',
+    //   type: 'collapse',
+    //   icon: icons.IconSpeakerphone,  // 🎵 Sound related
+    //   children: [
+    //     {
+    //       id: 'add-package',
+    //       title: 'Add Package',
+    //       type: 'item',
+    //       url: '/light/addpackage',
+    //       icon: icons.IconPlus
+    //     },
+    //     {
+    //       id: 'package-list',
+    //       title: 'Package List',
+    //       type: 'item',
+    //       url: '/light/packagelist',
+    //       icon: icons.IconList
+    //     }
+    //   ]
+    // },
     {
       id: 'light-categories',
       title: 'Categories',
