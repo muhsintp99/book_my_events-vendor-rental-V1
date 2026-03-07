@@ -48,6 +48,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
 import SpaIcon from '@mui/icons-material/Spa';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
@@ -428,7 +429,25 @@ function MehandiSchedules() {
             </Grid>
 
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                <DialogTitle>
+                <DialogTitle sx={{ position: 'relative' }}>
+                    <IconButton
+                        aria-label="close"
+                        onClick={handleCloseDialog}
+                        sx={{
+                            position: 'absolute',
+                            right: 20,
+                            top: 20,
+                            color: (theme) => theme.palette.grey[500],
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'rotate(90deg)',
+                                color: '#ef5350',
+                                bgcolor: 'rgba(239, 83, 80, 0.1)'
+                            }
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
                     <Typography variant="h4" fontWeight={800} sx={{ mt: 2, textAlign: 'center' }}>Create Manual Booking</Typography>
                     <Box sx={{ width: '80%', mx: 'auto', mt: 3, mb: 1 }}>
                         <Stepper activeStep={activeStep} alternativeLabel>
