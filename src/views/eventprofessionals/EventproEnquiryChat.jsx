@@ -91,8 +91,10 @@ const EventproEnquiryChat = () => {
                     return (
                         mt.includes('eventpro') ||
                         mt.includes('professional') ||
+                        mt.includes('event-prof') ||
                         title.includes('eventpro') ||
-                        title.includes('professional')
+                        title.includes('professional') ||
+                        title.includes('event-prof')
                     );
                 });
                 setEnquiries(filtered);

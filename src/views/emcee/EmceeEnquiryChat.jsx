@@ -89,10 +89,10 @@ const EmceeEnquiryChat = () => {
                     const mt = (e.moduleId?.moduleType || '').toLowerCase();
                     const title = (e.moduleId?.title || '').toLowerCase();
                     return (
-                        mt.includes('bouncer') ||
-                        mt.includes('security') ||
-                        title.includes('bouncer') ||
-                        title.includes('security')
+                        mt.includes('emcee') ||
+                        mt.includes('host') ||
+                        title.includes('emcee') ||
+                        title.includes('host')
                     );
                 });
                 setEnquiries(filtered);

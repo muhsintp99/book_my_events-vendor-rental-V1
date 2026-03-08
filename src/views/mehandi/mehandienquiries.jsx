@@ -35,6 +35,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import EventIcon from "@mui/icons-material/Event";
 import CategoryIcon from "@mui/icons-material/Category";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import MessageIcon from "@mui/icons-material/Message";
 
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -234,7 +235,7 @@ const EnquiriesUI = () => {
                             size="small"
                             color="primary"
                             onClick={() => {
-                              navigate('/makeupartist/enquirychat', { state: { enquiry: e } });
+                              navigate('/mehandi/enquirychat', { state: { enquiry: e } });
                             }}
                           >
                             <ChatIcon fontSize="small" />
@@ -342,6 +343,23 @@ const EnquiriesUI = () => {
                   </CardContent>
                 </Card>
               </Grid>
+
+              {selectedEnquiry.description && (
+                <Grid item xs={12}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography fontWeight={600} mb={2}>
+                        Customer Message
+                      </Typography>
+                      <DetailRow
+                        icon={<MessageIcon fontSize="small" />}
+                        label="Message"
+                        value={selectedEnquiry.description}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
             </Grid>
           )}
         </DialogContent>
@@ -356,7 +374,7 @@ const EnquiriesUI = () => {
             onClick={() => {
               setChatEnquiry(selectedEnquiry);
               setOpenChat(true);
-              navigate('/makeupartist/enquirychat', { state: { enquiry: selectedEnquiry } });
+              navigate('/mehandi/enquirychat', { state: { enquiry: selectedEnquiry } });
             }}
           >
             Open Chat

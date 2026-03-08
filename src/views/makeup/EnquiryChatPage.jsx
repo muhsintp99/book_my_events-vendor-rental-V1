@@ -91,10 +91,17 @@ var EnquiryChatPage = function () {
           var filtered = all.filter(function (e) {
             var mt = (e.moduleId?.moduleType || '').toLowerCase();
             var title = (e.moduleId?.title || '').toLowerCase();
-            return mt === 'makeup' || mt === 'makeup artist' || title.includes('makeup');
+            return mt === 'makeup' || mt === 'artist' || title.includes('makeup') || title.includes('artist');
           });
-          setEnquiries(filtered);
-          if (!initialEnquiry && filtered.length > 0) setActiveEnquiry(filtered[0]);
+
+          // Ensure the active/initial enquiry is in the list even if it doesn't match the filter
+          var finalEnquiries = filtered;
+          if (initialEnquiry && !filtered.some(e => e._id === initialEnquiry._id)) {
+            finalEnquiries = [initialEnquiry, ...filtered];
+          }
+
+          setEnquiries(finalEnquiries);
+          if (!activeEnquiry && finalEnquiries.length > 0) setActiveEnquiry(finalEnquiries[0]);
         } catch (err) {
           console.error('Failed to fetch enquiries:', err);
         } finally {

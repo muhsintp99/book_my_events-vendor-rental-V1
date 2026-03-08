@@ -87,9 +87,16 @@ const EnquiryChatPage = () => {
           var title = e.moduleId?.title?.toLowerCase();
           return mt === 'venue' || (title && title.includes('venue')) || e.moduleId?._id === '68e5ea9f27ca1c19b2d3924a';
         });
-        setEnquiries(venue);
-        if (!initialEnquiry && venue.length > 0) {
-          setActiveEnquiry(venue[0]);
+
+        // Ensure the active/initial enquiry is in the list even if it doesn't match the filter
+        var finalEnquiries = venue;
+        if (initialEnquiry && !venue.some(e => e._id === initialEnquiry._id)) {
+          finalEnquiries = [initialEnquiry, ...venue];
+        }
+
+        setEnquiries(finalEnquiries);
+        if (!activeEnquiry && finalEnquiries.length > 0) {
+          setActiveEnquiry(finalEnquiries[0]);
         }
       } catch (err) {
         console.error('Failed to fetch enquiries:', err);
@@ -134,10 +141,10 @@ const EnquiryChatPage = () => {
           prev.map((msg) =>
             msg.timestamp === data.timestamp && String(msg.senderId) === String(data.senderId)
               ? {
-                  ...data,
-                  _id: data._id,
-                  time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }
+                ...data,
+                _id: data._id,
+                time: data.time || new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              }
               : msg
           )
         );

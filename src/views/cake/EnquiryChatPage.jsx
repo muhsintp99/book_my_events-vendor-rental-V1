@@ -47,7 +47,7 @@ const EnquiryChatPage = () => {
         enquiry={enquiry}
         onClose={() => {
           setOpen(false);
-          navigate("/makeupartist/Enqury");
+          navigate("/cake/enquiries");
         }}
       />
     </Box>

@@ -229,7 +229,7 @@ const EnquiriesUI = () => {
                             size="small"
                             color="primary"
                             onClick={() =>
-                              navigate("/makeupartist/Enqurychat", {
+                              navigate("/cake/enquirychat", {
                                 state: e,
                               })
                             }
@@ -352,7 +352,7 @@ const EnquiriesUI = () => {
             startIcon={<ChatIcon />}
             onClick={() => {
               handleCloseModal();
-              navigate("/makeupartist/Enqurychat", {
+              navigate("/cake/enquirychat", {
                 state: selectedEnquiry,
               });
             }}

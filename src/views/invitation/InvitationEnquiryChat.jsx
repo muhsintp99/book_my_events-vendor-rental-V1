@@ -37,7 +37,7 @@ const ACCENT_DARK = '#020617';
 const ACCENT_LIGHT = '#f1f5f9';
 const ACCENT_BG = '#f8fafc';
 
-const PanthalEnquiryChat = () => {
+const InvitationEnquiryChat = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const theme = useTheme();
@@ -89,10 +89,10 @@ const PanthalEnquiryChat = () => {
                     const mt = (e.moduleId?.moduleType || '').toLowerCase();
                     const title = (e.moduleId?.title || '').toLowerCase();
                     return (
-                        mt.includes('panthal') ||
-                        mt.includes('decorat') ||
-                        title.includes('panthal') ||
-                        title.includes('decorat')
+                        mt.includes('invitation') ||
+                        mt.includes('print') ||
+                        title.includes('invitation') ||
+                        title.includes('print')
                     );
                 });
                 setEnquiries(filtered);
@@ -319,7 +319,7 @@ const PanthalEnquiryChat = () => {
                                                     }
                                                     secondary={
                                                         <Typography variant="body2" noWrap sx={{ maxWidth: '200px', color: '#64748B', fontSize: '0.8rem' }}>
-                                                            {enq.moduleId?.title || enq.email || 'Panthal Enquiry'}
+                                                            {enq.moduleId?.title || enq.email || 'Invitation Enquiry'}
                                                         </Typography>
                                                     }
                                                 />
@@ -561,4 +561,4 @@ const PanthalEnquiryChat = () => {
     );
 };
 
-export default PanthalEnquiryChat;
+export default InvitationEnquiryChat;

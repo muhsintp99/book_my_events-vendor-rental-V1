@@ -42,7 +42,7 @@ var EnquiryChatPage = function () {
   var navigate = useNavigate();
   var theme = useTheme();
   var isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  var initialEnquiry = location.state || null;
+  var initialEnquiry = location.state?.enquiry || null;
 
   var userStr = localStorage.getItem('user') || '{}';
   var user = JSON.parse(userStr);
@@ -76,7 +76,7 @@ var EnquiryChatPage = function () {
     return String(sid) === String(vendorId);
   };
 
-  // Fetch boutique enquiries
+  // Fetch Mehandi enquiries
   useEffect(
     function () {
       if (!vendorId) {
@@ -91,20 +91,17 @@ var EnquiryChatPage = function () {
           var filtered = all.filter(function (e) {
             var mt = (e.moduleId?.moduleType || '').toLowerCase();
             var title = (e.moduleId?.title || '').toLowerCase();
-            // Include broad terms for Boutique
-            return (
-              mt === 'boutique' ||
-              mt === 'fashion' ||
-              mt === 'clothing' ||
-              title.includes('boutique') ||
-              title.includes('fashion') ||
-              title.includes('dress') ||
-              title.includes('gown') ||
-              title.includes('clothing')
-            );
+            return mt === 'mehandi' || title.includes('mehandi');
           });
-          setEnquiries(filtered);
-          if (!initialEnquiry && filtered.length > 0) setActiveEnquiry(filtered[0]);
+
+          // Ensure the active/initial enquiry is in the list even if it doesn't match the filter
+          var finalEnquiries = filtered;
+          if (initialEnquiry && !filtered.some(e => e._id === initialEnquiry._id)) {
+            finalEnquiries = [initialEnquiry, ...filtered];
+          }
+
+          setEnquiries(finalEnquiries);
+          if (!activeEnquiry && finalEnquiries.length > 0) setActiveEnquiry(finalEnquiries[0]);
         } catch (err) {
           console.error('Failed to fetch enquiries:', err);
         } finally {

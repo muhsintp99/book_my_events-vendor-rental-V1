@@ -352,7 +352,7 @@ const EventproPaymentFailed = Loadable(lazy(() => import('../views/eventprofessi
 // invitation/////////////////////////
 const AddinvitationPackage = Loadable(lazy(() => import('../views/invitation/Addinvitation.jsx')));
 const InvitationList = Loadable(lazy(() => import('../views/invitation/InvitationList.jsx')));
-const InvitationChat = Loadable(lazy(() => import('../views/invitation/InvitationChat.jsx')));
+const InvitationEnquiryChat = Loadable(lazy(() => import('../views/invitation/InvitationEnquiryChat.jsx')));
 const InvitationUpgrade = Loadable(lazy(() => import('../views/invitation/InvitationUpgrade.jsx')));
 const InvitationBookings = Loadable(lazy(() => import('../views/invitation/InvitationBookings.jsx')));
 const InvitationCategories = Loadable(lazy(() => import('../views/invitation/Categories.jsx')));
@@ -669,7 +669,7 @@ const MainRoutes = {
             { path: 'edit-package/:id', element: <AddinvitationPackage /> },
             { path: 'edit/:id', element: <AddinvitationPackage /> },
             { path: 'list', element: <InvitationList /> },
-            { path: 'enquiry', element: <InvitationChat /> },
+            { path: 'enquiry', element: <InvitationEnquiryChat /> },
             { path: 'upgrade', element: <InvitationUpgrade /> },
             { path: 'categories', element: <InvitationCategories /> },
             { path: 'schedules', element: <Schedulesinvitation /> },
