@@ -230,7 +230,8 @@ function BoutiqueSchedules() {
     try {
       const bookingData = {
         moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-        boutiquePackageId: formData.packageId,
+        boutiqueId: formData.packageId,
+        bookingMode: 'rental',
         fullName: formData.fullName,
         contactNumber: formData.contactNumber,
         emailAddress: formData.emailAddress,

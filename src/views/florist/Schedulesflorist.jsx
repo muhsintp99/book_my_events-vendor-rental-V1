@@ -230,7 +230,7 @@ function FloristSchedules() {
         try {
             const bookingData = {
                 moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                packageId: formData.packageId,
+                floristId: formData.packageId,
                 fullName: formData.fullName,
                 contactNumber: formData.contactNumber,
                 emailAddress: formData.emailAddress,

@@ -232,7 +232,7 @@ function BouncersSchedules() {
         try {
             const bookingData = {
                 moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                bouncersId: formData.packageId,
+                bouncerId: formData.packageId,
                 fullName: formData.fullName,
                 contactNumber: formData.contactNumber,
                 emailAddress: formData.emailAddress,
