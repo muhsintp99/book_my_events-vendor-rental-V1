@@ -131,7 +131,9 @@ function OrnamentsSchedules() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ornaments/provider/${providerId}`);
       const data = await response.json();
-      setPackages(data.success ? (data.data || []) : []);
+      const allPackages = data.success ? (data.data || []) : [];
+      const rentalOnly = allPackages.filter(pkg => (pkg.availabilityMode || '').toLowerCase() === 'rental');
+      setPackages(rentalOnly);
     } catch (err) {
       console.error('Fetch packages error:', err);
       setPackages([]);
@@ -378,13 +380,6 @@ function OrnamentsSchedules() {
                   <InputLabel>Select Ornament Package</InputLabel>
                   <Select label="Select Ornament Package" name="packageId" value={formData.packageId} onChange={handleInputChange}>
                     {packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.name || pkg.title}</MenuItem>)}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                  <InputLabel>Rental Type</InputLabel>
-                  <Select label="Rental Type" name="rentalType" value={formData.rentalType} onChange={handleInputChange}>
-                    <MenuItem value="Rental">Rental</MenuItem>
-                    <MenuItem value="Purchase">Purchase</MenuItem>
                   </Select>
                 </FormControl>
                 <Box>
