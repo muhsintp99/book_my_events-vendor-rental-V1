@@ -130,7 +130,9 @@ function BoutiqueSchedules() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/boutiques/provider/${providerId}`);
       const data = await response.json();
-      setPackages(data.success ? (data.data || []) : []);
+      const allPackages = data.success ? (data.data || []) : [];
+      const rentalOnly = allPackages.filter(pkg => (pkg.availabilityMode || '').toLowerCase() === 'rental');
+      setPackages(rentalOnly);
     } catch (err) {
       console.error('Fetch packages error:', err);
       setPackages([]);
@@ -228,7 +230,8 @@ function BoutiqueSchedules() {
     try {
       const bookingData = {
         moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-        boutiquePackageId: formData.packageId,
+        boutiqueId: formData.packageId,
+        bookingMode: 'rental',
         fullName: formData.fullName,
         contactNumber: formData.contactNumber,
         emailAddress: formData.emailAddress,
@@ -377,13 +380,6 @@ function BoutiqueSchedules() {
                   <InputLabel>Select Boutique Package</InputLabel>
                   <Select label="Select Boutique Package" name="packageId" value={formData.packageId} onChange={handleInputChange}>
                     {packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.name || pkg.title}</MenuItem>)}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                  <InputLabel>Rental Type</InputLabel>
-                  <Select label="Rental Type" name="rentalType" value={formData.rentalType} onChange={handleInputChange}>
-                    <MenuItem value="Rental">Rental</MenuItem>
-                    <MenuItem value="Purchase">Purchase</MenuItem>
                   </Select>
                 </FormControl>
                 <Box>

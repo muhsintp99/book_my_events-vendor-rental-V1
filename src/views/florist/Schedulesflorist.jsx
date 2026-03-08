@@ -24,16 +24,18 @@ import {
     StepLabel,
     Fade
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material,Person';
-import PhoneIcon from '@mui/icons-material,Phone';
-import EmailIcon from '@mui/icons-material,Email';
-import HomeIcon from '@mui/icons-material,Home';
-import PeopleIcon from '@mui/icons-material,People';
-import AccessTimeIcon from '@mui/icons-material,AccessTime';
-import DeleteIcon from '@mui/icons-material,Delete';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
+import SpaIcon from '@mui/icons-material/Spa';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -230,7 +232,7 @@ function FloristSchedules() {
         try {
             const bookingData = {
                 moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                packageId: formData.packageId,
+                floristId: formData.packageId,
                 fullName: formData.fullName,
                 contactNumber: formData.contactNumber,
                 emailAddress: formData.emailAddress,

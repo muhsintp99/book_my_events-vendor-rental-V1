@@ -243,7 +243,7 @@ function LightSchedules() {
         try {
             const bookingData = {
                 moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                lightId: formData.packageId,
+                lightAndSoundId: formData.packageId,
                 fullName: formData.fullName,
                 contactNumber: formData.contactNumber,
                 emailAddress: formData.emailAddress,

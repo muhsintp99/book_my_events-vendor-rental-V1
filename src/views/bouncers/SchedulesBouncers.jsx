@@ -31,6 +31,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -232,7 +233,7 @@ function BouncersSchedules() {
         try {
             const bookingData = {
                 moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                bouncersId: formData.packageId,
+                bouncerId: formData.packageId,
                 fullName: formData.fullName,
                 contactNumber: formData.contactNumber,
                 emailAddress: formData.emailAddress,
