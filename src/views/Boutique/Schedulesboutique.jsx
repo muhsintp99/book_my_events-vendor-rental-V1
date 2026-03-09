@@ -232,6 +232,7 @@ function BoutiqueSchedules() {
         moduleId: formData.moduleId || (modules[0] && modules[0]._id),
         boutiqueId: formData.packageId,
         bookingMode: 'rental',
+        deliveryType: 'Takeaway',
         fullName: formData.fullName,
         contactNumber: formData.contactNumber,
         emailAddress: formData.emailAddress,
