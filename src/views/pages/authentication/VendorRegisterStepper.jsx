@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     Box, Button, Step, StepLabel, Stepper, Typography, TextField,
@@ -33,6 +33,7 @@ const API = 'https://api.bookmyevent.ae';
 const RED = '#E15B65';
 const RED_DARK = '#c0392b';
 const RED_BG = 'rgba(225,91,101,0.07)';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyAfLUm1kPmeMkHh1Hr5nbgNpQJOsNa7B78';
 
 /* ── animations ── */
 const fadeUp = keyframes`from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}`;
@@ -432,8 +433,151 @@ export default function VendorRegisterStepper() {
         vendorType: 'individual', module: '', password: '', confirmPassword: '',
         storeName: '', businessTIN: '', tinExpireDate: '', zone: '',
         storeAddress: { street: '', city: '', state: '', zipCode: '', fullAddress: '' },
+        latitude: '', longitude: '',
         subscriptionPlan: 'free', logo: null, coverImage: null, tinCertificate: null,
     });
+
+    // Google Maps states and refs
+    const mapRef = useRef(null);
+    const markerRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const [mapsLoaded, setMapsLoaded] = useState(false);
+    const [map, setMap] = useState(null);
+
+    // Load Google Maps script
+    useEffect(() => {
+        if (!GOOGLE_MAPS_API_KEY) return;
+        if (window.google && window.google.maps) {
+            setMapsLoaded(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => setMapsLoaded(true);
+        document.head.appendChild(script);
+        return () => {
+            if (document.head.contains(script)) document.head.removeChild(script);
+        };
+    }, []);
+
+    // Init map
+    const initMap = useCallback(() => {
+        if (!window.google || !mapRef.current || !mapsLoaded) return;
+
+        const centerLat = form.latitude && form.longitude ? parseFloat(form.latitude) : 25.2048;
+        const centerLng = form.latitude && form.longitude ? parseFloat(form.longitude) : 55.2708;
+        const center = { lat: centerLat, lng: centerLng };
+
+        const newMap = new window.google.maps.Map(mapRef.current, {
+            zoom: 12,
+            center,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false
+        });
+
+        newMap.addListener('click', (event) => {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            set('latitude', lat.toString());
+            set('longitude', lng.toString());
+
+            if (markerRef.current) markerRef.current.setMap(null);
+            markerRef.current = new window.google.maps.Marker({ position: { lat, lng }, map: newMap });
+
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const address = results[0].address_components || [];
+                    const get = (type) => {
+                        const item = address.find((a) => a.types.includes(type));
+                        return item ? item.long_name : '';
+                    };
+
+                    setForm(prev => ({
+                        ...prev,
+                        storeAddress: {
+                            street: get('route'),
+                            city: get('locality') || get('administrative_area_level_2') || '',
+                            state: get('administrative_area_level_1') || '',
+                            zipCode: get('postal_code') || '',
+                            fullAddress: results[0].formatted_address || ''
+                        },
+                        latitude: lat.toString(),
+                        longitude: lng.toString()
+                    }));
+                }
+            });
+        });
+
+        setMap(newMap);
+    }, [mapsLoaded]);
+
+    useEffect(() => {
+        if (mapsLoaded && !map && step === 2) {
+            initMap();
+        }
+    }, [mapsLoaded, step, map, initMap]);
+
+    // Autocomplete for search input
+    useEffect(() => {
+        if (!mapsLoaded || !map || !searchInputRef.current || !window.google || step !== 2) return;
+
+        const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+            fields: ['place_id', 'geometry', 'name', 'formatted_address', 'address_components']
+        });
+
+        const listener = autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry?.location) return;
+
+            const loc = place.geometry.location;
+            if (place.geometry.viewport) map.fitBounds(place.geometry.viewport);
+            else {
+                map.setCenter(loc);
+                map.setZoom(17);
+            }
+
+            if (markerRef.current) markerRef.current.setMap(null);
+            markerRef.current = new window.google.maps.Marker({ position: loc, map });
+
+            const address = place.address_components || [];
+            const get = (type) => {
+                const item = address.find((a) => a.types.includes(type));
+                return item ? item.long_name : '';
+            };
+
+            setForm(prev => ({
+                ...prev,
+                latitude: loc.lat().toString(),
+                longitude: loc.lng().toString(),
+                storeAddress: {
+                    street: get('route') || '',
+                    city: get('locality') || get('administrative_area_level_2') || '',
+                    state: get('administrative_area_level_1') || '',
+                    zipCode: get('postal_code') || '',
+                    fullAddress: place.formatted_address || place.name || ''
+                }
+            }));
+        });
+
+        return () => {
+            if (listener && listener.remove) listener.remove();
+        };
+    }, [mapsLoaded, map, step]);
+
+    // Update marker when lat/lng change
+    useEffect(() => {
+        if (!map || !form.latitude || !form.longitude || step !== 2) return;
+        const pos = { lat: parseFloat(form.latitude), lng: parseFloat(form.longitude) };
+        if (markerRef.current) {
+            markerRef.current.setPosition(pos);
+        } else {
+            markerRef.current = new window.google.maps.Marker({ position: pos, map });
+        }
+    }, [form.latitude, form.longitude, map, step]);
 
     useEffect(() => {
         fetch(`${API}/api/modules`).then(r => r.json())
@@ -478,7 +622,9 @@ export default function VendorRegisterStepper() {
         setLoading(true); setSubmitErr('');
         try {
             const fd = new FormData();
-            ['firstName', 'lastName', 'email', 'phone', 'vendorType', 'password', 'storeName'].forEach(k => fd.append(k, form[k].trim?.() ?? form[k]));
+            ['firstName', 'lastName', 'email', 'phone', 'vendorType', 'password', 'storeName', 'latitude', 'longitude'].forEach(k => {
+                if (form[k]) fd.append(k, form[k].trim?.() ?? form[k]);
+            });
             fd.append('role', 'vendor');
             if (form.businessTIN) fd.append('businessTIN', form.businessTIN.trim());
             if (form.tinExpireDate) fd.append('tinExpireDate', form.tinExpireDate);
@@ -698,31 +844,73 @@ export default function VendorRegisterStepper() {
         </Box>,
 
         /* STEP 3 */
-        <Box key={2} sx={{ animation: `${fadeUp} .35s ease` }}>
+        <Box key={2} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <Typography variant="subtitle2" sx={{ color: '#334155', fontWeight: 600, mb: -1 }}>Where is your business located?</Typography>
+
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <TextField fullWidth label="Full Address" value={form.storeAddress.fullAddress}
                         onChange={e => setAddr('fullAddress', e.target.value)} size="medium"
                         multiline rows={2} sx={INPUT_SX} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="Street / Building" value={form.storeAddress.street}
                         onChange={e => setAddr('street', e.target.value)} size="medium" sx={INPUT_SX} />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="City *" value={form.storeAddress.city}
                         onChange={e => setAddr('city', e.target.value)} size="medium"
                         error={!!errors.city} helperText={errors.city} sx={INPUT_SX} />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="State / Emirate" value={form.storeAddress.state}
                         onChange={e => setAddr('state', e.target.value)} size="medium" sx={INPUT_SX} />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="ZIP / PO Box" value={form.storeAddress.zipCode}
                         onChange={e => setAddr('zipCode', e.target.value)} size="medium" sx={INPUT_SX} />
                 </Grid>
             </Grid>
+
+            <Divider sx={{ my: 1 }} />
+
+            <TextField
+                fullWidth
+                label="Search Location"
+                inputRef={searchInputRef}
+                placeholder="Type to search your location..."
+                sx={INPUT_SX}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <LocationOnOutlinedIcon sx={{ color: RED, fontSize: 20 }} />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
+            <Box sx={{ position: 'relative', height: 320, width: '100%', borderRadius: 4, overflow: 'hidden', border: '1.5px solid #dde1ec' }}>
+                {!mapsLoaded && (
+                    <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f8fafc', zIndex: 2 }}>
+                        <CircularProgress size={30} sx={{ color: RED }} />
+                    </Box>
+                )}
+                <Box ref={mapRef} sx={{ height: '100%', width: '100%' }} />
+                <Box sx={{ position: 'absolute', bottom: 12, left: 12, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', padding: '6px 12px', borderRadius: 2, border: '1px solid #dde1ec', zIndex: 1 }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Tip: Click on map to adjust position
+                    </Typography>
+                </Box>
+            </Box>
+
+            <Stack direction="row" spacing={2}>
+                <TextField fullWidth label="Latitude" value={form.latitude}
+                    onChange={e => set('latitude', e.target.value)} size="small" sx={INPUT_SX}
+                    InputProps={{ readOnly: true }} />
+                <TextField fullWidth label="Longitude" value={form.longitude}
+                    onChange={e => set('longitude', e.target.value)} size="small" sx={INPUT_SX}
+                    InputProps={{ readOnly: true }} />
+            </Stack>
         </Box>,
 
         /* STEP 4 – Plan */
