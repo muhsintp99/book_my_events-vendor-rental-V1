@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Table, TableBody, TableCell, TableHead, TableRow, Paper, Typography, Modal, Menu, MenuItem } from '@mui/material';
+import { Box, Button, TextField, Table, TableBody, TableCell, TableHead, TableRow, Paper, Typography, Modal, Menu, MenuItem, IconButton } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import ReplyIcon from '@mui/icons-material/Reply';
 import CloseIcon from '@mui/icons-material/Close';
@@ -203,53 +203,114 @@ const Review = () => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 600,
+          width: { xs: '90%', sm: 500 },
           bgcolor: 'background.paper',
-          boxShadow: 24,
-          p: 4,
-          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          borderRadius: 3,
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCloseReplyModal} sx={{ minWidth: 'auto' }}>
+          {/* Header */}
+          <Box sx={{ 
+            p: 2, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            borderBottom: '1px solid #f0f0f0',
+            bgcolor: '#fafafa'
+          }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+              {selectedReview?.replyFromOwner ? 'Edit Reply' : 'Give Reply'}
+            </Typography>
+            <IconButton onClick={handleCloseReplyModal} size="small" sx={{ color: '#666' }}>
               <CloseIcon />
-            </Button>
+            </IconButton>
           </Box>
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-            <Typography variant="h6">{selectedReview?.targetType}</Typography>
-          </Box>
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-            {/* <Typography sx={{ mr: 1 }}>{selectedReview?.reviewer}</Typography> */}
-            <Box sx={{ display: 'flex' }}>
-              {[...Array(selectedReview?.rating)].map((_, i) => (
-                <StarIcon key={i} sx={{ color: '#FFD700', fontSize: 18 }} />
-              ))}
+
+          <Box sx={{ p: 3 }}>
+            {/* Original Review Section */}
+            <Box sx={{ 
+              mb: 3, 
+              p: 2, 
+              bgcolor: '#f8f9fa', 
+              borderRadius: 2,
+              border: '1px solid #eee'
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#E15B65' }}>
+                  {selectedReview?.user?.firstName} {selectedReview?.user?.lastName}
+                </Typography>
+                <Box sx={{ display: 'flex' }}>
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon 
+                      key={i} 
+                      sx={{ 
+                        color: i < (selectedReview?.rating || 0) ? '#FFD700' : '#e0e0e0', 
+                        fontSize: 16 
+                      }} 
+                    />
+                  ))}
+                </Box>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#555', fontStyle: 'italic' }}>
+                "{selectedReview?.comment}"
+              </Typography>
+              <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#999' }}>
+                Service: {selectedReview?.targetType} • {selectedReview && new Date(selectedReview.createdAt).toLocaleDateString()}
+              </Typography>
+            </Box>
+
+            {/* Reply Section */}
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#333' }}>
+              Your Response
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Type your reply here..."
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  bgcolor: 'white'
+                }
+              }}
+            />
+
+            {/* Actions */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button 
+                onClick={handleCloseReplyModal}
+                sx={{ 
+                  textTransform: 'none', 
+                  color: '#666',
+                  borderRadius: 2
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleUpdateReply}
+                disabled={!replyText.trim() || replyText === selectedReview?.replyFromOwner}
+                sx={{ 
+                  textTransform: 'none', 
+                  backgroundColor: '#E15B65',
+                  borderRadius: 2,
+                  px: 3,
+                  '&:hover': {
+                    backgroundColor: '#d14a54'
+                  }
+                }}
+              >
+                {selectedReview?.replyFromOwner ? 'Update Reply' : 'Send Reply'}
+              </Button>
             </Box>
           </Box>
-          <Typography sx={{ mb: 2 }}>{selectedReview?.comment}</Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            sx={{ mb: 2 }}
-            InputProps={{
-              readOnly: selectedReview?.replyDate !== 'Not replied Yet',
-            }}
-            placeholder={selectedReview?.replyFromOwner ? '' : 'Write your reply here'}
-          />
-          {!selectedReview?.replyFromOwner && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleUpdateReply}
-              sx={{ alignSelf: 'flex-end', textTransform: 'none', backgroundColor: '#E15B65' }}
-            >
-              Update Reply
-            </Button>
-          )}
         </Box>
       </Modal>
     </Box>
