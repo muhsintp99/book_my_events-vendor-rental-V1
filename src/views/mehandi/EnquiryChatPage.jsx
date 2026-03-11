@@ -426,6 +426,12 @@ var EnquiryChatPage = function () {
                           {activeEnquiry.email}
                         </Typography>
                       )}
+                      {!isMobile && activeEnquiry.eventType && <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />}
+                      {activeEnquiry.eventType && (
+                        <Typography variant="caption" sx={{ color: '#E91E63', fontWeight: 800 }}>
+                          Event: {activeEnquiry.eventType}
+                        </Typography>
+                      )}
                       {!isMobile && activeEnquiry.contact && <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#CBD5E1' }} />}
                       {activeEnquiry.contact && (
                         <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>

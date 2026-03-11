@@ -45,7 +45,12 @@ const EventproEnquiries = () => {
         const fetchEnquiries = async () => {
             if (!providerId) { setError("Provider ID not found"); setLoading(false); return; }
             try {
-                const res = await axios.get(`https://api.bookmyevent.ae/api/enquiries/provider/${providerId}`);
+                const baseUrl = window.location.hostname === "localhost"
+                    ? "http://localhost:5000/api"
+                    : "https://api.bookmyevent.ae/api";
+                const res = await axios.get(
+                    `${baseUrl}/enquiries/provider/${providerId}`
+                );
                 setEnquiries(res.data.data || []);
                 setError(null);
             } catch { setError("Failed to fetch enquiries"); setEnquiries([]); }
@@ -58,7 +63,8 @@ const EventproEnquiries = () => {
         (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
         (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
         (e.contact || "").includes(search) ||
-        (e.moduleId?.title || "").toLowerCase().includes(search.toLowerCase())
+        (e.moduleId?.title || "").toLowerCase().includes(search.toLowerCase()) ||
+        (e.eventType || "").toLowerCase().includes(search.toLowerCase())
     );
 
     const handleViewEnquiry = (enquiry) => { setSelectedEnquiry(enquiry); setOpenModal(true); };
@@ -93,12 +99,16 @@ const EventproEnquiries = () => {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell>#</TableCell><TableCell>Customer</TableCell><TableCell>Module</TableCell>
-                                <TableCell>Contact</TableCell><TableCell>Date</TableCell><TableCell align="center">Actions</TableCell>
+                                <TableCell>#</TableCell>
+                                <TableCell>Customer</TableCell>
+                                <TableCell>Module</TableCell>
+                                <TableCell>Event Type</TableCell>
+                                <TableCell>Contact</TableCell>
+                                <TableCell>Date</TableCell><TableCell align="center">Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {loading && <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={28} /></TableCell></TableRow>}
+                            {loading && <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={28} /></TableCell></TableRow>}
                             {!loading && filteredEnquiries.map((e, i) => (
                                 <TableRow key={e._id} hover>
                                     <TableCell>{i + 1}</TableCell>
@@ -106,7 +116,8 @@ const EventproEnquiries = () => {
                                         <Typography fontWeight={600}>{e.fullName}</Typography>
                                         <Typography variant="caption" color="text.secondary">{e.email}</Typography>
                                     </TableCell>
-                                    <TableCell>{e.moduleId?.title}</TableCell>
+                                    <TableCell>{e.moduleId?.title || "N/A"}</TableCell>
+                                    <TableCell>{e.eventType || "N/A"}</TableCell>
                                     <TableCell>{e.contact}</TableCell>
                                     <TableCell>{new Date(e.bookingDate).toLocaleDateString()}</TableCell>
                                     <TableCell align="center">
@@ -130,7 +141,7 @@ const EventproEnquiries = () => {
                                 </TableRow>
                             ))}
                             {!loading && filteredEnquiries.length === 0 && (
-                                <TableRow><TableCell colSpan={6} align="center">No enquiries found</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} align="center">No enquiries found</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -158,7 +169,16 @@ const EventproEnquiries = () => {
                             <Grid item xs={12} md={6}>
                                 <Card variant="outlined"><CardContent>
                                     <Typography fontWeight={600} mb={2}>Booking Information</Typography>
-                                    <DetailRow icon={<CategoryIcon fontSize="small" />} label="Module" value={selectedEnquiry.moduleId?.title} />
+                                    <DetailRow
+                                        icon={<CategoryIcon fontSize="small" />}
+                                        label="Module"
+                                        value={selectedEnquiry.moduleId?.title}
+                                    />
+                                    <DetailRow
+                                        icon={<CategoryIcon fontSize="small" />}
+                                        label="Event Type"
+                                        value={selectedEnquiry.eventType}
+                                    />
                                     <DetailRow icon={<EventIcon fontSize="small" />} label="Booking Date" value={new Date(selectedEnquiry.bookingDate).toLocaleDateString()} />
                                     <DetailRow icon={<AccessTimeIcon fontSize="small" />} label="Created At" value={new Date(selectedEnquiry.createdAt).toLocaleString()} />
                                 </CardContent></Card>

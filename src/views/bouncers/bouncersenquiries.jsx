@@ -81,12 +81,13 @@ const BouncersEnquiries = () => {
             }
 
             try {
-                const res = await axios.get(
-                    `https://api.bookmyevent.ae/api/enquiries/provider/${providerId}`
-                );
-                // Filter for bouncers/security related enquiries if needed, 
-                // but usually the backend returns modules based on providerId.
-                setEnquiries(res.data.data || []);
+        const baseUrl = window.location.hostname === "localhost" 
+          ? "http://localhost:5000/api" 
+          : "https://api.bookmyevent.ae/api";
+        const res = await axios.get(
+          `${baseUrl}/enquiries/provider/${providerId}`
+        );
+        setEnquiries(res.data.data || []);
                 setError(null);
             } catch (err) {
                 setError("Failed to fetch enquiries");
@@ -195,9 +196,10 @@ const BouncersEnquiries = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>#</TableCell>
-                                <TableCell>Customer</TableCell>
-                                <TableCell>Module</TableCell>
-                                <TableCell>Contact</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Module</TableCell>
+                <TableCell>Event Type</TableCell>
+                <TableCell>Contact</TableCell>
                                 <TableCell>Date</TableCell>
                                 <TableCell align="center">Actions</TableCell>
                             </TableRow>
@@ -224,8 +226,9 @@ const BouncersEnquiries = () => {
                                             </Typography>
                                         </TableCell>
 
-                                        <TableCell>{e.moduleId?.title}</TableCell>
-                                        <TableCell>{e.contact}</TableCell>
+                                        <TableCell>{e.moduleId?.title || "N/A"}</TableCell>
+                    <TableCell>{e.eventType || "N/A"}</TableCell>
+                    <TableCell>{e.contact}</TableCell>
                                         <TableCell>
                                             {new Date(e.bookingDate).toLocaleDateString()}
                                         </TableCell>
@@ -323,11 +326,16 @@ const BouncersEnquiries = () => {
                                             Booking Information
                                         </Typography>
 
-                                        <DetailRow
-                                            icon={<CategoryIcon fontSize="small" />}
-                                            label="Module"
-                                            value={selectedEnquiry.moduleId?.title}
-                                        />
+                      <DetailRow
+                      icon={<CategoryIcon fontSize="small" />}
+                      label="Module"
+                      value={selectedEnquiry.moduleId?.title}
+                    />
+                    <DetailRow
+                      icon={<CategoryIcon fontSize="small" />}
+                      label="Event Type"
+                      value={selectedEnquiry.eventType}
+                    />
                                         <DetailRow
                                             icon={<EventIcon fontSize="small" />}
                                             label="Booking Date"

@@ -197,19 +197,19 @@ if (logRes === 'transport') {
   specificSections = [floristManagementMenu, floristmanagement, floristsection, floristReport, floristEmployee];
 }
 else if (logRes.includes('light')) {
-  specificSections = [lightManagementMenu, lightmanagement, lightsection];
+  specificSections = [ lightmanagement, lightsection];
 }
 else if (logRes.includes('bouncers')) {
-  specificSections = [bouncersManagementMenu, bouncersmanagement, bouncerssection];
+  specificSections = [  bouncersmanagement, bouncerssection];
 }
 else if (logRes.includes('emcee')) {
-  specificSections = [emceeManagementMenu, emceemanagement, emceesection];
+  specificSections = [ emceemanagement, emceesection];
 }
 else if (logRes.includes('panthal')) {
-  specificSections = [panthalManagementMenu, panthalmanagement, panthalsection];
+  specificSections = [ panthalmanagement, panthalsection];
 }
 else if (logRes.includes('event professionals') || logRes.includes('eventprofessionals')) {
-  specificSections = [eventproManagementMenu, eventpromanagement, eventprosection];
+  specificSections = [ eventpromanagement, eventprosection];
 }
 
 const menuItems = {

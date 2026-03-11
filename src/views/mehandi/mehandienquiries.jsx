@@ -81,8 +81,11 @@ const EnquiriesUI = () => {
       }
 
       try {
+        const baseUrl = window.location.hostname === "localhost" 
+          ? "http://localhost:5000/api" 
+          : "https://api.bookmyevent.ae/api";
         const res = await axios.get(
-          `https://api.bookmyevent.ae/api/enquiries/provider/${providerId}`
+          `${baseUrl}/enquiries/provider/${providerId}`
         );
         setEnquiries(res.data.data || []);
         setError(null);
@@ -195,6 +198,7 @@ const EnquiriesUI = () => {
                 <TableCell>#</TableCell>
                 <TableCell>Customer</TableCell>
                 <TableCell>Module</TableCell>
+                <TableCell>Event Type</TableCell>
                 <TableCell>Contact</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell align="center">Actions</TableCell>
@@ -222,10 +226,11 @@ const EnquiriesUI = () => {
                       </Typography>
                     </TableCell>
 
-                    <TableCell>{e.moduleId?.title}</TableCell>
+                    <TableCell>{e.moduleId?.title || "N/A"}</TableCell>
+                    <TableCell>{e.eventType || "N/A"}</TableCell>
                     <TableCell>{e.contact}</TableCell>
                     <TableCell>
-                      {new Date(e.bookingDate).toLocaleDateString()}
+                      {e.bookingDate ? new Date(e.bookingDate).toLocaleDateString() : "N/A"}
                     </TableCell>
 
                     <TableCell align="center">
@@ -327,11 +332,16 @@ const EnquiriesUI = () => {
                       value={selectedEnquiry.moduleId?.title}
                     />
                     <DetailRow
+                      icon={<CategoryIcon fontSize="small" />}
+                      label="Event Type"
+                      value={selectedEnquiry.eventType}
+                    />
+                    <DetailRow
                       icon={<EventIcon fontSize="small" />}
                       label="Booking Date"
-                      value={new Date(
+                      value={selectedEnquiry.bookingDate ? new Date(
                         selectedEnquiry.bookingDate
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString() : "N/A"}
                     />
                     <DetailRow
                       icon={<AccessTimeIcon fontSize="small" />}
