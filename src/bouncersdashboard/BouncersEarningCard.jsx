@@ -28,7 +28,7 @@ import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 export default function BouncersEarningCard({
     isLoading = false,
     amount = 0,
-    label = 'Total Earnings',
+    label = 'Total Confirmed Orders',
     trend = 'up'
 }) {
     const theme = useTheme();

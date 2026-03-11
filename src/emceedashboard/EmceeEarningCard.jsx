@@ -28,7 +28,7 @@ import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 export default function EmceeEarningCard({
     isLoading = false,
     amount = 0,
-    label = 'Total Earnings',
+    label = 'Total Orders',
     trend = 'up'
 }) {
     const theme = useTheme();

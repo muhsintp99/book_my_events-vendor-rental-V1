@@ -82,7 +82,7 @@ export default function LightIncomeDarkCard({ isLoading }) {
                                     }
                                     secondary={
                                         <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25 }}>
-                                            Total Income
+                                            Total Enquiries
                                         </Typography>
                                     }
                                 />
