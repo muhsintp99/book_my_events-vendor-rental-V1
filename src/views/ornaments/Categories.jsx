@@ -28,6 +28,7 @@ import {
   SubdirectoryArrowRight,
 } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { exportCategories } from '../../utils/exportUtils';
 
 const ORNAMENTS_MODULE_ID = '68e5fdf0eb7faab6e94b4f6f';
 
@@ -159,10 +160,15 @@ const OrnamentsCategory = () => {
       return;
     }
 
+    const lowerTerm = searchTerm.toLowerCase();
     const filtered = parentCategories.filter((category) => {
-      const matchesParent = category.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesParent =
+        category.name.toLowerCase().includes(lowerTerm) ||
+        category.id.toLowerCase().includes(lowerTerm);
+
       const matchesSubcategory = category.subCategories?.some((sub) =>
-        sub.title.toLowerCase().includes(searchTerm.toLowerCase())
+        sub.title.toLowerCase().includes(lowerTerm) ||
+        (sub._id && sub._id.toLowerCase().includes(lowerTerm))
       );
       return matchesParent || matchesSubcategory;
     });
@@ -175,26 +181,35 @@ const OrnamentsCategory = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = "SI,Type,Category Name,Parent Category\n";
-    let rowIndex = 1;
+    const flattenedData = [];
 
     filteredCategories.forEach((category) => {
-      csvContent += `${rowIndex++},Parent,${category.name},-\n`;
+      // Add Parent
+      flattenedData.push({
+        id: category.id,
+        name: category.name,
+        image: category.image
+      });
 
+      // Add Subcategories
       category.subCategories?.forEach((sub) => {
-        csvContent += `${rowIndex++},Subcategory,${sub.title},${category.name}\n`;
+        flattenedData.push({
+          id: sub._id,
+          name: `${category.name} > ${sub.title}`,
+          image: sub.image
+        });
       });
     });
 
-    const blob = new Blob([csvContent], {
-      type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ornaments_categories_${new Date().toISOString().slice(0, 10)}.${format}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const title = 'Ornament Category List';
+    const fileName = 'ornaments_categories';
+    const exporter = exportCategories(flattenedData, fileName, title);
+
+    if (format === 'excel') {
+      exporter.excel();
+    } else if (format === 'pdf') {
+      exporter.pdf();
+    }
     handleClose();
   };
 
@@ -286,7 +301,7 @@ const OrnamentsCategory = () => {
             </Box>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
               <MenuItem onClick={() => handleExport('excel')}>Excel</MenuItem>
-              <MenuItem onClick={() => handleExport('csv')}>CSV</MenuItem>
+              <MenuItem onClick={() => handleExport('pdf')}>PDF</MenuItem>
             </Menu>
           </Box>
         </Box>
@@ -320,9 +335,10 @@ const OrnamentsCategory = () => {
             <TableHead sx={{ bgcolor: '#fce4ec' }}>
               <TableRow>
                 <TableCell width={50}></TableCell>
-                <TableCell width={50}>SI</TableCell>
+                <TableCell width={50}>SI No</TableCell>
+                <TableCell>Category ID</TableCell>
                 <TableCell>Category Name</TableCell>
-                <TableCell>Image</TableCell>
+                <TableCell>Category Image</TableCell>
                 <TableCell align="center">Subcategories</TableCell>
               </TableRow>
             </TableHead>
@@ -350,6 +366,9 @@ const OrnamentsCategory = () => {
                         </IconButton>
                       </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{index + 1}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.85rem' }}>
+                        {category.id}
+                      </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <CategoryIcon sx={{ color: '#E91E63' }} />
@@ -400,7 +419,7 @@ const OrnamentsCategory = () => {
 
                     {/* Subcategories Row */}
                     <TableRow>
-                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                         <Collapse in={expandedRows[category.id]} timeout="auto" unmountOnExit>
                           <Box sx={{ margin: 2, bgcolor: '#fafafa', borderRadius: 1, p: 2 }}>
                             <Typography variant="subtitle2" gutterBottom sx={{ color: '#E91E63', fontWeight: 600 }}>
@@ -410,20 +429,24 @@ const OrnamentsCategory = () => {
                               <TableContainer sx={{ overflowX: 'auto' }}>
                                 <Table size="small">
                                   <TableHead>
-                                    <TableRow>
-                                      <TableCell>SI</TableCell>
+                                    <TableRow sx={{ bgcolor: '#fce4ec' }}>
+                                      <TableCell>SI No</TableCell>
+                                      <TableCell>Subcategory ID</TableCell>
                                       <TableCell>Subcategory Name</TableCell>
-                                      <TableCell>Image</TableCell>
+                                      <TableCell>Subcategory Image</TableCell>
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
                                     {category.subCategories.map((sub, subIndex) => (
-                                      <TableRow key={sub._id}>
+                                      <TableRow key={sub._id} hover>
                                         <TableCell>{subIndex + 1}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                                          {sub._id}
+                                        </TableCell>
                                         <TableCell>
                                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                             <SubdirectoryArrowRight sx={{ fontSize: 18, color: '#E91E63' }} />
-                                            <Typography>{sub.title}</Typography>
+                                            <Typography fontWeight={600}>{sub.title}</Typography>
                                           </Box>
                                         </TableCell>
                                         <TableCell>
@@ -472,8 +495,8 @@ const OrnamentsCategory = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Box>
-    </Box>
+      </Box >
+    </Box >
   );
 };
 

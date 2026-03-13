@@ -13,8 +13,9 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'; // Explicit import to avoid resolution issues
+import { Search as SearchIcon, Download as DownloadIcon, PictureAsPdf as PdfIcon } from '@mui/icons-material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { exportCategories } from '../utils/exportUtils';
 
 const Category = () => {
   const theme = useTheme();
@@ -27,49 +28,50 @@ const Category = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.bookmyevent.ae'; // Fallback to provided API URL
 
   // Fetch categories from API
- useEffect(() => {
-  const fetchCategories = async () => {
-    try {
-      if (!API_BASE_URL) {
-        throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        if (!API_BASE_URL) {
+          throw new Error('API base URL is not defined. Please set VITE_API_BASE_URL in your .env file.');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/vehicle-categories`, {
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // ✅ Access `data.data` instead of `data`
+        if (data.success && Array.isArray(data.data)) {
+          const formattedCategories = data.data.map(category => ({
+            id: category.vehicleCategoryId || category._id,
+            name: category.title,
+            image: category.image ? `${API_BASE_URL}${category.image}` : '',
+          }));
+          setCategories(formattedCategories);
+          setFilteredCategories(formattedCategories);
+        } else {
+          setError('No categories found for this module');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error.message);
+        setError(`Failed to fetch categories: ${error.message}`);
       }
-
-      const response = await fetch(`${API_BASE_URL}/api/vehicle-categories`, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // ✅ Access `data.data` instead of `data`
-      if (data.success && Array.isArray(data.data)) {
-        const formattedCategories = data.data.map(category => ({
-          id: category.vehicleCategoryId || category._id,
-          name: category.title,
-          image: category.image ? `${API_BASE_URL}${category.image}` : '',
-        }));
-        setCategories(formattedCategories);
-        setFilteredCategories(formattedCategories);
-      } else {
-        setError('No categories found for this module');
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error.message);
-      setError(`Failed to fetch categories: ${error.message}`);
-    }
-  };
-  fetchCategories();
-}, []);
+    };
+    fetchCategories();
+  }, []);
 
   // Search functionality
   const handleSearch = () => {
     const filtered = categories.filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCategories(filtered);
   };
@@ -79,19 +81,15 @@ const Category = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = "SI,Category Id,Category Name\n";
-    filteredCategories.forEach((category, index) => {
-      csvContent += `${index + 1},${category.id},${category.name}\n`;
-    });
-    const blob = new Blob([csvContent], {
-      type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv'
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `category_list.${format}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const title = 'Category List';
+    const fileName = 'vehicle_categories';
+    const exporter = exportCategories(filteredCategories, fileName, title);
+
+    if (format === 'excel') {
+      exporter.excel();
+    } else if (format === 'pdf') {
+      exporter.pdf();
+    }
     handleClose();
   };
 
@@ -121,14 +119,14 @@ const Category = () => {
             <Button
               variant="outlined" color='#E15B65'
               startIcon={<SearchIcon />}
-              onClick={handleSearch} sx={{color:'#E15B65'}}
+              onClick={handleSearch} sx={{ color: '#E15B65' }}
             >
               Search
             </Button>
             <Button
               variant="outlined" color='#E15B65'
               endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick} sx={{color:'#E15B65'}}
+              onClick={handleClick} sx={{ color: '#E15B65' }}
             >
               Export
             </Button>
@@ -138,7 +136,7 @@ const Category = () => {
               onClose={handleClose}
             >
               <MenuItem onClick={() => handleExport('excel')}>Excel</MenuItem>
-              <MenuItem onClick={() => handleExport('csv')}>CSV</MenuItem>
+              <MenuItem onClick={() => handleExport('pdf')}>PDF</MenuItem>
             </Menu>
           </Box>
         </Box>
@@ -150,22 +148,22 @@ const Category = () => {
         <Box sx={{ width: '100%', overflowX: 'auto' }}>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>SI</TableCell>
-                <TableCell>Category Name</TableCell>
-                <TableCell>Category Id</TableCell>
+              <TableRow sx={{ bgcolor: '#fce9ea' }}>
+                <TableCell>SI No</TableCell>
+                <TableCell>Category ID</TableCell>
                 <TableCell>Category Image</TableCell>
+                <TableCell>Category Name</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredCategories.map((category, index) => (
-                <TableRow key={category.id}>
+                <TableRow key={category.id} hover>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{category.name}</TableCell>
                   <TableCell>{category.id}</TableCell>
                   <TableCell>
-                    <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                    <img src={category.image} alt={category.name} style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 8 }} />
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{category.name}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

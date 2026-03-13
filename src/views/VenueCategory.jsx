@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { exportCategories } from '../utils/exportUtils';
 
 const Category = () => {
   const theme = useTheme();
@@ -97,20 +98,15 @@ const Category = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = 'SI No,Category ID,Category Image,Category Name\n';
-    filteredCategories.forEach((category, index) => {
-      csvContent += `${index + 1},${category.id},${category.image || 'N/A'},${category.name}\n`;
-    });
-    const blob = new Blob([csvContent], {
-      type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const extension = format === 'excel' ? 'xls' : 'csv';
-    link.download = `category_list.${extension}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const title = 'Venue Category List';
+    const fileName = 'venue_categories';
+    const exporter = exportCategories(filteredCategories, fileName, title);
+
+    if (format === 'excel') {
+      exporter.excel();
+    } else if (format === 'pdf') {
+      exporter.pdf();
+    }
     handleClose();
   };
 
@@ -144,44 +140,44 @@ const Category = () => {
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
             <TextField
-  variant="outlined"
-  placeholder="Search categories"
-  value={searchTerm}
-  onChange={(e) => {
-    setSearchTerm(e.target.value);
-    if (!e.target.value.trim()) {
-      setFilteredCategories(categories);
-    }
-  }}
-  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-  size="small" sx={{
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: '#E15B65',
-      },
-      '&:hover fieldset': {
-        borderColor: '#E15B65',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#E15B65',
-      },
-    },
-  }}/>
+              variant="outlined"
+              placeholder="Search categories"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                if (!e.target.value.trim()) {
+                  setFilteredCategories(categories);
+                }
+              }}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              size="small" sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#E15B65',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#E15B65',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E15B65',
+                  },
+                },
+              }} />
             <Button
-              variant="outlined" 
+              variant="outlined"
               startIcon={<SearchIcon />}
               onClick={handleSearch} sx={{ borderColor: '#E15B65', color: '#E15B65' }}>
               Search
             </Button>
             <Button
-              variant="outlined" 
+              variant="outlined"
               endIcon={<ArrowDropDownIcon />}
               onClick={handleClick} sx={{ borderColor: '#E15B65', color: '#E15B65' }}>
               Export
             </Button>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
               <MenuItem onClick={() => handleExport('excel')}>Excel</MenuItem>
-              <MenuItem onClick={() => handleExport('csv')}>CSV</MenuItem>
+              <MenuItem onClick={() => handleExport('pdf')}>PDF</MenuItem>
             </Menu>
           </Box>
         </Box>
@@ -193,16 +189,16 @@ const Category = () => {
         <Box sx={{ width: '100%', overflowX: 'auto' }}>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>SI</TableCell>
-                <TableCell>Category Id</TableCell>
+              <TableRow sx={{ bgcolor: '#fce9ea' }}>
+                <TableCell>SI No</TableCell>
+                <TableCell>Category ID</TableCell>
                 <TableCell>Category Image</TableCell>
                 <TableCell>Category Name</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredCategories.map((category, index) => (
-                <TableRow key={category.id}>
+                <TableRow key={category.id} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{category.id}</TableCell>
                   <TableCell>
@@ -210,14 +206,15 @@ const Category = () => {
                       <img
                         src={category.image}
                         alt={category.name}
-                        style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                        style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 8 }}
+                      />
                     ) : (
                       <Typography variant="caption" color="text.secondary">
                         No Image
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell>{category.name}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{category.name}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

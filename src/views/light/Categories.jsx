@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { exportCategories } from '../../utils/exportUtils';
 
 const THEME_COLOR = '#673ab7';
 
@@ -86,7 +87,8 @@ const LightCategory = () => {
   /* ================= SEARCH ================= */
   useEffect(() => {
     const filtered = categories.filter((cat) =>
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cat.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCategories(filtered);
   }, [searchTerm, categories]);
@@ -96,25 +98,15 @@ const LightCategory = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = 'SI,Category Id,Category Name\n';
+    const title = 'Light & Sound Category List';
+    const fileName = 'light_categories';
+    const exporter = exportCategories(filteredCategories, fileName, title);
 
-    filteredCategories.forEach((cat, index) => {
-      csvContent += `${index + 1},${cat.id},${cat.name}\n`;
-    });
-
-    const blob = new Blob([csvContent], {
-      type:
-        format === 'excel'
-          ? 'application/vnd.ms-excel'
-          : 'text/csv'
-    });
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `light_categories.${format}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    if (format === 'excel') {
+      exporter.excel();
+    } else if (format === 'pdf') {
+      exporter.pdf();
+    }
     handleClose();
   };
 
@@ -185,8 +177,8 @@ const LightCategory = () => {
               <MenuItem onClick={() => handleExport('excel')}>
                 Excel
               </MenuItem>
-              <MenuItem onClick={() => handleExport('csv')}>
-                CSV
+              <MenuItem onClick={() => handleExport('pdf')}>
+                PDF
               </MenuItem>
             </Menu>
           </Box>
@@ -204,10 +196,10 @@ const LightCategory = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: '#f3e5f5' }}>
-                <TableCell>SI</TableCell>
-                <TableCell>Image</TableCell>
-                <TableCell>Category Name</TableCell>
+                <TableCell>SI No</TableCell>
                 <TableCell>Category ID</TableCell>
+                <TableCell>Category Image</TableCell>
+                <TableCell>Category Name</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -224,6 +216,8 @@ const LightCategory = () => {
                   }}
                 >
                   <TableCell>{index + 1}</TableCell>
+
+                  <TableCell>{cat.id}</TableCell>
 
                   <TableCell>
                     <Box
@@ -242,8 +236,6 @@ const LightCategory = () => {
                   <TableCell sx={{ fontWeight: 600 }}>
                     {cat.name}
                   </TableCell>
-
-                  <TableCell>{cat.id}</TableCell>
 
                   <TableCell>
                     <Box

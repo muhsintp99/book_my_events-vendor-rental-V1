@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { exportCategories } from '../../utils/exportUtils';
 
 const Category = () => {
   const theme = useTheme();
@@ -84,7 +85,8 @@ const Category = () => {
   /* ================= SEARCH ================= */
   useEffect(() => {
     const filtered = categories.filter((cat) =>
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cat.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCategories(filtered);
   }, [searchTerm, categories]);
@@ -94,25 +96,15 @@ const Category = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = 'SI,Category Id,Category Name\n';
+    const title = 'Event Professional Category List';
+    const fileName = 'event_professional_categories';
+    const exporter = exportCategories(filteredCategories, fileName, title);
 
-    filteredCategories.forEach((cat, index) => {
-      csvContent += `${index + 1},${cat.id},${cat.name}\n`;
-    });
-
-    const blob = new Blob([csvContent], {
-      type:
-        format === 'excel'
-          ? 'application/vnd.ms-excel'
-          : 'text/csv'
-    });
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `eventpro_categories.${format}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    if (format === 'excel') {
+      exporter.excel();
+    } else if (format === 'pdf') {
+      exporter.pdf();
+    }
     handleClose();
   };
 
@@ -183,8 +175,8 @@ const Category = () => {
               <MenuItem onClick={() => handleExport('excel')}>
                 Excel
               </MenuItem>
-              <MenuItem onClick={() => handleExport('csv')}>
-                CSV
+              <MenuItem onClick={() => handleExport('pdf')}>
+                PDF
               </MenuItem>
             </Menu>
           </Box>
@@ -202,10 +194,10 @@ const Category = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: '#fce9ea' }}>
-                <TableCell>SI</TableCell>
-                <TableCell>Image</TableCell>
-                <TableCell>Category Name</TableCell>
+                <TableCell>SI No</TableCell>
                 <TableCell>Category ID</TableCell>
+                <TableCell>Category Image</TableCell>
+                <TableCell>Category Name</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -222,6 +214,8 @@ const Category = () => {
                   }}
                 >
                   <TableCell>{index + 1}</TableCell>
+
+                  <TableCell>{cat.id}</TableCell>
 
                   <TableCell>
                     <Box
@@ -240,8 +234,6 @@ const Category = () => {
                   <TableCell sx={{ fontWeight: 600 }}>
                     {cat.name}
                   </TableCell>
-
-                  <TableCell>{cat.id}</TableCell>
 
                   <TableCell>
                     <Box
