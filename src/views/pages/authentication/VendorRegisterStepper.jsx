@@ -132,6 +132,7 @@ const SBtn = styled(Button)({
 const UpBox = styled(Box)(({ isset }) => ({
     border: `2px dashed ${isset ? '#4caf50' : '#dde1ec'}`,
     borderRadius: 16, padding: '32px 16px', textAlign: 'center', cursor: 'pointer',
+    position: 'relative',
     transition: 'all .25s', background: isset ? 'rgba(76,175,80,0.04)' : '#fafcff',
     '&:hover': { borderColor: RED, background: RED_BG },
 }));
@@ -793,6 +794,7 @@ export default function VendorRegisterStepper() {
                     type={showPass ? 'text' : 'password'} value={form.password}
                     onChange={e => set('password', e.target.value)}
                     error={!!errors.password} helperText={errors.password} sx={INPUT_SX}
+                    inputProps={{ minLength: 6, maxLength: 8 }}
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
@@ -806,6 +808,7 @@ export default function VendorRegisterStepper() {
                     type={showConf ? 'text' : 'password'} value={form.confirmPassword}
                     onChange={e => set('confirmPassword', e.target.value)}
                     error={!!errors.confirmPassword} helperText={errors.confirmPassword} sx={INPUT_SX}
+                    inputProps={{ minLength: 6, maxLength: 8 }}
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
@@ -973,6 +976,20 @@ export default function VendorRegisterStepper() {
                 ].map(({ label, note, field, ref: r, accept }) => (
                     <Grid item xs={12} sm={4} key={field}>
                         <UpBox isset={form[field] ? 'true' : undefined} onClick={() => r.current?.click()}>
+                            {form[field] && (
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => { e.stopPropagation(); set(field, null); }}
+                                    sx={{
+                                        position: 'absolute', top: 8, right: 8,
+                                        bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)', transform: 'scale(1.1)' },
+                                        transition: 'all .2s'
+                                    }}
+                                >
+                                    <CancelOutlinedIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                            )}
                             <input type="file" accept={accept} ref={r} hidden onChange={e => set(field, e.target.files[0])} />
                             {form[field] ? (
                                 <>

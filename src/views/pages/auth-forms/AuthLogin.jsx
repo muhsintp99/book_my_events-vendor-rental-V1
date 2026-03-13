@@ -160,6 +160,7 @@ export default function AuthLogin() {
           type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          inputProps={{ minLength: 6, maxLength: 8 }}
           endAdornment={
             <InputAdornment position="end">
               <IconButton
