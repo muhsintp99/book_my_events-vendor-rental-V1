@@ -29,7 +29,7 @@ import axios from 'axios';
 
 const API_BASE = 'https://api.bookmyevent.ae';
 const api = axios.create({ baseURL: API_BASE });
-const PRIMARY_COLOR = '#673ab7';
+const PRIMARY_COLOR = '#E15B65';
 
 export default function LightPortfolioManagement() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -248,7 +248,7 @@ export default function LightPortfolioManagement() {
                     {/* IMAGE TAB */}
                     {addTab === 0 && (
                         <>
-                            <Button component="label" variant="contained" sx={{ bgcolor: PRIMARY_COLOR, mb: 2, '&:hover': { bgcolor: '#5e35b1' } }}>
+                            <Button component="label" variant="contained" sx={{ bgcolor: PRIMARY_COLOR, mb: 2, '&:hover': { bgcolor: '#c14a54' } }}>
                                 <CloudUpload sx={{ mr: 1 }} /> Upload Thumbnail
                                 <input hidden type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
                             </Button>
@@ -318,7 +318,7 @@ export default function LightPortfolioManagement() {
                     {/* VIDEO TAB */}
                     {addTab === 1 && (
                         <>
-                            <Button component="label" variant="contained" sx={{ bgcolor: PRIMARY_COLOR, mb: 2, '&:hover': { bgcolor: '#5e35b1' } }}>
+                            <Button component="label" variant="contained" sx={{ bgcolor: PRIMARY_COLOR, mb: 2, '&:hover': { bgcolor: '#c14a54' } }}>
                                 <VideoLibrary sx={{ mr: 1 }} /> Upload Videos
                                 <input hidden multiple type="file" accept="video/*" onChange={(e) => setVideoFiles(Array.from(e.target.files))} />
                             </Button>
@@ -367,7 +367,7 @@ export default function LightPortfolioManagement() {
                     <Button
                         fullWidth
                         variant="contained"
-                        sx={{ bgcolor: PRIMARY_COLOR, py: 1.4, '&:hover': { bgcolor: '#5e35b1' } }}
+                        sx={{ bgcolor: PRIMARY_COLOR, py: 1.4, '&:hover': { bgcolor: '#c14a54' } }}
                         onClick={addPortfolio}
                         disabled={loading}
                     >

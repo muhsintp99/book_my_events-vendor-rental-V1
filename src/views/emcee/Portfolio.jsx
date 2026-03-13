@@ -29,7 +29,7 @@ import axios from 'axios';
 
 const API_BASE = 'https://api.bookmyevent.ae';
 const api = axios.create({ baseURL: API_BASE });
-const PRIMARY_COLOR = '#0f172a';
+const PRIMARY_COLOR = '#E15B65';
 
 export default function EmceePortfolioManagement() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -367,7 +367,7 @@ export default function EmceePortfolioManagement() {
                     <Button
                         fullWidth
                         variant="contained"
-                        sx={{ bgcolor: PRIMARY_COLOR, py: 1.4, '&:hover': { bgcolor: '#1e293b' } }}
+                        sx={{ bgcolor: PRIMARY_COLOR, py: 1.4, '&:hover': { bgcolor: '#c14a54' } }}
                         onClick={addPortfolio}
                         disabled={loading}
                     >

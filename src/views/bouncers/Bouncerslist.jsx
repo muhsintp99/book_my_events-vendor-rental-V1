@@ -160,13 +160,13 @@ export default function BouncersList() {
         });
     }, [bouncersList, searchQuery]);
 
-    const THEME_COLOR = '#0f172a'; // Slate-ish color for bouncers/security
+    const THEME_COLOR = '#E15B65'; // Red color for bouncers/security
 
     return (
         <Box sx={{ bgcolor: '#f5f7fa', minHeight: '100vh', pb: 4 }}>
             <Box
                 sx={{
-                    background: `linear-gradient(135deg, ${THEME_COLOR} 0%, #1e293b 100%)`,
+                    background: `linear-gradient(135deg, ${THEME_COLOR} 0%, #c14a54 100%)`,
                     color: 'white',
                     py: 4,
                     px: 3,

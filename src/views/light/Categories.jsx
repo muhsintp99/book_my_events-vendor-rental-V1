@@ -14,7 +14,8 @@ import {
   MenuItem,
   Paper,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  TableContainer
 } from '@mui/material';
 
 import {
@@ -25,7 +26,7 @@ import {
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { exportCategories } from '../../utils/exportUtils';
 
-const THEME_COLOR = '#673ab7';
+const THEME_COLOR = '#E15B65';
 
 const LightCategory = () => {
   const theme = useTheme();
@@ -163,7 +164,7 @@ const LightCategory = () => {
               onClick={handleClick}
               sx={{
                 bgcolor: THEME_COLOR,
-                '&:hover': { bgcolor: '#5e35b1' }
+                '&:hover': { bgcolor: '#c14a54' }
               }}
             >
               Export

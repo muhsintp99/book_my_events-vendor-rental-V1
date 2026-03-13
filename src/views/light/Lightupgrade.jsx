@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Card, CardContent, Typography, Button, Grid, Chip, Stack, Divider, Alert, CircularProgress, Snackbar } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import axios from 'axios';
@@ -9,8 +10,8 @@ const MAX_DESC_CHARS = 120;
 const MAX_FEATURES = 3;
 const API_BASE = 'https://api.bookmyevent.ae';
 
-const THEME_COLOR = '#673ab7';
-const THEME_HOVER = '#5e35b1';
+const THEME_COLOR = '#E15B65';
+const THEME_HOVER = '#c14a54';
 
 export default function LightUpgradePlanUI() {
     const [plans, setPlans] = useState([]);
