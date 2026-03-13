@@ -172,7 +172,7 @@ const PremiumBookings = ({
 
         // 2. Search Text
         if (searchText.trim()) {
-            const lower = searchText.toLowerCase();
+            const lower = searchText.trim().toLowerCase().replace(/^#/, '');
             result = result.filter(b =>
                 (b._id && b._id.toLowerCase().includes(lower)) ||
                 (b.fullName && b.fullName.toLowerCase().includes(lower)) ||
@@ -190,22 +190,50 @@ const PremiumBookings = ({
 
         // 4. Sorting
         result.sort((a, b) => {
-            const dateA = new Date(a.bookingDate || 0);
-            const dateB = new Date(b.bookingDate || 0);
-            const priceA = parseFloat(a.finalPrice || 0);
-            const priceB = parseFloat(b.finalPrice || 0);
-            const nameA = (a.fullName || '').toLowerCase();
-            const nameB = (b.fullName || '').toLowerCase();
+            const getMs = (d) => {
+                if (!d) return 0;
+                let ms = new Date(d).getTime();
+                // If invalid date (e.g. DD/MM/YYYY format), try parsing manually
+                if (isNaN(ms) && typeof d === 'string') {
+                    const parts = d.split(/[/-]/);
+                    if (parts.length === 3) {
+                        // Assume DD-MM-YYYY format
+                        ms = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+                    }
+                }
+                return isNaN(ms) ? 0 : ms;
+            };
+
+            const dateA = getMs(a.bookingDate);
+            const dateB = getMs(b.bookingDate);
+
+            const getCleanNum = (val) => {
+                if (!val) return 0;
+                if (typeof val === 'number') return val;
+                // Strip commas and strings and extract numerical values
+                const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+                return parseFloat(cleaned) || 0;
+            };
+
+            const priceA = getCleanNum(a.finalPrice);
+            const priceB = getCleanNum(b.finalPrice);
+            
+            const nameA = String(a.fullName || '').toLowerCase();
+            const nameB = String(b.fullName || '').toLowerCase();
+            const idA = String(a._id || '');
+            const idB = String(b._id || '');
+
+            const compareId = idB.localeCompare(idA);
 
             switch (sortBy) {
-                case 'newest': return b._id.localeCompare(a._id);
-                case 'date_asc': return dateA - dateB || b._id.localeCompare(a._id);
-                case 'date_desc': return dateB - dateA || b._id.localeCompare(a._id);
-                case 'price_high': return priceB - priceA || b._id.localeCompare(a._id);
-                case 'price_low': return priceA - priceB || b._id.localeCompare(a._id);
-                case 'name_asc': return nameA.localeCompare(nameB) || b._id.localeCompare(a._id);
-                case 'name_desc': return nameB.localeCompare(nameA) || b._id.localeCompare(a._id);
-                default: return b._id.localeCompare(a._id);
+                case 'newest': return compareId;
+                case 'date_asc': return (dateA - dateB) || compareId;
+                case 'date_desc': return (dateB - dateA) || compareId;
+                case 'price_high': return (priceB - priceA) || compareId;
+                case 'price_low': return (priceA - priceB) || compareId;
+                case 'name_asc': return nameA.localeCompare(nameB) || compareId;
+                case 'name_desc': return nameB.localeCompare(nameA) || compareId;
+                default: return compareId;
             }
         });
 

@@ -120,8 +120,13 @@ var EnquiryChatPage = function () {
       var doFetch = async function () {
         try {
           setChatLoading(true);
-          var res = await axios.get('https://api.bookmyevent.ae/api/enquiries/' + activeEnquiry._id + '/messages');
-          setMessages(res.data?.data || []);
+          var msgs = res.data?.data || [];
+          setMessages(msgs.map(function(m) {
+            return {
+              ...m,
+              time: m.time || new Date(m.createdAt || m.timestamp || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+          }));
         } catch (err) {
           console.error('Failed to fetch messages:', err);
           setMessages([]);

@@ -85,8 +85,10 @@ const Category = () => {
       setFilteredCategories(categories);
       return;
     }
+    const lower = searchTerm.toLowerCase();
     const filtered = categories.filter((category) =>
-      category.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      (category.name && category.name.toLowerCase().includes(lower)) ||
+      (category.id && category.id.toLowerCase().includes(lower))
     );
     setFilteredCategories(filtered);
   };
@@ -95,9 +97,9 @@ const Category = () => {
   const handleClose = () => setAnchorEl(null);
 
   const handleExport = (format) => {
-    let csvContent = 'SI,Category Id,Category Name\n';
+    let csvContent = 'SI No,Category ID,Category Image,Category Name\n';
     filteredCategories.forEach((category, index) => {
-      csvContent += `${index + 1},${category.id},${category.name}\n`;
+      csvContent += `${index + 1},${category.id},${category.image || 'N/A'},${category.name}\n`;
     });
     const blob = new Blob([csvContent], {
       type: format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv',
@@ -105,7 +107,8 @@ const Category = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `category_list.${format}`;
+    const extension = format === 'excel' ? 'xls' : 'csv';
+    link.download = `category_list.${extension}`;
     link.click();
     window.URL.revokeObjectURL(url);
     handleClose();
@@ -142,7 +145,13 @@ const Category = () => {
   variant="outlined"
   placeholder="Search categories"
   value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
+  onChange={(e) => {
+    setSearchTerm(e.target.value);
+    if (!e.target.value.trim()) {
+      setFilteredCategories(categories);
+    }
+  }}
+  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
   size="small" sx={{
     '& .MuiOutlinedInput-root': {
       '& fieldset': {

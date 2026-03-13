@@ -124,6 +124,19 @@ const EnquiriesUI = () => {
   };
 
   /* ===============================
+     DELETE ENQUIRY
+  =============================== */
+  const handleDeleteEnquiry = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this enquiry?")) return;
+    try {
+      await axios.delete(`https://api.bookmyevent.ae/api/enquiries/${id}`);
+      setEnquiries((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      alert("Failed to delete enquiry. Please try again.");
+    }
+  };
+
+  /* ===============================
      DETAIL ROW
   =============================== */
   const DetailRow = ({ icon, label, value }) => (
@@ -224,7 +237,7 @@ const EnquiriesUI = () => {
                     <TableCell>{e.moduleId?.title}</TableCell>
                     <TableCell>{e.contact}</TableCell>
                     <TableCell>
-                      {new Date(e.bookingDate).toLocaleDateString()}
+                      {new Date(e.bookingDate).toLocaleDateString('en-GB')}
                     </TableCell>
 
                     <TableCell align="center">
@@ -252,7 +265,7 @@ const EnquiriesUI = () => {
                         </Tooltip>
 
                         <Tooltip title="Delete">
-                          <IconButton size="small" color="error">
+                          <IconButton size="small" color="error" onClick={() => handleDeleteEnquiry(e._id)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -330,14 +343,14 @@ const EnquiriesUI = () => {
                       label="Booking Date"
                       value={new Date(
                         selectedEnquiry.bookingDate
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString('en-GB')}
                     />
                     <DetailRow
                       icon={<AccessTimeIcon fontSize="small" />}
                       label="Created At"
                       value={new Date(
                         selectedEnquiry.createdAt
-                      ).toLocaleString()}
+                      ).toLocaleString('en-GB')}
                     />
                   </CardContent>
                 </Card>

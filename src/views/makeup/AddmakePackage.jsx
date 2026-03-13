@@ -400,13 +400,24 @@ const AddmakePackage = () => {
               <InputLabel>Category *</InputLabel>
               <Select
                 multiple
+                label="Category *"
                 value={selectedCategories}
                 onChange={(e) => setSelectedCategories(e.target.value)}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selected.map((value) => {
                       const cat = makeupCategories.find((c) => c._id === value);
-                      return <Chip key={value} label={cat?.title} size="small" />;
+                      return (
+                        <Chip
+                          key={value}
+                          label={cat?.title}
+                          size="small"
+                          onDelete={() => {
+                            setSelectedCategories((prev) => prev.filter((item) => item !== value));
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
+                      );
                     })}
                   </Box>
                 )}
@@ -422,7 +433,7 @@ const AddmakePackage = () => {
             {/* Makeup Type */}
             <FormControl fullWidth>
               <InputLabel>Makeup Type *</InputLabel>
-              <Select value={makeupType} onChange={(e) => setMakeupType(e.target.value)}>
+              <Select label="Makeup Type *" value={makeupType} onChange={(e) => setMakeupType(e.target.value)}>
                 <MenuItem value="" disabled>
                   Select Type
                 </MenuItem>
