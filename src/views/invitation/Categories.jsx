@@ -117,11 +117,11 @@ const Category = () => {
   };
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f8f9fc', minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8f9fc', minHeight: '100vh' }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, md: 4 },
           borderRadius: 4
         }}
       >
@@ -129,8 +129,10 @@ const Category = () => {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2,
             mb: 4
           }}
         >
@@ -138,18 +140,20 @@ const Category = () => {
             variant="h4"
             sx={{
               fontWeight: 700,
-              color: '#E15B65'
+              color: '#F06292',
+              fontSize: { xs: '1.5rem', md: '2.125rem' }
             }}
           >
             Invitation Category List
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
             <TextField
               size="small"
               placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flex: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -164,8 +168,8 @@ const Category = () => {
               endIcon={<ArrowDropDownIcon />}
               onClick={handleClick}
               sx={{
-                bgcolor: '#E15B65',
-                '&:hover': { bgcolor: '#C2444E' }
+                bgcolor: '#F06292',
+                '&:hover': { bgcolor: '#E91E63' }
               }}
             >
               Export
@@ -194,6 +198,7 @@ const Category = () => {
         ) : error ? (
           <Typography color="error">{error}</Typography>
         ) : (
+        <TableContainer sx={{ overflowX: 'auto' }}>
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: '#fce9ea' }}>
@@ -261,6 +266,7 @@ const Category = () => {
               ))}
             </TableBody>
           </Table>
+        </TableContainer>
         )}
       </Paper>
     </Box>

@@ -119,11 +119,11 @@ const LightCategory = () => {
   };
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f8f9fc', minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8f9fc', minHeight: '100vh' }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, md: 4 },
           borderRadius: 4
         }}
       >
@@ -131,8 +131,10 @@ const LightCategory = () => {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2,
             mb: 4
           }}
         >
@@ -140,18 +142,20 @@ const LightCategory = () => {
             variant="h4"
             sx={{
               fontWeight: 700,
-              color: THEME_COLOR
+              color: THEME_COLOR,
+              fontSize: { xs: '1.5rem', md: '2.125rem' }
             }}
           >
             Light & Sound Category List
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
             <TextField
               size="small"
               placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flex: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -196,6 +200,7 @@ const LightCategory = () => {
         ) : error ? (
           <Typography color="error">{error}</Typography>
         ) : (
+        <TableContainer sx={{ overflowX: 'auto' }}>
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: '#f3e5f5' }}>
@@ -263,6 +268,7 @@ const LightCategory = () => {
               ))}
             </TableBody>
           </Table>
+        </TableContainer>
         )}
       </Paper>
     </Box>

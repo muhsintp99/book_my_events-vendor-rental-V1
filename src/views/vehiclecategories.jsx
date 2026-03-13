@@ -211,7 +211,7 @@ const VehicleCategory = () => {
   }
 
   return (
-    <Box sx={{ p: 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: theme.palette.grey[100], minHeight: '100vh' }}>
       <Box
         sx={{
           maxWidth: 'lg',
@@ -223,7 +223,16 @@ const VehicleCategory = () => {
         }}
       >
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2,
+            mb: 3
+          }}
+        >
           <Box>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
               Vehicle Categories
@@ -232,7 +241,15 @@ const VehicleCategory = () => {
               Parent categories and their subcategories
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: 2,
+              width: { xs: '100%', md: 'auto' }
+            }}
+          >
             <TextField
               variant="outlined"
               placeholder="Search categories..."
@@ -240,24 +257,37 @@ const VehicleCategory = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               size="small"
-              sx={{ minWidth: 250 }}
+              sx={{ minWidth: { xs: '100%', sm: 250 } }}
             />
-            <Button
-              variant="outlined"
-              startIcon={<SearchIcon />}
-              onClick={handleSearch}
-              sx={{ color: '#E15B65', borderColor: '#E15B65', '&:hover': { borderColor: '#c14a54' } }}
-            >
-              Search
-            </Button>
-            <Button
-              variant="outlined"
-              endIcon={<ArrowDropDownIcon />}
-              onClick={handleClick}
-              sx={{ color: '#E15B65', borderColor: '#E15B65', '&:hover': { borderColor: '#c14a54' } }}
-            >
-              Export
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
+              <Button
+                variant="outlined"
+                startIcon={<SearchIcon />}
+                onClick={handleSearch}
+                fullWidth={false}
+                sx={{
+                  flex: { xs: 1, sm: 'none' },
+                  color: '#E15B65',
+                  borderColor: '#E15B65',
+                  '&:hover': { borderColor: '#c14a54' }
+                }}
+              >
+                Search
+              </Button>
+              <Button
+                variant="outlined"
+                endIcon={<ArrowDropDownIcon />}
+                onClick={handleClick}
+                sx={{
+                  flex: { xs: 1, sm: 'none' },
+                  color: '#E15B65',
+                  borderColor: '#E15B65',
+                  '&:hover': { borderColor: '#c14a54' }
+                }}
+              >
+                Export
+              </Button>
+            </Box>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
               <MenuItem onClick={() => handleExport('excel')}>Excel</MenuItem>
               <MenuItem onClick={() => handleExport('csv')}>CSV</MenuItem>
@@ -273,7 +303,7 @@ const VehicleCategory = () => {
         )}
 
         {/* Statistics */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Chip
             icon={<DirectionsCar />}
             label={`${filteredCategories.length} Parent Categories`}
@@ -289,7 +319,7 @@ const VehicleCategory = () => {
         </Box>
 
         {/* Table */}
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0', overflowX: 'auto' }}>
           <Table>
             <TableHead sx={{ bgcolor: '#fce4ec' }}>
               <TableRow>
@@ -381,54 +411,56 @@ const VehicleCategory = () => {
                               Subcategories
                             </Typography>
                             {category.subCategories && category.subCategories.length > 0 ? (
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>SI</TableCell>
-                                    <TableCell>Subcategory Name</TableCell>
-                                    <TableCell>Image</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {category.subCategories.map((sub, subIndex) => (
-                                    <TableRow key={sub._id}>
-                                      <TableCell>{subIndex + 1}</TableCell>
-                                      <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <SubdirectoryArrowRight sx={{ fontSize: 18, color: '#E15B65' }} />
-                                          <Typography>{sub.title}</Typography>
-                                        </Box>
-                                      </TableCell>
-                                      <TableCell>
-                                        {sub.image && !imageErrors[`sub-${sub._id}`] ? (
-                                          <img
-                                            src={sub.image}
-                                            alt={sub.title}
-                                            style={{ width: 60, height: 45, objectFit: 'cover', borderRadius: 4 }}
-                                            onError={() => handleImageError(sub._id, 'sub')}
-                                          />
-                                        ) : (
-                                          <Box
-                                            sx={{
-                                              width: 60,
-                                              height: 45,
-                                              bgcolor: '#e0e0e0',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              justifyContent: 'center',
-                                              borderRadius: 1,
-                                            }}
-                                          >
-                                            <Typography variant="caption" color="text.secondary">
-                                              No Image
-                                            </Typography>
-                                          </Box>
-                                        )}
-                                      </TableCell>
+                              <TableContainer sx={{ overflowX: 'auto' }}>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>SI</TableCell>
+                                      <TableCell>Subcategory Name</TableCell>
+                                      <TableCell>Image</TableCell>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
+                                  </TableHead>
+                                  <TableBody>
+                                    {category.subCategories.map((sub, subIndex) => (
+                                      <TableRow key={sub._id}>
+                                        <TableCell>{subIndex + 1}</TableCell>
+                                        <TableCell>
+                                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <SubdirectoryArrowRight sx={{ fontSize: 18, color: '#E15B65' }} />
+                                            <Typography>{sub.title}</Typography>
+                                          </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                          {sub.image && !imageErrors[`sub-${sub._id}`] ? (
+                                            <img
+                                              src={sub.image}
+                                              alt={sub.title}
+                                              style={{ width: 60, height: 45, objectFit: 'cover', borderRadius: 4 }}
+                                              onError={() => handleImageError(sub._id, 'sub')}
+                                            />
+                                          ) : (
+                                            <Box
+                                              sx={{
+                                                width: 60,
+                                                height: 45,
+                                                bgcolor: '#e0e0e0',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: 1,
+                                              }}
+                                            >
+                                              <Typography variant="caption" color="text.secondary">
+                                                No Image
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
                             ) : (
                               <Typography variant="body2" color="text.secondary">
                                 No subcategories available
