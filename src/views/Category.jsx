@@ -98,11 +98,19 @@ const Category = () => {
   return (
     <Box sx={{ p: 3, backgroundColor: theme.palette.grey[100], minHeight: '100vh' }}>
       <Box sx={{ maxWidth: 'lg', margin: 'auto', backgroundColor: 'white', borderRadius: theme.shape.borderRadius, boxShadow: theme.shadows[1], p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2,
+            mb: 3,
+          }}>
           <Typography variant="h5" component="h1">
             Category List
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
             <TextField
               variant="outlined"
               placeholder="Search categories"
@@ -139,28 +147,30 @@ const Category = () => {
             {error}
           </Typography>
         )}
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>SI</TableCell>
-              <TableCell>Category Name</TableCell>
-              <TableCell>Category Id</TableCell>
-              <TableCell>Category Image</TableCell>
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>SI</TableCell>
+                <TableCell>Category Name</TableCell>
+                <TableCell>Category Id</TableCell>
+                <TableCell>Category Image</TableCell>
               </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredCategories.map((category, index) => (
-              <TableRow key={category.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>{category.id}</TableCell>
-                <TableCell>
-                <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {filteredCategories.map((category, index) => (
+                <TableRow key={category.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.id}</TableCell>
+                  <TableCell>
+                    <img src={category.image} alt={category.name} style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
       </Box>
     </Box>
   );

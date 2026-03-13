@@ -133,14 +133,16 @@ const Category = () => {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2,
             mb: 3,
           }}>
           <Typography variant="h5" component="h1">
             Category List
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
             <TextField
   variant="outlined"
   placeholder="Search categories"
@@ -188,37 +190,39 @@ const Category = () => {
             {error}
           </Typography>
         )}
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>SI</TableCell>
-              <TableCell>Category Id</TableCell>
-              <TableCell>Category Image</TableCell>
-              <TableCell>Category Name</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredCategories.map((category, index) => (
-              <TableRow key={category.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{category.id}</TableCell>
-                <TableCell>
-                  {category.image ? (
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      style={{ width: 100, height: 50, objectFit: 'contain' }} />
-                  ) : (
-                    <Typography variant="caption" color="text.secondary">
-                      No Image
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>{category.name}</TableCell>
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>SI</TableCell>
+                <TableCell>Category Id</TableCell>
+                <TableCell>Category Image</TableCell>
+                <TableCell>Category Name</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {filteredCategories.map((category, index) => (
+                <TableRow key={category.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{category.id}</TableCell>
+                  <TableCell>
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        style={{ width: 100, height: 50, objectFit: 'contain' }} />
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        No Image
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{category.name}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
       </Box>
     </Box>
   );

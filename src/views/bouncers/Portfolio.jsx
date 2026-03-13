@@ -203,7 +203,7 @@ export default function BouncersPortfolioManagement() {
             : portfolio.filter((p) => p.media?.some((m) => m.type === 'video' || m.type === 'videoLink'));
 
     return (
-        <Box sx={{ p: 3, maxWidth: 1800, mx: 'auto' }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1800, mx: 'auto' }}>
             {!isPremium && (
                 <Alert severity="warning" sx={{ mb: 3 }}>
                     Upgrade to premium to add portfolio works
@@ -220,8 +220,11 @@ export default function BouncersPortfolioManagement() {
                     <Tabs
                         value={addTab}
                         onChange={(_, v) => setAddTab(v)}
+                        variant="scrollable"
+                        scrollButtons="auto"
                         sx={{
                             mb: 3,
+                            borderBottom: '1px solid #eee',
                             '& .MuiTabs-indicator': { backgroundColor: PRIMARY_COLOR },
                             '& .MuiTab-root.Mui-selected': { color: PRIMARY_COLOR }
                         }}
@@ -378,8 +381,11 @@ export default function BouncersPortfolioManagement() {
             <Tabs
                 value={listTab}
                 onChange={(_, v) => setListTab(v)}
+                variant="scrollable"
+                scrollButtons="auto"
                 sx={{
                     mb: 2,
+                    borderBottom: '1px solid #eee',
                     '& .MuiTabs-indicator': { backgroundColor: PRIMARY_COLOR },
                     '& .MuiTab-root.Mui-selected': { color: PRIMARY_COLOR }
                 }}
@@ -388,7 +394,7 @@ export default function BouncersPortfolioManagement() {
                 <Tab label="Videos" />
             </Tabs>
 
-            <TableContainer component={Paper} sx={{ borderRadius: 3, width: '100%' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: 3, width: '100%', overflowX: 'auto' }}>
                 <Table>
                     <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>

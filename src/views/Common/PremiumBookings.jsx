@@ -303,7 +303,7 @@ const PremiumBookings = ({
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pb: 6 }}>
-            <Box sx={{ px: 4, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
+            <Box sx={{ px: { xs: 2, md: 4 }, py: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1, bgcolor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
                 <Typography variant="h6" fontWeight={700} color="text.primary">
                     {tabs[tabValue].label} {moduleLabel}
                 </Typography>
@@ -401,7 +401,17 @@ const PremiumBookings = ({
 
                     {!hideTabs && (
                         <Box sx={{ px: 3, borderBottom: '1px solid #f1f5f9' }}>
-                            <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, minWidth: 100 }, '& .Mui-selected': { color: primaryColor + ' !important' }, '& .MuiTabs-indicator': { bgcolor: primaryColor } }}>
+                            <Tabs
+                                value={tabValue}
+                                onChange={(e, v) => setTabValue(v)}
+                                variant="scrollable"
+                                scrollButtons="auto"
+                                sx={{
+                                    '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, minWidth: 100 },
+                                    '& .Mui-selected': { color: primaryColor + ' !important' },
+                                    '& .MuiTabs-indicator': { bgcolor: primaryColor }
+                                }}
+                            >
                                 {tabs.map(t => <Tab key={t.key} label={t.label} />)}
                             </Tabs>
                         </Box>

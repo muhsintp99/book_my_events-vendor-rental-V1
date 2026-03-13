@@ -188,7 +188,7 @@ export default function PortfolioManagement() {
       : portfolio.filter((p) => p.media?.some((m) => m.type === 'video' || m.type === 'videoLink'));
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1800, mx: 'auto' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1800, mx: 'auto' }}>
       {!isPremium && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Upgrade to premium to add portfolio works
@@ -202,7 +202,13 @@ export default function PortfolioManagement() {
             Add Portfolio Work
           </Typography>
 
-          <Tabs value={addTab} onChange={(_, v) => setAddTab(v)} sx={{ mb: 3 }}>
+          <Tabs
+            value={addTab}
+            onChange={(_, v) => setAddTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 3, borderBottom: '1px solid #eee' }}
+          >
             <Tab label="Images" />
             <Tab label="Videos" />
           </Tabs>
@@ -375,12 +381,18 @@ export default function PortfolioManagement() {
         </CardContent>
       </Card>
       {/* ================= LIST ================= */}
-      <Tabs value={listTab} onChange={(_, v) => setListTab(v)} sx={{ mb: 2 }}>
+      <Tabs
+        value={listTab}
+        onChange={(_, v) => setListTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ mb: 2, borderBottom: '1px solid #eee' }}
+      >
         <Tab label="Images" />
         <Tab label="Videos" />
       </Tabs>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 3, width: '100%' }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 3, width: '100%', overflowX: 'auto' }}>
         <Table>
           <TableHead sx={{ bgcolor: '#fdeaea' }}>
             <TableRow>

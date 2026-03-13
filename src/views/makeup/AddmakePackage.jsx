@@ -485,10 +485,11 @@ const AddmakePackage = () => {
             Basic Add-ons
           </Typography>
           <Paper variant="outlined" sx={{ p: 3, mb: 4, bgcolor: '#fafafa' }}>
-            <FormGroup row>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {Object.keys(basicServices).map((key) => (
                 <MuiFormControlLabel
                   key={key}
+                  sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
                   control={
                     <Checkbox
                       checked={basicServices[key]}
@@ -510,7 +511,7 @@ const AddmakePackage = () => {
                   }
                 />
               ))}
-            </FormGroup>
+            </Box>
           </Paper>
 
           {/* Custom Sections */}
@@ -546,7 +547,7 @@ const AddmakePackage = () => {
           />
 
           {/* Toggles */}
-          <Stack direction="row" spacing={4} sx={{ mb: 4 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 4 }} sx={{ mb: 4 }}>
             <FormControlLabel
               control={<Switch checked={trialIncluded} onChange={() => setTrialIncluded(!trialIncluded)} />}
               label="Trial Makeup Included"

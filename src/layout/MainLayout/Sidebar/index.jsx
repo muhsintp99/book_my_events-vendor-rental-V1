@@ -55,7 +55,7 @@ function Sidebar() {
     return (
       <>
         {downMD ? (
-          <Box sx={drawerSX}>
+          <Box sx={{ height: 'calc(100vh - 75px)', overflowY: 'auto', ...drawerSX }}>
             <MenuList />
             {drawerOpen && drawerContent}
           </Box>
@@ -86,7 +86,7 @@ function Sidebar() {
               bgcolor: '#ffffff',
               color: 'text.primary',
               borderRight: 'none',
-              height: 'auto'
+              height: '100%'
             }
           }}
           ModalProps={{ keepMounted: true }}
