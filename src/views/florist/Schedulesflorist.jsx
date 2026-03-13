@@ -119,14 +119,27 @@ function FloristSchedules() {
 
     const fetchModules = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/modules`);
-            const data = await response.json();
-            let modulesList = data.success ? (data.data || data.modules || []) : (Array.isArray(data) ? data : []);
-            const filtered = modulesList.filter(m => {
+            const [modulesRes, secondaryModulesRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/modules`),
+                fetch(`${API_BASE_URL}/api/secondary-modules`)
+            ]);
+
+            const modulesData = await modulesRes.json();
+            const secondaryData = await secondaryModulesRes.json();
+
+            let modulesList = modulesData.success ? (modulesData.data || modulesData.modules || []) : (Array.isArray(modulesData) ? modulesData : []);
+            let secondaryList = secondaryData.success ? (secondaryData.data || secondaryData.modules || []) : (Array.isArray(secondaryData) ? secondaryData : []);
+
+            const combined = [...modulesList, ...secondaryList];
+            const filtered = combined.filter(m => {
                 const t = (m.title || m.name || '').toLowerCase();
                 return t.includes('florist') || t.includes('stage decoration');
             });
             setModules(filtered);
+
+            if (filtered.length > 0) {
+                setFormData(prev => ({ ...prev, moduleId: filtered[0]._id }));
+            }
         } catch (err) { console.error('Fetch modules error:', err); }
     };
 
@@ -272,7 +285,16 @@ function FloristSchedules() {
 
     const handleNext = () => setActiveStep(prev => prev + 1);
     const handleBack = () => setActiveStep(prev => prev - 1);
-    const handleOpenDialog = () => { setOpenDialog(true); setActiveStep(0); };
+    const handleOpenDialog = () => {
+        const selectedBookingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toISOString().split('T')[0];
+        setFormData(prev => ({
+            ...prev,
+            bookingDate: selectedBookingDate,
+            moduleId: modules[0]?._id || prev.moduleId
+        }));
+        setOpenDialog(true);
+        setActiveStep(0);
+    };
     const handleCloseDialog = () => { setOpenDialog(false); setError(null); setActiveStep(0); };
     const steps = ['Customer Info', 'Service Details', 'Notes'];
 
