@@ -8,7 +8,7 @@ import axios from 'axios';
 const MAX_DESC_CHARS = 120;
 const MAX_FEATURES = 3;
 const API_BASE = 'https://api.bookmyevent.ae';
-const PRIMARY_COLOR = '#0f172a';
+const PRIMARY_COLOR = '#E15B65';
 
 export default function BouncersUpgradePlanUI() {
     const [plans, setPlans] = useState([]);
@@ -256,7 +256,7 @@ export default function BouncersUpgradePlanUI() {
                         Current Plan: <b>{currentSubscription.planId?.name || 'PREMIUM'}</b>
                     </Alert>
                 ) : (
-                    <Alert severity="info" sx={{ mb: 4, border: '1px solid #0f172a' }}>
+                    <Alert severity="info" sx={{ mb: 4, border: '1px solid #E15B65' }}>
                         Current Plan: <b>FREE</b> - Upgrade to unlock premium features
                     </Alert>
                 )}
@@ -352,7 +352,7 @@ export default function BouncersUpgradePlanUI() {
                                                 color: isCurrent ? '#757575' : '#fff',
                                                 fontWeight: 800,
                                                 py: 1.5,
-                                                '&:hover': { bgcolor: isCurrent ? '#e0e0e0' : '#1e293b' }
+                                                '&:hover': { bgcolor: isCurrent ? '#e0e0e0' : '#c14a54' }
                                             }}
                                         >
                                             {isCurrent ? 'Current Plan' : isPaying ? 'Redirecting...' : 'Upgrade To Premium'}
