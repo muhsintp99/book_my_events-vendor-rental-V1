@@ -5,6 +5,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -190,75 +191,75 @@ const Category = () => {
         ) : error ? (
           <Typography color="error">{error}</Typography>
         ) : (
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#fce9ea' }}>
-                <TableCell>SI No</TableCell>
-                <TableCell>Category ID</TableCell>
-                <TableCell>Category Image</TableCell>
-                <TableCell>Category Name</TableCell>
-                <TableCell>Status</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {filteredCategories.map((cat, index) => (
-                <TableRow
-                  key={cat.id}
-                  hover
-                  sx={{
-                    '&:hover': {
-                      bgcolor: '#fff5f6'
-                    }
-                  }}
-                >
-                  <TableCell>{index + 1}</TableCell>
-
-                  <TableCell>{cat.id}</TableCell>
-
-                  <TableCell>
-                    <Box
-                      component="img"
-                      src={cat.image}
-                      alt={cat.name}
-                      sx={{
-                        width: 80,
-                        height: 60,
-                        objectFit: 'cover',
-                        borderRadius: 2
-                      }}
-                    />
-                  </TableCell>
-
-                  <TableCell sx={{ fontWeight: 600 }}>
-                    {cat.name}
-                  </TableCell>
-
-                  <TableCell>
-                    <Box
-                      sx={{
-                        px: 2,
-                        py: 0.5,
-                        borderRadius: 3,
-                        display: 'inline-block',
-                        fontSize: 12,
-                        bgcolor: cat.status
-                          ? '#e6f4ea'
-                          : '#fdecea',
-                        color: cat.status
-                          ? '#2e7d32'
-                          : '#d32f2f'
-                      }}
-                    >
-                      {cat.status ? 'Active' : 'Inactive'}
-                    </Box>
-                  </TableCell>
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#fce9ea' }}>
+                  <TableCell>SI No</TableCell>
+                  <TableCell>Category ID</TableCell>
+                  <TableCell>Category Image</TableCell>
+                  <TableCell>Category Name</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+
+              <TableBody>
+                {filteredCategories.map((cat, index) => (
+                  <TableRow
+                    key={cat.id}
+                    hover
+                    sx={{
+                      '&:hover': {
+                        bgcolor: '#fff5f6'
+                      }
+                    }}
+                  >
+                    <TableCell>{index + 1}</TableCell>
+
+                    <TableCell>{cat.id}</TableCell>
+
+                    <TableCell>
+                      <Box
+                        component="img"
+                        src={cat.image}
+                        alt={cat.name}
+                        sx={{
+                          width: 80,
+                          height: 60,
+                          objectFit: 'cover',
+                          borderRadius: 2
+                        }}
+                      />
+                    </TableCell>
+
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {cat.name}
+                    </TableCell>
+
+                    <TableCell>
+                      <Box
+                        sx={{
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: 3,
+                          display: 'inline-block',
+                          fontSize: 12,
+                          bgcolor: cat.status
+                            ? '#e6f4ea'
+                            : '#fdecea',
+                          color: cat.status
+                            ? '#2e7d32'
+                            : '#d32f2f'
+                        }}
+                      >
+                        {cat.status ? 'Active' : 'Inactive'}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Paper>
     </Box>
