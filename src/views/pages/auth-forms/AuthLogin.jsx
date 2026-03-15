@@ -43,7 +43,7 @@ export default function AuthLogin() {
       /* ================= LOGIN ================= */
       const res = await axios.post(
         "https://api.bookmyevent.ae/api/auth/login",
-        { email, password }
+        { email, password, loginType: "vendor" }
       );
 
       const { token, user, profile } = res.data;
