@@ -104,13 +104,25 @@ const LightEnquiries = () => {
        SEARCH FILTER
     =============================== */
     const filteredEnquiries = enquiries.filter((e) => {
-        const isLightAndSound = e.moduleId?.title === "Light & Sound" || e.moduleId?.title === "Light and Sound";
-        if (!isLightAndSound) return false;
+        const mTitle = String(e.moduleId?.title || "").toLowerCase();
+        const eType = String(e.eventType || "").toLowerCase();
 
+        const matchesModule = 
+            mTitle.includes("light") || 
+            mTitle.includes("sound") || 
+            mTitle.includes("audio") ||
+            eType.includes("light") || 
+            eType.includes("sound") || 
+            eType.includes("audio");
+
+        if (!matchesModule) return false;
+
+        const searchStr = search.toLowerCase();
         return (
-            (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-            (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
-            (e.contact || "").includes(search)
+            (e.fullName || "").toLowerCase().includes(searchStr) ||
+            (e.email || "").toLowerCase().includes(searchStr) ||
+            (e.contact || "").includes(search) ||
+            (e.eventType || "").toLowerCase().includes(searchStr)
         );
     });
 

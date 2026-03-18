@@ -18,81 +18,88 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 // styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    backgroundColor: '#E15B65',
-    color: '#fff',
-    overflow: 'hidden',
-    position: 'relative',
-    '&:after': {
-        content: '""',
-        position: 'absolute',
-        width: 210,
-        height: 210,
-        background: `linear-gradient(210.04deg, #FF8A8A -50.94%, rgba(225, 91, 101, 0) 83.49%)`,
-        borderRadius: '50%',
-        top: -30,
-        right: -180
-    },
-    '&:before': {
-        content: '""',
-        position: 'absolute',
-        width: 210,
-        height: 210,
-        background: `linear-gradient(140.9deg, #FF8A8A -14.02%, rgba(225, 91, 101, 0) 77.58%)`,
-        borderRadius: '50%',
-        top: -160,
-        right: -130
-    }
+  backgroundColor: '#E15B65',
+  background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
+  color: '#fff',
+  overflow: 'hidden',
+  position: 'relative',
+  '&:after': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '50%',
+    top: -30,
+    right: -180
+  },
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '50%',
+    top: -160,
+    right: -130
+  }
 }));
 
-export default function InvitationIncomeDarkCard({ isLoading }) {
-    const theme = useTheme();
+// ==============================|| INVITATION TOTAL INCOME DARK CARD ||============================== //
 
-    return (
-        <>
-            {isLoading ? (
-                <TotalIncomeCard />
-            ) : (
-                <CardWrapper border={false} content={false}>
-                    <Box sx={{ p: 2 }}>
-                        <List sx={{ py: 0 }}>
-                            <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                <ListItemAvatar>
-                                    <Avatar
-                                        variant="rounded"
-                                        sx={{
-                                            ...theme.typography.commonAvatar,
-                                            ...theme.typography.largeAvatar,
-                                            bgcolor: '#8d1e27ff',
-                                            color: '#fff'
-                                        }}
-                                    >
-                                        <TableChartOutlinedIcon fontSize="inherit" />
-                                    </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                    sx={{
-                                        py: 0,
-                                        mt: 0.45,
-                                        mb: 0.45
-                                    }}
-                                    primary={
-                                        <Typography variant="h4" sx={{ color: '#fff' }}>
-                                            ₹0.00
-                                        </Typography>
-                                    }
-                                    secondary={
-                                        <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25 }}>
-                                            Total Income
-                                        </Typography>
-                                    }
-                                />
-                            </ListItem>
-                        </List>
-                    </Box>
-                </CardWrapper>
-            )}
-        </>
-    );
+export default function InvitationTotalIncomeDarkCard({ isLoading, totalAmount = 0 }) {
+  const theme = useTheme();
+
+  return (
+    <>
+      {isLoading ? (
+        <TotalIncomeCard />
+      ) : (
+        <CardWrapper border={false} content={false}>
+          <Box sx={{ p: 2 }}>
+            <List sx={{ py: 0 }}>
+              <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.largeAvatar,
+                      bgcolor: '#8d1e27ff',
+                      color: '#fff'
+                    }}
+                  >
+                    <TableChartOutlinedIcon fontSize="inherit" />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  sx={{
+                    py: 0,
+                    mt: 0.45,
+                    mb: 0.45,
+                    ml: 1
+                  }}
+                  primary={
+                    <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700 }}>
+                      ₹{Number(totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25, fontWeight: 600 }}>
+                      Total Income
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            </List>
+          </Box>
+        </CardWrapper>
+      )}
+    </>
+  );
 }
 
-InvitationIncomeDarkCard.propTypes = { isLoading: PropTypes.bool };
+InvitationTotalIncomeDarkCard.propTypes = { 
+  isLoading: PropTypes.bool,
+  totalAmount: PropTypes.number
+};

@@ -41,17 +41,18 @@ export default function BoutiqueEarningCard({ isLoading, totalEarnings = 0 }) {
           border={false}
           content={false}
           sx={{
-            background: 'linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%)',
+            background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 8px 32px 0 rgba(142, 68, 173, 0.3)',
+            height: 190,
+            boxShadow: '0 8px 32px 0 rgba(214, 48, 49, 0.3)',
             '&:after': {
               content: '""',
               position: 'absolute',
               width: 210,
               height: 210,
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.2)',
               borderRadius: '50%',
               top: -85,
               right: -95,
@@ -62,7 +63,7 @@ export default function BoutiqueEarningCard({ isLoading, totalEarnings = 0 }) {
               position: 'absolute',
               width: 210,
               height: 210,
-              background: 'rgba(255, 255, 255, 0.15)',
+              background: 'rgba(255, 255, 255, 0.25)',
               borderRadius: '50%',
               top: -125,
               right: -15,
@@ -131,13 +132,13 @@ export default function BoutiqueEarningCard({ isLoading, totalEarnings = 0 }) {
                       letterSpacing: '-0.5px'
                     }}
                   >
-                    ₹{Number(totalEarnings).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{Number(totalEarnings).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </Typography>
                   <Avatar
                     sx={{
                       width: 24,
                       height: 24,
-                      bgcolor: 'rgba(76, 175, 80, 0.4)',
+                      bgcolor: 'rgba(255, 255, 255, 0.3)',
                       color: '#fff'
                     }}
                   >
@@ -165,4 +166,3 @@ export default function BoutiqueEarningCard({ isLoading, totalEarnings = 0 }) {
 }
 
 BoutiqueEarningCard.propTypes = { isLoading: PropTypes.bool, totalEarnings: PropTypes.number };
-

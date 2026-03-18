@@ -1,81 +1,87 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 
 // material-ui
-// import { useTheme } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
 
-// third party
+// third-party
 import Chart from 'react-apexcharts';
 
 // project imports
-import chartData from './cards/chartdata/areachart';
+import MainCard from 'ui-component/cards/MainCard';
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
+// ==============================|| BOUTIQUE AREA CHART CARD ||============================== //
 
-export default function BoutiqueAreaChartCard() {
-  // const theme = useTheme();
+export default function BoutiqueAreaChartCard({ totalRevenue }) {
+  const theme = useTheme();
 
-  // Custom coral-red color theme
-  const coralMain = '#dd666eff';
-  const coralDark = '#A33A43';
-  const coralLight = '#FF8A92';
-
-  const [chartConfig, setChartConfig] = useState(chartData);
-
-  useEffect(() => {
-    setChartConfig((prevState) => ({
-      ...prevState,
-      options: {
-        ...prevState.options,
-        colors: [coralMain],
-        tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
-        fill: {
-          type: 'gradient',
-          gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.7,
-            opacityTo: 0.2,
-            stops: [0, 90, 100],
-            colorStops: [
-              { offset: 0, color: coralLight, opacity: 0.8 },
-              { offset: 50, color: coralMain, opacity: 0.6 },
-              { offset: 100, color: coralDark, opacity: 0.3 }
-            ]
-          }
+  const chartData = {
+    type: 'area',
+    height: 120,
+    options: {
+      chart: {
+        id: 'boutique-support-chart',
+        sparkline: { enabled: true }
+      },
+      dataLabels: { enabled: false },
+      stroke: {
+        curve: 'smooth',
+        width: 3
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.5,
+          opacityTo: 0.0,
+          stops: [0, 90, 100]
         }
+      },
+      colors: ['#E15B65'], // Coral Red
+      tooltip: {
+        theme: 'light',
+        fixed: { enabled: false },
+        x: { show: false },
+        y: {
+          title: { formatter: () => 'Revenue ₹' }
+        },
+        marker: { show: false }
       }
-    }));
-  }, []);
+    },
+    series: [
+      {
+        name: 'Revenue',
+        data: [0, 15, 10, 50, 30, 40, 25, 60] // Decorative Sparkline
+      }
+    ]
+  };
 
   return (
-    <Card
+    <MainCard
       sx={{
-        bgcolor: coralLight,
-        border: `1px solid ${coralMain}`,
-        boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
-        borderRadius: 3
+        bgcolor: '#FFF5F5',
+        boxShadow: '0 8px 24px rgba(239, 83, 80, 0.08)',
+        border: '1px solid rgba(239, 83, 80, 0.1)',
+        position: 'relative',
+        overflow: 'hidden',
+        mb: 2 // Margin bottom to space it from the list
       }}
+      content={false}
     >
-      <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-        <Grid item xs={12}>
-          <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid item>
-              <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
-                Boutique
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹0.00
-              </Typography>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      <Chart {...chartConfig} />
-    </Card>
+      <Box sx={{ p: 3, pb: 0, position: 'relative', zIndex: 2 }}>
+        <Typography variant="h3" sx={{ fontWeight: 800, color: '#D63031' }}>
+          ₹{Number(totalRevenue || 0).toLocaleString('en-IN')}
+        </Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#E15B65', mt: 0.5 }}>
+          Total Boutique Revenue
+        </Typography>
+      </Box>
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Chart {...chartData} />
+      </Box>
+    </MainCard>
   );
 }
+
+BoutiqueAreaChartCard.propTypes = { totalRevenue: PropTypes.number };

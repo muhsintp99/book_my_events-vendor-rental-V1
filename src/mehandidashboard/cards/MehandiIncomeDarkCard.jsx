@@ -18,8 +18,9 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 // styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.dark = '#E15B65',
-  color: theme.palette.primary.light,
+  backgroundColor: '#E15B65',
+  background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
+  color: '#fff',
   overflow: 'hidden',
   position: 'relative',
   '&:after': {
@@ -27,7 +28,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(210.04deg, ${theme.palette.primary[200]} -50.94%, #e6ccceff, 0) 83.49%)`,
+    background: 'rgba(255, 255, 255, 0.1)',
     borderRadius: '50%',
     top: -30,
     right: -180
@@ -37,14 +38,16 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(140.9deg, ${theme.palette.primary[200]} -14.02%, rgba(54, 152, 233, 0) 77.58%)`,
+    background: 'rgba(255, 255, 255, 0.15)',
     borderRadius: '50%',
     top: -160,
     right: -130
   }
 }));
 
-export default function MehandiIncomeDarkCard({ isLoading }) {
+// ==============================|| MEHANDI TOTAL INCOME DARK CARD ||============================== //
+
+export default function MehandiTotalIncomeDarkCard({ isLoading, totalAmount = 0 }) {
   const theme = useTheme();
 
   return (
@@ -73,15 +76,16 @@ export default function MehandiIncomeDarkCard({ isLoading }) {
                   sx={{
                     py: 0,
                     mt: 0.45,
-                    mb: 0.45
+                    mb: 0.45,
+                    ml: 1
                   }}
                   primary={
-                    <Typography variant="h4" sx={{ color: '#fff' }}>
-                      ₹0.00
+                    <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700 }}>
+                      ₹{Number(totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </Typography>
                   }
                   secondary={
-                    <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25 }}>
+                    <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25, fontWeight: 600 }}>
                       Total Income
                     </Typography>
                   }
@@ -95,4 +99,7 @@ export default function MehandiIncomeDarkCard({ isLoading }) {
   );
 }
 
-MehandiIncomeDarkCard.propTypes = { isLoading: PropTypes.bool };
+MehandiTotalIncomeDarkCard.propTypes = { 
+  isLoading: PropTypes.bool,
+  totalAmount: PropTypes.number
+};

@@ -5,11 +5,11 @@ import React from 'react';
 import Button from '@mui/material/Button';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 
 // project imports
 import OrnamentsAreaChartCard from './OrnamentsAreaChartCard';
@@ -17,21 +17,21 @@ import MainCard from 'ui-component/cards/MainCard';
 import SkeletonPopularCard from 'ui-component/cards/Skeleton/PopularCard';
 import { gridSpacing } from 'store/constant';
 
-// icons
+// assets
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
-import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
+import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined';
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 
-export default function PopularCard({ isLoading }) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+/* ================= DEFAULT EMPTY DATA ================= */
+const formatCurrency = (val) =>
+  `₹${Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
+export default function OrnamentsPopularCard({ 
+  isLoading = false, 
+  title = 'Top Booked Ornaments', 
+  packages = [], 
+  totalPackageRevenue = 0 
+}) {
   return (
     <>
       {isLoading ? (
@@ -44,38 +44,94 @@ export default function PopularCard({ isLoading }) {
               <Grid item xs={12}>
                 <Grid container alignItems="center" justifyContent="space-between">
                   <Typography variant="h4">
-                    Top Booked Ornaments
+                    {title}
                   </Typography>
-
-                  <IconButton size="small" onClick={handleClick}>
-                    <MoreHorizOutlinedIcon fontSize="small" />
-                  </IconButton>
-
-                  <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleClose}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  >
-                    <MenuItem onClick={handleClose}>Today</MenuItem>
-                    <MenuItem onClick={handleClose}>This Month</MenuItem>
-                    <MenuItem onClick={handleClose}>This Year</MenuItem>
-                  </Menu>
                 </Grid>
               </Grid>
 
-              {/* CHART (KEPT) */}
+              {/* CHART */}
               <Grid item xs={12} sx={{ mt: -1 }}>
-                <OrnamentsAreaChartCard />
+                <OrnamentsAreaChartCard totalRevenue={totalPackageRevenue} />
               </Grid>
 
-              {/* ❌ PACKAGE LIST REMOVED */}
+              {/* PACKAGE LIST */}
+              {packages.length > 0 ? (
+                packages.map((pkg, index) => (
+                  <React.Fragment key={index}>
+                    <Grid item xs={12}>
+                      <Grid container direction="column">
+                        <Grid item>
+                          <Grid container alignItems="center" justifyContent="space-between">
+                            <Grid item xs sx={{ minWidth: 0, pr: 1 }}>
+                              <Typography 
+                                variant="subtitle1" 
+                                color="inherit"
+                                sx={{ 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis', 
+                                    whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {pkg.name || 'Ornaments Service'}
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Grid container alignItems="center" justifyContent="flex-end" sx={{ flexWrap: 'nowrap' }}>
+                                <Grid item>
+                                  <Typography variant="subtitle1" color="inherit">
+                                    {formatCurrency(pkg.amount || pkg.revenue || pkg.price || 0)}
+                                  </Typography>
+                                </Grid>
+                                <Grid item>
+                                  <Avatar
+                                    variant="rounded"
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      borderRadius: '5px',
+                                      bgcolor: pkg.amount > 0 || pkg.trend === 'up' ? '#b9f6ca' : '#ffe0b2',
+                                      color: pkg.amount > 0 || pkg.trend === 'up' ? 'success.dark' : 'warning.dark',
+                                      ml: 1.5
+                                    }}
+                                  >
+                                    {pkg.amount > 0 || pkg.trend === 'up' ? (
+                                      <KeyboardArrowUpOutlinedIcon fontSize="small" color="inherit" />
+                                    ) : (
+                                      <KeyboardArrowDownOutlinedIcon fontSize="small" color="inherit" />
+                                    )}
+                                  </Avatar>
+                                </Grid>
+                              </Grid>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                        <Grid item>
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ color: pkg.amount > 0 || pkg.trend === 'up' ? 'success.dark' : 'warning.dark', mt: 0.5 }}
+                          >
+                            {pkg.note ? pkg.note : `${pkg.bookings} items booked`}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                      {index < packages.length - 1 && <Divider sx={{ my: 1.5 }} />}
+                    </Grid>
+                  </React.Fragment>
+                ))
+              ) : (
+                <Grid item xs={12}>
+                  <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Typography variant="subtitle2" color="textSecondary">
+                      No ornaments data available yet
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
           </CardContent>
 
           <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
-            <Button size="small" disableElevation sx={{ color: '#E15B65' }}>
+            <Button size="small" disableElevation>
               View All Ornaments
               <ChevronRightOutlinedIcon />
             </Button>
@@ -86,6 +142,9 @@ export default function PopularCard({ isLoading }) {
   );
 }
 
-PopularCard.propTypes = {
-  isLoading: PropTypes.bool
+OrnamentsPopularCard.propTypes = {
+  isLoading: PropTypes.bool,
+  title: PropTypes.string,
+  packages: PropTypes.array,
+  totalPackageRevenue: PropTypes.number
 };

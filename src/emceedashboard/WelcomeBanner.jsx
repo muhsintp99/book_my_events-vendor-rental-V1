@@ -56,7 +56,7 @@ export default function WelcomeBanner() {
                 sx={{
                     position: 'relative',
                     overflow: 'hidden',
-                    background: 'linear-gradient(135deg, #c63b4a 0%, #e11d48 45%, #fb7185 100%)',
+                    background: 'linear-gradient(135deg, #B71C1C 0%, #C62828 45%, #EF5350 100%)',
                     borderRadius: 3,
                     px: { xs: 3, md: 4 },
                     py: { xs: 2.5, md: 3 },
@@ -64,7 +64,7 @@ export default function WelcomeBanner() {
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
-                    boxShadow: '0 14px 35px rgba(225, 29, 72, 0.35)',
+                    boxShadow: '0 14px 35px rgba(198, 40, 40, 0.35)',
                     transition: '0.3s ease',
 
                     '&:hover': {

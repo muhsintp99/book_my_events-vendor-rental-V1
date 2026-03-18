@@ -1,108 +1,87 @@
+import React from 'react';
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
+import { Box, Typography } from '@mui/material';
 
-// third party
+// third-party
 import Chart from 'react-apexcharts';
 
-// ===========================|| Eventpro AREA CHART CARD ||=========================== //
+// project imports
+import MainCard from 'ui-component/cards/MainCard';
 
-export default function EventproAreaChartCard({
-    title = 'Eventpro',
-    amount = 1839,
-    chartConfig,
-    height = 160
-}) {
-    const theme = useTheme();
+export default function EventproAreaChartCard({ totalEnquiries }) {
+  const theme = useTheme();
 
-    // Coral theme colors
-    const coralMain = '#dd666eff';
-    const coralDark = '#A33A43';
-    const coralLight = '#FF8A92';
+  const chartData = {
+    type: 'area',
+    height: 120,
+    options: {
+      chart: {
+        id: 'eventpro-support-chart',
+        sparkline: { enabled: true }
+      },
+      dataLabels: { enabled: false },
+      stroke: {
+        curve: 'smooth',
+        width: 3
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.5,
+          opacityTo: 0.0,
+          stops: [0, 90, 100]
+        }
+      },
+      colors: ['#E15B65'], // Coral Red
+      tooltip: {
+        theme: 'light',
+        fixed: { enabled: false },
+        x: { show: false },
+        y: {
+          title: { formatter: () => 'Enquiries' }
+        },
+        marker: { show: false }
+      }
+    },
+    series: [
+      {
+        name: 'Enquiries',
+        data: [0, 15, 10, 50, 30, 40, 25, 60] // Decorative Sparkline
+      }
+    ]
+  };
 
-    const [config, setConfig] = useState(null);
-
-    useEffect(() => {
-        if (!chartConfig) return;
-
-        setConfig({
-            ...chartConfig,
-            options: {
-                ...chartConfig.options,
-                colors: [coralMain],
-                tooltip: {
-                    ...chartConfig.options?.tooltip,
-                    theme: 'light'
-                },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.7,
-                        opacityTo: 0.2,
-                        stops: [0, 90, 100],
-                        colorStops: [
-                            { offset: 0, color: coralLight, opacity: 0.8 },
-                            { offset: 50, color: coralMain, opacity: 0.6 },
-                            { offset: 100, color: coralDark, opacity: 0.3 }
-                        ]
-                    }
-                }
-            }
-        });
-    }, [chartConfig]);
-
-    return (
-        <Card
-            sx={{
-                bgcolor: coralLight,
-                border: `1px solid ${coralMain}`,
-                boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
-                borderRadius: 3
-            }}
-        >
-            {/* ================= HEADER ================= */}
-            <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-                <Grid item xs={12}>
-                    <Grid container alignItems="center" justifyContent="space-between">
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {title}
-                        </Typography>
-
-                        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                            ₹{amount.toLocaleString()}
-                        </Typography>
-                    </Grid>
-                </Grid>
-            </Grid>
-
-            {/* ================= CHART ================= */}
-            {config ? (
-                <Chart {...config} height={height} />
-            ) : (
-                <Typography
-                    variant="subtitle2"
-                    sx={{ textAlign: 'center', py: 4, color: '#fff' }}
-                >
-                    No chart data
-                </Typography>
-            )}
-        </Card>
-    );
+  return (
+    <MainCard
+      sx={{
+        bgcolor: '#FFF5F5',
+        boxShadow: '0 8px 24px rgba(239, 83, 80, 0.08)',
+        border: '1px solid rgba(239, 83, 80, 0.1)',
+        position: 'relative',
+        overflow: 'hidden',
+        mb: 2
+      }}
+      content={false}
+    >
+      <Box sx={{ p: 3, pb: 0, position: 'relative', zIndex: 2 }}>
+        <Typography variant="h3" sx={{ fontWeight: 800, color: '#D63031' }}>
+          {Number(totalEnquiries || 0).toLocaleString()}
+        </Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#E15B65', mt: 0.5 }}>
+          Total Event Pro Enquiries
+        </Typography>
+      </Box>
+      <Box sx={{ position: 'relative', zIndex: 1, mt: -2 }}>
+        <Chart {...chartData} />
+      </Box>
+    </MainCard>
+  );
 }
 
 EventproAreaChartCard.propTypes = {
-    title: PropTypes.string,
-    amount: PropTypes.number,
-    height: PropTypes.number,
-    chartConfig: PropTypes.shape({
-        series: PropTypes.array,
-        options: PropTypes.object
-    })
+  totalEnquiries: PropTypes.number
 };
-

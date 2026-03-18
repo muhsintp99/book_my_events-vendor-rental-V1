@@ -75,13 +75,13 @@ const mehandiManagementMenu = {
           url: '/bookings/mehandiconfirmed',
           icon: icons.IconUserCheck
         },
-        {
-          id: 'completed-mehandi',
-          title: 'Completed',
-          type: 'item',
-          url: '/bookings/completedmehandi',
-          icon: icons.IconGraph
-        },
+        // {
+        //   id: 'completed-mehandi',
+        //   title: 'Completed',
+        //   type: 'item',
+        //   url: '/bookings/completedmehandi',
+        //   icon: icons.IconGraph
+        // },
         {
           id: 'cancelled-mehandi',
           title: 'Canceled',

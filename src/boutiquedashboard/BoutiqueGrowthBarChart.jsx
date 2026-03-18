@@ -23,8 +23,29 @@ import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowth
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
-// chart data
-import barChartOptions from './cards/chartdata/ornamentsgrowth-barchart'; // Already here, reusing the existing path even if named ornaments
+const defaultChartOptions = {
+    chart: {
+      type: 'bar',
+      height: 480,
+      stacked: true,
+      toolbar: { show: true, tools: { download: true } }
+    },
+    plotOptions: {
+      bar: { columnWidth: '45%', borderRadius: 4 }
+    },
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    },
+    yaxis: {
+      show: true
+    },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: 'left'
+    }
+  };
 
 const status = [
   { value: 'year', label: 'This Year' },
@@ -32,7 +53,7 @@ const status = [
   { value: 'today', label: 'Today' }
 ];
 
-export default function TotalGrowthBarChart({ 
+export default function BoutiqueGrowthBarChart({ 
   isLoading, 
   monthlyGrowth = [], 
   monthlyIncomeGrowth = [], 
@@ -41,9 +62,8 @@ export default function TotalGrowthBarChart({
   const theme = useTheme();
   const { fontFamily } = useConfig();
   const [value, setValue] = useState('year');
-  const [chartOptions, setChartOptions] = useState(barChartOptions);
+  const [chartOptions, setChartOptions] = useState(defaultChartOptions);
 
-  // Dynamic Series based on props
   const series = useMemo(() => [
     {
       name: 'Revenue (₹)',
@@ -57,7 +77,6 @@ export default function TotalGrowthBarChart({
 
   const textPrimary = theme.palette.text.primary;
   const divider = theme.palette.divider;
-  const grey500 = theme.palette.grey[500];
 
   useEffect(() => {
     setChartOptions((prev) => ({
@@ -68,7 +87,7 @@ export default function TotalGrowthBarChart({
         stacked: true,
         toolbar: { show: true, tools: { download: true } }
       },
-      colors: ['#8E44AD', '#9B59B6'], // Boutique colors: Purple
+      colors: ['#D63031', '#FF7675'], 
       xaxis: { ...prev.xaxis, labels: { style: { colors: textPrimary, fontWeight: 600 } } },
       yaxis: { 
         ...prev.yaxis, 
@@ -85,7 +104,7 @@ export default function TotalGrowthBarChart({
       tooltip: { theme: 'light', shared: true, intersect: false },
       legend: { ...(prev.legend ?? {}), labels: { ...(prev.legend?.labels ?? {}), colors: textPrimary } }
     }));
-  }, [fontFamily, textPrimary, grey500, divider, theme]);
+  }, [fontFamily, textPrimary, divider, theme]);
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -94,10 +113,9 @@ export default function TotalGrowthBarChart({
     if (value === 'today' || value === 'month') {
       return monthlyIncomeGrowth[currentMonth] || 0;
     }
-    return totalEarnings;
+    return totalEarnings; 
   }, [value, monthlyIncomeGrowth, totalEarnings, currentMonth]);
 
-  // Calculate percentage growth compared to last month
   const growthPercentage = useMemo(() => {
     if (currentMonth === 0) return 0;
     const lastMonthIncome = monthlyIncomeGrowth[currentMonth - 1] || 0;
@@ -117,10 +135,10 @@ export default function TotalGrowthBarChart({
           <Stack sx={{ gap: gridSpacing }}>
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Stack sx={{ gap: 0.5 }}>
-                <Typography variant="subtitle2" color="textSecondary">Total Growth</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Boutique Growth Performance</Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="h3">
-                        ₹{Number(displayTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                        ₹{Number(displayTotal).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </Typography>
                     {growthPercentage !== 0 && (
                         <Chip
@@ -172,10 +190,9 @@ export default function TotalGrowthBarChart({
   );
 }
 
-TotalGrowthBarChart.propTypes = { 
+BoutiqueGrowthBarChart.propTypes = { 
   isLoading: PropTypes.bool,
   monthlyGrowth: PropTypes.array,
   monthlyIncomeGrowth: PropTypes.array,
   totalEarnings: PropTypes.number
 };
-

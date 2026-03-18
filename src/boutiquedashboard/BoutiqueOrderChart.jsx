@@ -13,21 +13,26 @@ import Box from '@mui/material/Box';
 import Chart from 'react-apexcharts';
 
 // project imports
-import ChartDataMonth from './cards/chartdata/boutique-ordermonthline-chart';
-import ChartDataYear from './cards/chartdata/boutique-orderyear-linechart';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonTotalOrderCard from 'ui-component/cards/Skeleton/EarningCard';
 
 // assets
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValue = 0, trend = 'down' }) {
+// ==============================|| BOUTIQUE TOTAL ORDERS CARD ||============================== //
+
+export default function BoutiqueOrderChart({
+  isLoading = false,
+  title = 'Total Orders',
+  monthValue = 0,
+  yearValue = 0,
+  monthChart,
+  yearChart,
+  trend = 'up'
+}) {
   const theme = useTheme();
-  const [isMonth, setIsMonth] = React.useState(true);
-
-  const TrendIcon = trend === 'up' ? ArrowUpwardIcon : ArrowDownwardIcon;
+  // Default to Total view initially
+  const [isMonth, setIsMonth] = React.useState(false);
 
   return (
     <>
@@ -38,11 +43,12 @@ export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValu
           border={false}
           content={false}
           sx={{
-            background: 'linear-gradient(135deg, #AF7AC5 0%, #9B59B6 100%)',
+            background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 8px 32px 0 rgba(155, 89, 182, 0.3)',
+            height: 190,
+            boxShadow: '0 8px 32px 0 rgba(214, 48, 49, 0.3)',
             '&:after': {
               content: '""',
               position: 'absolute',
@@ -69,6 +75,7 @@ export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValu
         >
           <Box sx={{ p: 2.25, position: 'relative', zIndex: 2 }}>
             <Stack spacing={2}>
+              {/* ================= HEADER ================= */}
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Avatar
                   variant="rounded"
@@ -98,48 +105,39 @@ export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValu
                     sx={{ color: '#fff', bgcolor: !isMonth ? 'rgba(255, 255, 255, 0.2)' : 'transparent', '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' } }}
                     onClick={() => setIsMonth(false)}
                   >
-                    Year
+                    Total
                   </Button>
                 </Stack>
               </Stack>
 
+              {/* ================= CONTENT ================= */}
               <Stack direction="row" alignItems="center" spacing={2}>
+                {/* LEFT */}
                 <Stack spacing={0.5} sx={{ minWidth: 120 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography
-                      sx={{
-                        fontSize: '2.125rem',
-                        fontWeight: 700,
-                        color: '#fff',
-                        letterSpacing: '-0.5px'
-                      }}
-                    >
-                      ₹{(isMonth ? monthValue : yearValue).toLocaleString('en-IN')}
-                    </Typography>
-                    <Avatar
-                        sx={{
-                        width: 20,
-                        height: 20,
-                        bgcolor: trend === 'up' ? 'rgba(76, 175, 80, 0.4)' : 'rgba(244, 67, 54, 0.4)',
-                        color: '#fff'
-                        }}
-                    >
-                        <TrendIcon sx={{ fontSize: '0.75rem' }} />
-                    </Avatar>
-                  </Stack>
                   <Typography
                     sx={{
-                      fontSize: '1rem',
+                      fontSize: '2.125rem',
+                      fontWeight: 700,
+                      color: '#fff',
+                      letterSpacing: '-0.5px'
+                    }}
+                  >
+                    {(isMonth ? monthValue : yearValue).toLocaleString()}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '0.9rem',
                       fontWeight: 600,
                       color: 'rgba(255, 255, 255, 0.9)',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
+                      letterSpacing: '1px'
                     }}
                   >
-                    Total Orders
+                    {title}
                   </Typography>
                 </Stack>
 
+                {/* RIGHT (CHART) */}
                 <Box
                   sx={{
                     flexGrow: 1,
@@ -147,13 +145,18 @@ export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValu
                     '& .apexcharts-tooltip.apexcharts-theme-light': {
                       color: theme.palette.text.primary,
                       background: theme.palette.background.default
-                    }
+                    },
+                    '& .apexcharts-canvas': { filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }
                   }}
                 >
-                  {isMonth ? (
-                    <Chart {...ChartDataMonth} height={80} />
+                  {isMonth && monthChart ? (
+                    <Chart {...monthChart} />
+                  ) : !isMonth && yearChart ? (
+                    <Chart {...yearChart} />
                   ) : (
-                    <Chart {...ChartDataYear} height={80} />
+                    <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>No statistics</Typography>
+                    </Box>
                   )}
                 </Box>
               </Stack>
@@ -167,8 +170,10 @@ export default function BoutiqueOrderChart({ isLoading, monthValue = 0, yearValu
 
 BoutiqueOrderChart.propTypes = {
   isLoading: PropTypes.bool,
+  title: PropTypes.string,
   monthValue: PropTypes.number,
   yearValue: PropTypes.number,
-  trend: PropTypes.oneOf(['up', 'down'])
+  trend: PropTypes.oneOf(['up', 'down']),
+  monthChart: PropTypes.object,
+  yearChart: PropTypes.object
 };
-

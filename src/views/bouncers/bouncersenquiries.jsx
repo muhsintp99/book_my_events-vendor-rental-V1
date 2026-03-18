@@ -104,13 +104,23 @@ const BouncersEnquiries = () => {
        SEARCH FILTER
     =============================== */
     const filteredEnquiries = enquiries.filter((e) => {
+        const mTitle = String(e.moduleId?.title || "").toLowerCase();
+        const eType = String(e.eventType || "").toLowerCase();
+
+        const matchesModule = 
+            mTitle.includes("bouncer") || 
+            mTitle.includes("security") || 
+            eType.includes("bouncer") || 
+            eType.includes("security");
+
+        if (!matchesModule) return false;
+
+        const searchStr = search.toLowerCase();
         return (
-            (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-            (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
+            (e.fullName || "").toLowerCase().includes(searchStr) ||
+            (e.email || "").toLowerCase().includes(searchStr) ||
             (e.contact || "").includes(search) ||
-            (e.moduleId?.title || "")
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            (e.eventType || "").toLowerCase().includes(searchStr)
         );
     });
 

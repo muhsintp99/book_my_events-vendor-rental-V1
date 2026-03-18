@@ -19,7 +19,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import EnquiryChatDialog from "./EnquiryChatDialog";
 
-const THEME = '#4527A0';
+const THEME = '#D63031'; // Coral Red
 
 const EventproEnquiries = () => {
     const navigate = useNavigate();
@@ -59,13 +59,26 @@ const EventproEnquiries = () => {
         fetchEnquiries();
     }, [providerId]);
 
-    const filteredEnquiries = enquiries.filter((e) =>
-        (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-        (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (e.contact || "").includes(search) ||
-        (e.moduleId?.title || "").toLowerCase().includes(search.toLowerCase()) ||
-        (e.eventType || "").toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredEnquiries = enquiries.filter((e) => {
+        const mTitle = String(e.moduleId?.title || "").toLowerCase();
+        const eType = String(e.eventType || "").toLowerCase();
+
+        const matchesModule = 
+            mTitle.includes("eventpro") || 
+            mTitle.includes("event professional") || 
+            eType.includes("eventpro") || 
+            eType.includes("event professional");
+
+        if (!matchesModule) return false;
+
+        const searchStr = search.toLowerCase();
+        return (
+            (e.fullName || "").toLowerCase().includes(searchStr) ||
+            (e.email || "").toLowerCase().includes(searchStr) ||
+            (e.contact || "").includes(search) ||
+            (e.eventType || "").toLowerCase().includes(searchStr)
+        );
+    });
 
     const handleViewEnquiry = (enquiry) => { setSelectedEnquiry(enquiry); setOpenModal(true); };
     const handleCloseModal = () => { setOpenModal(false); setSelectedEnquiry(null); };
@@ -74,7 +87,7 @@ const EventproEnquiries = () => {
         <Box display="flex" alignItems="center" gap={2} py={1.5}
             sx={{ borderBottom: "1px solid", borderColor: "divider", "&:last-child": { borderBottom: "none" } }}>
             <Box sx={{
-                width: 40, height: 40, borderRadius: "50%", bgcolor: "rgba(198,40,40,0.1)", color: THEME,
+                width: 40, height: 40, borderRadius: "50%", bgcolor: "rgba(214,48,49,0.1)", color: THEME,
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
             }}>{icon}</Box>
             <Box>
@@ -86,7 +99,7 @@ const EventproEnquiries = () => {
 
     return (
         <Box p={2}>
-            <Typography variant="h4" gutterBottom sx={{ color: '#4527A0', fontWeight: 700 }}>
+            <Typography variant="h4" gutterBottom sx={{ color: THEME, fontWeight: 700 }}>
                 Event Professional Enquiries
             </Typography>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -149,7 +162,7 @@ const EventproEnquiries = () => {
             </Paper>
 
             <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
-                <DialogTitle sx={{ bgcolor: '#4527A0', color: "white" }}>
+                <DialogTitle sx={{ bgcolor: THEME, color: "white" }}>
                     <Box display="flex" justifyContent="space-between">
                         <Typography fontWeight={600}>Enquiry Details</Typography>
                         <IconButton onClick={handleCloseModal} sx={{ color: "white" }}><CloseIcon /></IconButton>
@@ -198,7 +211,7 @@ const EventproEnquiries = () => {
                 <DialogActions>
                     <Button onClick={handleCloseModal} variant="outlined">Close</Button>
                     <Button variant="contained" startIcon={<ChatIcon />}
-                        sx={{ bgcolor: '#4527A0', '&:hover': { bgcolor: '#311B92' } }}
+                        sx={{ bgcolor: THEME, '&:hover': { bgcolor: '#b71c1c' } }}
                         onClick={() => {
                             setChatEnquiry(selectedEnquiry); setOpenChat(true);
                             navigate('/eventprofessionals/enquirychat', { state: { enquiry: selectedEnquiry } });

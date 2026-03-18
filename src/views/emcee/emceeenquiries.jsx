@@ -106,13 +106,23 @@ const EmceeEnquiries = () => {
        SEARCH FILTER
     =============================== */
     const filteredEnquiries = enquiries.filter((e) => {
+        const mTitle = String(e.moduleId?.title || "").toLowerCase();
+        const eType = String(e.eventType || "").toLowerCase();
+
+        const matchesModule = 
+            mTitle.includes("emcee") || 
+            mTitle.includes("host") || 
+            eType.includes("emcee") || 
+            eType.includes("host");
+
+        if (!matchesModule) return false;
+
+        const searchStr = search.toLowerCase();
         return (
-            (e.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-            (e.email || "").toLowerCase().includes(search.toLowerCase()) ||
+            (e.fullName || "").toLowerCase().includes(searchStr) ||
+            (e.email || "").toLowerCase().includes(searchStr) ||
             (e.contact || "").includes(search) ||
-            (e.moduleId?.title || "")
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            (e.eventType || "").toLowerCase().includes(searchStr)
         );
     });
 

@@ -20,25 +20,17 @@ import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import EarningIcon from 'assets/images/icons/earning.svg';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import GetAppTwoToneIcon from '@mui/icons-material/GetAppOutlined';
 import FileCopyTwoToneIcon from '@mui/icons-material/FileCopyOutlined';
 import PictureAsPdfTwoToneIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 
-export default function MehandiEarningCard({
-  isLoading = false,
-  amount = 0,
-  label = 'Total Earnings',
-  trend = 'up'
-}) {
+export default function MehandiEarningCard({ isLoading, totalEarnings = 0 }) {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
-
-  const TrendIcon = trend === 'down' ? ArrowDownwardIcon : ArrowUpwardIcon;
 
   return (
     <>
@@ -49,17 +41,18 @@ export default function MehandiEarningCard({
           border={false}
           content={false}
           sx={{
-            background: 'linear-gradient(135deg, #27AE60 0%, #229954 100%)',
+            background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 8px 32px 0 rgba(39, 174, 96, 0.3)',
+            height: 190,
+            boxShadow: '0 8px 32px 0 rgba(214, 48, 49, 0.3)',
             '&:after': {
               content: '""',
               position: 'absolute',
               width: 210,
               height: 210,
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.2)',
               borderRadius: '50%',
               top: -85,
               right: -95,
@@ -70,7 +63,7 @@ export default function MehandiEarningCard({
               position: 'absolute',
               width: 210,
               height: 210,
-              background: 'rgba(255, 255, 255, 0.15)',
+              background: 'rgba(255, 255, 255, 0.25)',
               borderRadius: '50%',
               top: -125,
               right: -15,
@@ -139,17 +132,17 @@ export default function MehandiEarningCard({
                       letterSpacing: '-0.5px'
                     }}
                   >
-                    ₹{Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{Number(totalEarnings).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </Typography>
                   <Avatar
                     sx={{
                       width: 24,
                       height: 24,
-                      bgcolor: trend === 'up' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(244, 67, 54, 0.4)',
+                      bgcolor: 'rgba(255, 255, 255, 0.3)',
                       color: '#fff'
                     }}
                   >
-                    <TrendIcon sx={{ fontSize: '0.875rem' }} />
+                    <ArrowUpwardIcon sx={{ fontSize: '0.875rem' }} />
                   </Avatar>
                 </Stack>
                 <Typography
@@ -161,7 +154,7 @@ export default function MehandiEarningCard({
                     letterSpacing: '0.5px'
                   }}
                 >
-                  {label}
+                  Total Earnings
                 </Typography>
               </Stack>
             </Stack>
@@ -172,9 +165,4 @@ export default function MehandiEarningCard({
   );
 }
 
-MehandiEarningCard.propTypes = {
-  isLoading: PropTypes.bool,
-  amount: PropTypes.number,
-  label: PropTypes.string,
-  trend: PropTypes.oneOf(['up', 'down'])
-};
+MehandiEarningCard.propTypes = { isLoading: PropTypes.bool, totalEarnings: PropTypes.number };

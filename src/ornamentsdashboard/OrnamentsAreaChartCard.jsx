@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 // material-ui
-// import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -9,15 +8,34 @@ import Typography from '@mui/material/Typography';
 // third party
 import Chart from 'react-apexcharts';
 
-// project imports
-import chartData from './cards/chartdata/areachart';
+// Inlined Chart Data to prevent missing imports
+const chartData = {
+  type: 'area',
+  height: 95,
+  options: {
+    chart: { 
+      id: 'support-chart', 
+      sparkline: { enabled: true } 
+    },
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth', width: 2 },
+    tooltip: {
+      fixed: { enabled: false },
+      x: { show: false },
+      y: { title: { formatter: () => 'Revenue: ' } },
+      marker: { show: false }
+    }
+  },
+  series: [{
+    name: 'Packages',
+    data: [10, 45, 20, 70, 40, 60, 20, 80, 50, 96, 60, 40]
+  }]
+};
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
+// ===========================|| ORNAMENTS AREA CHART CARD ||=========================== //
 
-export default function OrnamentsAreaChartCard() {
-  // const theme = useTheme();
-
-  // Custom coral-red color theme
+export default function OrnamentsAreaChartCard({ totalRevenue = 0 }) {
+  // Custom coral-red color theme matching makeup
   const coralMain = '#dd666eff';
   const coralDark = '#A33A43';
   const coralLight = '#FF8A92';
@@ -35,8 +53,8 @@ export default function OrnamentsAreaChartCard() {
           type: 'gradient',
           gradient: {
             shadeIntensity: 1,
-            opacityFrom: 0.7,
-            opacityTo: 0.2,
+            opacityFrom: 0.8,
+            opacityTo: 0.1,
             stops: [0, 90, 100],
             colorStops: [
               { offset: 0, color: coralLight, opacity: 0.8 },
@@ -68,7 +86,7 @@ export default function OrnamentsAreaChartCard() {
             </Grid>
             <Grid item>
               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹0.00
+                ₹{Number(totalRevenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Typography>
             </Grid>
           </Grid>

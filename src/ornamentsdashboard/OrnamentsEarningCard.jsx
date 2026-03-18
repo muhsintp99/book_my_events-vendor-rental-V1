@@ -41,11 +41,12 @@ export default function OrnamentsEarningCard({ isLoading, totalEarnings = 0 }) {
           border={false}
           content={false}
           sx={{
-            background: 'linear-gradient(135deg, #F1C40F 0%, #D4AC0D 100%)',
+            background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 8px 32px 0 rgba(212, 172, 13, 0.3)',
+            height: 190,
+            boxShadow: '0 8px 32px 0 rgba(214, 48, 49, 0.3)',
             '&:after': {
               content: '""',
               position: 'absolute',
@@ -131,7 +132,7 @@ export default function OrnamentsEarningCard({ isLoading, totalEarnings = 0 }) {
                       letterSpacing: '-0.5px'
                     }}
                   >
-                    ₹{Number(totalEarnings).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{Number(totalEarnings).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </Typography>
                   <Avatar
                     sx={{

@@ -23,8 +23,30 @@ import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowth
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
-// chart data
-import barChartOptions from './cards/chartdata/ornamentsgrowth-barchart';
+// Inlined chart defaults to prevent missing chartdata issues
+const defaultChartOptions = {
+    chart: {
+      type: 'bar',
+      height: 480,
+      stacked: true,
+      toolbar: { show: true, tools: { download: true } }
+    },
+    plotOptions: {
+      bar: { columnWidth: '45%', borderRadius: 4 }
+    },
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    },
+    yaxis: {
+      show: true
+    },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: 'left'
+    }
+  };
 
 const status = [
   { value: 'year', label: 'This Year' },
@@ -32,7 +54,9 @@ const status = [
   { value: 'today', label: 'Today' }
 ];
 
-export default function TotalGrowthBarChart({ 
+// ==============================|| ORNAMENTS GROWTH BAR CHART ||============================== //
+
+export default function OrnamentsGrowthBarChart({ 
   isLoading, 
   monthlyGrowth = [], 
   monthlyIncomeGrowth = [], 
@@ -41,7 +65,7 @@ export default function TotalGrowthBarChart({
   const theme = useTheme();
   const { fontFamily } = useConfig();
   const [value, setValue] = useState('year');
-  const [chartOptions, setChartOptions] = useState(barChartOptions);
+  const [chartOptions, setChartOptions] = useState(defaultChartOptions);
 
   // Dynamic Series based on props
   const series = useMemo(() => [
@@ -68,7 +92,7 @@ export default function TotalGrowthBarChart({
         stacked: true,
         toolbar: { show: true, tools: { download: true } }
       },
-      colors: ['#F1C40F', '#F39C12'], // Ornaments colors: Gold/Yellow
+      colors: ['#D63031', '#FF7675'], // Premium Red / Coral layout
       xaxis: { ...prev.xaxis, labels: { style: { colors: textPrimary, fontWeight: 600 } } },
       yaxis: { 
         ...prev.yaxis, 
@@ -94,7 +118,7 @@ export default function TotalGrowthBarChart({
     if (value === 'today' || value === 'month') {
       return monthlyIncomeGrowth[currentMonth] || 0;
     }
-    return totalEarnings;
+    return totalEarnings; // Default fallback to year
   }, [value, monthlyIncomeGrowth, totalEarnings, currentMonth]);
 
   // Calculate percentage growth compared to last month
@@ -117,10 +141,10 @@ export default function TotalGrowthBarChart({
           <Stack sx={{ gap: gridSpacing }}>
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Stack sx={{ gap: 0.5 }}>
-                <Typography variant="subtitle2" color="textSecondary">Total Growth</Typography>
+                <Typography variant="subtitle2" color="textSecondary">Ornaments Business Growth</Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="h3">
-                        ₹{Number(displayTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                        ₹{Number(displayTotal).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </Typography>
                     {growthPercentage !== 0 && (
                         <Chip
@@ -172,10 +196,9 @@ export default function TotalGrowthBarChart({
   );
 }
 
-TotalGrowthBarChart.propTypes = { 
+OrnamentsGrowthBarChart.propTypes = { 
   isLoading: PropTypes.bool,
   monthlyGrowth: PropTypes.array,
   monthlyIncomeGrowth: PropTypes.array,
   totalEarnings: PropTypes.number
 };
-

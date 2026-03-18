@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkroom } from '@mui/icons-material';
+import { LocalMall } from '@mui/icons-material';
 import PremiumBookings from '../Common/PremiumBookings';
 
 const getBoutiquePackageData = (booking) => {
@@ -32,7 +32,7 @@ const BoutiqueBookings = ({ initialTab = 'All', hideTabs = false }) => {
             moduleLabel="Boutique"
             moduleUrlName="boutique"
             getDataFn={getBoutiquePackageData}
-            ModuleIcon={Checkroom}
+            ModuleIcon={LocalMall}
             initialTab={initialTab}
             hideTabs={hideTabs}
         />

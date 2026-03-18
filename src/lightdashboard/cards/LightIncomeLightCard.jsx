@@ -1,7 +1,5 @@
 import PropTypes from 'prop-types';
-
-// material-ui
-import { alpha, useTheme, styled } from '@mui/material/styles';
+import { useTheme, styled } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -14,73 +12,91 @@ import Box from '@mui/material/Box';
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 
+// assets
+import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
+
 // styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    overflow: 'hidden',
-    position: 'relative',
-    '&:after': {
-        content: '""',
-        position: 'absolute',
-        width: 210,
-        height: 210,
-        background: `linear-gradient(210.04deg, ${theme.palette.warning.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
-        borderRadius: '50%',
-        top: -30,
-        right: -180
-    },
-    '&:before': {
-        content: '""',
-        position: 'absolute',
-        width: 210,
-        height: 210,
-        background: `linear-gradient(140.9deg, ${theme.palette.warning.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
-        borderRadius: '50%',
-        top: -160,
-        right: -130
-    }
+  overflow: 'hidden',
+  position: 'relative',
+  background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
+  color: '#fff',
+  '&:after': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '50%',
+    top: -30,
+    right: -180
+  },
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '50%',
+    top: -160,
+    right: -130
+  }
 }));
 
-export default function LightIncomeLightCard({ isLoading, total, icon, label }) {
-    const theme = useTheme();
+export default function LightIncomeLightCard({ isLoading, total = 0, label = 'Total Enquiries' }) {
+  const theme = useTheme();
 
-    return (
-        <>
-            {isLoading ? (
-                <TotalIncomeCard />
-            ) : (
-                <CardWrapper border={false} content={false}>
-                    <Box sx={{ p: 2 }}>
-                        <List sx={{ py: 0 }}>
-                            <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
-                                <ListItemAvatar>
-                                    <Avatar
-                                        variant="rounded"
-                                        sx={{
-                                            ...theme.typography.commonAvatar,
-                                            ...theme.typography.largeAvatar,
-                                            bgcolor: label === 'Meeting attends' ? alpha(theme.palette.error.light, 0.25) : 'warning.light',
-                                            color: label === 'Meeting attends' ? 'error.dark' : 'warning.dark'
-                                        }}
-                                    >
-                                        {icon}
-                                    </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                    sx={{ py: 0, mt: 0.45, mb: 0.45 }}
-                                    primary={<Typography variant="h4">₹{total}</Typography>}
-                                    secondary={
-                                        <Typography variant="subtitle2" sx={{ color: 'grey.500', mt: 0.5 }}>
-                                            {label}
-                                        </Typography>
-                                    }
-                                />
-                            </ListItem>
-                        </List>
-                    </Box>
-                </CardWrapper>
-            )}
-        </>
-    );
+  return (
+    <>
+      {isLoading ? (
+        <TotalIncomeCard />
+      ) : (
+        <CardWrapper border={false} content={false}>
+          <Box sx={{ p: 2 }}>
+            <List sx={{ py: 0 }}>
+              <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.largeAvatar,
+                      bgcolor: '#8d1e27ff',
+                      color: '#fff'
+                    }}
+                  >
+                    <StorefrontTwoToneIcon fontSize="inherit" />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  sx={{
+                    py: 0,
+                    mt: 0.45,
+                    mb: 0.45,
+                    ml: 1
+                  }}
+                  primary={
+                    <Typography variant="h4" sx={{ color: '#fff', fontWeight: 700 }}>
+                      {Number(total || 0).toLocaleString()}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="subtitle2" sx={{ color: 'white', mt: 0.25, fontWeight: 600 }}>
+                      {label}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            </List>
+          </Box>
+        </CardWrapper>
+      )}
+    </>
+  );
 }
 
-LightIncomeLightCard.propTypes = { isLoading: PropTypes.bool, total: PropTypes.number, icon: PropTypes.node, label: PropTypes.string };
+LightIncomeLightCard.propTypes = {
+  isLoading: PropTypes.bool,
+  total: PropTypes.number,
+  label: PropTypes.string
+};
