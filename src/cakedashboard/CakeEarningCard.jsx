@@ -52,6 +52,7 @@ export default function EarningCard({
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
+            height: 190,
             '&:after': {
               content: '""',
               position: 'absolute',

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { alpha, useTheme, styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -23,7 +23,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(210.04deg, ${theme.palette.warning.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+    background: '#E15B65',
+    opacity: 0.1,
     borderRadius: '50%',
     top: -30,
     right: -180
@@ -33,14 +34,17 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(140.9deg, ${theme.palette.warning.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
+    background: '#FF7675',
+    opacity: 0.1,
     borderRadius: '50%',
     top: -160,
     right: -130
   }
 }));
 
-export default function TotalIncomeLightCard({ isLoading, total, icon, label }) {
+// ==============================|| CATERING INCOME LIGHT CARD ||============================== //
+
+export default function CateringIncomeLightCard({ isLoading, total = 0, label, icon }) {
   const theme = useTheme();
 
   return (
@@ -58,18 +62,27 @@ export default function TotalIncomeLightCard({ isLoading, total, icon, label }) 
                     sx={{
                       ...theme.typography.commonAvatar,
                       ...theme.typography.largeAvatar,
-                      bgcolor: label === 'Meeting attends' ? alpha(theme.palette.error.light, 0.25) : 'warning.light',
-                      color: label === 'Meeting attends' ? 'error.dark' : 'warning.dark'
+                      backgroundColor: 'rgba(225, 91, 101, 0.1)',
+                      color: '#E15B65'
                     }}
                   >
                     {icon}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  sx={{ py: 0, mt: 0.45, mb: 0.45 }}
-                  primary={<Typography variant="h4">₹{total}k</Typography>}
+                  sx={{
+                    py: 0,
+                    mt: 0.45,
+                    mb: 0.45,
+                    ml: 1
+                  }}
+                  primary={
+                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                      ₹{Number(total).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </Typography>
+                  }
                   secondary={
-                    <Typography variant="subtitle2" sx={{ color: 'grey.500', mt: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ color: theme.palette.grey[500], mt: 0.25, fontWeight: 600 }}>
                       {label}
                     </Typography>
                   }
@@ -83,4 +96,9 @@ export default function TotalIncomeLightCard({ isLoading, total, icon, label }) 
   );
 }
 
-TotalIncomeLightCard.propTypes = { isLoading: PropTypes.bool, total: PropTypes.number, icon: PropTypes.node, label: PropTypes.string };
+CateringIncomeLightCard.propTypes = { 
+  isLoading: PropTypes.bool,
+  total: PropTypes.number,
+  label: PropTypes.string,
+  icon: PropTypes.node
+};

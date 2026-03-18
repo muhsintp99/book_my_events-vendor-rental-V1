@@ -87,7 +87,7 @@ const PremiumBookings = ({
             { label: 'All', value: 0, filterFn: () => true, key: 'All' },
             { label: 'Scheduled', value: 1, filterFn: (s) => s === 'scheduled', key: 'Scheduled', hidden: moduleUrlName !== 'transport' },
             { label: 'Pending', value: 2, filterFn: (s) => s === 'pending', key: 'Pending' },
-            { label: 'Confirmed', value: 3, filterFn: (s, p, b) => ['accepted', 'confirmed', 'approve', 'approved'].includes(s) && new Date(b.bookingDate) >= new Date().setHours(0, 0, 0, 0), key: 'Confirmed' },
+            { label: 'Confirmed', value: 3, filterFn: (s) => ['accepted', 'confirmed', 'approve', 'approved'].includes(s), key: 'Confirmed' },
             { label: 'Ongoing', value: 4, filterFn: (s) => s === 'ongoing', key: 'Ongoing', hidden: moduleUrlName !== 'transport' },
             { label: 'Completed', value: 5, filterFn: (s, p, b) => s === 'completed' || s === 'completed bookings' || s === 'done' || (['accepted', 'confirmed'].includes(s) && new Date(b.bookingDate) < new Date().setHours(0, 0, 0, 0)), key: 'Completed' },
             { label: 'Cancelled', value: 6, filterFn: (s) => ['cancelled', 'rejected'].includes(s), key: 'Cancelled' },

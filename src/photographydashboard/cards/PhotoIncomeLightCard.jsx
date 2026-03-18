@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { alpha, useTheme, styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -14,7 +14,7 @@ import Box from '@mui/material/Box';
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 
-/* ================= STYLED CARD ================= */
+// styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   overflow: 'hidden',
   position: 'relative',
@@ -23,11 +23,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(
-      210.04deg,
-      ${theme.palette.warning.dark} -50.94%,
-      rgba(144, 202, 249, 0) 83.49%
-    )`,
+    background: '#E15B65',
+    opacity: 0.1,
     borderRadius: '50%',
     top: -30,
     right: -180
@@ -37,28 +34,18 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     position: 'absolute',
     width: 210,
     height: 210,
-    background: `linear-gradient(
-      140.9deg,
-      ${theme.palette.warning.dark} -14.02%,
-      rgba(144, 202, 249, 0) 70.5%
-    )`,
+    background: '#FF7675',
+    opacity: 0.1,
     borderRadius: '50%',
     top: -160,
     right: -130
   }
 }));
 
-/* ================= COMPONENT ================= */
-export default function TotalIncomeLightCard({
-  isLoading = false,
-  total = 0,
-  label = 'Total Income',
-  icon,
-  variant = 'warning' // 'warning' | 'error' | 'success' | 'primary'
-}) {
-  const theme = useTheme();
+// ==============================|| PHOTOGRAPHY INCOME LIGHT CARD ||============================== //
 
-  const palette = theme.palette[variant] || theme.palette.warning;
+export default function PhotographyIncomeLightCard({ isLoading, total = 0, label, icon }) {
+  const theme = useTheme();
 
   return (
     <>
@@ -68,32 +55,34 @@ export default function TotalIncomeLightCard({
         <CardWrapper border={false} content={false}>
           <Box sx={{ p: 2 }}>
             <List sx={{ py: 0 }}>
-              <ListItem disableGutters sx={{ py: 0 }}>
+              <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
                 <ListItemAvatar>
                   <Avatar
                     variant="rounded"
                     sx={{
                       ...theme.typography.commonAvatar,
                       ...theme.typography.largeAvatar,
-                      bgcolor: alpha(palette.light, 0.25),
-                      color: palette.dark
+                      backgroundColor: 'rgba(225, 91, 101, 0.1)',
+                      color: '#E15B65'
                     }}
                   >
                     {icon}
                   </Avatar>
                 </ListItemAvatar>
-
                 <ListItemText
+                  sx={{
+                    py: 0,
+                    mt: 0.45,
+                    mb: 0.45,
+                    ml: 1
+                  }}
                   primary={
-                    <Typography variant="h4">
-                      ₹{total.toLocaleString()}
+                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                      ₹{Number(total).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </Typography>
                   }
                   secondary={
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: 'grey.500', mt: 0.5 }}
-                    >
+                    <Typography variant="subtitle2" sx={{ color: theme.palette.grey[500], mt: 0.25, fontWeight: 600 }}>
                       {label}
                     </Typography>
                   }
@@ -107,11 +96,9 @@ export default function TotalIncomeLightCard({
   );
 }
 
-/* ================= PROPS ================= */
-TotalIncomeLightCard.propTypes = {
+PhotographyIncomeLightCard.propTypes = { 
   isLoading: PropTypes.bool,
   total: PropTypes.number,
   label: PropTypes.string,
-  icon: PropTypes.node,
-  variant: PropTypes.oneOf(['warning', 'error', 'success', 'primary'])
+  icon: PropTypes.node
 };

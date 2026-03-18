@@ -17,6 +17,7 @@ import BouncersIndex from '../../../bouncersdashboard';
 import EmceeIndex from '../../../emceedashboard';
 import PanthalIndex from '../../../panthaldashboard';
 import EventproIndex from '../../../eventprodashboard';
+import VenueIndex from '../../../venuedashboard';
 
 // cards
 import EarningCard from './EarningCard';
@@ -65,6 +66,7 @@ export default function Dashboard() {
     if (moduleKey.includes('emcee')) return <EmceeIndex isLoading={isLoading} />;
     if (moduleKey.includes('panthal')) return <PanthalIndex isLoading={isLoading} />;
     if (moduleKey.includes('event professionals') || moduleKey.includes('eventprofessionals')) return <EventproIndex isLoading={isLoading} />;
+    if (moduleKey.includes('venue')) return <VenueIndex isLoading={isLoading} />;
 
     return (
       <Grid container spacing={gridSpacing}>

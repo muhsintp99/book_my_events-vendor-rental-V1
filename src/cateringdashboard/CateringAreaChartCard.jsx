@@ -1,55 +1,100 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 // third party
 import Chart from 'react-apexcharts';
 
-// ===========================|| VEHICLE AREA CHART CARD (FRESH START) ||=========================== //
-
-export default function VehicleAreaChartCard({
+export default function CateringAreaChartCard({
   title = 'Packages',
   amount = 0,
   chartConfig,
-  height = 160
+  height = 140
 }) {
   const theme = useTheme();
 
-  // Coral theme colors
-  const coralMain = '#dd666eff';
-  const coralDark = '#A33A43';
-  const coralLight = '#FF8A92';
+  // Premium Red/Coral theme colors
+  const coralMain = '#FF7675';
+  const coralDark = '#D63031';
+  const coralLight = '#FF8A8A';
 
   const [config, setConfig] = useState(null);
 
+  // Default chart config if none provided
+  const defaultChartConfig = {
+    type: 'area',
+    series: [{
+      name: 'Revenue',
+      data: [35, 41, 62, 42, 13, 18, 29, 37, 36, 51, 32, 35]
+    }],
+    options: {
+      chart: {
+        id: 'catering-area-chart',
+        sparkline: {
+          enabled: true
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        curve: 'smooth',
+        width: 3
+      },
+      tooltip: {
+        fixed: {
+          enabled: false
+        },
+        x: {
+          show: false
+        },
+        y: {
+          title: 'Revenue'
+        },
+        marker: {
+          show: false
+        }
+      }
+    }
+  };
+
   useEffect(() => {
-    if (!chartConfig) return;
+    const activeConfig = chartConfig || defaultChartConfig;
 
     setConfig({
-      ...chartConfig,
+      ...activeConfig,
       options: {
-        ...chartConfig.options,
-        colors: [coralMain],
+        ...activeConfig.options,
+        colors: ['#fff'], // White chart on red background
+        chart: {
+            ...activeConfig.options?.chart,
+            sparkline: { enabled: true }
+        },
         tooltip: {
-          ...chartConfig.options?.tooltip,
+          ...activeConfig.options?.tooltip,
           theme: 'light'
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3,
+            colors: ['rgba(255, 255, 255, 0.8)']
         },
         fill: {
           type: 'gradient',
           gradient: {
             shadeIntensity: 1,
-            opacityFrom: 0.7,
-            opacityTo: 0.2,
-            stops: [0, 90, 100],
+            opacityFrom: 0.6,
+            opacityTo: 0.1,
+            stops: [0, 95, 100],
             colorStops: [
-              { offset: 0, color: coralLight, opacity: 0.8 },
-              { offset: 50, color: coralMain, opacity: 0.6 },
-              { offset: 100, color: coralDark, opacity: 0.3 }
+              { offset: 0, color: '#fff', opacity: 0.6 },
+              { offset: 100, color: '#fff', opacity: 0.1 }
             ]
           }
         }
@@ -60,48 +105,41 @@ export default function VehicleAreaChartCard({
   return (
     <Card
       sx={{
-        bgcolor: coralLight,
-        border: `1px solid ${coralMain}`,
-        boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
-        borderRadius: 3
+        background: 'linear-gradient(135deg, #FF7675 0%, #D63031 100%)',
+        border: 'none',
+        boxShadow: '0 8px 32px 0 rgba(214, 48, 49, 0.3)',
+        borderRadius: 3,
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      {/* ================= HEADER ================= */}
-      <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-        <Grid xs={12}>
-          <Grid container alignItems="center" justifyContent="space-between">
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {title}
-            </Typography>
+      <Box sx={{ p: 2, color: '#fff', position: 'relative', zIndex: 2 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, opacity: 0.9, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>
+            {title}
+          </Typography>
+          <Typography variant="h3" sx={{ fontWeight: 800 }}>
+            ₹{Number(amount || 0).toLocaleString('en-IN')}
+          </Typography>
+        </Stack>
+      </Box>
 
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              ₹{amount.toLocaleString()}
-            </Typography>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* ================= CHART ================= */}
       {config ? (
-        <Chart {...config} height={height} />
+        <Box sx={{ mt: -2, position: 'relative', zIndex: 1, '& .apexcharts-canvas': { filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' } }}>
+            <Chart {...config} height={height} />
+        </Box>
       ) : (
-        <Typography
-          variant="subtitle2"
-          sx={{ textAlign: 'center', py: 4, color: '#fff' }}
-        >
-          No chart data
-        </Typography>
+        <Box sx={{ height: height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>No statistics</Typography>
+        </Box>
       )}
     </Card>
   );
 }
 
-VehicleAreaChartCard.propTypes = {
+CateringAreaChartCard.propTypes = {
   title: PropTypes.string,
   amount: PropTypes.number,
   height: PropTypes.number,
-  chartConfig: PropTypes.shape({
-    series: PropTypes.array,
-    options: PropTypes.object
-  })
+  chartConfig: PropTypes.object
 };

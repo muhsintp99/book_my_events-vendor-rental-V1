@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 // material-ui
-// import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -12,11 +11,9 @@ import Chart from 'react-apexcharts';
 // project imports
 import chartData from './chartdata/areachart';
 
-// ===========================|| DASHBOARD DEFAULT - BAJAJ AREA CHART CARD (E15B65 THEME) ||=========================== //
+// ===========================|| DASHBOARD DEFAULT - MAKEUP AREA CHART CARD ||=========================== //
 
-export default function VehicleAreaChartCard() {
-  // const theme = useTheme();
-
+export default function MakeupAreaChartCard({ totalRevenue = 0 }) {
   // Custom coral-red color theme
   const coralMain = '#dd666eff';
   const coralDark = '#A33A43';
@@ -68,7 +65,7 @@ export default function VehicleAreaChartCard() {
             </Grid>
             <Grid item>
               <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                ₹0.00
+                ₹{Number(totalRevenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Typography>
             </Grid>
           </Grid>

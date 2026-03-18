@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 // material-ui
 import Grid from '@mui/material/Grid';
@@ -17,72 +17,239 @@ import { gridSpacing } from 'store/constant';
 // assets
 import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.bookmyevent.ae';
+
 // ==============================|| PHOTOGRAPHY DASHBOARD ||============================== //
 
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    totalEarnings: 0,
+    totalOrders: 0,
+    totalIncome: 0,
+    monthlyOrders: 0,
+    yearlyOrders: 0,
+    monthlyEarnings: 0,
+    yearlyEarnings: 0,
+    bookings: [],
+    popularPackages: [],
+    monthlyGrowth: new Array(12).fill(0),
+    monthlyIncomeGrowth: new Array(12).fill(0)
+  });
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const userStr = localStorage.getItem('user') || localStorage.getItem('vendor');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
+      const providerId = user?._id || user?.id;
+      if (!providerId) return;
+
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      // 1. Fetch Bookings
+      const bookingsRes = await fetch(`${API_BASE_URL}/api/bookings/provider/${providerId}`, { headers });
+      const bookingsJson = await bookingsRes.json();
+      const allBookings = bookingsJson?.data || bookingsJson?.bookings || [];
+
+      // Most inclusive filter
+      const photoBookings = allBookings.filter(
+        (b) =>
+          String(b.moduleType || '').toLowerCase().includes('photo') ||
+          b.photographyId ||
+          b.photographyPackageId ||
+          String(b.packageType || b.serviceType || '').toLowerCase().includes('photo') ||
+          b.packageName?.toLowerCase().includes('photo')
+      );
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Broad status inclusion for dashboard metrics
+      const isAcceptedStatus = (s) =>
+        ['accepted', 'confirmed', 'completed', 'active', 'success'].includes(String(s || '').toLowerCase());
+
+      const validForEarnings = (b) =>
+        b.paymentStatus === 'completed' || isAcceptedStatus(b.status);
+
+      const totalEarnings = photoBookings
+        .filter(validForEarnings)
+        .reduce((sum, b) => sum + (Number(b.finalPrice || b.packagePrice || b.totalAmount || 0)), 0);
+
+      const totalOrders = photoBookings.length;
+
+      const totalIncome = photoBookings
+        .filter((b) => b.paymentStatus === 'completed')
+        .reduce((sum, b) => sum + (Number(b.finalPrice || b.packagePrice || b.totalAmount || 0)), 0);
+
+      const monthlyBookings = photoBookings.filter((b) => {
+        const d = new Date(b.createdAt || b.bookingDate || b.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
+      const monthlyOrders = monthlyBookings.length;
+      const monthlyEarnings = monthlyBookings
+        .filter(validForEarnings)
+        .reduce((sum, b) => sum + (Number(b.finalPrice || b.packagePrice || b.totalAmount || 0)), 0);
+
+      const yearlyBookings = photoBookings.filter((b) => {
+        const d = new Date(b.createdAt || b.bookingDate || b.date);
+        return d.getFullYear() === currentYear;
+      });
+      const yearlyOrders = yearlyBookings.length;
+      const yearlyEarnings = yearlyBookings
+        .filter(validForEarnings)
+        .reduce((sum, b) => sum + (Number(b.finalPrice || b.packagePrice || b.totalAmount || 0)), 0);
+
+      const monthlyGrowth = new Array(12).fill(0);
+      const monthlyIncomeGrowth = new Array(12).fill(0);
+      yearlyBookings.forEach((b) => {
+        const d = new Date(b.createdAt || b.bookingDate || b.date);
+        const month = d.getMonth();
+        if (month >= 0 && month < 12) {
+          monthlyGrowth[month] += 1;
+          if (validForEarnings(b)) {
+            monthlyIncomeGrowth[month] += Number(b.finalPrice || b.packagePrice || b.totalAmount || 0);
+          }
+        }
+      });
+
+      // 2. Fetch Packages
+      let packageNameMap = {};
+      try {
+        const pkgRes = await fetch(`${API_BASE_URL}/api/photography-packages/provider/${providerId}`, { headers });
+        const pkgJson = await pkgRes.json();
+        const packages = pkgJson?.data || pkgJson || [];
+        if (Array.isArray(packages)) {
+          packages.forEach((p) => {
+            packageNameMap[p._id] = {
+              name: p.packageTitle || p.title || 'Photography Package',
+              price: p.price || 0
+            };
+          });
+        }
+      } catch (e) { console.log(e); }
+
+      // 3. Aggregate Popular Packages
+      const packageMap = {};
+      photoBookings.forEach((b) => {
+        const rawPkg = b.photographyId || b.packageId;
+        const pkgId = (rawPkg && typeof rawPkg === 'object' ? rawPkg._id : rawPkg) || b.photographyPackageId || 'unknown_photo';
+
+        if (!packageMap[pkgId]) {
+          const pkgInfo = packageNameMap[pkgId];
+          packageMap[pkgId] = {
+            id: pkgId,
+            name: pkgInfo?.name || (rawPkg && typeof rawPkg === 'object' ? (rawPkg.packageTitle || rawPkg.title) : null) || b.packageName || 'Photography Service',
+            price: pkgInfo?.price || (rawPkg && typeof rawPkg === 'object' ? rawPkg.price : 0) || 0,
+            bookings: 0,
+            revenue: 0
+          };
+        }
+        packageMap[pkgId].bookings += 1;
+        if (validForEarnings(b)) {
+          packageMap[pkgId].revenue += Number(b.finalPrice || b.packagePrice || b.totalAmount || 0);
+        }
+      });
+
+      let popularPackages = Object.values(packageMap).sort((a, b) => b.bookings - a.bookings);
+      if (popularPackages.length < 5 && Object.keys(packageNameMap).length > 0) {
+        Object.entries(packageNameMap).forEach(([id, info]) => {
+          if (popularPackages.length < 5 && !popularPackages.find(p => p.id === id)) {
+            popularPackages.push({ id, name: info.name, bookings: 0, revenue: 0, price: info.price });
+          }
+        });
+      }
+      popularPackages = popularPackages.slice(0, 5);
+
+      setDashboardData({
+        totalEarnings,
+        totalOrders,
+        totalIncome,
+        monthlyOrders,
+        yearlyOrders,
+        monthlyEarnings,
+        yearlyEarnings,
+        bookings: photoBookings,
+        popularPackages,
+        monthlyGrowth,
+        monthlyIncomeGrowth
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setLoading(false);
-  }, []);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
     <Grid container spacing={gridSpacing}>
-
-      {/* ===================== WELCOME BANNER ===================== */}
       <Grid size={12}>
         <WelcomeBanner />
       </Grid>
 
-      {/* ===================== TOP CARDS ===================== */}
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
-
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <PhotoEarningCard isLoading={isLoading} />
+            <PhotoEarningCard isLoading={isLoading} amount={dashboardData.totalEarnings} />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <PhotopOrderchart isLoading={isLoading} />
+            <PhotopOrderchart
+              isLoading={isLoading}
+              totalOrders={dashboardData.totalOrders}
+              totalEarnings={dashboardData.totalEarnings}
+              monthValue={dashboardData.monthlyEarnings}
+              yearValue={dashboardData.yearlyEarnings}
+              monthlyOrders={dashboardData.monthlyOrders}
+              yearlyOrders={dashboardData.yearlyOrders}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
             <Grid container spacing={gridSpacing}>
               <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-                <PhotoIncomeDarkCard isLoading={isLoading} />
+                <PhotoIncomeDarkCard isLoading={isLoading} totalIncome={dashboardData.totalIncome} />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 12 }}>
                 <PhotoIncomeLightCard
-                  {...{
-                    isLoading,
-                    total: 0.00,
-                    label: 'Total Income',
-                    icon: <StorefrontTwoToneIcon fontSize="inherit" />
-                  }}
+                  isLoading={isLoading}
+                  total={dashboardData.totalEarnings}
+                  label="Total Income"
+                  icon={<StorefrontTwoToneIcon fontSize="inherit" />}
                 />
               </Grid>
             </Grid>
           </Grid>
-
         </Grid>
       </Grid>
 
-      {/* ===================== BOTTOM SECTION ===================== */}
       <Grid size={12}>
         <Grid container spacing={gridSpacing}>
-
           <Grid size={{ xs: 12, md: 8 }}>
-            <PhotoGrowthBarChart isLoading={isLoading} />
+            <PhotoGrowthBarChart
+              isLoading={isLoading}
+              monthlyGrowth={dashboardData.monthlyGrowth}
+              monthlyIncomeGrowth={dashboardData.monthlyIncomeGrowth}
+              totalEarnings={dashboardData.totalEarnings}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <PhotoPopularCard isLoading={isLoading} />
+            <PhotoPopularCard
+              isLoading={isLoading}
+              popularPackages={dashboardData.popularPackages}
+              totalPackageRevenue={dashboardData.totalEarnings}
+            />
           </Grid>
-
         </Grid>
       </Grid>
-
     </Grid>
   );
 }

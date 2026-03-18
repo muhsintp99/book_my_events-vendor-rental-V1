@@ -5,11 +5,12 @@ import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
 import CardMedia from '@mui/material/CardMedia';
-import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -48,66 +49,63 @@ export default function MehandiEarningCard({
           border={false}
           content={false}
           sx={{
-            bgcolor: '#E15B65',
+            background: 'linear-gradient(135deg, #27AE60 0%, #229954 100%)',
             color: '#fff',
             overflow: 'hidden',
             position: 'relative',
+            boxShadow: '0 8px 32px 0 rgba(39, 174, 96, 0.3)',
             '&:after': {
               content: '""',
               position: 'absolute',
               width: 210,
               height: 210,
-              background: '#C2444E',
+              background: 'rgba(255, 255, 255, 0.1)',
               borderRadius: '50%',
               top: -85,
-              right: -95
+              right: -95,
+              zIndex: 1
             },
             '&:before': {
               content: '""',
               position: 'absolute',
               width: 210,
               height: 210,
-              background: '#fba7adff',
+              background: 'rgba(255, 255, 255, 0.15)',
               borderRadius: '50%',
               top: -125,
               right: -15,
-              opacity: 0.5
+              zIndex: 1
             }
           }}
         >
-          <Box sx={{ p: 2.25 }}>
-            <Grid container direction="column">
-              {/* ================= HEADER ================= */}
-              <Grid container justifyContent="space-between">
+          <Box sx={{ p: 2.25, position: 'relative', zIndex: 2 }}>
+            <Stack spacing={2}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Avatar
                   variant="rounded"
                   sx={{
                     ...theme.typography.commonAvatar,
                     ...theme.typography.largeAvatar,
-                    bgcolor: '#cf2836ff',
-                    mt: 1
+                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    color: '#fff'
                   }}
                 >
                   <CardMedia
                     component="img"
                     src={EarningIcon}
                     alt="earning"
-                    sx={{ width: 24, height: 24 }}
+                    sx={{ width: 24, height: 24, filter: 'brightness(0) invert(1)' }}
                   />
                 </Avatar>
 
-                <Avatar
-                  variant="rounded"
-                  sx={{
-                    ...theme.typography.commonAvatar,
-                    ...theme.typography.mediumAvatar,
-                    bgcolor: '#ad2430ff',
-                    cursor: 'pointer'
-                  }}
+                <IconButton
+                  size="small"
                   onClick={handleClick}
+                  sx={{ color: 'rgba(255, 255, 255, 0.8)', bgcolor: 'rgba(255, 255, 255, 0.1)', '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' } }}
                 >
-                  <MoreHorizIcon fontSize="inherit" />
-                </Avatar>
+                  <MoreHorizIcon />
+                </IconButton>
 
                 <Menu
                   anchorEl={anchorEl}
@@ -129,38 +127,44 @@ export default function MehandiEarningCard({
                     <ArchiveTwoToneIcon sx={{ mr: 1.75 }} /> Archive
                   </MenuItem>
                 </Menu>
-              </Grid>
+              </Stack>
 
-              {/* ================= VALUE ================= */}
-              <Grid container alignItems="center">
+              <Stack spacing={0.5}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography
+                    sx={{
+                      fontSize: '2.125rem',
+                      fontWeight: 700,
+                      color: '#fff',
+                      letterSpacing: '-0.5px'
+                    }}
+                  >
+                    ₹{Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </Typography>
+                  <Avatar
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      bgcolor: trend === 'up' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(244, 67, 54, 0.4)',
+                      color: '#fff'
+                    }}
+                  >
+                    <TrendIcon sx={{ fontSize: '0.875rem' }} />
+                  </Avatar>
+                </Stack>
                 <Typography
                   sx={{
-                    fontSize: '2.125rem',
-                    fontWeight: 500,
-                    mr: 1,
-                    mt: 1.75,
-                    mb: 0.75
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
                   }}
                 >
-                  ₹{amount.toLocaleString()}
+                  {label}
                 </Typography>
-
-                <Avatar
-                  sx={{
-                    ...theme.typography.smallAvatar,
-                    bgcolor: '#f0c4c8ff',
-                    color: 'secondary.dark'
-                  }}
-                >
-                  <TrendIcon fontSize="inherit" />
-                </Avatar>
-              </Grid>
-
-              {/* ================= LABEL ================= */}
-              <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
-                {label}
-              </Typography>
-            </Grid>
+              </Stack>
+            </Stack>
           </Box>
         </MainCard>
       )}

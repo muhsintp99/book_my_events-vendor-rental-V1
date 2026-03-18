@@ -2,37 +2,33 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 // material-ui
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 // project imports
-import MakeupAreaChartCard from './PhotoAreaChartCard';
+import PhotographyAreaChartCard from './PhotoAreaChartCard';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonPopularCard from 'ui-component/cards/Skeleton/PopularCard';
-import { gridSpacing } from 'store/constant';
 
 // assets
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
 import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 
-/* ================= DEFAULT EMPTY ================= */
-const defaultPackages = [];
+// ==============================|| PHOTOGRAPHY POPULAR PACKAGES CARD ||============================== //
 
-export default function PopularCard({
+export default function PhotographyPopularCard({
   isLoading = false,
-  title = 'Top Booked Photography Packages',
-  packages = defaultPackages,
-  footerLabel = 'View All Photography Packages'
+  popularPackages = [],
+  totalPackageRevenue = 0
 }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -45,120 +41,81 @@ export default function PopularCard({
         <SkeletonPopularCard />
       ) : (
         <MainCard content={false}>
-          <CardContent>
-            <Grid container spacing={gridSpacing}>
+          <CardContent sx={{ p: '24px !important' }}>
+            <Stack spacing={3}>
               {/* ================= HEADER ================= */}
-              <Grid xs={12}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                  <Typography variant="h4">{title}</Typography>
-
-                  <IconButton size="small" onClick={handleClick}>
-                    <MoreHorizOutlinedIcon fontSize="small" />
-                  </IconButton>
-
-                  <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleClose}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  >
-                    <MenuItem onClick={handleClose}>Today</MenuItem>
-                    <MenuItem onClick={handleClose}>This Month</MenuItem>
-                    <MenuItem onClick={handleClose}>This Year</MenuItem>
-                  </Menu>
-                </Grid>
-              </Grid>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>Top Booked Packages</Typography>
+                <IconButton size="small" onClick={handleClick} sx={{ color: 'grey.500' }}>
+                  <MoreHorizOutlinedIcon fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem onClick={handleClose}>Today</MenuItem>
+                  <MenuItem onClick={handleClose}>This Month</MenuItem>
+                  <MenuItem onClick={handleClose}>This Year</MenuItem>
+                </Menu>
+              </Stack>
 
               {/* ================= CHART ================= */}
-              <Grid xs={12} sx={{ mt: -1 }}>
-                <MakeupAreaChartCard />
-              </Grid>
+              <Box>
+                <PhotographyAreaChartCard title="Package Revenue" amount={totalPackageRevenue} />
+              </Box>
 
               {/* ================= PACKAGE LIST ================= */}
-              <Grid xs={12}>
-                {packages.length === 0 ? (
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ textAlign: 'center', py: 2 }}
-                  >
-                    No package data available
-                  </Typography>
+              <Stack spacing={2}>
+                {popularPackages.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 3, border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+                     <Typography variant="body2" color="textSecondary">No photography package data</Typography>
+                  </Box>
                 ) : (
-                  packages.map((item, index) => (
-                    <React.Fragment key={index}>
-                      <Grid container direction="column">
-                        <Grid
-                          container
-                          alignItems="center"
-                          justifyContent="space-between"
-                        >
-                          <Typography variant="subtitle1">
+                  popularPackages.map((item, index) => (
+                    <Box key={index}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack spacing={0.5}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                             {item.name}
                           </Typography>
-
-                          <Grid
-                            container
-                            alignItems="center"
-                            spacing={1}
-                            sx={{ width: 'auto' }}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 700,
+                              color: 'success.main',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5
+                            }}
                           >
-                            <Typography variant="subtitle1">
-                              {item.bookings} bookings
-                            </Typography>
+                             <KeyboardArrowUpOutlinedIcon sx={{ fontSize: '1rem' }} />
+                             {item.bookings} bookings
+                          </Typography>
+                        </Stack>
 
-                            <Avatar
-                              variant="rounded"
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                bgcolor:
-                                  item.trend === 'up'
-                                    ? 'success.light'
-                                    : 'orange.light',
-                                color:
-                                  item.trend === 'up'
-                                    ? 'success.dark'
-                                    : 'orange.dark'
-                              }}
-                            >
-                              {item.trend === 'up' ? (
-                                <KeyboardArrowUpOutlinedIcon fontSize="small" />
-                              ) : (
-                                <KeyboardArrowDownOutlinedIcon fontSize="small" />
-                              )}
-                            </Avatar>
-                          </Grid>
-                        </Grid>
-
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            color:
-                              item.trend === 'up'
-                                ? 'success.dark'
-                                : 'orange.dark'
-                          }}
-                        >
-                          {item.note}
-                        </Typography>
-                      </Grid>
-
-                      {index !== packages.length - 1 && (
-                        <Divider sx={{ my: 1.5 }} />
-                      )}
-                    </React.Fragment>
+                        <Stack alignItems="flex-end" spacing={0.5}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            ₹{Number(item.revenue || 0).toLocaleString('en-IN')}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                             Revenue
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                      {index !== popularPackages.length - 1 && <Divider sx={{ mt: 2 }} />}
+                    </Box>
                   ))
                 )}
-              </Grid>
-            </Grid>
+              </Stack>
+            </Stack>
           </CardContent>
 
-          {/* ================= FOOTER ================= */}
-          <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
-            <Button size="small" disableElevation>
-              {footerLabel}
-              <ChevronRightOutlinedIcon />
+          <CardActions sx={{ p: 1.5, pt: 0, justifyContent: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+            <Button size="small" color="primary" sx={{ fontWeight: 600, textTransform: 'none' }} endIcon={<ChevronRightOutlinedIcon />}>
+               View Detailed Analysis
             </Button>
           </CardActions>
         </MainCard>
@@ -167,16 +124,8 @@ export default function PopularCard({
   );
 }
 
-PopularCard.propTypes = {
+PhotographyPopularCard.propTypes = {
   isLoading: PropTypes.bool,
-  title: PropTypes.string,
-  footerLabel: PropTypes.string,
-  packages: PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string,
-      bookings: PropTypes.number,
-      trend: PropTypes.oneOf(['up', 'down']),
-      note: PropTypes.string
-    })
-  )
+  popularPackages: PropTypes.array,
+  totalPackageRevenue: PropTypes.number
 };

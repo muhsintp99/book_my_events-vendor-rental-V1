@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 
 // material-ui
-import { useTheme } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -10,35 +9,26 @@ import Typography from '@mui/material/Typography';
 // third party
 import Chart from 'react-apexcharts';
 
-// ===========================|| VEHICLE AREA CHART CARD – FRESH START ||=========================== //
+// project imports
+import chartData from './chartdata/area-chart';
 
-export default function VehicleAreaChartCard({
-  title = 'Vehicles',
-  amount = 0,
-  chartConfig,
-  height = 160
-}) {
-  const theme = useTheme();
+// ===========================|| VEHICLE AREA CHART CARD ||=========================== //
 
+export default function VehicleAreaChartCard({ totalRevenue = 0 }) {
   // Coral-red theme
   const coralMain = '#dd666eff';
   const coralDark = '#A33A43';
   const coralLight = '#FF8A92';
 
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState(chartData);
 
   useEffect(() => {
-    if (!chartConfig) return;
-
-    setConfig({
-      ...chartConfig,
+    setConfig((prevState) => ({
+      ...prevState,
       options: {
-        ...chartConfig.options,
+        ...prevState.options,
         colors: [coralMain],
-        tooltip: {
-          ...chartConfig.options?.tooltip,
-          theme: 'light'
-        },
+        tooltip: { ...prevState?.options?.tooltip, theme: 'light' },
         fill: {
           type: 'gradient',
           gradient: {
@@ -54,8 +44,8 @@ export default function VehicleAreaChartCard({
           }
         }
       }
-    });
-  }, [chartConfig]);
+    }));
+  }, []);
 
   return (
     <Card
@@ -63,45 +53,31 @@ export default function VehicleAreaChartCard({
         bgcolor: coralLight,
         border: `1px solid ${coralMain}`,
         boxShadow: `0 4px 12px rgba(225, 91, 101, 0.3)`,
-        borderRadius: 3
+        borderRadius: 3,
+        overflow: 'hidden'
       }}
     >
-      {/* ================= HEADER ================= */}
       <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
-        <Grid xs={12}>
-          <Grid container alignItems="center" justifyContent="space-between">
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {title}
-            </Typography>
-
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              ₹{amount.toLocaleString()}
-            </Typography>
+        <Grid item xs={12}>
+          <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Grid item>
+              <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 600 }}>
+                Vehicles
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+                ₹{Number(totalRevenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Typography>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
-
-      {/* ================= CHART ================= */}
-      {config ? (
-        <Chart {...config} height={height} />
-      ) : (
-        <Typography
-          variant="subtitle2"
-          sx={{ textAlign: 'center', py: 4, color: '#fff' }}
-        >
-          No chart data
-        </Typography>
-      )}
+      <Chart {...config} />
     </Card>
   );
 }
 
 VehicleAreaChartCard.propTypes = {
-  title: PropTypes.string,
-  amount: PropTypes.number,
-  height: PropTypes.number,
-  chartConfig: PropTypes.shape({
-    series: PropTypes.array,
-    options: PropTypes.object
-  })
+  totalRevenue: PropTypes.number
 };

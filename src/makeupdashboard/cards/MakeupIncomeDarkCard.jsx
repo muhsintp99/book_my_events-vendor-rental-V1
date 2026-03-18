@@ -44,7 +44,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   }
 }));
 
-export default function TotalIncomeDarkCard({ isLoading }) {
+export default function TotalIncomeDarkCard({ isLoading, totalIncome = 0 }) {
   const theme = useTheme();
 
   return (
@@ -77,7 +77,7 @@ export default function TotalIncomeDarkCard({ isLoading }) {
                   }}
                   primary={
                     <Typography variant="h4" sx={{ color: '#fff' }}>
-                      ₹0.00
+                      ₹{Number(totalIncome).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Typography>
                   }
                   secondary={
