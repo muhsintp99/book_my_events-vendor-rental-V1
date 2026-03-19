@@ -53,6 +53,13 @@ const mehandimanagement = {
       icon: icons.IconCategory
     },
     {
+      id: 'mehandi-multizones',
+      title: 'Multizones',
+      type: 'item',
+      url: '/mehandi/multizones',
+      icon: icons.IconCategory
+    },
+    {
       id: 'mehandi-upgrade',
       title: 'Upgrade',
       type: 'item',

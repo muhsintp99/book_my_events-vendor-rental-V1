@@ -65,6 +65,14 @@ const photomanagement = {
       icon: icons.IconCategory2,
       breadcrumbs: false
     },
+    {
+      id: 'multizones',
+      title: 'Multizones',
+      type: 'item',
+      url: '/photography/multizones',
+      icon: icons.IconCategory2,
+      breadcrumbs: false
+    },
 
     {
       id: 'portfolio',

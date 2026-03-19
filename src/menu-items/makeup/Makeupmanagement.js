@@ -64,6 +64,14 @@ const makeupmanagement = {
       icon: icons.IconCategory2,
       breadcrumbs: false
     },
+    {
+      id: 'multizones',
+      title: 'Multizones',
+      type: 'item',
+      url: '/makeupartist/multizones',
+      icon: icons.IconCategory2,
+      breadcrumbs: false
+    },
 
     {
       id: 'portfolio',

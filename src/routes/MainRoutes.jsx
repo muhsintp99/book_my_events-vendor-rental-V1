@@ -132,6 +132,8 @@ const Makeupupgrade = Loadable(lazy(() => import('../views/makeup/makeupupgrade'
 const Makeupenquiry = Loadable(lazy(() => import('../views/makeup/Makeupenquiries')));
 const Enquirychat = Loadable(lazy(() => import('../views/makeup/EnquiryChatPage')));
 const MakeupSchedules = Loadable(lazy(() => import('../views/makeup/Schedulesmakeup')));
+const MakeupMultizones = Loadable(lazy(() => import('../views/makeup/Multizones.jsx')));
+
 
 // PHOTOGRAPHY BOOKINGS PREMIUM
 const PhotoAll = Loadable(lazy(() => import('../views/photography/PhotoAll')));
@@ -183,6 +185,10 @@ const Photographyupgrade = Loadable(lazy(() => import('../views/photography/phot
 const Photographyenquiry = Loadable(lazy(() => import('../views/photography/Photoenquiry')));
 const Photographyenquirychat = Loadable(lazy(() => import('../views/photography/EnquiryChatPage')));
 const PhotographySchedules = Loadable(lazy(() => import('../views/photography/photoschedule')));
+const PhotographyMultizones = Loadable(lazy(() => import('../views/photography/Multizones.jsx')));
+
+
+
 
 // Cake Other
 const AddcakePackage = Loadable(lazy(() => import('../views/cake/Addcakepackage')));
@@ -245,6 +251,8 @@ const MehandiConfirmed = Loadable(lazy(() => import('../views/mehandi/Mehandicon
 const MehandiCompleted = Loadable(lazy(() => import('../views/mehandi/Mehandicompleted.jsx')));
 const MehandiCancelled = Loadable(lazy(() => import('../views/mehandi/Mehandicancelled.jsx')));
 const MehandiPaymentFailed = Loadable(lazy(() => import('../views/mehandi/MehandiPaymentFailed.jsx')));
+const MehandiMultizones = Loadable(lazy(() => import('../views/mehandi/Multizones.jsx')));
+
 
 // florist/////////////////////////
 const AddfloristPackage = Loadable(lazy(() => import('../views/florist/Addflorist.jsx')));
@@ -718,7 +726,9 @@ const MainRoutes = {
             { path: 'enquiry', element: <Makeupenquiry /> },
             { path: 'enquiries', element: <Makeupenquiry /> },
             { path: 'enquirychat', element: <Enquirychat /> },
-            { path: 'schedules', element: <MakeupSchedules /> }
+            { path: 'schedules', element: <MakeupSchedules /> },
+            { path: 'multizones', element: <MakeupMultizones /> }
+
           ]
         },
 
@@ -734,7 +744,9 @@ const MainRoutes = {
             { path: 'enquiry', element: <Photographyenquiry /> },
             { path: 'enquiries', element: <Photographyenquiry /> },
             { path: 'enquirychat', element: <Photographyenquirychat /> },
-            { path: 'schedules', element: <PhotographySchedules /> }
+            { path: 'schedules', element: <PhotographySchedules /> },
+            { path: 'multizones', element: <PhotographyMultizones /> }
+
           ]
         },
 
@@ -800,7 +812,9 @@ const MainRoutes = {
             { path: 'enquirychat', element: <Mehandienquirychat /> },
             { path: 'chat', element: <MehandiChat /> },
             { path: 'schedules', element: <MehandiSchedules /> },
-            { path: 'categories', element: <Mehandicategories /> }
+            { path: 'categories', element: <Mehandicategories /> },
+            { path: 'multizones', element: <MehandiMultizones /> }
+
           ]
         },
 

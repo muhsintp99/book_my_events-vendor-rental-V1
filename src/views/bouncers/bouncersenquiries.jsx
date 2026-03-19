@@ -81,13 +81,13 @@ const BouncersEnquiries = () => {
             }
 
             try {
-        const baseUrl = window.location.hostname === "localhost" 
-          ? "http://localhost:5000/api" 
-          : "https://api.bookmyevent.ae/api";
-        const res = await axios.get(
-          `${baseUrl}/enquiries/provider/${providerId}`
-        );
-        setEnquiries(res.data.data || []);
+                const baseUrl = window.location.hostname === "localhost"
+                    ? "http://localhost:5000/api"
+                    : "https://api.bookmyevent.ae/api";
+                const res = await axios.get(
+                    `${baseUrl}/enquiries/provider/${providerId}`
+                );
+                setEnquiries(res.data.data || []);
                 setError(null);
             } catch (err) {
                 setError("Failed to fetch enquiries");
@@ -107,10 +107,10 @@ const BouncersEnquiries = () => {
         const mTitle = String(e.moduleId?.title || "").toLowerCase();
         const eType = String(e.eventType || "").toLowerCase();
 
-        const matchesModule = 
-            mTitle.includes("bouncer") || 
-            mTitle.includes("security") || 
-            eType.includes("bouncer") || 
+        const matchesModule =
+            mTitle.includes("bouncer") ||
+            mTitle.includes("security") ||
+            eType.includes("bouncer") ||
             eType.includes("security");
 
         if (!matchesModule) return false;
@@ -206,10 +206,10 @@ const BouncersEnquiries = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>#</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Module</TableCell>
-                <TableCell>Event Type</TableCell>
-                <TableCell>Contact</TableCell>
+                                <TableCell>Customer</TableCell>
+                                <TableCell>Module</TableCell>
+                                <TableCell>Event Type</TableCell>
+                                <TableCell>Contact</TableCell>
                                 <TableCell>Date</TableCell>
                                 <TableCell align="center">Actions</TableCell>
                             </TableRow>
@@ -237,8 +237,8 @@ const BouncersEnquiries = () => {
                                         </TableCell>
 
                                         <TableCell>{e.moduleId?.title || "N/A"}</TableCell>
-                    <TableCell>{e.eventType || "N/A"}</TableCell>
-                    <TableCell>{e.contact}</TableCell>
+                                        <TableCell>{e.eventType || "N/A"}</TableCell>
+                                        <TableCell>{e.contact}</TableCell>
                                         <TableCell>
                                             {new Date(e.bookingDate).toLocaleDateString()}
                                         </TableCell>
@@ -336,16 +336,16 @@ const BouncersEnquiries = () => {
                                             Booking Information
                                         </Typography>
 
-                      <DetailRow
-                      icon={<CategoryIcon fontSize="small" />}
-                      label="Module"
-                      value={selectedEnquiry.moduleId?.title}
-                    />
-                    <DetailRow
-                      icon={<CategoryIcon fontSize="small" />}
-                      label="Event Type"
-                      value={selectedEnquiry.eventType}
-                    />
+                                        <DetailRow
+                                            icon={<CategoryIcon fontSize="small" />}
+                                            label="Module"
+                                            value={selectedEnquiry.moduleId?.title}
+                                        />
+                                        <DetailRow
+                                            icon={<CategoryIcon fontSize="small" />}
+                                            label="Event Type"
+                                            value={selectedEnquiry.eventType}
+                                        />
                                         <DetailRow
                                             icon={<EventIcon fontSize="small" />}
                                             label="Booking Date"

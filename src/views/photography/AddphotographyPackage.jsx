@@ -97,7 +97,7 @@ const ServiceSection = ({ section, onChange, onDelete }) => {
         fullWidth
         label={<span>Items (comma separated) <span style={{ color: 'red' }}>*</span></span>}
         placeholder="e.g. 300 edited photos, Full day coverage"
-        value={Array.isArray(section.items) ? section.items.join(', ') : ''}
+        value={Array.isArray(section.items) ? section.items.join(',') : ''}
         onChange={(e) => onChange('items', e.target.value)}
         multiline
         rows={2}
@@ -274,7 +274,7 @@ const AddPhotographyPackage = () => {
             ...sec,
             [field]:
               field === 'items'
-                ? value.split(',').map(i => i.trim()).filter(Boolean)
+                ? value.split(',')
                 : value,
           }
           : sec
@@ -344,8 +344,11 @@ const AddPhotographyPackage = () => {
     formData.append('basicAddons', JSON.stringify(selectedAddons));
 
     const validSections = serviceSections
-      .filter(s => s.title.trim() && s.items.length > 0)
-      .map(s => ({ title: s.title.trim(), items: s.items }));
+      .map(s => ({
+        title: s.title.trim(),
+        items: s.items.map(i => i.trim()).filter(Boolean)
+      }))
+      .filter(s => s.title && s.items.length > 0);
 
     formData.append('includedServices', JSON.stringify(validSections));
 
