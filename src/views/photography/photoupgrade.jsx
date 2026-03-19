@@ -22,15 +22,20 @@ export default function UpgradePlanUI() {
 
   const moduleId = localStorage.getItem('moduleId');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = user?._id;
+  const providerId = user?._id;
 
   /* ---------- HANDLE JUSPAY RETURN ---------- */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('orderId');
+    // Extract payment params from URL (for Juspay fallback or Razorpay)
+    const orderId = params.get('orderId'); 
+    const razorpayPaymentId = params.get('razorpay_payment_id');
+    const razorpaySubscriptionId = params.get('razorpay_subscription_id');
+    const razorpaySignature = params.get('razorpay_signature');
 
-    if (!orderId) {
-      setSubscriptionLoading(false); // ✅ FIX: Set loading to false even if no orderId
+    // If no relevant payment parameters are found, just set loading to false and return.
+    if (!razorpayPaymentId || !razorpaySubscriptionId || !razorpaySignature) {
+      setSubscriptionLoading(false);
       return;
     }
 
@@ -39,7 +44,11 @@ export default function UpgradePlanUI() {
         setSnackbar({ open: true, message: 'Verifying payment...', severity: 'info' });
 
         // ✅ Call verify endpoint
-        const res = await axios.post(`${API_BASE}/api/payment/verify-subscription-payment`, { orderId });
+        const res = await axios.post(`${API_BASE}/api/razorpay/subscription/verify`, {
+          razorpay_payment_id: razorpayPaymentId,
+          razorpay_subscription_id: razorpaySubscriptionId,
+          razorpay_signature: razorpaySignature,
+        });
 
         console.log('✅ Verify response:', res.data);
 
@@ -57,7 +66,7 @@ export default function UpgradePlanUI() {
               ? res.data.subscription.moduleId?._id || res.data.subscription.moduleId
               : res.data.subscription.moduleId;
 
-          const subRes = await axios.get(`${API_BASE}/api/subscription/status/${userId}?moduleId=${resModuleId}`);
+          const subRes = await axios.get(`${API_BASE}/api/subscription/status/${providerId}?moduleId=${resModuleId}`);
 
           console.log('✅ Subscription response:', subRes.data);
 
@@ -124,7 +133,7 @@ export default function UpgradePlanUI() {
     };
 
     verifyPayment();
-  }, [userId, moduleId]);
+  }, [providerId, moduleId]);
 
   /* ---------- FETCH CURRENT SUBSCRIPTION ---------- */
   useEffect(() => {
@@ -138,7 +147,7 @@ export default function UpgradePlanUI() {
     const freshModuleId = localStorage.getItem('moduleId');
 
     console.log('🔍 ========== SUBSCRIPTION CHECK DEBUG ==========');
-    console.log('🔍 userId:', userId);
+    console.log('🔍 providerId:', providerId);
     console.log('🔍 moduleId (component):', moduleId);
     console.log('🔍 moduleId (fresh from localStorage):', freshModuleId);
     console.log('🔍 upgrade localStorage:', localStorage.getItem('upgrade'));
@@ -176,7 +185,7 @@ export default function UpgradePlanUI() {
       // Use fresh moduleId
       const effectiveModuleId = freshModuleId || moduleId;
 
-      if (!userId || !effectiveModuleId) {
+      if (!providerId || !effectiveModuleId) {
         console.log('⚠️ Missing userId or moduleId, trying fallback...');
         checkLocalStorageFallback(effectiveModuleId);
         setSubscriptionLoading(false);
@@ -184,9 +193,9 @@ export default function UpgradePlanUI() {
       }
 
       try {
-        console.log('📡 Calling API:', `${API_BASE}/api/subscription/status/${userId}?moduleId=${effectiveModuleId}`);
+        console.log('📡 Calling API:', `${API_BASE}/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
 
-        const res = await axios.get(`${API_BASE}/api/subscription/status/${userId}?moduleId=${effectiveModuleId}`);
+        const res = await axios.get(`${API_BASE}/api/subscription/status/${providerId}?moduleId=${effectiveModuleId}`);
 
         console.log('📡 API Response:', res.data);
 
@@ -243,7 +252,7 @@ export default function UpgradePlanUI() {
     };
 
     fetchCurrentSubscription();
-  }, [userId, moduleId]);
+  }, [providerId, moduleId]);
 
   /* ---------- FETCH MODULE PLANS ---------- */
   useEffect(() => {
@@ -261,9 +270,25 @@ export default function UpgradePlanUI() {
     if (moduleId) fetchPlans();
   }, [moduleId]);
 
+  /* ---------- LOAD RAZORPAY SDK ---------- */
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   /* ---------- HANDLE UPGRADE - DIRECT TO PAYMENT ---------- */
   const handleUpgrade = async (plan) => {
-    if (!userId || !moduleId) {
+    if (!providerId || !moduleId) {
       setSnackbar({ open: true, message: 'User or module missing', severity: 'warning' });
       return;
     }
@@ -271,33 +296,57 @@ export default function UpgradePlanUI() {
     try {
       setPayingPlanId(plan._id);
 
-      console.log('🚀 Creating payment session...');
-      console.log('Plan:', plan.name, 'Price:', plan.price);
+      // 1. Load Razorpay script
+      const loaded = await loadRazorpayScript();
+      if (!loaded) throw new Error('Razorpay SDK failed to load');
 
-      const paymentRes = await axios.post(`${API_BASE}/api/payment/create-subscription-payment`, {
-        providerId: userId,
+      // 2. Create Razorpay subscription on backend
+      const res = await axios.post(`${API_BASE}/api/razorpay/subscription/create`, {
+        providerId: providerId,
         planId: plan._id,
-        amount: plan.price,
         customerEmail: user.email,
         customerPhone: user.mobile || user.phone || '9999999999'
       });
 
-      console.log('✅ Payment response:', paymentRes.data);
+      const { razorpay, customer } = res.data;
 
-      if (paymentRes.data?.payment_links?.web) {
-        setSnackbar({
-          open: true,
-          message: 'Redirecting to payment page...',
-          severity: 'info'
-        });
+      // 3. Open Razorpay checkout
+      const options = {
+        key: razorpay.key,
+        subscription_id: razorpay.subscriptionId,
+        name: 'Book My Event',
+        description: `${plan.name} Subscription`,
+        image: '/logo.png', // Add your logo url
+        handler: async function (response) {
+          console.log('✅ Checkout successful:', response);
+          try {
+            setSubscriptionLoading(true);
+            const verifyRes = await axios.post(`${API_BASE}/api/razorpay/subscription/verify`, response);
+            if (verifyRes.data.success) {
+              setSnackbar({ open: true, message: '🎉 Plan Activated!', severity: 'success' });
+              setTimeout(() => {
+                window.location.replace('/photography/portfolio');
+              }, 1500);
+            }
+          } catch (err) {
+            console.error('❌ Verification failed:', err);
+            setSnackbar({ open: true, message: 'Verification failed', severity: 'error' });
+          } finally {
+            setSubscriptionLoading(false);
+          }
+        },
+        prefill: {
+          email: customer.email,
+          contact: customer.phone
+        },
+        theme: {
+          color: '#c62828'
+        }
+      };
 
-        // Redirect to payment page
-        setTimeout(() => {
-          window.location.href = paymentRes.data.payment_links.web;
-        }, 1000);
-      } else {
-        throw new Error('Payment link not available');
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
     } catch (error) {
       console.error('❌ Payment error:', error);
       setSnackbar({
