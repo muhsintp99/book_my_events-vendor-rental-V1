@@ -12,7 +12,7 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Badge from '@mui/material/Badge';
 import Switch from '@mui/material/Switch';
-import { TextField, Button, Card, CardContent, InputAdornment, IconButton, AppBar, Toolbar, Snackbar, Alert, Stepper, Step, StepLabel, LinearProgress } from '@mui/material';
+import { TextField, Button, Card, CardContent, InputAdornment, IconButton, AppBar, Toolbar, Snackbar, Alert, Stepper, Step, StepLabel, LinearProgress, CircularProgress } from '@mui/material';
 import { ArrowBack, Phone, Language, Business, Store, Email, Web, Image as ImageIcon, NavigateNext, NavigateBefore, Done } from '@mui/icons-material';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -736,338 +736,326 @@ export default function ProfileSection() {
                 {open && isedit === true && (
                   <MainCard
                     border={false}
-                    elevation={16}
+                    elevation={24}
                     content={false}
                     boxShadow
-                    shadow={theme.shadows[16]}
+                    shadow={theme.shadows[24]}
                     sx={{
-                      maxWidth: '850px',
+                      maxWidth: '880px',
                       width: '100%',
-                      maxHeight: '92vh',
+                      maxHeight: '94vh',
                       overflowY: 'auto',
-                      borderRadius: 4,
-                      bgcolor: '#f8f9fa',
+                      borderRadius: 5,
+                      bgcolor: '#fcfcfd',
                       '&::-webkit-scrollbar': { width: 6 },
-                      '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.1)', borderRadius: 3 }
+                      '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(225, 91, 101, 0.2)', borderRadius: 3 }
                     }}
                   >
-                    <Box sx={{ flexGrow: 1 }}>
-                      {/* Header */}
+                    <Box sx={{ flexGrow: 1, position: 'relative' }}>
+                      {/* Premium Header */}
                       <AppBar
                         position="sticky"
                         elevation={0}
                         sx={{
-                          bgcolor: 'rgba(255, 255, 255, 0.95)',
-                          backdropFilter: 'blur(12px)',
+                          bgcolor: 'rgba(255, 255, 255, 0.85)',
+                          backdropFilter: 'blur(20px)',
                           borderBottom: '1px solid',
-                          borderColor: 'divider',
+                          borderColor: 'rgba(0,0,0,0.06)',
                           color: 'text.primary',
-                          zIndex: 10
+                          zIndex: 100
                         }}
                       >
-                        <Toolbar sx={{ px: { xs: 2, sm: 4 }, minHeight: 80, display: 'flex', justifyContent: 'space-between' }}>
+                        <Toolbar sx={{ px: { xs: 2.5, sm: 3 }, minHeight: { xs: 70, sm: 80 }, display: 'flex', justifyContent: 'space-between' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <IconButton edge="start" onClick={() => SetIsedit(false)} sx={{ mr: 2, bgcolor: 'action.hover' }}>
-                              <ArrowBack sx={{ fontSize: 20 }} />
+                            <IconButton 
+                              edge="start" 
+                              onClick={() => SetIsedit(false)} 
+                              sx={{ 
+                                mr: 2, 
+                                bgcolor: 'rgba(225, 91, 101, 0.08)',
+                                color: '#E15B65',
+                                '&:hover': { bgcolor: 'rgba(225, 91, 101, 0.15)' }
+                              }}
+                            >
+                              <ArrowBack sx={{ fontSize: 18 }} />
                             </IconButton>
                             <Box>
-                              <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                              <Typography variant="h4" sx={{ fontWeight: 800, color: '#1A0A00', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
                                 Edit Profile
                               </Typography>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                                Update your business identity and presence
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.25 }}>
+                                Profile Settings
                               </Typography>
                             </Box>
                           </Box>
 
-                          <Box sx={{ display: 'flex', gap: 1.5 }}>
-                            <Button
-                              variant="outlined"
-                              onClick={() => SetIsedit(false)}
-                              sx={{
-                                borderRadius: 2.5,
-                                px: 3,
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                borderColor: 'divider',
-                                color: 'text.primary'
-                              }}
-                            >
-                              Cancel
-                            </Button>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
                             <Button
                               variant="contained"
                               onClick={handleSave}
                               disabled={isSubmitting}
-                              startIcon={isSubmitting ? null : <Done />}
+                              startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <Done sx={{ fontSize: 18 }} />}
                               sx={{
                                 bgcolor: '#E15B65',
                                 borderRadius: 2.5,
-                                px: 4,
+                                px: 2.5,
+                                py: 1,
                                 textTransform: 'none',
-                                fontWeight: 600,
-                                boxShadow: '0 4px 12px rgba(225, 91, 101, 0.25)',
-                                '&:hover': { bgcolor: '#c94a53' }
+                                fontSize: '0.875rem',
+                                fontWeight: 700,
+                                boxShadow: '0 8px 20px rgba(225, 91, 101, 0.3)',
+                                '&:hover': { bgcolor: '#c94a53', boxShadow: '0 10px 25px rgba(225, 91, 101, 0.4)' }
                               }}
                             >
-                              {isSubmitting ? 'Saving...' : 'Save Changes'}
+                              {isSubmitting ? 'Saving' : 'Save'}
                             </Button>
                           </Box>
                         </Toolbar>
+                        {isSubmitting && <LinearProgress sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, bgcolor: 'rgba(225, 91, 101, 0.1)', '& .MuiLinearProgress-bar': { bgcolor: '#E15B65' } }} />}
                       </AppBar>
 
-                      <Box sx={{ px: { xs: 2.5, sm: 4 }, py: 4 }}>
-                        {/* Section 1: Visual Identity */}
-                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, overflow: 'visible', bgcolor: '#fff' }}>
-                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <ImageIcon sx={{ color: '#E15B65' }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Visual Identity</Typography>
-                          </Box>
-                          <Box sx={{ p: 3 }}>
-                            <Box sx={{ position: 'relative', mb: 10 }}>
-                              <Box
-                                sx={{
-                                  height: 200,
-                                  borderRadius: 3,
-                                  position: 'relative',
-                                  overflow: 'hidden',
-                                  bgcolor: 'rgba(0,0,0,0.04)',
-                                  border: '1px dashed',
-                                  borderColor: 'divider',
-                                  backgroundImage: coverPreview ? `url(${coverPreview})` : 'none',
-                                  backgroundSize: 'cover',
-                                  backgroundPosition: 'center',
-                                  transition: 'all 0.3s ease'
+                      <Box sx={{ px: { xs: 3, sm: 6 }, py: 4 }}>
+                        
+                        {/* 1. Visual Identity - Full Width Bleed */}
+                        <Box sx={{ mb: 8, mx: { xs: -3, sm: -6 }, mt: -4 }}>
+                          <Box sx={{ position: 'relative', mb: 14 }}>
+                            <Box
+                              sx={{
+                                height: { xs: 200, sm: 320 },
+                                borderRadius: { xs: 0, sm: '0 0 40px 40px' },
+                                position: 'relative',
+                                overflow: 'hidden',
+                                bgcolor: '#f0f2f5',
+                                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                backgroundImage: coverPreview ? `url(${coverPreview})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                transition: 'all 0.4s ease',
+                                '&:hover': { '& .cover-overlay': { opacity: 1 } }
+                              }}
+                            >
+                              {!coverPreview && (
+                                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', opacity: 0.6 }}>
+                                  <ImageIcon sx={{ fontSize: 64, mb: 1, color: 'rgba(225, 91, 101, 0.2)' }} />
+                                  <Typography variant="h5" fontWeight={700}>Add Brand Cover</Typography>
+                                </Box>
+                              )}
+                              
+                              <Box 
+                                className="cover-overlay"
+                                sx={{ 
+                                  position: 'absolute', 
+                                  inset: 0, 
+                                  bgcolor: 'rgba(0,0,0,0.2)', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center',
+                                  opacity: 0,
+                                  transition: 'opacity 0.3s ease',
+                                  backdropFilter: 'blur(2px)'
                                 }}
                               >
-                                {!coverPreview && (
-                                  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', opacity: 0.5 }}>
-                                    <ImageIcon sx={{ fontSize: 40, mb: 1 }} />
-                                    <Typography variant="subtitle2">No Cover Image</Typography>
-                                  </Box>
-                                )}
-                                <Box sx={{ position: 'absolute', bottom: 12, right: 12 }}>
-                                  <input accept="image/*" style={{ display: 'none' }} id="cover-photo-upload" type="file" onChange={handleCoverImageUpload} />
-                                  <label htmlFor="cover-photo-upload">
-                                    <Button
-                                      component="span"
-                                      variant="contained"
-                                      size="small"
-                                      startIcon={<PhotoCamera />}
-                                      sx={{
-                                        bgcolor: 'rgba(255,255,255,0.95)',
-                                        color: 'text.primary',
-                                        backdropFilter: 'blur(8px)',
-                                        borderRadius: 2,
-                                        fontWeight: 600,
-                                        textTransform: 'none',
-                                        '&:hover': { bgcolor: '#fff' }
-                                      }}
-                                    >
-                                      Edit Cover
-                                    </Button>
-                                  </label>
-                                </Box>
-                              </Box>
-
-                              <Box sx={{ position: 'absolute', bottom: -45, left: 24 }}>
-                                <Badge
-                                  overlap="circular"
-                                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                  badgeContent={
-                                    <>
-                                      <input accept="image/*" style={{ display: 'none' }} id="profile-photo-upload" type="file" onChange={handleProfileImageUpload} />
-                                      <label htmlFor="profile-photo-upload">
-                                        <IconButton
-                                          component="span"
-                                          sx={{
-                                            bgcolor: '#E15B65',
-                                            color: 'white',
-                                            border: '3px solid white',
-                                            boxShadow: '0 4px 10px rgba(225, 91, 101, 0.3)',
-                                            width: 36,
-                                            height: 36,
-                                            '&:hover': { bgcolor: '#c94a53' }
-                                          }}
-                                        >
-                                          <PhotoCamera sx={{ fontSize: 16 }} />
-                                        </IconButton>
-                                      </label>
-                                    </>
-                                  }
-                                >
-                                  <Avatar
-                                    src={profilePreview || User1}
-                                    sx={{
-                                      width: 100,
-                                      height: 100,
-                                      border: '4px solid white',
-                                      boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
-                                      bgcolor: '#f0f0f0',
-                                      fontSize: 40,
-                                      fontWeight: 700,
-                                      color: '#E15B65'
-                                    }}
+                                <input accept="image/*" style={{ display: 'none' }} id="cover-photo-upload" type="file" onChange={handleCoverImageUpload} />
+                                <label htmlFor="cover-photo-upload">
+                                  <Button
+                                    component="span"
+                                    variant="contained"
+                                    startIcon={<PhotoCamera />}
+                                    sx={{ bgcolor: 'white', color: '#1A0A00', borderRadius: 3, fontWeight: 800, px: 4, py: 1.2 }}
                                   >
-                                    {!profilePreview && (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
-                                  </Avatar>
-                                </Badge>
+                                    Change Cover Image
+                                  </Button>
+                                </label>
                               </Box>
                             </Box>
-                          </Box>
-                        </Card>
 
-                        {/* Section 2: Business Information */}
-                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
-                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Store sx={{ color: '#E15B65' }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Business Information</Typography>
+                            <Box sx={{ position: 'absolute', bottom: -80, left: '50%', transform: 'translateX(-50%)' }}>
+                              <Badge
+                                overlap="circular"
+                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                badgeContent={
+                                  <>
+                                    <input accept="image/*" style={{ display: 'none' }} id="profile-photo-upload" type="file" onChange={handleProfileImageUpload} />
+                                    <label htmlFor="profile-photo-upload">
+                                      <IconButton
+                                        component="span"
+                                        sx={{
+                                          bgcolor: 'white',
+                                          color: '#E15B65',
+                                          border: '1px solid rgba(0,0,0,0.08)',
+                                          boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                                          width: 48,
+                                          height: 48,
+                                          '&:hover': { bgcolor: '#f8f9fa', transform: 'scale(1.05)' },
+                                          transition: 'all 0.2s'
+                                        }}
+                                      >
+                                        <PhotoCamera sx={{ fontSize: 24 }} />
+                                      </IconButton>
+                                    </label>
+                                  </>
+                                }
+                              >
+                                <Avatar
+                                  src={profilePreview || User1}
+                                  sx={{
+                                    width: 200,
+                                    height: 200,
+                                    border: '8px solid white',
+                                    boxShadow: '0 15px 35px rgba(0,0,0,0.18)',
+                                    bgcolor: '#fdf2f3',
+                                    fontSize: 80,
+                                    fontWeight: 800,
+                                    color: '#E15B65'
+                                  }}
+                                >
+                                  {!profilePreview && (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
+                                </Avatar>
+                              </Badge>
+                            </Box>
                           </Box>
-                          <Box sx={{ p: 3 }}>
-                            <Grid container spacing={3}>
-                              <Grid item xs={12}>
-                                <TextField
-                                  fullWidth
-                                  label="Vendor/Business Name"
-                                  value={formData.vendorName || ''}
-                                  onChange={handleInputChange('vendorName')}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  label="Email Address"
-                                  value={formData.email || ''}
-                                  disabled
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f8f9fa' } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  label="Phone Number"
-                                  value={formData.phone || ''}
-                                  onChange={handleInputChange('phone')}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12}>
-                                <TextField
-                                  fullWidth
-                                  label="Website URL"
-                                  value={formData.website || ''}
-                                  onChange={handleInputChange('website')}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12}>
-                                <TextField
-                                  fullWidth
-                                  label="Business Address"
-                                  value={formData.businessAddress || ''}
-                                  onChange={handleInputChange('businessAddress')}
-                                  multiline
-                                  rows={3}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                            </Grid>
-                          </Box>
-                        </Card>
+                        </Box>
 
-                        {/* Section 3: Bio & Story */}
-                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
-                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Business sx={{ color: '#E15B65' }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Bio & Story</Typography>
+                        {/* 2. Business Information - Vertical Stack */}
+                        <Box sx={{ mb: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1 }}>
+                            <Box sx={{ width: 4, height: 16, bgcolor: '#E15B65', borderRadius: 1 }} />
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Business Information</Typography>
                           </Box>
-                          <Box sx={{ p: 3 }}>
-                            <Grid container spacing={3}>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  label="Professional Title"
-                                  value={formData.bioTitle || ''}
-                                  onChange={handleInputChange('bioTitle')}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  label="Bio Subtitle"
-                                  value={formData.bioSubtitle || ''}
-                                  onChange={handleInputChange('bioSubtitle')}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                              <Grid item xs={12}>
-                                <TextField
-                                  fullWidth
-                                  label="Detailed Description"
-                                  value={formData.bioDescription || ''}
-                                  onChange={handleInputChange('bioDescription')}
-                                  multiline
-                                  rows={5}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                              </Grid>
-                            </Grid>
-                          </Box>
-                        </Card>
 
-                        {/* Section 4: Social Presence */}
-                        <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', mb: 4, bgcolor: '#fff' }}>
-                          <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Language sx={{ color: '#E15B65' }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>Social Presence</Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                            <TextField
+                              fullWidth
+                              label="Vendor / Business Name"
+                              value={formData.vendorName || ''}
+                              onChange={handleInputChange('vendorName')}
+                              InputProps={{ startAdornment: <InputAdornment position="start"><Store sx={{ color: 'text.secondary', fontSize: 20, mr: 0.5 }} /></InputAdornment> }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Official Email Address"
+                              value={formData.email || ''}
+                              disabled
+                              InputProps={{ startAdornment: <InputAdornment position="start"><Email sx={{ color: 'text.secondary', fontSize: 20, mr: 0.5, opacity: 0.5 }} /></InputAdornment> }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f8f9fa' } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Primary Contact Number"
+                              value={formData.phone || ''}
+                              onChange={handleInputChange('phone')}
+                              InputProps={{ startAdornment: <InputAdornment position="start"><Phone sx={{ color: 'text.secondary', fontSize: 20, mr: 0.5 }} /></InputAdornment> }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Website or Portfolio"
+                              value={formData.website || ''}
+                              onChange={handleInputChange('website')}
+                              InputProps={{ startAdornment: <InputAdornment position="start"><Language sx={{ color: 'text.secondary', fontSize: 20, mr: 0.5 }} /></InputAdornment> }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Business Address"
+                              value={formData.businessAddress || ''}
+                              onChange={handleInputChange('businessAddress')}
+                              multiline
+                              rows={3}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
                           </Box>
-                          <Box sx={{ p: 3 }}>
-                            <Grid container spacing={2.5}>
-                              {[
-                                { id: 'instagram', label: 'Instagram', icon: <InstagramIcon sx={{ color: '#E1306C' }} /> },
-                                { id: 'facebook', label: 'Facebook', icon: <FacebookIcon sx={{ color: '#1877F2' }} /> },
-                                { id: 'whatsapp', label: 'WhatsApp', icon: <WhatsAppIcon sx={{ color: '#25D366' }} /> },
-                                { id: 'linkedin', label: 'LinkedIn', icon: <LinkedInIcon sx={{ color: '#0A66C2' }} /> },
-                                { id: 'twitter', label: 'Twitter / X', icon: <TwitterIcon sx={{ color: '#000' }} /> },
-                                { id: 'youtube', label: 'YouTube', icon: <YouTubeIcon sx={{ color: '#FF0000' }} /> }
-                              ].map((social) => (
-                                <Grid item xs={12} sm={6} key={social.id}>
-                                  <TextField
-                                    fullWidth
-                                    label={social.label}
-                                    value={formData[social.id] || ''}
-                                    onChange={handleInputChange(social.id)}
-                                    InputProps={{ startAdornment: <InputAdornment position="start">{social.icon}</InputAdornment> }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                  />
-                                </Grid>
-                              ))}
-                            </Grid>
-                          </Box>
-                        </Card>
+                        </Box>
 
-                        {/* Save Trigger Footer */}
-                        <Box sx={{ textAlign: 'center', pb: 2, pt: 2 }}>
+                        {/* 3. Bio & Story - Vertical Stack */}
+                        <Box sx={{ mb: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1 }}>
+                            <Box sx={{ width: 4, height: 16, bgcolor: '#E15B65', borderRadius: 1 }} />
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Bio & Story</Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                            <TextField
+                              fullWidth
+                              label="Professional Title"
+                              value={formData.bioTitle || ''}
+                              onChange={handleInputChange('bioTitle')}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Bio Subtitle"
+                              value={formData.bioSubtitle || ''}
+                              onChange={handleInputChange('bioSubtitle')}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Brand Description"
+                              value={formData.bioDescription || ''}
+                              onChange={handleInputChange('bioDescription')}
+                              multiline
+                              rows={4}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* 4. Social Presence - Vertical Stack */}
+                        <Box sx={{ mb: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1 }}>
+                            <Box sx={{ width: 4, height: 16, bgcolor: '#E15B65', borderRadius: 1 }} />
+                            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Social Presence</Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {[
+                              { id: 'instagram', label: 'Instagram', icon: <InstagramIcon sx={{ color: '#E1306C', fontSize: 18 }} /> },
+                              { id: 'facebook', label: 'Facebook', icon: <FacebookIcon sx={{ color: '#1877F2', fontSize: 18 }} /> },
+                              { id: 'whatsapp', label: 'WhatsApp', icon: <WhatsAppIcon sx={{ color: '#25D366', fontSize: 18 }} /> },
+                              { id: 'youtube', label: 'YouTube', icon: <YouTubeIcon sx={{ color: '#FF0000', fontSize: 18 }} /> }
+                            ].map((social) => (
+                              <TextField
+                                key={social.id}
+                                fullWidth
+                                label={social.label}
+                                size="small"
+                                value={formData[social.id] || ''}
+                                onChange={handleSocialLinkChange(social.id)}
+                                InputProps={{ 
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Box sx={{ bgcolor: 'rgba(0,0,0,0.03)', p: 0.5, borderRadius: 1, display: 'flex', mr: 0.5 }}>{social.icon}</Box>
+                                    </InputAdornment>
+                                  ) 
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+
+                        {/* Footer Button */}
+                        <Box sx={{ textAlign: 'center', py: 2 }}>
                           <Button
                             variant="contained"
-                            size="large"
+                            fullWidth
                             onClick={handleSave}
                             disabled={isSubmitting}
                             sx={{
                               bgcolor: '#E15B65',
                               borderRadius: 3,
-                              px: 8,
                               py: 1.5,
-                              fontSize: '1.1rem',
-                              fontWeight: 700,
+                              fontSize: '1rem',
+                              fontWeight: 800,
                               textTransform: 'none',
-                              boxShadow: '0 8px 24px rgba(225, 91, 101, 0.3)',
-                              '&:hover': { bgcolor: '#c94a53', boxShadow: '0 12px 30px rgba(225, 91, 101, 0.4)' }
+                              boxShadow: '0 10px 25px rgba(225, 91, 101, 0.3)',
+                              '&:hover': { bgcolor: '#c94a53', transform: 'translateY(-2px)' },
+                              transition: 'all 0.2s'
                             }}
                           >
-                            {isSubmitting ? 'Saving Changes...' : 'Save All Changes'}
+                            {isSubmitting ? 'Updating Profile...' : 'Save All Changes'}
                           </Button>
                         </Box>
                       </Box>
