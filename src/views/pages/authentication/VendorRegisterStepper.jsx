@@ -5,7 +5,7 @@ import {
     Grid, Select, MenuItem, FormControl, InputLabel, FormHelperText,
     CircularProgress, Checkbox, FormControlLabel, Alert, Avatar,
     Divider, Chip, Paper, InputAdornment, IconButton, Card, CardContent, Stack,
-    ListItemText, OutlinedInput
+    ListItemText, OutlinedInput, Snackbar
 } from '@mui/material';
 import { styled, keyframes, alpha } from '@mui/material/styles';
 
@@ -28,6 +28,12 @@ import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import MapIcon from '@mui/icons-material/Map';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import MapPinIcon from '@mui/icons-material/AddLocationAlt';
+import TagIcon from '@mui/icons-material/Tag';
 import bookLogo from 'assets/images/book.png';
 
 const API = 'https://api.bookmyevent.ae';
@@ -107,14 +113,21 @@ const PageWrap = styled(Box)(({ theme }) => ({
 const RegCard = styled(Paper)(({ theme }) => ({
     width: '100%',
     maxWidth: 920,
-    borderRadius: 24,
-    boxShadow: '0 12px 48px rgba(30, 41, 59, 0.08)',
-    border: '1px solid rgba(226, 232, 240, 0.8)',
-    padding: '28px 20px',
+    borderRadius: 32,
+    boxShadow: '0 25px 80px rgba(15, 23, 42, 0.08)',
+    border: '1px solid rgba(226, 232, 240, 0.6)',
+    padding: '32px 24px',
     background: '#fff',
+    position: 'relative',
+    overflow: 'hidden',
     [theme.breakpoints.up('sm')]: {
-        padding: '48px 52px',
+        padding: '56px 64px',
     },
+    '&::after': {
+        content: '""',
+        position: 'absolute', top: 0, left: 0, right: 0, height: '6px',
+        background: `linear-gradient(90deg, ${RED}, #f472b6, ${RED})`,
+    }
 }));
 const PBtn = styled(Button)({
     background: `linear-gradient(135deg,${RED},${RED_DARK})`,
@@ -170,7 +183,7 @@ function validate(s, f, isSecondary) {
             if (!f.startingPrice) e.startingPrice = 'Required';
         }
     }
-    if (s === 2) { if (!f.storeAddress.city.trim()) e.city = 'City required'; }
+    if (s === 2) { /* City is optional */ }
     return e;
 }
 
@@ -242,6 +255,84 @@ function VerificationScreen({ status = 'pending', rejectReason = '' }) {
             { icon: <ErrorOutlineIcon sx={{ fontSize: 18 }} />, label: 'Review Failed', active: true, error: true },
             { icon: <HelpOutlineIcon sx={{ fontSize: 18 }} />, label: 'Action Required', done: false },
         ];
+    }
+
+    // Polling logic for live status updates
+    const [currentStatus, setCurrentStatus] = useState(status);
+    const [checkLoading, setCheckLoading] = useState(false);
+    const [toast, setToast] = useState({ open: false, msg: '', type: 'info' });
+
+    const checkStatus = useCallback(async () => {
+        let userId = localStorage.getItem('pendingVendorId');
+        
+        // If no ID in storage, check URL/state (fallback)
+        if (!userId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            userId = urlParams.get('userId'); // Potential fallback if we append it
+        }
+
+        if (!userId) {
+            setToast({ open: true, msg: 'User ID missing in local storage. Try refreshing from the last step.', type: 'warning' });
+            return;
+        }
+
+        if (currentStatus === 'approved') return;
+
+        setCheckLoading(true);
+        try {
+            // Attempt a general profile check or dedicated status check
+            // We'll try the known profile provider endpoint (usually needs no token for basic status or has a public status shim)
+            const res = await fetch(`https://api.bookmyevent.ae/api/auth/register-status/${userId}`);
+            
+            if (res.status === 404) {
+                // If the new endpoint doesn't exist, try the general profile one
+                const profileRes = await fetch(`https://api.bookmyevent.ae/api/profile/provider/${userId}`);
+                if (profileRes.ok) {
+                    const profData = await profileRes.json();
+                    if (profData.success && profData.data?.status) {
+                        const newS = profData.data.status;
+                        if (newS === currentStatus) {
+                            setToast({ open: true, msg: `Registration is still ${newS.toUpperCase()}...`, type: 'info' });
+                        } else {
+                            setCurrentStatus(newS);
+                            setToast({ open: true, msg: `Excellent! Your status is now ${newS.toUpperCase()}`, type: 'success' });
+                        }
+                        setCheckLoading(false);
+                        return;
+                    }
+                }
+            }
+
+            const data = await res.json();
+            if (data.success && data.status) {
+                if (data.status === currentStatus) {
+                    setToast({ open: true, msg: `Your application is still in ${data.status.toUpperCase()} status.`, type: 'info' });
+                } else {
+                    setCurrentStatus(data.status);
+                    setToast({ open: true, msg: `Status updated to ${data.status.toUpperCase()}!`, type: 'success' });
+                }
+            } else {
+                setToast({ open: true, msg: 'Still pending. Please wait for admin approval.', type: 'info' });
+            }
+        } catch (err) {
+            setToast({ open: true, msg: 'Unable to reach status server. Please try again later.', type: 'error' });
+            console.error('Status check failed', err);
+        } finally {
+            setCheckLoading(false);
+        }
+    }, [currentStatus]);
+
+    useEffect(() => {
+        let interval;
+        if (currentStatus === 'pending') {
+            interval = setInterval(checkStatus, 20000); // Check every 20s
+        }
+        return () => clearInterval(interval);
+    }, [currentStatus, checkStatus]);
+
+    // If status changed via polling, re-render with new data
+    if (currentStatus !== status) {
+        return <VerificationScreen status={currentStatus} rejectReason={rejectReason} />;
     }
 
     return (
@@ -379,29 +470,29 @@ function VerificationScreen({ status = 'pending', rejectReason = '' }) {
                     </Grid>
                 </Grid>
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" alignItems="center">
+                <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
                     <Button component={Link} to="/pages/login" variant="contained"
                         sx={{
-                            borderRadius: 3, px: 5, py: 1.8, fontWeight: 800, fontSize: 14, textTransform: 'none',
+                            borderRadius: 3, px: 6, py: 1.8, fontWeight: 800, fontSize: 14, textTransform: 'none',
                             bgcolor: '#1e293b', color: '#fff', boxShadow: '0 10px 20px rgba(30,41,59,0.2)',
                             '&:hover': { bgcolor: '#0f172a', transform: 'translateY(-2px)' },
                             transition: 'all .3s ease'
                         }}>
                         Return to Login
                     </Button>
-
-                    {status === 'rejected' && (
-                        <Button component={Link} to="/pages/register" variant="outlined"
-                            sx={{
-                                borderRadius: 3, px: 5, py: 1.8, fontWeight: 800, fontSize: 14, textTransform: 'none',
-                                borderColor: '#e2e8f0', color: '#64748b',
-                                '&:hover': { bgcolor: '#f1f5f9', borderColor: '#cbd5e1' }
-                            }}>
-                            Re-submit Application
-                        </Button>
-                    )}
                 </Stack>
             </RegCard>
+
+            <Snackbar 
+                open={toast.open} 
+                autoHideDuration={4000} 
+                onClose={() => setToast(p => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert severity={toast.type} sx={{ borderRadius: 3, fontWeight: 700, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                    {toast.msg}
+                </Alert>
+            </Snackbar>
 
             <Typography variant="caption" sx={{ mt: 4, color: '#94a3b8', fontWeight: 600 }}>
                 &copy; {new Date().getFullYear()} BookMyEvent Technology. All rights reserved.
@@ -633,8 +724,17 @@ export default function VendorRegisterStepper() {
         const selMod = modules.find(m => m._id === form.module);
         const errs = validate(step, form, selMod?.isSecondary);
         if (Object.keys(errs).length) { setErrors(errs); return; }
-        setErrors({}); setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' });
+        setErrors({}); setStep(s => {
+            if (s === 2) setMap(null); // Clear map when leaving Location step to ensure fresh init on return
+            return s + 1;
+        }); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    // Also ensures map is cleared when using back button
+    useEffect(() => {
+        if (step !== 2) setMap(null);
+    }, [step]);
 
     /* ── Razorpay script loader ── */
     const loadRazorpayScript = () => new Promise(resolve => {
@@ -684,6 +784,8 @@ export default function VendorRegisterStepper() {
 
             // ── Free plan → show verification screen ──
             if (form.subscriptionPlan === 'free') {
+                const pendingId = data.userId || data._id || data.user?._id;
+                if (pendingId) localStorage.setItem('pendingVendorId', pendingId);
                 setVendorStatus('pending');
                 setSubmitted(true);
                 return;
@@ -976,74 +1078,164 @@ export default function VendorRegisterStepper() {
             )}
         </Box>,
 
-        /* STEP 3 */
-        <Box key={2} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            <Typography variant="subtitle2" sx={{ color: '#334155', fontWeight: 600, mb: -1 }}>Where is your business located?</Typography>
+        /* STEP 3 - Location */
+        <Box key={2} sx={{ animation: `${fadeUp} .35s ease`, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ mb: 1 }}>
+                <Typography variant="h5" sx={{ color: '#0f172a', fontWeight: 800, mb: 1 }}>Business Location</Typography>
+                <Typography variant="body2" color="text.secondary">Enter your precise business address and position on the map.</Typography>
+            </Box>
 
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <TextField fullWidth label="Full Address" value={form.storeAddress.fullAddress}
-                        onChange={e => setAddr('fullAddress', e.target.value)} size="medium"
-                        multiline rows={2} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Street / Building" value={form.storeAddress.street}
-                        onChange={e => setAddr('street', e.target.value)} size="medium" sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="City *" value={form.storeAddress.city}
-                        onChange={e => setAddr('city', e.target.value)} size="medium"
-                        error={!!errors.city} helperText={errors.city} sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="State / Emirate" value={form.storeAddress.state}
-                        onChange={e => setAddr('state', e.target.value)} size="medium" sx={INPUT_SX} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="ZIP / PO Box" value={form.storeAddress.zipCode}
-                        onChange={e => setAddr('zipCode', e.target.value)} size="medium" sx={INPUT_SX} />
-                </Grid>
-            </Grid>
+            <Stack spacing={2.5}>
+                <TextField 
+                    fullWidth 
+                    label="Complete Business Address *" 
+                    value={form.storeAddress.fullAddress}
+                    onChange={e => setAddr('fullAddress', e.target.value)} 
+                    multiline 
+                    rows={3} 
+                    sx={INPUT_SX}
+                    placeholder="Enter your full business address here..."
+                />
 
-            <Divider sx={{ my: 1 }} />
+                <TextField 
+                    fullWidth 
+                    label="Street / Building No." 
+                    value={form.storeAddress.street}
+                    onChange={e => setAddr('street', e.target.value)} 
+                    sx={INPUT_SX} 
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><LocationOnOutlinedIcon sx={{ color: '#cbd5e1', fontSize: 20 }} /></InputAdornment>
+                    }}
+                />
 
-            <TextField
-                fullWidth
-                label="Search Location"
-                inputRef={searchInputRef}
-                placeholder="Type to search your location..."
-                sx={INPUT_SX}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <LocationOnOutlinedIcon sx={{ color: RED, fontSize: 20 }} />
-                        </InputAdornment>
-                    ),
-                }}
-            />
+                <TextField 
+                    fullWidth 
+                    label="City" 
+                    value={form.storeAddress.city}
+                    onChange={e => setAddr('city', e.target.value)} 
+                    error={!!errors.city} 
+                    helperText={errors.city} 
+                    sx={INPUT_SX}
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><BusinessCenterOutlinedIcon sx={{ color: '#cbd5e1', fontSize: 20 }} /></InputAdornment>
+                    }}
+                />
 
-            <Box sx={{ position: 'relative', height: 320, width: '100%', borderRadius: 4, overflow: 'hidden', border: '1.5px solid #dde1ec' }}>
+                <TextField 
+                    fullWidth 
+                    label="State / Province / Emirate" 
+                    value={form.storeAddress.state}
+                    onChange={e => setAddr('state', e.target.value)} 
+                    sx={INPUT_SX} 
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><MapPinIcon sx={{ color: '#cbd5e1', fontSize: 20 }} /></InputAdornment>
+                    }}
+                />
+
+                <TextField 
+                    fullWidth 
+                    label="ZIP / Postal Code" 
+                    value={form.storeAddress.zipCode}
+                    onChange={e => setAddr('zipCode', e.target.value)} 
+                    sx={INPUT_SX} 
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start"><TagIcon sx={{ color: '#cbd5e1', fontSize: 20 }} /></InputAdornment>
+                    }}
+                />
+            </Stack>
+
+            <Divider sx={{ my: 2, '&::before, &::after': { borderColor: '#f1f5f9' } }}>
+                <Chip label="PINPOINT ON MAP" size="small" sx={{ fontWeight: 800, fontSize: 10, bgcolor: '#f8fafc', color: '#64748b', px: 1 }} />
+            </Divider>
+
+            <Box sx={{ mb: 1 }}>
+                <TextField
+                    fullWidth
+                    label="Search Place or Area"
+                    inputRef={searchInputRef}
+                    placeholder="Type to find your business location..."
+                    sx={{
+                        ...INPUT_SX,
+                        '& .MuiOutlinedInput-root': {
+                            ...INPUT_SX['& .MuiOutlinedInput-root'],
+                            bgcolor: alpha(RED, 0.02),
+                            borderColor: alpha(RED, 0.1)
+                        }
+                    }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon sx={{ color: RED, fontSize: 20 }} />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+            </Box>
+
+            <Box sx={{ 
+                position: 'relative', 
+                height: { xs: 300, sm: 400 }, 
+                width: '100%', 
+                borderRadius: 5, 
+                overflow: 'hidden', 
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+            }}>
                 {!mapsLoaded && (
                     <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f8fafc', zIndex: 2 }}>
-                        <CircularProgress size={30} sx={{ color: RED }} />
+                        <CircularProgress size={32} sx={{ color: RED }} />
                     </Box>
                 )}
                 <Box ref={mapRef} sx={{ height: '100%', width: '100%' }} />
-                <Box sx={{ position: 'absolute', bottom: 12, left: 12, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', padding: '6px 12px', borderRadius: 2, border: '1px solid #dde1ec', zIndex: 1 }}>
-                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Tip: Click on map to adjust position
+                
+                <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 20, 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    bgcolor: 'rgba(255,255,255,0.95)', 
+                    backdropFilter: 'blur(8px)', 
+                    padding: '10px 20px', 
+                    borderRadius: 3, 
+                    border: '1px solid #e2e8f0', 
+                    zIndex: 1,
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5
+                }}>
+                    <LocationOnIcon sx={{ color: RED, fontSize: 18 }} />
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                        Drag pin or click to set location
                     </Typography>
                 </Box>
             </Box>
 
-            <Stack direction="row" spacing={2}>
-                <TextField fullWidth label="Latitude" value={form.latitude}
-                    onChange={e => set('latitude', e.target.value)} size="small" sx={INPUT_SX}
-                    InputProps={{ readOnly: true }} />
-                <TextField fullWidth label="Longitude" value={form.longitude}
-                    onChange={e => set('longitude', e.target.value)} size="small" sx={INPUT_SX}
-                    InputProps={{ readOnly: true }} />
-            </Stack>
+            <Box sx={{ 
+                bgcolor: '#f8fafc', 
+                p: 2.5, 
+                borderRadius: 4, 
+                border: '1px solid #f1f5f9',
+                display: 'flex',
+                gap: 2
+            }}>
+                <TextField 
+                    fullWidth 
+                    label="Latitude" 
+                    value={form.latitude}
+                    size="small" 
+                    sx={{ ...INPUT_SX, '& .MuiOutlinedInput-root': { bgcolor: '#fff' } }}
+                    InputProps={{ readOnly: true, startAdornment: <Typography variant="caption" sx={{ mr: 1, color: '#94a3b8', fontWeight: 800 }}>LAT</Typography> }} 
+                />
+                <TextField 
+                    fullWidth 
+                    label="Longitude" 
+                    value={form.longitude}
+                    size="small" 
+                    sx={{ ...INPUT_SX, '& .MuiOutlinedInput-root': { bgcolor: '#fff' } }}
+                    InputProps={{ readOnly: true, startAdornment: <Typography variant="caption" sx={{ mr: 1, color: '#94a3b8', fontWeight: 800 }}>LNG</Typography> }} 
+                />
+            </Box>
         </Box>,
 
         /* STEP 4 – Plan */
@@ -1098,50 +1290,89 @@ export default function VendorRegisterStepper() {
 
         /* STEP 5 – Media */
         <Box key={4} sx={{ animation: `${fadeUp} .35s ease` }}>
-            <Grid container spacing={2.5}>
+            <Stack spacing={3}>
                 {[
-                    { label: 'Business Logo', note: 'PNG / JPG, max 5MB', field: 'logo', ref: logoRef, accept: 'image/*' },
-                    { label: 'Cover Image', note: 'PNG / JPG, max 5MB', field: 'coverImage', ref: coverRef, accept: 'image/*' },
-                    { label: 'TIN Certificate', note: 'PDF / PNG / JPG', field: 'tinCertificate', ref: tinRef, accept: 'image/*,application/pdf' },
-                ].map(({ label, note, field, ref: r, accept }) => (
-                    <Grid item xs={12} sm={4} key={field}>
-                        <UpBox isset={form[field] ? 'true' : undefined} onClick={() => r.current?.click()}>
-                            {form[field] && (
-                                <IconButton
-                                    size="small"
-                                    onClick={(e) => { e.stopPropagation(); set(field, null); }}
-                                    sx={{
-                                        position: 'absolute', top: 8, right: 8,
-                                        bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
-                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)', transform: 'scale(1.1)' },
-                                        transition: 'all .2s'
-                                    }}
-                                >
-                                    <CancelOutlinedIcon sx={{ fontSize: 18 }} />
-                                </IconButton>
-                            )}
-                            <input type="file" accept={accept} ref={r} hidden onChange={e => set(field, e.target.files[0])} />
+                    { label: 'Business Logo / Brand Identity', note: 'Square recommended, PNG or JPG (max 5MB)', field: 'logo', ref: logoRef, accept: 'image/*', icon: <ExploreOutlinedIcon sx={{ fontSize: 32 }} /> },
+                    { label: 'Brand Cover Header Image', note: 'Landscape recommended, PNG or JPG (max 5MB)', field: 'coverImage', ref: coverRef, accept: 'image/*', icon: <MapIcon sx={{ fontSize: 32 }} /> },
+                    { label: 'TIN / Business License Certificate', note: 'Legal proof, PDF or high-quality JPG', field: 'tinCertificate', ref: tinRef, accept: 'image/*,application/pdf', icon: <WorkspacePremiumIcon sx={{ fontSize: 32 }} /> },
+                ].map(({ label, note, field, ref: r, accept, icon }) => (
+                    <UpBox 
+                        key={field} 
+                        isset={form[field] ? 'true' : undefined} 
+                        onClick={() => r.current?.click()}
+                        sx={{ 
+                            textAlign: 'left', 
+                            py: 4, 
+                            px: 3, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 3,
+                            boxShadow: form[field] ? '0 4px 12px rgba(76, 175, 80, 0.1)' : 'none'
+                        }}
+                    >
+                        {form[field] && (
+                            <IconButton
+                                size="small"
+                                onClick={(e) => { e.stopPropagation(); set(field, null); }}
+                                sx={{
+                                    position: 'absolute', top: 12, right: 12,
+                                    bgcolor: 'rgba(239, 68, 68, 0.08)', color: '#ef4444',
+                                    '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.15)', transform: 'rotate(90deg)' },
+                                    transition: 'all .3s'
+                                }}
+                            >
+                                <CancelOutlinedIcon sx={{ fontSize: 18 }} />
+                            </IconButton>
+                        )}
+                        <input type="file" accept={accept} ref={r} hidden onChange={e => set(field, e.target.files[0])} />
+                        
+                        <Box sx={{ 
+                            width: 64, 
+                            height: 64, 
+                            borderRadius: '16px', 
+                            bgcolor: form[field] ? alpha('#4caf50', 0.1) : alpha(RED, 0.05), 
+                            color: form[field] ? '#4caf50' : RED, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            flexShrink: 0
+                        }}>
                             {form[field] ? (
-                                <>
-                                    {form[field].type?.startsWith('image')
-                                        ? <Avatar src={URL.createObjectURL(form[field])} variant="rounded" sx={{ width: 56, height: 56, mx: 'auto', mb: 1.5, borderRadius: 2 }} />
-                                        : <CheckCircleIcon sx={{ fontSize: 44, color: '#4caf50', mb: 1 }} />}
-                                    <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#4caf50', mb: .3 }}>
-                                        {form[field].name.length > 22 ? form[field].name.slice(0, 22) + '…' : form[field].name}
-                                    </Typography>
-                                    <Typography sx={{ fontSize: 11.5, color: '#aaa' }}>Click to replace</Typography>
-                                </>
+                                form[field].type?.startsWith('image') 
+                                    ? <Avatar src={URL.createObjectURL(form[field])} variant="rounded" sx={{ width: 44, height: 44, borderRadius: '10px' }} />
+                                    : <CheckCircleIcon sx={{ fontSize: 32 }} />
                             ) : (
-                                <>
-                                    <CloudUploadIcon sx={{ fontSize: 38, color: '#c8cfe0', mb: 1.5 }} />
-                                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#555', mb: .3 }}>{label}</Typography>
-                                    <Typography sx={{ fontSize: 11.5, color: '#aaa' }}>{note}</Typography>
-                                </>
+                                icon
                             )}
-                        </UpBox>
-                    </Grid>
+                        </Box>
+
+                        <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#1e293b', mb: 0.5 }}>{label}</Typography>
+                            <Typography sx={{ fontSize: 13, color: form[field] ? '#4caf50' : '#64748b', fontWeight: 500 }}>
+                                {form[field] 
+                                    ? `Selected: ${form[field].name.length > 35 ? form[field].name.slice(0, 35) + '...' : form[field].name}` 
+                                    : note}
+                            </Typography>
+                        </Box>
+
+                        {!form[field] && (
+                            <Button 
+                                variant="outlined" 
+                                size="small" 
+                                sx={{ 
+                                    borderRadius: 2, 
+                                    borderColor: '#e2e8f0', 
+                                    color: '#64748b', 
+                                    fontWeight: 700,
+                                    display: { xs: 'none', sm: 'flex' }
+                                }}
+                            >
+                                Upload
+                            </Button>
+                        )}
+                    </UpBox>
                 ))}
-            </Grid>
+            </Stack>
         </Box>,
 
         /* STEP 6 – Review */
