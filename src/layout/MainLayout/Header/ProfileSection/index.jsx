@@ -321,10 +321,35 @@ export default function ProfileSection() {
     setShowToast(true);
   };
 
-  const handleResetPassword = () => {
-    setToastMessage('Reset Password feature is coming soon!');
-    setToastSeverity('info');
-    setShowToast(true);
+  const handleResetPassword = async () => {
+    try {
+      const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:5000/api' 
+        : 'https://api.bookmyevent.ae/api';
+
+      const userEmail = user?.email || profile?.email;
+      if (!userEmail) {
+        setToastMessage('User email not found. Please log in again.');
+        setToastSeverity('error');
+        setShowToast(true);
+        return;
+      }
+
+      setToastMessage('Sending reset password link...');
+      setToastSeverity('info');
+      setShowToast(true);
+
+      await axios.post(`${BASE_URL}/auth/forgot-password`, { email: userEmail });
+
+      setToastMessage('Password reset link sent to your email!');
+      setToastSeverity('success');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      setToastMessage(error.response?.data?.message || 'Failed to send reset instructions.');
+      setToastSeverity('error');
+      setShowToast(true);
+    }
   };
 
   const handleBusinessDetails = () => {

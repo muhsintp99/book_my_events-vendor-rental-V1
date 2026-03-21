@@ -4,7 +4,8 @@ import {
     Box, Button, Step, StepLabel, Stepper, Typography, TextField,
     Grid, Select, MenuItem, FormControl, InputLabel, FormHelperText,
     CircularProgress, Checkbox, FormControlLabel, Alert, Avatar,
-    Divider, Chip, Paper, InputAdornment, IconButton, Card, CardContent, Stack
+    Divider, Chip, Paper, InputAdornment, IconButton, Card, CardContent, Stack,
+    ListItemText, OutlinedInput
 } from '@mui/material';
 import { styled, keyframes, alpha } from '@mui/material/styles';
 
@@ -150,7 +151,7 @@ const STEP_ICONS = [PersonOutlineIcon, BusinessCenterOutlinedIcon, LocationOnOut
 const FREE_PLAN = { _id: 'free', name: 'Free', price: 0, features: ['Basic listing', 'Up to 5 packages', 'Standard visibility', 'Email alerts'] };
 
 /* ── validation ── */
-function validate(s, f) {
+function validate(s, f, isSecondary) {
     const e = {};
     if (s === 0) {
         if (!f.firstName.trim()) e.firstName = 'Required';
@@ -161,7 +162,14 @@ function validate(s, f) {
         if (f.password.length < 6) e.password = 'Min 6 characters';
         if (f.password !== f.confirmPassword) e.confirmPassword = "Passwords don't match";
     }
-    if (s === 1) { if (!f.storeName.trim()) e.storeName = 'Required'; }
+    if (s === 1) { 
+        if (!f.storeName.trim()) e.storeName = 'Required'; 
+        if (!f.zone) e.zone = 'Primary Zone is required';
+        if (isSecondary) {
+            if (!f.specialised) e.specialised = 'Required';
+            if (!f.startingPrice) e.startingPrice = 'Required';
+        }
+    }
     if (s === 2) { if (!f.storeAddress.city.trim()) e.city = 'City required'; }
     return e;
 }
@@ -426,16 +434,18 @@ export default function VendorRegisterStepper() {
     const [zones, setZones] = useState([]);
     const [plans, setPlans] = useState([]);
     const [plansLoading, setPlansLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [expandedFeatures, setExpandedFeatures] = useState(null);
     const logoRef = useRef(); const coverRef = useRef(); const tinRef = useRef();
 
     const [form, setForm] = useState({
         firstName: '', lastName: '', email: '', phone: '',
         vendorType: 'individual', module: '', password: '', confirmPassword: '',
-        storeName: '', businessTIN: '', tinExpireDate: '', zone: '',
+        storeName: '', businessTIN: '', tinExpireDate: '', zone: '', multiZones: [],
         storeAddress: { street: '', city: '', state: '', zipCode: '', fullAddress: '' },
         latitude: '', longitude: '',
         subscriptionPlan: 'free', logo: null, coverImage: null, tinCertificate: null,
+        maxBookings: '', services: [], specialised: '', startingPrice: '', minBookingPrice: ''
     });
 
     // Google Maps states and refs
@@ -581,13 +591,31 @@ export default function VendorRegisterStepper() {
     }, [form.latitude, form.longitude, map, step]);
 
     useEffect(() => {
-        fetch(`${API}/api/modules`).then(r => r.json())
-            .then(d => setModules(Array.isArray(d.data) ? d.data : Array.isArray(d) ? d : []))
-            .catch(() => { });
+        Promise.all([
+            fetch(`${API}/api/modules`).then(r => r.json()).catch(() => ({ data: [] })),
+            fetch(`${API}/api/secondary-modules`).then(r => r.json()).catch(() => [])
+        ]).then(([modRes, secRes]) => {
+            const mods = Array.isArray(modRes.data) ? modRes.data : Array.isArray(modRes) ? modRes : [];
+            const secs = Array.isArray(secRes.data) ? secRes.data : Array.isArray(secRes) ? secRes : [];
+            const mappedSecs = secs.map(s => ({ ...s, isSecondary: true }));
+            setModules([...mods, ...mappedSecs]);
+        });
         fetch(`${API}/api/zones`).then(r => r.json())
             .then(d => setZones(Array.isArray(d.data) ? d.data : Array.isArray(d) ? d : []))
             .catch(() => { });
     }, []);
+
+    useEffect(() => {
+        const selMod = modules.find(m => m._id === form.module);
+        if (selMod?.isSecondary) {
+            fetch(`${API}/api/secondary-modules/${form.module}`).then(r => r.json())
+                .then(data => {
+                    const modData = data.module || data.data || data;
+                    const cats = Array.isArray(modData?.categories) ? modData.categories : [];
+                    setCategories(cats.map(c => ({ ...c, _id: c._id?.$oid || c._id })));
+                }).catch(() => setCategories([]));
+        }
+    }, [form.module, modules]);
 
     useEffect(() => {
         if (step !== 3) return;
@@ -602,7 +630,8 @@ export default function VendorRegisterStepper() {
     const setAddr = (k, v) => { setForm(f => ({ ...f, storeAddress: { ...f.storeAddress, [k]: v } })); setErrors(e => ({ ...e, [k]: '' })); };
 
     const next = () => {
-        const errs = validate(step, form);
+        const selMod = modules.find(m => m._id === form.module);
+        const errs = validate(step, form, selMod?.isSecondary);
         if (Object.keys(errs).length) { setErrors(errs); return; }
         setErrors({}); setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -623,14 +652,27 @@ export default function VendorRegisterStepper() {
         setLoading(true); setSubmitErr('');
         try {
             const fd = new FormData();
-            ['firstName', 'lastName', 'email', 'phone', 'vendorType', 'password', 'storeName', 'latitude', 'longitude'].forEach(k => {
+            ['firstName', 'lastName', 'email', 'phone', 'vendorType', 'password', 'storeName', 'latitude', 'longitude', 'maxBookings', 'specialised', 'startingPrice', 'minBookingPrice'].forEach(k => {
                 if (form[k]) fd.append(k, form[k].trim?.() ?? form[k]);
             });
+            if (form.services && form.services.length > 0) {
+                fd.append('services', JSON.stringify(form.services));
+            }
             fd.append('role', 'vendor');
             if (form.businessTIN) fd.append('businessTIN', form.businessTIN.trim());
             if (form.tinExpireDate) fd.append('tinExpireDate', form.tinExpireDate);
             if (form.module) fd.append('module', form.module);
             if (form.zone) fd.append('zone', form.zone);
+            
+            const submitMod = modules.find(m => m._id === form.module);
+            const isSubmitMultiZone = submitMod && ['makeup', 'photography', 'mehandi'].some(kw => submitMod.title.toLowerCase().includes(kw));
+
+            if (isSubmitMultiZone && form.multiZones && form.multiZones.length > 0) {
+              const allZones = [form.zone, ...form.multiZones.filter(z => z !== form.zone)].filter(Boolean);
+              fd.append('zones', allZones.join(','));
+            } else if (form.zone) {
+              fd.append('zones', form.zone);
+            }
             if (form.subscriptionPlan !== 'free') fd.append('subscriptionPlan', form.subscriptionPlan);
             fd.append('storeAddress', JSON.stringify(form.storeAddress));
             if (form.logo) fd.append('logo', form.logo);
@@ -722,7 +764,10 @@ export default function VendorRegisterStepper() {
 
     const selModule = modules.find(m => m._id === form.module);
     const selZone = zones.find(z => z._id === form.zone);
+    const selMultiZones = (form.multiZones || []).map(id => zones.find(z => z._id === id)?.name).filter(Boolean);
     const selPlan = form.subscriptionPlan === 'free' ? FREE_PLAN : plans.find(p => p._id === form.subscriptionPlan);
+    const isMultiZoneModule = selModule && ['makeup', 'photography', 'mehandi'].some(kw => selModule.title.toLowerCase().includes(kw));
+    const isSecondaryModule = selModule?.isSecondary === true;
 
     /* ── shared label sx ── */
     const LB_SX = {
@@ -835,15 +880,100 @@ export default function VendorRegisterStepper() {
                     onChange={e => set('tinExpireDate', e.target.value)} size="medium"
                     InputLabelProps={{ shrink: true }} sx={INPUT_SX} />
             </Stack>
-            {/* Row: Zone — FULL WIDTH always */}
-            <FormControl fullWidth size="medium">
-                <InputLabel sx={LB_SX}>Zone / Area (optional)</InputLabel>
-                <Select value={form.zone} label="Zone / Area (optional)" onChange={e => set('zone', e.target.value)}
+            {/* Row: Primary Zone */}
+            <FormControl fullWidth size="medium" error={!!errors.zone}>
+                <InputLabel sx={LB_SX}>Primary Zone / Area *</InputLabel>
+                <Select value={form.zone} label="Primary Zone / Area *" onChange={e => { set('zone', e.target.value); set('multiZones', form.multiZones.filter(mz => mz !== e.target.value)); }}
                     sx={SELECT_SX} MenuProps={MENU_PROPS}>
-                    <MenuItem value=""><em style={{ color: '#aaa' }}>None — skip this</em></MenuItem>
+                    <MenuItem value=""><em style={{ color: '#aaa' }}>None</em></MenuItem>
                     {zones.map(z => <MenuItem key={z._id} value={z._id}>{z.name}{z.city ? ` — ${z.city}` : ''}</MenuItem>)}
                 </Select>
+                {errors.zone && <FormHelperText>{errors.zone}</FormHelperText>}
             </FormControl>
+
+            {/* Row: Multi Zones - Conditionally Rendered */}
+            {isMultiZoneModule && (
+                <FormControl fullWidth size="medium">
+                    <InputLabel sx={LB_SX}>Additional Zones (Optional)</InputLabel>
+                    <Select
+                        multiple
+                        value={form.multiZones || []}
+                        onChange={(e) => set('multiZones', typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                        input={<OutlinedInput label="Additional Zones (Optional)" />}
+                        renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((val) => {
+                                    const matched = zones.find(z => z._id === val);
+                                    return matched ? (
+                                        <Chip 
+                                            key={val} 
+                                            label={matched.name}
+                                            size="small" 
+                                            onDelete={() => set('multiZones', form.multiZones.filter(m => m !== val))}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            sx={{ bgcolor: alpha(RED, 0.1), color: RED, fontWeight: 600, '& .MuiChip-deleteIcon': { color: RED, '&:hover': { color: RED_DARK } } }}
+                                        />
+                                    ) : null;
+                                })}
+                            </Box>
+                        )}
+                        sx={SELECT_SX}
+                        MenuProps={MENU_PROPS}
+                    >
+                        {zones.map(z => {
+                            if (z._id === form.zone) return null;
+                            return (
+                                <MenuItem key={z._id} value={z._id}>
+                                    <Checkbox checked={(form.multiZones || []).includes(z._id)} sx={{ '&.Mui-checked': { color: RED } }} />
+                                    <ListItemText primary={`${z.name}${z.city ? ` — ${z.city}` : ''}`} />
+                                </MenuItem>
+                            );
+                        })}
+                    </Select>
+                </FormControl>
+            )}
+
+            {isSecondaryModule && (
+                <>
+                    <Typography variant="subtitle2" sx={{ color: RED, fontWeight: 700, mt: 2 }}>Services & Specialisation</Typography>
+                    <FormControl fullWidth size="medium">
+                        <InputLabel sx={LB_SX}>Services (Multi-Selection)</InputLabel>
+                        <Select multiple value={form.services || []} onChange={(e) => set('services', typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)} sx={SELECT_SX}
+                            input={<OutlinedInput label="Services (Multi-Selection)" />}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((val) => {
+                                        const c = categories.find(cat => cat._id === val);
+                                        return c ? <Chip key={val} label={c.title || c.name} size="small" /> : null;
+                                    })}
+                                </Box>
+                            )}
+                            MenuProps={MENU_PROPS}
+                        >
+                            {categories.map(c => (
+                                <MenuItem key={c._id} value={c._id}>
+                                    <Checkbox checked={(form.services || []).includes(c._id)} sx={{ '&.Mui-checked': { color: RED } }} />
+                                    <ListItemText primary={c.title || c.name} />
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth size="medium" error={!!errors.specialised}>
+                        <InputLabel sx={LB_SX}>Specialised (Single) *</InputLabel>
+                        <Select value={form.specialised} onChange={(e) => set('specialised', e.target.value)} sx={SELECT_SX} MenuProps={MENU_PROPS}>
+                            {categories.map(c => <MenuItem key={c._id} value={c._id}>{c.title || c.name}</MenuItem>)}
+                        </Select>
+                        {errors.specialised && <FormHelperText>{errors.specialised}</FormHelperText>}
+                    </FormControl>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <TextField fullWidth label="Starting Price *" type="number" value={form.startingPrice} onChange={e => set('startingPrice', e.target.value)} error={!!errors.startingPrice} helperText={errors.startingPrice} sx={INPUT_SX} />
+                        <TextField fullWidth label="Minimum Booking Price" type="number" value={form.minBookingPrice} onChange={e => set('minBookingPrice', e.target.value)} sx={INPUT_SX} />
+                    </Stack>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <TextField fullWidth label="Max Bookings Per Day" type="number" value={form.maxBookings} onChange={e => set('maxBookings', e.target.value)} sx={INPUT_SX} />
+                    </Stack>
+                </>
+            )}
         </Box>,
 
         /* STEP 3 */
@@ -1019,7 +1149,22 @@ export default function VendorRegisterStepper() {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
                 {[
                     { title: 'Personal', icon: <PersonOutlineIcon sx={{ fontSize: 16 }} />, goTo: 0, rows: [['Name', `${form.firstName} ${form.lastName}`], ['Email', form.email], ['Phone', form.phone], ['Type', form.vendorType === 'individual' ? 'Individual' : 'Company'], ['Module', selModule?.title || '—']] },
-                    { title: 'Business', icon: <BusinessCenterOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 1, rows: [['Store', form.storeName || '—'], ['TIN', form.businessTIN || '—'], ['Zone', selZone?.name || '—']] },
+                    { 
+                        title: 'Business', 
+                        icon: <BusinessCenterOutlinedIcon sx={{ fontSize: 16 }} />, 
+                        goTo: 1, 
+                        rows: [
+                            ['Store', form.storeName || '—'],
+                            ...(isSecondaryModule ? [
+                                ['Specialised', categories.find(c => c._id === form.specialised)?.title || categories.find(c => c._id === form.specialised)?.name || '—'],
+                                ['Starting Price', form.startingPrice || '—']
+                            ] : [
+                                ['TIN', form.businessTIN || '—']
+                            ]),
+                            ['Primary Zone', selZone?.name || '—'],
+                            ...(isMultiZoneModule ? [['Additional Zones', selMultiZones.length ? selMultiZones.join(', ') : '—']] : [])
+                        ] 
+                    },
                     { title: 'Location', icon: <LocationOnOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 2, rows: [['City', form.storeAddress.city || '—'], ['State', form.storeAddress.state || '—'], ['ZIP', form.storeAddress.zipCode || '—']] },
                     { title: 'Plan', icon: <StarOutlineIcon sx={{ fontSize: 16 }} />, goTo: 3, rows: [['Plan', selPlan?.name || 'Free'], ['Price', selPlan?.price === 0 ? 'Free' : `₹${selPlan?.price}`]] },
                     { title: 'Media', icon: <PermMediaOutlinedIcon sx={{ fontSize: 16 }} />, goTo: 4, rows: [['Logo', form.logo?.name || 'Not uploaded'], ['Cover', form.coverImage?.name || 'Not uploaded'], ['Cert', form.tinCertificate?.name || 'Not uploaded']] },

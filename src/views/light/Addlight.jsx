@@ -212,9 +212,9 @@ export default function AddLightPackage() {
       e.image = 'Please upload a package image';
     }
 
-    if (selectedServices.length === 0) {
+    /* if (selectedServices.length === 0) {
       e.services = 'Please select at least one category';
-    }
+    } */
 
     return e;
   };
@@ -454,7 +454,7 @@ export default function AddLightPackage() {
 
             {/* ── 4. Categories Selection ── */}
             <Paper elevation={0} sx={card}>
-              <SL>Category *</SL>
+              <SL>Category</SL>
               {svcLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
                   <CircularProgress size={20} color="primary" />

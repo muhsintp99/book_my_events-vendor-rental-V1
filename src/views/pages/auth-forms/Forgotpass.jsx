@@ -28,7 +28,11 @@ export default function AuthForgotPassword() {
     setError('');
     setSuccess('');
     try {
-      const response = await axios.post('https://api.bookmyevent.ae/api/auth/forgot-password', { email });
+      const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:5000/api' 
+        : 'https://api.bookmyevent.ae/api';
+        
+      const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
       setSuccess(response.data.message || 'Password reset instructions have been sent to your email.');
       // Optionally clear email after success
       setEmail('');

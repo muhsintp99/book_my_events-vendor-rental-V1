@@ -209,7 +209,7 @@ export default function AddInvitationPackage() {
         if (!form.description.trim()) e.description = 'Required';
         if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
         if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
-        if (!form.services || form.services.length === 0) e.category = 'Please select at least one category';
+        // if (!form.services || form.services.length === 0) e.category = 'Please select at least one category';
         if (!isEditMode && !thumbnailFile) e.thumbnail = 'Please upload a thumbnail';
         return e;
     };

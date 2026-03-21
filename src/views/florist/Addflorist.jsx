@@ -213,7 +213,7 @@ export default function AddFloristPackage() {
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
     if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
 
-    if (selectedServices.length === 0) e.services = 'Please select a category';
+    // if (selectedServices.length === 0) e.services = 'Please select a category';
     if (!isEditMode && !imageFile) {
       e.image = 'Please upload a package image';
     }
@@ -455,7 +455,7 @@ export default function AddFloristPackage() {
 
             {/* ── 4. Category Selection ── */}
             <Paper elevation={0} sx={card}>
-              <SL>Select Category *</SL>
+              <SL>Select Category</SL>
               {svcLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
                   <CircularProgress size={18} thickness={5} sx={{ color: 'primary.main' }} />
