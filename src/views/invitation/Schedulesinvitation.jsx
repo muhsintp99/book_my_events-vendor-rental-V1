@@ -34,7 +34,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
-import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -88,12 +87,6 @@ function InvitationSchedules() {
         }
     }, [currentDate, providerId]);
 
-    useEffect(() => {
-        if (modules.length === 1 && !formData.moduleId) {
-            setFormData(prev => ({ ...prev, moduleId: modules[0]._id }));
-        }
-    }, [modules]);
-
     const fetchBookings = async () => {
         setLoading(true);
         setError(null);
@@ -102,7 +95,8 @@ function InvitationSchedules() {
             const data = await response.json();
             if (data.success) {
                 const filtered = (data.data || []).filter(b =>
-                    String(b.moduleType || '').toLowerCase().includes('invitation')
+                    String(b.moduleType || '').toLowerCase().includes('invitation') ||
+                    String(b.moduleType || '').toLowerCase().includes('printing')
                 );
                 setBookings(filtered);
             } else {
@@ -117,35 +111,48 @@ function InvitationSchedules() {
 
     const fetchModules = async () => {
         try {
-            const [modulesRes, secondaryModulesRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/modules`),
-                fetch(`${API_BASE_URL}/api/secondary-modules`)
-            ]);
+            const storedModuleId = localStorage.getItem('moduleId');
+            const response = await fetch(`${API_BASE_URL}/api/modules`);
+            const data = await response.json();
+            const modulesList = data.success ? (data.data || data.modules || []) : (Array.isArray(data) ? data : []);
+            
+            const filtered = modulesList.filter(m => {
+                const title = (m.title || m.name || '').toLowerCase();
+                return title.includes('invitation') || title.includes('printing');
+            });
 
-            const modulesData = await modulesRes.json();
-            const secondaryData = await secondaryModulesRes.json();
+            let targetModule = filtered.find(m => m._id === storedModuleId) || filtered[0];
+            if (!targetModule && modulesList.length > 0) targetModule = modulesList.find(m => m._id === storedModuleId) || modulesList[0];
 
-            let modulesList = modulesData.success ? (modulesData.data || modulesData.modules || []) : (Array.isArray(modulesData) ? modulesData : []);
-            let secondaryList = secondaryData.success ? (secondaryData.data || secondaryData.modules || []) : (Array.isArray(secondaryData) ? secondaryData : []);
-
-            const combined = [...modulesList, ...secondaryList];
-            const filtered = combined.filter(m => (m.title || m.name || '').toLowerCase().includes('invitation'));
-            setModules(filtered);
-
-            if (filtered.length > 0) {
-                setFormData(prev => ({ ...prev, moduleId: filtered[0]._id }));
+            setModules(filtered.length > 0 ? filtered : (targetModule ? [targetModule] : []));
+            
+            if (targetModule && !formData.moduleId) {
+                setFormData(prev => ({ ...prev, moduleId: targetModule._id }));
             }
-        } catch (err) { console.error('Fetch modules error:', err); }
+            
+            if (targetModule) {
+                fetchPackagesWithId(targetModule._id);
+            }
+        } catch (err) { }
     };
 
+    const fetchPackagesWithId = async (moduleId) => {
+    try {
+        // ✅ Correct endpoint matching your backend route
+        const response = await fetch(`${API_BASE_URL}/api/invitation-printing/vendor/${providerId}`);
+        const data = await response.json();
+        console.log('Invitation packages:', data);
+        setPackages(data.success ? (data.data || []) : []);
+    } catch (err) {
+        console.error('Fetch invitation packages error:', err);
+        setPackages([]);
+    }
+};
+
     const fetchPackages = async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/invitation-printing/vendor/${providerId}`);
-            const data = await response.json();
-            setPackages(data.success ? (data.data || []) : []);
-        } catch (err) {
-            console.error('Fetch packages error:', err);
-            setPackages([]);
+        const moduleId = formData.moduleId || localStorage.getItem('moduleId');
+        if (moduleId) {
+            fetchPackagesWithId(moduleId);
         }
     };
 
@@ -161,12 +168,8 @@ function InvitationSchedules() {
             if (data.success) {
                 setBookings(prev => prev.filter(b => b._id !== bookingId));
                 alert('Booking deleted successfully!');
-            } else {
-                setError(data.message || 'Failed to delete booking');
             }
-        } catch (err) {
-            setError('Error deleting booking');
-        } finally {
+        } catch (err) { } finally {
             setDeleteLoading(null);
         }
     };
@@ -183,10 +186,17 @@ function InvitationSchedules() {
         const status = {};
         for (let day = 1; day <= daysInMonth; day++) {
             const dayBookings = bookings.filter(b => {
-                const bDate = new Date(b.bookingDate);
-                return bDate.getDate() === day && bDate.getMonth() === month && bDate.getFullYear() === year && b.bookingType === 'Direct';
+                if (!b.bookingDate) return false;
+                const bookingDateStr = String(b.bookingDate).split('T')[0];
+                const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                return bookingDateStr === targetDateStr;
             });
             status[day] = dayBookings.length === 0 ? 'free' : 'booked';
+
+            // For past dates, don't show status (so no dot is rendered)
+            const isPastMonth = year < todayYear || (year === todayYear && month < todayMonth);
+            const isPastDay = isPastMonth || (month === todayMonth && year === todayYear && day < todayDate);
+            if (isPastDay) status[day] = 'none';
         }
         return status;
     };
@@ -194,8 +204,10 @@ function InvitationSchedules() {
     const bookingStatus = getCurrentMonthBookings();
     const getBookingsForSelectedDate = () =>
         bookings.filter(b => {
-            const bDate = new Date(b.bookingDate);
-            return bDate.getDate() === selectedDate && bDate.getMonth() === currentDate.getMonth() && bDate.getFullYear() === currentDate.getFullYear() && b.bookingType === 'Direct';
+            if (!b.bookingDate) return false;
+            const bookingDateStr = String(b.bookingDate).split('T')[0];
+            const targetDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
+            return bookingDateStr === targetDateStr;
         });
 
     const selectedBookings = getBookingsForSelectedDate();
@@ -205,8 +217,20 @@ function InvitationSchedules() {
     })();
 
     const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    const getStatusColor = (status) => status === 'booked' ? '#ef5350' : '#66bb6a';
-    const changeMonth = (dir) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1));
+    const getStatusColor = (status) => {
+        if (status === 'booked') return '#ef5350';
+        if (status === 'free') return '#66bb6a';
+        return 'transparent'; // for 'none' or past dates
+    };
+    const changeMonth = (dir) => {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+        setCurrentDate(newDate);
+        if (newDate.getMonth() === todayMonth && newDate.getFullYear() === todayYear) {
+            setSelectedDate(todayDate);
+        } else {
+            setSelectedDate(1);
+        }
+    };
 
     const renderCalendarDays = () => {
         const days = [];
@@ -217,10 +241,33 @@ function InvitationSchedules() {
         for (let day = 1; day <= daysInMonth; day++) {
             const status = bookingStatus[day] || 'free';
             const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
+            const isPastMonth = currentDate.getFullYear() < todayYear || (currentDate.getFullYear() === todayYear && currentDate.getMonth() < todayMonth);
+            const isPastDay = isPastMonth || (currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear && day < todayDate);
             const isSelected = day === selectedDate;
             days.push(
-                <Box key={day} onClick={() => setSelectedDate(day)} sx={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: { xs: '50px', md: '100px' }, cursor: 'pointer', borderRadius: { xs: '8px', md: '16px' }, transition: 'all 0.3s', bgcolor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff', border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0', '&:hover': { transform: { md: 'translateY(-4px)' }, boxShadow: '0 6px 16px rgba(0,0,0,0.08)', borderColor: '#ef5350', zIndex: 1 } }}>
-                    <Box sx={{ fontSize: { xs: '14px', md: '22px' }, fontWeight: isToday || isSelected ? '600' : '400', color: isToday ? '#fff' : (isSelected ? '#ef5350' : '#333'), width: { xs: '28px', md: '48px' }, height: { xs: '28px', md: '48px' }, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: isToday ? '#ef5350' : 'transparent', mb: { xs: '2px', md: '8px' } }}>{day}</Box>
+                <Box key={day} onClick={() => !isPastDay && setSelectedDate(day)} 
+                    sx={{ 
+                        position: 'relative', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        minHeight: { xs: '50px', md: '100px' }, 
+                        cursor: isPastDay ? 'default' : 'pointer', 
+                        borderRadius: { xs: '8px', md: '16px' }, 
+                        transition: 'all 0.3s', 
+                        bgcolor: isSelected ? 'rgba(239, 83, 80, 0.05)' : (isPastDay ? '#fdfdfd' : '#fff'), 
+                        border: isSelected ? '1px solid #ef5350' : (isPastDay ? '1px solid #f9f9f9' : '1px solid #f0f0f0'), 
+                        opacity: isPastDay ? 0.4 : 1,
+                        '&:hover': { 
+                            transform: !isPastDay && { md: 'translateY(-4px)' }, 
+                            boxShadow: !isPastDay && '0 6px 16px rgba(0,0,0,0.08)', 
+                            borderColor: isPastDay ? '#f9f9f9' : '#ef5350', 
+                            zIndex: 1 
+                        } 
+                    }}
+                >
+                    <Box sx={{ fontSize: { xs: '14px', md: '22px' }, fontWeight: isToday || isSelected ? '600' : '400', color: isPastDay ? '#ccc' : (isToday ? '#fff' : (isSelected ? '#ef5350' : '#333')), width: { xs: '28px', md: '48px' }, height: { xs: '28px', md: '48px' }, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: isToday ? '#ef5350' : 'transparent', mb: { xs: '2px', md: '8px' } }}>{day}</Box>
                     <Box sx={{ width: { xs: '6px', md: '10px' }, height: { xs: '6px', md: '10px' }, borderRadius: '50%', bgcolor: getStatusColor(status) }} />
                 </Box>
             );
@@ -229,59 +276,96 @@ function InvitationSchedules() {
     };
 
     const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+const handleSubmit = async () => {
+    if (!formData.fullName.trim()) {
+        setError('Please fill all required fields: Full Name is missing');
+        return;
+    }
+    if (!formData.contactNumber.trim()) {
+        setError('Please fill all required fields: Contact Number is missing');
+        return;
+    }
+    if (!formData.packageId) {
+        setError('Please fill all required fields: Package is missing');
+        return;
+    }
 
-    const handleSubmit = async () => {
-        if (!formData.fullName.trim() || !formData.contactNumber.trim() || !formData.packageId) {
-            setError('Please fill all required fields');
-            return;
+    setSubmitLoading(true);
+    setError(null);
+
+    try {
+        // ✅ Get moduleId from the selected package itself
+        const selectedPkg = packages.find(p => p._id === formData.packageId);
+        const resolvedModuleId = selectedPkg?.secondaryModule
+            || selectedPkg?.module
+            || selectedPkg?.moduleId
+            || formData.moduleId
+            || null;
+
+        console.log('Selected package:', selectedPkg);
+        console.log('Resolved moduleId:', resolvedModuleId);
+
+        const bookingData = {
+            providerId: providerId,
+            bookingType: 'Direct',
+            invitationId: formData.packageId,
+            packageId: formData.packageId,
+            fullName: formData.fullName,
+            contactNumber: formData.contactNumber,
+            emailAddress: formData.emailAddress || `direct${Date.now()}@booking.com`,
+            address: formData.address || 'N/A',
+            bookingDate: formData.bookingDate,
+            timeSlot: ['Morning'],
+            paymentType: formData.paymentType,
+            additionalNotes: formData.additionalNotes,
+        };
+
+        // ✅ Only send moduleId if resolved from the package itself
+        if (resolvedModuleId) {
+            bookingData.moduleId = resolvedModuleId;
         }
-        setSubmitLoading(true);
-        setError(null);
-        try {
-            const bookingData = {
-                moduleId: formData.moduleId || (modules[0] && modules[0]._id),
-                invitationId: formData.packageId,
-                fullName: formData.fullName,
-                contactNumber: formData.contactNumber,
-                emailAddress: formData.emailAddress,
-                address: formData.address,
-                bookingDate: formData.bookingDate,
-                paymentType: formData.paymentType,
-                additionalNotes: formData.additionalNotes,
-                bookingType: 'Direct',
-                status: 'Accepted',
-                paymentStatus: 'Paid'
-            };
-            const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingData)
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert('Create manual booking successfully!');
-                setOpenDialog(false);
-                fetchBookings();
-                resetForm();
-            } else {
-                setError(data.message || 'Failed to create booking');
-            }
-        } catch (err) {
-            setError('Error creating booking');
-        } finally {
-            setSubmitLoading(false);
+
+        console.log('FINAL SUBMIT DATA:', bookingData);
+
+        const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Booking created successfully!');
+            setOpenDialog(false);
+            fetchBookings();
+            resetForm();
+        } else {
+            setError(data.message || 'Failed to create booking');
         }
-    };
+    } catch (err) {
+        setError('Error connecting to server');
+    } finally {
+        setSubmitLoading(false);
+    }
+};
 
     const resetForm = () => {
-        setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: new Date().toISOString().split('T')[0], paymentType: 'Cash', bookingType: 'Direct' });
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        const day = today.getDate();
+        const todayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: todayStr, paymentType: 'Cash', bookingType: 'Direct' });
         setActiveStep(0);
     };
 
     const handleNext = () => setActiveStep(prev => prev + 1);
     const handleBack = () => setActiveStep(prev => prev - 1);
     const handleOpenDialog = () => {
-        const selectedBookingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toISOString().split('T')[0];
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const day = selectedDate;
+        const selectedBookingDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         setFormData(prev => ({
             ...prev,
             bookingDate: selectedBookingDate,
@@ -321,7 +405,18 @@ function InvitationSchedules() {
                     <Typography variant="h6" fontWeight={700} color="#333">{selectedBookings.length === 0 ? 'No Bookings' : `${selectedBookings.length} Direct Bookings`}</Typography>
                     <Typography color="#999" fontSize="14px">{selectedBookings.length === 0 ? 'Slots available for manual entry' : 'Reserved slots for this date'}</Typography>
                 </Box>
-                <Button variant="contained" onClick={handleOpenDialog} sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}>Add Booking</Button>
+                <Button 
+                    variant="contained" 
+                    onClick={handleOpenDialog} 
+                    disabled={(() => {
+                        const isPastMonth = currentDate.getFullYear() < todayYear || (currentDate.getFullYear() === todayYear && currentDate.getMonth() < todayMonth);
+                        const isPastDay = isPastMonth || (currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear && selectedDate < todayDate);
+                        return isPastDay;
+                    })()}
+                    sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}
+                >
+                    Add Booking
+                </Button>
             </Box>
 
             <Grid container spacing={3}>
@@ -333,16 +428,23 @@ function InvitationSchedules() {
                             <Paper sx={{ p: 3, borderRadius: '24px', position: 'relative', overflow: 'hidden', border: '1px solid #f0f0f0', boxShadow: '0 8px 20px rgba(0,0,0,0.02)' }}>
                                 <Box sx={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', bgcolor: '#ef5350' }} />
                                 <Stack direction="row" justifyContent="space-between" mb={2}>
-                                    <Chip label="Direct Booking" size="small" icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} sx={{ bgcolor: 'rgba(239, 83, 80, 0.1)', color: '#ef5350', fontWeight: 700 }} />
-                                    <IconButton size="small" onClick={() => handleDeleteBooking(b._id)} disabled={deleteLoading === b._id} sx={{ color: '#ccc', '&:hover': { color: '#ef5350' } }}>
+                                    <Chip 
+                                        label={
+                                            Array.isArray(b.timeSlot) 
+                                                ? b.timeSlot.map(s => typeof s === 'object' ? (s.label || s.name || s.time) : s).join(', ') 
+                                                : (typeof b.timeSlot === 'object' ? (b.timeSlot.label || b.timeSlot.name || b.timeSlot.time) : (b.timeSlot || 'Full Day'))
+                                        } 
+                                        size="small" 
+                                        icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} 
+                                        sx={{ bgcolor: 'rgba(239, 83, 80, 0.1)', color: '#ef5350', fontWeight: 700 }} 
+                                    />
+                                    <IconButton size="small" onClick={() => handleDeleteBooking(b._id)} sx={{ color: '#ccc', '&:hover': { color: '#ef5350' } }} disabled={deleteLoading === b._id}>
                                         {deleteLoading === b._id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
                                     </IconButton>
                                 </Stack>
                                 <Typography variant="h6" fontWeight={800} mb={2}>{b.fullName}</Typography>
-                                <Stack spacing={1}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><PhoneIcon sx={{ fontSize: 16 }} /><Typography variant="body2">{b.contactNumber}</Typography></Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><MarkEmailReadIcon sx={{ fontSize: 16 }} /><Typography variant="body2">Invitation Service</Typography></Box>
-                                </Stack>
+                                <Typography color="#666" fontSize="14px">📞 {b.contactNumber}</Typography>
+                                <Typography color="#666" fontSize="14px">✉️ {b.emailAddress || 'No Email'}</Typography>
                             </Paper>
                         </Grid>
                     ))
@@ -351,32 +453,11 @@ function InvitationSchedules() {
 
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
                 <DialogTitle sx={{ position: 'relative' }}>
-                    <IconButton
-                        aria-label="close"
-                        onClick={handleCloseDialog}
-                        sx={{
-                            position: 'absolute',
-                            right: 20,
-                            top: 20,
-                            color: (theme) => theme.palette.grey[500],
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                                transform: 'rotate(90deg)',
-                                color: '#ef5350',
-                                bgcolor: 'rgba(239, 83, 80, 0.1)'
-                            }
-                        }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
+                    <IconButton aria-label="close" onClick={handleCloseDialog} sx={{ position: 'absolute', right: 20, top: 20, color: (theme) => theme.palette.grey[500], transition: 'all 0.3s ease', '&:hover': { transform: 'rotate(90deg)', color: '#ef5350', bgcolor: 'rgba(239, 83, 80, 0.1)' } }}><CloseIcon /></IconButton>
                     <Typography variant="h4" fontWeight={800} sx={{ mt: 2, textAlign: 'center' }}>Create Manual Booking</Typography>
                     <Box sx={{ width: '80%', mx: 'auto', mt: 3, mb: 1 }}>
                         <Stepper activeStep={activeStep} alternativeLabel>
-                            {steps.map(label => (
-                                <Step key={label} sx={{ '& .MuiStepIcon-root.Mui-active': { color: '#ef5350' }, '& .MuiStepIcon-root.Mui-completed': { color: '#ef5350' } }}>
-                                    <StepLabel>{label}</StepLabel>
-                                </Step>
-                            ))}
+                            {steps.map(label => <Step key={label} sx={{ '& .MuiStepIcon-root.Mui-active': { color: '#ef5350' }, '& .MuiStepIcon-root.Mui-completed': { color: '#ef5350' } }}><StepLabel>{label}</StepLabel></Step>)}
                         </Stepper>
                     </Box>
                 </DialogTitle>
@@ -399,16 +480,13 @@ function InvitationSchedules() {
                                         {packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.name || pkg.title}</MenuItem>)}
                                     </Select>
                                 </FormControl>
-                                <Box>
-                                    <Typography variant="subtitle1" fontWeight={700} color="text.secondary" sx={{ mb: 1 }}>Selected Date</Typography>
+                                <Box><Typography variant="subtitle1" fontWeight={700} color="text.secondary" sx={{ mb: 1 }}>Selected Date</Typography>
                                     <TextField fullWidth disabled value={new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate).toLocaleDateString('en-US', { dateStyle: 'full' })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px', bgcolor: '#f8fafc' } }} />
                                 </Box>
                             </Stack></Fade>
                         )}
                         {activeStep === 2 && (
-                            <Fade in={activeStep === 2}><Box>
-                                <TextField fullWidth multiline rows={4} label="Special Instructions / Notes" name="additionalNotes" value={formData.additionalNotes} onChange={handleInputChange} placeholder="Type any specific requests here..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '20px' } }} />
-                            </Box></Fade>
+                            <Fade in={activeStep === 2}><Box><TextField fullWidth multiline rows={4} label="Special Instructions / Notes" name="additionalNotes" value={formData.additionalNotes} onChange={handleInputChange} placeholder="Type any specific requests here..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '20px' } }} /></Box></Fade>
                         )}
                     </Box>
                     <Stack direction="row" spacing={2} sx={{ mt: 6 }}>
@@ -420,9 +498,7 @@ function InvitationSchedules() {
                         {activeStep < steps.length - 1 ? (
                             <Button fullWidth variant="contained" onClick={handleNext} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, bgcolor: '#ef5350', '&:hover': { bgcolor: '#d32f2f' } }}>Next Step</Button>
                         ) : (
-                            <Button fullWidth variant="contained" onClick={handleSubmit} disabled={submitLoading} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, bgcolor: '#ef5350', boxShadow: '0 8px 16px rgba(239, 83, 80, 0.3)', '&:hover': { bgcolor: '#d32f2f' } }}>
-                                {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm Booking'}
-                            </Button>
+                            <Button fullWidth variant="contained" onClick={handleSubmit} disabled={submitLoading} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, bgcolor: '#ef5350', boxShadow: '0 8px 16px rgba(239, 83, 80, 0.3)', '&:hover': { bgcolor: '#d32f2f' } }}>{submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm Booking'}</Button>
                         )}
                     </Stack>
                 </DialogContent>

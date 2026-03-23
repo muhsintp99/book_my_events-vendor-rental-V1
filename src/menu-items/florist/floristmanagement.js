@@ -68,13 +68,13 @@ const floristmanagement = {
       url: '/florist/portfolio',
       icon: icons.IconPhoto
     },
-    // {
-    //   id: 'florist-schedules',
-    //   title: 'Schedules',
-    //   type: 'item',
-    //   url: '/florist/schedules',
-    //   icon: icons.IconCalendarEvent
-    // },
+    {
+      id: 'florist-schedules',
+      title: 'Schedules',
+      type: 'item',
+      url: '/florist/schedules',
+      icon: icons.IconCalendarEvent
+    },
     {
       id: 'florist-enquiries',
       title: 'Enquiries',

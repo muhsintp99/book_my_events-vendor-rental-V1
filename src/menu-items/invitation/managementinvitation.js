@@ -57,13 +57,13 @@ const managementinvitation = {
                     url: '/bookings/invitationconfirmed',
                     icon: icons.IconUserCheck
                 },
-                {
-                    id: 'completed-invitation',
-                    title: 'Completed',
-                    type: 'item',
-                    url: '/bookings/completedinvitation',
-                    icon: icons.IconGraph
-                },
+                // {
+                //     id: 'completed-invitation',
+                //     title: 'Completed',
+                //     type: 'item',
+                //     url: '/bookings/completedinvitation',
+                //     icon: icons.IconGraph
+                // },
                 {
                     id: 'cancelled-invitation',
                     title: 'Canceled',

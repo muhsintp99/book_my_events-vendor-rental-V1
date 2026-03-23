@@ -60,6 +60,7 @@ function MakeupSchedules() {
     moduleId: '',
     packageId: '',
     bookingDate: new Date().toISOString().split('T')[0],
+    timeSlot: [],
     paymentType: 'Cash',
     bookingType: 'Direct'
   });
@@ -117,11 +118,24 @@ function MakeupSchedules() {
 
   const fetchModules = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/modules`);
-      const data = await response.json();
-      let modulesList = data.success ? (data.data || data.modules || []) : (Array.isArray(data) ? data : []);
-      const filtered = modulesList.filter(m => (m.title || m.name || '').toLowerCase().includes('makeup'));
+      const [modulesRes, secondaryModulesRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/modules`),
+          fetch(`${API_BASE_URL}/api/secondary-modules`)
+      ]);
+
+      const modulesData = await modulesRes.json();
+      const secondaryData = await secondaryModulesRes.json();
+
+      let modulesList = modulesData.success ? (modulesData.data || modulesData.modules || []) : (Array.isArray(modulesData) ? modulesData : []);
+      let secondaryList = secondaryData.success ? (secondaryData.data || secondaryData.modules || []) : (Array.isArray(secondaryData) ? secondaryData : []);
+
+      const combined = [...modulesList, ...secondaryList];
+      const filtered = combined.filter(m => (m.title || m.name || m.moduleName || '').toLowerCase().includes('makeup'));
       setModules(filtered);
+
+      if (filtered.length > 0 && !formData.moduleId) {
+          setFormData(prev => ({ ...prev, moduleId: filtered[0]._id }));
+      }
     } catch (err) { console.error('Fetch modules error:', err); }
   };
 
@@ -170,10 +184,22 @@ function MakeupSchedules() {
     const status = {};
     for (let day = 1; day <= daysInMonth; day++) {
       const dayBookings = bookings.filter(b => {
-        const bDate = new Date(b.bookingDate);
-        return bDate.getDate() === day && bDate.getMonth() === month && bDate.getFullYear() === year && b.bookingType === 'Direct';
+        if (!b.bookingDate) return false;
+        // Handle both ISO strings and YYYY-MM-DD format safely
+        const bookingDateStr = String(b.bookingDate).split('T')[0];
+        const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return bookingDateStr === targetDateStr;
       });
-      status[day] = dayBookings.length === 0 ? 'free' : 'booked';
+
+      const totalSlots = dayBookings.reduce((acc, b) => acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1), 0);
+      if (totalSlots === 0) status[day] = 'free';
+      else if (totalSlots >= 3) status[day] = 'booked';
+      else status[day] = 'available';
+
+      // For past dates, don't show status (so no dot is rendered)
+      const isPastMonth = year < todayYear || (year === todayYear && month < todayMonth);
+      const isPastDay = isPastMonth || (month === todayMonth && year === todayYear && day < todayDate);
+      if (isPastDay) status[day] = 'none';
     }
     return status;
   };
@@ -181,8 +207,10 @@ function MakeupSchedules() {
   const bookingStatus = getCurrentMonthBookings();
   const getBookingsForSelectedDate = () =>
     bookings.filter(b => {
-      const bDate = new Date(b.bookingDate);
-      return bDate.getDate() === selectedDate && bDate.getMonth() === currentDate.getMonth() && bDate.getFullYear() === currentDate.getFullYear() && b.bookingType === 'Direct';
+      if (!b.bookingDate) return false;
+      const bookingDateStr = String(b.bookingDate).split('T')[0];
+      const targetDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
+      return bookingDateStr === targetDateStr;
     });
 
   const selectedBookings = getBookingsForSelectedDate();
@@ -192,8 +220,22 @@ function MakeupSchedules() {
   })();
 
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const getStatusColor = (status) => status === 'booked' ? '#ef5350' : '#66bb6a';
-  const changeMonth = (dir) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1));
+  const getStatusColor = (status) => {
+    if (status === 'booked') return '#ef5350';
+    if (status === 'available') return '#ffd54f';
+    if (status === 'free') return '#66bb6a';
+    return 'transparent'; // for 'none' or past dates
+  };
+  const changeMonth = (dir) => {
+      const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+      setCurrentDate(newDate);
+      // Reset selected date to current date if in same month/year, else to 1st
+      if (newDate.getMonth() === todayMonth && newDate.getFullYear() === todayYear) {
+          setSelectedDate(todayDate);
+      } else {
+          setSelectedDate(1);
+      }
+  };
 
   const renderCalendarDays = () => {
     const days = [];
@@ -204,10 +246,35 @@ function MakeupSchedules() {
     for (let day = 1; day <= daysInMonth; day++) {
       const status = bookingStatus[day] || 'free';
       const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
+      const isPastMonth = currentDate.getFullYear() < todayYear || (currentDate.getFullYear() === todayYear && currentDate.getMonth() < todayMonth);
+      const isPastDay = isPastMonth || (currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear && day < todayDate);
       const isSelected = day === selectedDate;
       days.push(
-        <Box key={day} onClick={() => setSelectedDate(day)} sx={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: { xs: '50px', md: '100px' }, cursor: 'pointer', borderRadius: { xs: '8px', md: '16px' }, transition: 'all 0.3s', bgcolor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff', border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0', '&:hover': { transform: { md: 'translateY(-4px)' }, boxShadow: '0 6px 16px rgba(0,0,0,0.08)', borderColor: '#ef5350', zIndex: 1 } }}>
-          <Box sx={{ fontSize: { xs: '14px', md: '22px' }, fontWeight: isToday || isSelected ? '600' : '400', color: isToday ? '#fff' : (isSelected ? '#ef5350' : '#333'), width: { xs: '28px', md: '48px' }, height: { xs: '28px', md: '48px' }, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: isToday ? '#ef5350' : 'transparent', mb: { xs: '2px', md: '8px' } }}>{day}</Box>
+        <Box 
+            key={day} 
+            onClick={() => !isPastDay && setSelectedDate(day)} 
+            sx={{ 
+                position: 'relative', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                minHeight: { xs: '50px', md: '100px' }, 
+                cursor: isPastDay ? 'default' : 'pointer', 
+                borderRadius: { xs: '8px', md: '16px' }, 
+                transition: 'all 0.3s', 
+                bgcolor: isSelected ? 'rgba(239, 83, 80, 0.05)' : (isPastDay ? '#fdfdfd' : '#fff'), 
+                border: isSelected ? '1px solid #ef5350' : (isPastDay ? '1px solid #f9f9f9' : '1px solid #f0f0f0'), 
+                opacity: isPastDay ? 0.4 : 1,
+                '&:hover': { 
+                    transform: !isPastDay && { md: 'translateY(-4px)' }, 
+                    boxShadow: !isPastDay && '0 6px 16px rgba(0,0,0,0.08)', 
+                    borderColor: isPastDay ? '#f9f9f9' : '#ef5350', 
+                    zIndex: 1 
+                } 
+            }}
+        >
+          <Box sx={{ fontSize: { xs: '14px', md: '22px' }, fontWeight: isToday || isSelected ? '600' : '400', color: isPastDay ? '#ccc' : (isToday ? '#fff' : (isSelected ? '#ef5350' : '#333')), width: { xs: '28px', md: '48px' }, height: { xs: '28px', md: '48px' }, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: isToday ? '#ef5350' : 'transparent', mb: { xs: '2px', md: '8px' } }}>{day}</Box>
           <Box sx={{ width: { xs: '6px', md: '10px' }, height: { xs: '6px', md: '10px' }, borderRadius: '50%', bgcolor: getStatusColor(status) }} />
         </Box>
       );
@@ -217,15 +284,25 @@ function MakeupSchedules() {
 
   const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const handleTimeSlotChange = (slot) => {
+      setFormData(prev => {
+          const slots = prev.timeSlot.includes(slot)
+              ? prev.timeSlot.filter(s => s !== slot)
+              : [...prev.timeSlot, slot];
+          return { ...prev, timeSlot: slots };
+      });
+  };
+
   const handleSubmit = async () => {
-    if (!formData.fullName.trim() || !formData.contactNumber.trim() || !formData.packageId) {
-      setError('Please fill all required fields');
+    if (!formData.fullName.trim() || !formData.contactNumber.trim() || !formData.packageId || formData.timeSlot.length === 0) {
+      setError('Please fill all required fields and select a time slot');
       return;
     }
     setSubmitLoading(true);
     setError(null);
     try {
       const bookingData = {
+        providerId: providerId,
         moduleId: formData.moduleId || (modules[0] && modules[0]._id),
         makeupId: formData.packageId,
         fullName: formData.fullName,
@@ -233,6 +310,7 @@ function MakeupSchedules() {
         emailAddress: formData.emailAddress,
         address: formData.address,
         bookingDate: formData.bookingDate,
+        timeSlot: formData.timeSlot,
         paymentType: formData.paymentType,
         additionalNotes: formData.additionalNotes,
         bookingType: 'Direct',
@@ -261,13 +339,29 @@ function MakeupSchedules() {
   };
 
   const resetForm = () => {
-    setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: new Date().toISOString().split('T')[0], paymentType: 'Cash', bookingType: 'Direct' });
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    const todayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: todayStr, timeSlot: [], paymentType: 'Cash', bookingType: 'Direct' });
     setActiveStep(0);
   };
 
   const handleNext = () => setActiveStep(prev => prev + 1);
   const handleBack = () => setActiveStep(prev => prev - 1);
-  const handleOpenDialog = () => { setOpenDialog(true); setActiveStep(0); };
+  const handleOpenDialog = () => { 
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = selectedDate;
+    const selectedBookingDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setFormData(prev => ({
+        ...prev,
+        bookingDate: selectedBookingDate,
+        moduleId: modules[0]?._id || prev.moduleId
+    }));
+    setOpenDialog(true); 
+    setActiveStep(0); 
+  };
   const handleCloseDialog = () => { setOpenDialog(false); setError(null); setActiveStep(0); };
   const steps = ['Customer Info', 'Service Details', 'Schedule & Notes'];
 
@@ -285,7 +379,8 @@ function MakeupSchedules() {
 
       <Box sx={{ bgcolor: '#fff', borderRadius: '12px', p: '24px', mb: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
         <Stack direction="row" justifyContent="center" spacing={3} flexWrap="wrap">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ef5350' }} /><Typography color="#666">Not Available</Typography></Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ef5350' }} /><Typography color="#666">Fully Booked</Typography></Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ffd54f' }} /><Typography color="#666">Partially Available</Typography></Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#66bb6a' }} /><Typography color="#666">Available</Typography></Box>
         </Stack>
       </Box>
@@ -299,7 +394,18 @@ function MakeupSchedules() {
           <Typography variant="h6" fontWeight={700} color="#333">{selectedBookings.length === 0 ? 'No Bookings' : `${selectedBookings.length} Direct Bookings`}</Typography>
           <Typography color="#999" fontSize="14px">{selectedBookings.length === 0 ? 'Slots available for manual entry' : 'Reserved slots for this date'}</Typography>
         </Box>
-        <Button variant="contained" onClick={handleOpenDialog} sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}>Add Booking</Button>
+        <Button 
+            variant="contained" 
+            onClick={handleOpenDialog} 
+            disabled={(() => {
+                const isPastMonth = currentDate.getFullYear() < todayYear || (currentDate.getFullYear() === todayYear && currentDate.getMonth() < todayMonth);
+                const isPastDay = isPastMonth || (currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear && selectedDate < todayDate);
+                return isPastDay;
+            })()}
+            sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}
+        >
+            Add Booking
+        </Button>
       </Box>
 
       <Grid container spacing={3}>
@@ -311,7 +417,16 @@ function MakeupSchedules() {
               <Paper sx={{ p: 3, borderRadius: '24px', position: 'relative', overflow: 'hidden', border: '1px solid #f0f0f0', boxShadow: '0 8px 20px rgba(0,0,0,0.02)' }}>
                 <Box sx={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', bgcolor: '#ef5350' }} />
                 <Stack direction="row" justifyContent="space-between" mb={2}>
-                  <Chip label="Direct Booking" size="small" icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} sx={{ bgcolor: 'rgba(239, 83, 80, 0.1)', color: '#ef5350', fontWeight: 700 }} />
+                  <Chip 
+                    label={
+                        Array.isArray(b.timeSlot) 
+                            ? b.timeSlot.map(s => typeof s === 'object' ? (s.label || s.name || s.time) : s).join(', ') 
+                            : (typeof b.timeSlot === 'object' ? (b.timeSlot.label || b.timeSlot.name || b.timeSlot.time) : (b.timeSlot || 'Full Day'))
+                    } 
+                    size="small" 
+                    icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} 
+                    sx={{ bgcolor: 'rgba(239, 83, 80, 0.1)', color: '#ef5350', fontWeight: 700 }} 
+                  />
                   <IconButton size="small" onClick={() => handleDeleteBooking(b._id)} disabled={deleteLoading === b._id} sx={{ color: '#ccc', '&:hover': { color: '#ef5350' } }}>
                     {deleteLoading === b._id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
                   </IconButton>
@@ -385,6 +500,12 @@ function MakeupSchedules() {
             )}
             {activeStep === 2 && (
               <Fade in={activeStep === 2}><Box>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, color: '#ef5350' }}>Preferred Time Slots</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
+                    {['Morning (9AM-12PM)', 'Afternoon (12PM-4PM)', 'Evening (4PM-8PM)', 'Night (8PM-12AM)'].map(slot => (
+                        <Chip key={slot} label={slot} onClick={() => handleTimeSlotChange(slot)} sx={{ borderRadius: '12px', height: 45, px: 1.5, fontSize: '0.9rem', fontWeight: 600, border: '1px solid', borderColor: formData.timeSlot.includes(slot) ? '#ef5350' : 'rgba(0,0,0,0.1)', bgcolor: formData.timeSlot.includes(slot) ? '#ef5350' : '#fff', color: formData.timeSlot.includes(slot) ? '#fff' : '#666', transition: '0.3s', '&:hover': { bgcolor: formData.timeSlot.includes(slot) ? '#d32f2f' : 'rgba(239, 83, 80, 0.05)' } }} />
+                    ))}
+                </Box>
                 <TextField fullWidth multiline rows={4} label="Special Instructions / Notes" name="additionalNotes" value={formData.additionalNotes} onChange={handleInputChange} placeholder="Type any specific requests here..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '20px' } }} />
               </Box></Fade>
             )}

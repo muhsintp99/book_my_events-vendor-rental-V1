@@ -51,6 +51,15 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
+const renderSafe = (val) => {
+  if (!val) return '';
+  if (typeof val === 'string' || typeof val === 'number') return val;
+  if (typeof val === 'object') {
+    return val.en || val.name || val.title || val.packageName || val.label || (typeof val.title === 'object' ? renderSafe(val.title) : val._id ? '[Object]' : JSON.stringify(val));
+  }
+  return String(val);
+};
+
 function BookingCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().getDate());
@@ -64,7 +73,7 @@ function BookingCalendar() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Client Information', 'Venue & Package', 'Schedule & Payment'];
+  const steps = ['Customer Info', 'Service Details', 'Schedule & Notes'];
 
   // Form state
   const [formData, setFormData] = useState({
@@ -385,7 +394,11 @@ function BookingCalendar() {
       days.push(
         <Box
           key={day}
-          onClick={() => setSelectedDate(day)}
+          onClick={() => {
+            const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+            const isPast = dateToCheck < new Date(todayYear, todayMonth, todayDate);
+            if (!isPast) setSelectedDate(day);
+          }}
           sx={{
             position: 'relative',
             display: 'flex',
@@ -393,16 +406,30 @@ function BookingCalendar() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: { xs: '50px', md: '100px' },
-            cursor: 'pointer',
+            cursor: (() => {
+              const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              const isPast = dateToCheck < new Date(todayYear, todayMonth, todayDate);
+              return isPast ? 'not-allowed' : 'pointer';
+            })(),
             borderRadius: { xs: '8px', md: '16px' },
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            backgroundColor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff',
+            backgroundColor: (() => {
+              const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              const isPast = dateToCheck < new Date(todayYear, todayMonth, todayDate);
+              if (isPast) return '#f5f5f5';
+              return isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff';
+            })(),
+            opacity: (() => {
+              const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              const isPast = dateToCheck < new Date(todayYear, todayMonth, todayDate);
+              return isPast ? 0.5 : 1;
+            })(),
             border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0',
             boxShadow: isSelected ? '0 4px 12px rgba(239, 83, 80, 0.15)' : 'none',
             '&:hover': {
-              transform: { md: 'translateY(-4px)' },
-              boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
-              borderColor: '#ef5350',
+              transform: { md: (new Date(currentDate.getFullYear(), currentDate.getMonth(), day) < new Date(todayYear, todayMonth, todayDate)) ? 'none' : 'translateY(-4px)' },
+              boxShadow: (new Date(currentDate.getFullYear(), currentDate.getMonth(), day) < new Date(todayYear, todayMonth, todayDate)) ? 'none' : '0 6px 16px rgba(0,0,0,0.08)',
+              borderColor: (new Date(currentDate.getFullYear(), currentDate.getMonth(), day) < new Date(todayYear, todayMonth, todayDate)) ? '#f0f0f0' : '#ef5350',
               zIndex: 1
             }
           }}
@@ -588,6 +615,16 @@ function BookingCalendar() {
   };
 
   const handleOpenDialog = () => {
+    const selectedDateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate);
+    // Adjust for timezone to get correct YYYY-MM-DD
+    const offset = selectedDateObj.getTimezoneOffset();
+    const localDate = new Date(selectedDateObj.getTime() - (offset * 60 * 1000));
+    const formattedDate = localDate.toISOString().split('T')[0];
+
+    setFormData(prev => ({
+      ...prev,
+      bookingDate: formattedDate
+    }));
     setActiveStep(0);
     setOpenDialog(true);
   };
@@ -784,6 +821,22 @@ function BookingCalendar() {
             </Typography>
           </Box>
         </Box>
+        {!(new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate) < new Date(todayYear, todayMonth, todayDate)) && (
+          <Button 
+            variant="contained" 
+            onClick={handleOpenDialog} 
+            sx={{ 
+              bgcolor: '#ef5350', 
+              borderRadius: '12px', 
+              px: 4, 
+              height: 48, 
+              fontWeight: 700, 
+              '&:hover': { bgcolor: '#d32f2f' } 
+            }}
+          >
+            Add Booking
+          </Button>
+        )}
       </Box>
 
       {/* 📑 Today's Bookings Section */}
@@ -843,7 +896,7 @@ function BookingCalendar() {
                         : 'All Day'}
                     </Typography>
                     <Typography sx={{ fontSize: { xs: '18px', md: '22px' }, fontWeight: '700', color: '#1a1a1a' }}>
-                      {booking.fullName}
+                      {renderSafe(booking.fullName)}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -924,32 +977,7 @@ function BookingCalendar() {
         )}
       </Box>
 
-      <Button
-        variant="contained"
-        sx={{
-          position: 'fixed',
-          bottom: { xs: '16px', md: '32px' },
-          right: { xs: '16px', md: '32px' },
-          backgroundColor: '#ef5350',
-          color: '#fff',
-          borderRadius: '50%',
-          width: { xs: '56px', md: '64px' },
-          height: { xs: '56px', md: '64px' },
-          minWidth: 'unset',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-          '&:hover': {
-            backgroundColor: '#e53935'
-          }
-        }}
-        onClick={handleOpenDialog}
-      >
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </Button>
+      {/* Floating button removed - added to banner instead */}
 
       <Dialog
         open={openDialog}
@@ -987,13 +1015,10 @@ function BookingCalendar() {
             Create Manual Booking
           </Typography>
 
-          <Box sx={{ width: '80%', mx: 'auto', mt: 4, mb: 2 }}>
+          <Box sx={{ width: '80%', mx: 'auto', mt: 3, mb: 1 }}>
             <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label) => (
-                <Step key={label} sx={{
-                  '& .MuiStepIcon-root.Mui-active': { color: '#ef5350' },
-                  '& .MuiStepIcon-root.Mui-completed': { color: '#ef5350' }
-                }}>
+              {steps.map(label => (
+                <Step key={label} sx={{ '& .MuiStepIcon-root.Mui-active': { color: '#ef5350' }, '& .MuiStepIcon-root.Mui-completed': { color: '#ef5350' } }}>
                   <StepLabel>{label}</StepLabel>
                 </Step>
               ))}
@@ -1001,69 +1026,16 @@ function BookingCalendar() {
           </Box>
         </DialogTitle>
 
-        <DialogContent sx={{ px: { xs: 2, md: 5 }, py: 4, minHeight: 450 }}>
+        <DialogContent sx={{ px: 4, pb: 4, pt: 2, minHeight: 400 }}>
+          {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '14px' }}>{error}</Alert>}
           <Box sx={{ mt: 2 }}>
             {activeStep === 0 && (
               <Fade in={activeStep === 0}>
                 <Stack spacing={3}>
-                  <Typography variant="h6" sx={sectionHeaderStyle}>
-                    <PersonIcon sx={iconStyle} />
-                    Client Details
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Full Name"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#ef5350' }} /></InputAdornment>
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Contact Number"
-                        name="contactNumber"
-                        value={formData.contactNumber}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#ef5350' }} /></InputAdornment>
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Email Address (Optional)"
-                        name="emailAddress"
-                        value={formData.emailAddress}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#ef5350' }} /></InputAdornment>
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Event Address (Optional)"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><HomeIcon sx={{ color: '#ef5350' }} /></InputAdornment>
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                  </Grid>
+                  <TextField fullWidth label="Full Name" name="fullName" value={formData.fullName} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ color: '#ef5350' }} /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                  <TextField fullWidth label="Contact Number" name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: '#ef5350' }} /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                  <TextField fullWidth label="Email Address" name="emailAddress" value={formData.emailAddress} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><EmailIcon sx={{ color: '#ef5350' }} /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                  <TextField fullWidth label="Home Address" name="address" value={formData.address} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><HomeIcon sx={{ color: '#ef5350' }} /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                 </Stack>
               </Fade>
             )}
@@ -1071,76 +1043,25 @@ function BookingCalendar() {
             {activeStep === 1 && (
               <Fade in={activeStep === 1}>
                 <Stack spacing={3}>
-                  <Typography variant="h6" sx={sectionHeaderStyle}>
-                    <DoorFrontIcon sx={iconStyle} />
-                    Service Selection
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                        <InputLabel>Module</InputLabel>
-                        <Select
-                          name="moduleId"
-                          value={formData.moduleId}
-                          label="Module"
-                          onChange={handleInputChange}
-                        >
-                          {modules.map(module => (
-                            <MenuItem key={module._id} value={module._id}>{module.title || module.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                        <InputLabel>Select Venue</InputLabel>
-                        <Select
-                          name="venueId"
-                          value={formData.venueId}
-                          label="Select Venue"
-                          onChange={handleInputChange}
-                        >
-                          {venues.map(venue => (
-                            <MenuItem key={venue._id} value={venue._id}>{venue.venueName}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                        <InputLabel>Select Package</InputLabel>
-                        <Select
-                          name="packageId"
-                          value={formData.packageId}
-                          label="Select Package"
-                          onChange={handleInputChange}
-                          disabled={!formData.venueId}
-                        >
-                          {packages.length === 0 ? (
-                            <MenuItem disabled>Select a venue first</MenuItem>
-                          ) : (
-                            packages.map(pkg => (
-                              <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.title || pkg.name}</MenuItem>
-                            ))
-                          )}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Number of Guests"
-                        name="numberOfGuests"
-                        type="number"
-                        value={formData.numberOfGuests}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ color: '#ef5350' }} /></InputAdornment>
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                  </Grid>
+                  <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                    <InputLabel>Module</InputLabel>
+                    <Select name="moduleId" value={formData.moduleId} label="Module" onChange={handleInputChange}>
+                      {modules.map(module => <MenuItem key={module._id} value={module._id}>{module.title || module.name}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                    <InputLabel>Select Venue</InputLabel>
+                    <Select name="venueId" value={formData.venueId} label="Select Venue" onChange={handleInputChange}>
+                      {venues.map(venue => <MenuItem key={venue._id} value={venue._id}>{venue.venueName}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                    <InputLabel>Select Package</InputLabel>
+                    <Select name="packageId" value={formData.packageId} label="Select Package" onChange={handleInputChange} disabled={!formData.venueId}>
+                      {packages.length === 0 ? <MenuItem disabled>Select a venue first</MenuItem> : packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.name || pkg.title}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <TextField fullWidth label="Number of Guests" name="numberOfGuests" type="number" value={formData.numberOfGuests} onChange={handleInputChange} InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon sx={{ color: '#ef5350' }} /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                 </Stack>
               </Fade>
             )}
@@ -1148,145 +1069,37 @@ function BookingCalendar() {
             {activeStep === 2 && (
               <Fade in={activeStep === 2}>
                 <Stack spacing={3}>
-                  <Typography variant="h6" sx={sectionHeaderStyle}>
-                    <CalendarMonthIcon sx={iconStyle} />
-                    Schedule Details
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Booking Date"
-                        type="date"
-                        name="bookingDate"
-                        value={formData.bookingDate}
-                        onChange={handleInputChange}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AccessTimeIcon sx={{ color: '#ef5350', fontSize: 20 }} />
-                        Time Slots
-                      </Typography>
-                      <FormGroup row>
-                        <FormControlLabel
-                          control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} style={{ color: '#ef5350' }} />}
-                          label="Morning Session"
-                        />
-                        <FormControlLabel
-                          control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} style={{ color: '#ef5350' }} />}
-                          label="Evening Session"
-                        />
-                      </FormGroup>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PaymentIcon sx={{ color: '#ef5350', fontSize: 20 }} />
-                        Payment Method
-                      </Typography>
-                      <Grid container spacing={2}>
-                        {['Cash', 'Card', 'UPI', 'Bank', 'Other'].map((method) => (
-                          <Grid item xs={4} sm={2.4} key={method}>
-                            <Paper
-                              onClick={() => setFormData(p => ({ ...p, paymentType: method }))}
-                              sx={{
-                                p: 2,
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                borderRadius: '16px',
-                                border: '2px solid',
-                                borderColor: formData.paymentType === method ? '#ef5350' : '#f0f0f0',
-                                backgroundColor: formData.paymentType === method ? 'rgba(239, 83, 80, 0.05)' : '#fff',
-                                transition: 'all 0.3s ease',
-                                '&:hover': { borderColor: '#ef5350', transform: 'scale(1.05)' }
-                              }}
-                            >
-                              {method === 'Cash' && <MoneyIcon sx={{ color: formData.paymentType === method ? '#ef5350' : '#666', mb: 1 }} />}
-                              {method === 'Card' && <CreditCardIcon sx={{ color: formData.paymentType === method ? '#ef5350' : '#666', mb: 1 }} />}
-                              {method === 'Bank' && <AccountBalanceIcon sx={{ color: formData.paymentType === method ? '#ef5350' : '#666', mb: 1 }} />}
-                              {method === 'UPI' && <AccountBalanceWalletIcon sx={{ color: formData.paymentType === method ? '#ef5350' : '#666', mb: 1 }} />}
-                              {method === 'Other' && <MoreHorizIcon sx={{ color: formData.paymentType === method ? '#ef5350' : '#666', mb: 1 }} />}
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: formData.paymentType === method ? '#ef5350' : '#666' }}>{method}</Typography>
-                            </Paper>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={3}
-                        label="Special Instructions"
-                        name="additionalNotes"
-                        value={formData.additionalNotes}
-                        onChange={handleInputChange}
-                        placeholder="Any specific requests or requirements..."
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                      />
-                    </Grid>
-                  </Grid>
+                  <TextField disabled fullWidth label="Booking Date" type="date" name="bookingDate" value={formData.bookingDate} onChange={handleInputChange} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px', bgcolor: '#f8fafc' } }} />
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={700} color="text.secondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AccessTimeIcon sx={{ color: '#ef5350', fontSize: 20 }} /> Time Slots
+                    </Typography>
+                    <FormGroup row>
+                      <FormControlLabel control={<Checkbox checked={formData.timeSlot.includes('Morning')} onChange={() => handleTimeSlotChange('Morning')} style={{ color: '#ef5350' }} />} label="Morning Session" />
+                      <FormControlLabel control={<Checkbox checked={formData.timeSlot.includes('Evening')} onChange={() => handleTimeSlotChange('Evening')} style={{ color: '#ef5350' }} />} label="Evening Session" />
+                    </FormGroup>
+                  </Box>
+                  <TextField fullWidth multiline rows={3} label="Special Instructions" name="additionalNotes" value={formData.additionalNotes} onChange={handleInputChange} placeholder="Any specific requests or requirements..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                 </Stack>
               </Fade>
             )}
           </Box>
+
+          <Stack direction="row" spacing={2} sx={{ mt: 6 }}>
+            {activeStep > 0 ? (
+              <Button fullWidth onClick={handleBack} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, border: '2px solid #eee', color: '#666', '&:hover': { border: '2px solid #ccc' } }}>Back</Button>
+            ) : (
+              <Button fullWidth onClick={handleCloseDialog} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, border: '2px solid #eee', color: '#666', '&:hover': { border: '2px solid #ccc' } }}>Cancel</Button>
+            )}
+            {activeStep < steps.length - 1 ? (
+              <Button fullWidth variant="contained" onClick={handleNext} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, bgcolor: '#ef5350', '&:hover': { bgcolor: '#d32f2f' } }}>Next Step</Button>
+            ) : (
+              <Button fullWidth variant="contained" onClick={handleSubmit} disabled={submitLoading} sx={{ borderRadius: '16px', fontWeight: 700, height: 55, bgcolor: '#ef5350', boxShadow: '0 8px 16px rgba(239, 83, 80, 0.3)', '&:hover': { bgcolor: '#d32f2f' } }}>
+                {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm Booking'}
+              </Button>
+            )}
+          </Stack>
         </DialogContent>
-
-        <Divider />
-
-        <Box sx={{ p: 4, display: 'flex', gap: 2 }}>
-          {activeStep > 0 && (
-            <Button
-              onClick={handleBack}
-              sx={{
-                borderRadius: '16px',
-                px: 4,
-                height: 56,
-                fontWeight: 700,
-                color: '#666',
-                border: '2px solid #eee',
-                '&:hover': { border: '2px solid #ccc' }
-              }}
-            >
-              Back
-            </Button>
-          )}
-          {activeStep < steps.length - 1 ? (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleNext}
-              sx={{
-                borderRadius: '16px',
-                height: 56,
-                fontWeight: 700,
-                backgroundColor: '#ef5350',
-                '&:hover': { backgroundColor: '#d32f2f' }
-              }}
-            >
-              Next Step
-            </Button>
-          ) : (
-            <Button
-              fullWidth
-              variant="contained"
-              disabled={submitLoading}
-              onClick={handleSubmit}
-              sx={{
-                borderRadius: '16px',
-                height: 56,
-                fontWeight: 700,
-                backgroundColor: '#ef5350',
-                boxShadow: '0 8px 16px rgba(239, 83, 80, 0.3)',
-                '&:hover': { backgroundColor: '#d32f2f' }
-              }}
-            >
-              {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm & Save Booking'}
-            </Button>
-          )}
-        </Box>
       </Dialog>
     </Box >
   );

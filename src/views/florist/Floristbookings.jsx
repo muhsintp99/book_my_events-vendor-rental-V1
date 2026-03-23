@@ -9,7 +9,7 @@ const getFloristPackageData = (booking) => {
 
     return {
         name: pkg.packageName || booking.packageName || 'Florist Package',
-        thumbnail: pkg.image || '',
+        thumbnail: pkg.thumbnail || pkg.image || '',
         packageType: pkg.packageType || 'Standard',
         price: booking.packagePrice || pkg.packagePrice || 0,
         advance: booking.advanceAmount || pkg.advanceBookingAmount || 0,

@@ -691,7 +691,7 @@ const MainRoutes = {
             // ... existing bookings ...
             { path: 'allinvitation', element: <InvitationBookings initialTab="All" /> },
             { path: 'pendinginvitation', element: <InvitationBookings initialTab="Pending" /> },
-            { path: 'invitationconfirmed', element: <InvitationBookings initialTab="Accepted" /> },
+            { path: 'invitationconfirmed', element: <InvitationBookings initialTab="Confirmed" /> },
             { path: 'completedinvitation', element: <InvitationBookings initialTab="Completed" /> },
             { path: 'cancelledinvitation', element: <InvitationBookings initialTab="Cancelled" /> },
             { path: 'paymentfailedinvitation', element: <InvitationBookings initialTab="Payment Failed" /> },

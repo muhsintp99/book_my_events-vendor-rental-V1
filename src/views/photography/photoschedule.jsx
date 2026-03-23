@@ -31,9 +31,19 @@ import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+
+const renderSafe = (val) => {
+  if (!val) return '';
+  if (typeof val === 'string' || typeof val === 'number') return val;
+  if (typeof val === 'object') {
+    return val.en || val.name || val.title || val.packageName || val.label || (typeof val.title === 'object' ? renderSafe(val.title) : val._id ? '[Object]' : JSON.stringify(val));
+  }
+  return String(val);
+};
 
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
@@ -59,6 +69,7 @@ function PhotographySchedules() {
     moduleId: '',
     packageId: '',
     bookingDate: new Date().toISOString().split('T')[0],
+    timeSlot: ['Full Day'],
     paymentType: 'Cash',
     bookingType: 'Direct'
   });
@@ -197,10 +208,35 @@ function PhotographySchedules() {
       const status = bookingStatus[day] || 'free';
       const isToday = day === todayDate && currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear;
       const isSelected = day === selectedDate;
+      const isPast = new Date(currentDate.getFullYear(), currentDate.getMonth(), day) < new Date(todayYear, todayMonth, todayDate);
+
       days.push(
-        <Box key={day} onClick={() => setSelectedDate(day)} sx={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: { xs: '50px', md: '100px' }, cursor: 'pointer', borderRadius: { xs: '8px', md: '16px' }, transition: 'all 0.3s', bgcolor: isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff', border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0', '&:hover': { transform: { md: 'translateY(-4px)' }, boxShadow: '0 6px 16px rgba(0,0,0,0.08)', borderColor: '#ef5350', zIndex: 1 } }}>
+        <Box 
+          key={day} 
+          onClick={() => !isPast && setSelectedDate(day)} 
+          sx={{ 
+            position: 'relative', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            minHeight: { xs: '50px', md: '100px' }, 
+            cursor: isPast ? 'not-allowed' : 'pointer', 
+            borderRadius: { xs: '8px', md: '16px' }, 
+            transition: 'all 0.3s', 
+            bgcolor: isPast ? '#f5f5f5' : (isSelected ? 'rgba(239, 83, 80, 0.05)' : '#fff'), 
+            opacity: isPast ? 0.5 : 1,
+            border: isSelected ? '1px solid #ef5350' : '1px solid #f0f0f0', 
+            '&:hover': { 
+              transform: isPast ? 'none' : { md: 'translateY(-4px)' }, 
+              boxShadow: isPast ? 'none' : '0 6px 16px rgba(0,0,0,0.08)', 
+              borderColor: isPast ? '#f0f0f0' : '#ef5350', 
+              zIndex: 1 
+            } 
+          }}
+        >
           <Box sx={{ fontSize: { xs: '14px', md: '22px' }, fontWeight: isToday || isSelected ? '600' : '400', color: isToday ? '#fff' : (isSelected ? '#ef5350' : '#333'), width: { xs: '28px', md: '48px' }, height: { xs: '28px', md: '48px' }, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', bgcolor: isToday ? '#ef5350' : 'transparent', mb: { xs: '2px', md: '8px' } }}>{day}</Box>
-          <Box sx={{ width: { xs: '6px', md: '10px' }, height: { xs: '6px', md: '10px' }, borderRadius: '50%', bgcolor: getStatusColor(status) }} />
+          <Box sx={{ width: { xs: '6px', md: '10px' }, height: { xs: '6px', md: '10px' }, borderRadius: '50%', bgcolor: isPast ? '#ccc' : getStatusColor(status) }} />
         </Box>
       );
     }
@@ -225,6 +261,7 @@ function PhotographySchedules() {
         emailAddress: formData.emailAddress,
         address: formData.address,
         bookingDate: formData.bookingDate,
+        timeSlot: formData.timeSlot,
         paymentType: formData.paymentType,
         additionalNotes: formData.additionalNotes,
         bookingType: 'Direct',
@@ -253,7 +290,7 @@ function PhotographySchedules() {
   };
 
   const resetForm = () => {
-    setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: new Date().toISOString().split('T')[0], paymentType: 'Cash', bookingType: 'Direct' });
+    setFormData({ fullName: '', contactNumber: '', emailAddress: '', address: '', additionalNotes: '', moduleId: modules[0]?._id || '', packageId: '', bookingDate: new Date().toISOString().split('T')[0], timeSlot: ['Full Day'], paymentType: 'Cash', bookingType: 'Direct' });
     setActiveStep(0);
   };
 
@@ -291,7 +328,9 @@ function PhotographySchedules() {
           <Typography variant="h6" fontWeight={700} color="#333">{selectedBookings.length === 0 ? 'No Bookings' : `${selectedBookings.length} Direct Bookings`}</Typography>
           <Typography color="#999" fontSize="14px">{selectedBookings.length === 0 ? 'Slots available for manual entry' : 'Reserved slots for this date'}</Typography>
         </Box>
-        <Button variant="contained" onClick={handleOpenDialog} sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}>Add Booking</Button>
+        {!(new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDate) < new Date(todayYear, todayMonth, todayDate)) && (
+          <Button variant="contained" onClick={handleOpenDialog} sx={{ bgcolor: '#ef5350', borderRadius: '12px', px: 4, height: 48, fontWeight: 700, '&:hover': { bgcolor: '#d32f2f' } }}>Add Booking</Button>
+        )}
       </Box>
 
       <Grid container spacing={3}>
@@ -308,10 +347,11 @@ function PhotographySchedules() {
                     {deleteLoading === b._id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
                   </IconButton>
                 </Stack>
-                <Typography variant="h6" fontWeight={800} mb={2}>{b.fullName}</Typography>
+                <Typography variant="h6" fontWeight={800} mb={2}>{renderSafe(b.fullName)}</Typography>
                 <Stack spacing={1}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><PhoneIcon sx={{ fontSize: 16 }} /><Typography variant="body2">{b.contactNumber}</Typography></Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><CameraAltIcon sx={{ fontSize: 16 }} /><Typography variant="body2">Photography</Typography></Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><PhoneIcon sx={{ fontSize: 16 }} /><Typography variant="body2">{renderSafe(b.contactNumber)}</Typography></Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><CameraAltIcon sx={{ fontSize: 16 }} /><Typography variant="body2">{renderSafe(b.photographyId?.packageName || 'Photography')}</Typography></Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#666' }}><AccessTimeIcon sx={{ fontSize: 16 }} /><Typography variant="body2">{Array.isArray(b.timeSlot) ? b.timeSlot.join(', ') : b.timeSlot || 'Full Day'}</Typography></Box>
                 </Stack>
               </Paper>
             </Grid>
@@ -366,7 +406,27 @@ function PhotographySchedules() {
                 <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
                   <InputLabel>Select Photography Package</InputLabel>
                   <Select label="Select Photography Package" name="packageId" value={formData.packageId} onChange={handleInputChange}>
-                    {packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{pkg.packageName || pkg.packageTitle || pkg.name || pkg.title}</MenuItem>)}
+                    {packages.map(pkg => <MenuItem key={pkg._id} value={pkg._id}>{renderSafe(pkg.packageName || pkg.packageTitle || pkg.name || pkg.title)}</MenuItem>)}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                  <InputLabel>Select Time Slot</InputLabel>
+                  <Select
+                    label="Select Time Slot"
+                    multiple
+                    value={formData.timeSlot}
+                    onChange={(e) => setFormData(prev => ({ ...prev, timeSlot: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value }))}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {['Full Day', 'Morning', 'Afternoon', 'Evening', 'Night'].map((slot) => (
+                      <MenuItem key={slot} value={slot}>{slot}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <Box>

@@ -7,7 +7,7 @@ const getEmceePackageData = (booking) => {
 
     return {
         name: pkg.packageName || booking.packageName || 'Emcee Package',
-        thumbnail: pkg.image || '',
+        thumbnail: pkg.thumbnail || pkg.image || '',
         packageType: pkg.packageType || 'Standard',
         price: booking.packagePrice || pkg.packagePrice || 0,
         advance: booking.advanceAmount || pkg.advanceBookingAmount || 0,

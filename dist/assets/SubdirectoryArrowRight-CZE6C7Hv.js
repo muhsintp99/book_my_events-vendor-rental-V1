@@ -1,0 +1,1 @@
+import{ag as o,j as r}from"./index-Cf0_3JAp.js";const s=o(r.jsx("path",{d:"M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"})),a=o(r.jsx("path",{d:"m19 15-6 6-1.42-1.42L15.17 16H4V4h2v10h9.17l-3.59-3.58L13 9z"}));export{s as K,a as S};

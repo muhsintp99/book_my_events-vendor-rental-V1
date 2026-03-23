@@ -8,7 +8,7 @@ const getMehandiPackageData = (booking) => {
 
     return {
         name: pkg.packageName || booking.packageName || 'Mehandi Package',
-        thumbnail: pkg.image || '',
+        thumbnail: pkg.thumbnail || pkg.image || '',
         packageType: pkg.packageType || 'Standard',
         price: booking.packagePrice || pkg.packagePrice || 0,
         advance: booking.advanceAmount || pkg.advanceBookingAmount || 0,
@@ -20,7 +20,7 @@ const getMehandiPackageData = (booking) => {
 const Mehandibookings = ({ initialTab = 'All', hideTabs = false }) => {
     return (
         <PremiumBookings
-            moduleType={['mehandi', 'mehandi artist', 'Mehandi', 'Mehandi Artist']}
+            moduleType={['mehandi', 'mehndi', 'henna', 'mehanid', 'mehandi artist']}
             moduleLabel="Mehandi"
             moduleUrlName="mehandi"
             getDataFn={getMehandiPackageData}

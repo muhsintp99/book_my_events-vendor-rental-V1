@@ -97,11 +97,22 @@ const PremiumBookings = ({
     }, [moduleUrlName]);
 
     const initialIndex = useMemo(() => {
-        const found = tabs.findIndex(t => t.key.toLowerCase() === initialTab.toLowerCase());
+        const lowerInitial = String(initialTab || '').toLowerCase().trim();
+        const found = tabs.findIndex(t => 
+            t.key.toLowerCase() === lowerInitial || 
+            t.label.toLowerCase() === lowerInitial ||
+            (lowerInitial === 'accepted' && t.key === 'Confirmed') ||
+            (lowerInitial === 'canceled' && t.key === 'Cancelled')
+        );
         return found !== -1 ? found : 0;
     }, [initialTab, tabs]);
 
     const [tabValue, setTabValue] = useState(initialIndex);
+
+    // Sync tabValue when initialIndex changes (e.g. on navigation)
+    useEffect(() => {
+        setTabValue(initialIndex);
+    }, [initialIndex]);
 
     // Filter & Sort State
     const [searchText, setSearchText] = useState('');
@@ -145,9 +156,9 @@ const PremiumBookings = ({
             const res = await axios.get(`${API_BASE_URL}/api/bookings/provider/${pid}`);
             const all = res.data?.data || [];
             const filtered = all.filter(b => {
-                const mType = String(b.moduleType || '').toLowerCase();
-                const mTypes = Array.isArray(moduleType) ? moduleType.map(m => m.toLowerCase()) : [moduleType.toLowerCase()];
-                return mTypes.includes(mType);
+                const mType = String(b.moduleType || '').toLowerCase().trim();
+                const mTypes = Array.isArray(moduleType) ? moduleType.map(m => m.toLowerCase().trim()) : [moduleType.toLowerCase().trim()];
+                return mTypes.some(mt => mType.includes(mt));
             });
             setBookings(filtered);
         } catch (err) {
@@ -522,7 +533,7 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
                 <Stack direction="row" spacing={1.5} alignItems="center">
                     <Avatar src={getImageUrl(data.thumbnail)} variant="rounded" sx={{ width: 50, height: 50, border: `1px solid ${alpha(GOLD_COLOR, 0.2)}` }} />
                     <Box flex={1}>
-                        <Stack direction="row" justifyContent="space-between"><Typography variant="caption" fontWeight={800} color={GOLD_COLOR}>#{booking._id?.slice(-6)}</Typography><Chip label={booking.status} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: alpha(statusColor, 0.1), color: statusColor }} /></Stack>
+                        <Stack direction="row" justifyContent="space-between"><Typography variant="caption" fontWeight={800} color={GOLD_COLOR}>#{booking._id?.slice(-8).toUpperCase()}</Typography><Chip label={booking.status} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: alpha(statusColor, 0.1), color: statusColor }} /></Stack>
                         <Typography variant="subtitle2" fontWeight={800} noWrap>{data.name}</Typography>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="caption" color="text.secondary">{booking.fullName}</Typography>
@@ -544,7 +555,7 @@ const BookingRow = ({ index, booking, isMobile, onUpdateStatus, onView, statusCo
     return (
         <Box onClick={() => onView(booking)} sx={{ px: 3, py: 2, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', '&:hover': { bgcolor: alpha(GOLD_COLOR, 0.05) } }}>
             <Typography variant="body2" sx={{ flex: 0.5, fontWeight: 600 }}>{index}</Typography>
-            <Typography variant="body2" sx={{ flex: 1.5, fontWeight: 700, color: GOLD_COLOR }}>#{booking._id?.slice(-6)}</Typography>
+            <Typography variant="body2" sx={{ flex: 1.5, fontWeight: 700, color: GOLD_COLOR }}>#{booking._id?.slice(-8).toUpperCase()}</Typography>
             <Box sx={{ flex: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar src={getImageUrl(data.thumbnail)} variant="rounded" sx={{ width: 44, height: 44, border: `1px solid ${alpha(GOLD_COLOR, 0.2)}` }}>{ModuleIcon && <ModuleIcon sx={{ fontSize: 20 }} />}</Avatar>
                 <Box><Typography variant="body2" fontWeight={700} noWrap sx={{ maxWidth: 150 }}>{data.name}</Typography><Typography variant="caption" color="text.secondary">{data.category}</Typography></Box>
@@ -633,7 +644,7 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                     )}
                 </Box>
                 {/* Trip & Location Details / Delivery Details */}
-                {(booking.transportDetails || booking.deliveryType || booking.address || booking.location) && (
+                {(['transport', 'cake', 'boutique', 'boutiques', 'ornament', 'ornaments'].includes(String(moduleUrlName).toLowerCase())) && (booking.transportDetails || booking.deliveryType || booking.address || booking.location) && (
                     <Box sx={{ p: 3, borderRadius: '24px', bgcolor: alpha(primaryColor, 0.03), border: '1px solid', borderColor: alpha(primaryColor, 0.1) }}>
                         <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: 'uppercase' }}>
                             {moduleUrlName === 'transport' ? 'TRIP & LOCATION DETAILS' : 'DELIVERY & LOCATION DETAILS'}
@@ -677,6 +688,22 @@ const DetailDrawer = ({ open, onClose, booking, getStatusColor, getDataFn, getIm
                                 );
                             })()}
                             {booking.pincode && <DetailRow label="Pincode" value={booking.pincode} />}
+                        </Stack>
+                    </Box>
+                )}
+
+                {/* Invitation Specific Details */}
+                {booking.invitationDetails && (
+                    <Box sx={{ p: 3, borderRadius: '24px', bgcolor: alpha('#e11d48', 0.03), border: '1px solid', borderColor: alpha('#e11d48', 0.1) }}>
+                        <Typography variant="caption" fontWeight={800} color="#e11d48" sx={{ textTransform: 'uppercase' }}>
+                            INVITATION & PRINTING DETAILS
+                        </Typography>
+                        <Stack spacing={2} sx={{ mt: 2 }}>
+                            {booking.invitationDetails.eventTitle && <DetailRow label="Event Title" value={booking.invitationDetails.eventTitle} />}
+                            {booking.invitationDetails.mainNames && <DetailRow label="Main Names" value={booking.invitationDetails.mainNames} />}
+                            {booking.invitationDetails.venueDetails && <DetailRow label="Venue Details" value={booking.invitationDetails.venueDetails} />}
+                            {booking.invitationDetails.quantity && <DetailRow label="Quantity (Sets Needed)" value={`${booking.invitationDetails.quantity} Sets`} />}
+                            {booking.invitationDetails.instructions && <DetailRow label="Special Instructions" value={booking.invitationDetails.instructions} />}
                         </Stack>
                     </Box>
                 )}
