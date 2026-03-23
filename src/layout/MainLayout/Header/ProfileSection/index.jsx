@@ -514,6 +514,7 @@ export default function ProfileSection() {
                     boxShadow
                     shadow={theme.shadows[16]}
                     sx={{
+                      width: { xs: '350px', md: '430px' },
                       maxHeight: '90vh',
                       overflowY: 'auto',
                       '&::-webkit-scrollbar': { width: 6 }
@@ -741,8 +742,7 @@ export default function ProfileSection() {
                     boxShadow
                     shadow={theme.shadows[24]}
                     sx={{
-                      maxWidth: '880px',
-                      width: '100%',
+                      width: { xs: '350px', md: '430px' },
                       maxHeight: '94vh',
                       overflowY: 'auto',
                       borderRadius: 5,
