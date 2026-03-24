@@ -210,6 +210,7 @@ const Ornamentsenquiry = Loadable(lazy(() => import('../views/ornaments/Ornament
 const Ornamentsenquirychat = Loadable(lazy(() => import('../views/ornaments/EnquiryChatPage.jsx')));
 const OrnamentsSchedules = Loadable(lazy(() => import('../views/ornaments/Schedulesornaments.jsx')));
 const Ornamentscategories = Loadable(lazy(() => import('../views/ornaments/Categories.jsx')));
+const OrnamentsPortfolio = Loadable(lazy(() => import('../views/ornaments/Portfolio.jsx')));
 
 const Allornaments = Loadable(lazy(() => import('../views/ornaments/OrnamentsBookings.jsx')));
 const OrnamentsPending = Loadable(lazy(() => import('../views/ornaments/Ornamentspending.jsx')));
@@ -227,6 +228,7 @@ const Boutiqueenquiry = Loadable(lazy(() => import('../views/Boutique/Boutiqueen
 const Boutiqueenquirychat = Loadable(lazy(() => import('../views/Boutique/EnquiryChatPage.jsx')));
 const BoutiqueSchedules = Loadable(lazy(() => import('../views/Boutique/Schedulesboutique.jsx')));
 const Boutiquecategories = Loadable(lazy(() => import('../views/Boutique/Categories.jsx')));
+const BoutiquePortfolio = Loadable(lazy(() => import('../views/Boutique/Portfolio.jsx')));
 
 const Allboutique = Loadable(lazy(() => import('../views/Boutique/BoutiqueBookings.jsx')));
 const BoutiquePending = Loadable(lazy(() => import('../views/Boutique/Boutiquepending.jsx')));
@@ -777,7 +779,8 @@ const MainRoutes = {
             { path: 'enquiries', element: <Ornamentsenquiry /> },
             { path: 'enquirychat', element: <Ornamentsenquirychat /> },
             { path: 'schedules', element: <OrnamentsSchedules /> },
-            { path: 'categories', element: <Ornamentscategories /> }
+            { path: 'categories', element: <Ornamentscategories /> },
+            { path: 'portfolio', element: <OrnamentsPortfolio /> }
           ]
         },
         {
@@ -794,7 +797,8 @@ const MainRoutes = {
             { path: 'enquirychat', element: <Boutiqueenquirychat /> },
             { path: 'chat', element: <BoutiqueChat /> },
             { path: 'schedules', element: <BoutiqueSchedules /> },
-            { path: 'categories', element: <Boutiquecategories /> }
+            { path: 'categories', element: <Boutiquecategories /> },
+            { path: 'portfolio', element: <BoutiquePortfolio /> }
           ]
         },
 

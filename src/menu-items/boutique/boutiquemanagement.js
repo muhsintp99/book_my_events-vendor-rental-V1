@@ -6,7 +6,8 @@ import {
   IconCategory,        // Categories
   IconRocket,          // Upgrade
   IconCalendarTime,    // Schedules
-  IconMessageQuestion  // Enquiries
+  IconMessageQuestion, // Enquiries
+  IconPhoto            // Portfolio
 } from '@tabler/icons-react';
 
 // constants
@@ -17,7 +18,8 @@ const icons = {
   IconCategory,
   IconRocket,
   IconCalendarTime,
-  IconMessageQuestion
+  IconMessageQuestion,
+  IconPhoto
 };
 
 // ==============================|| BOUTIQUE MANAGEMENT MENU ||============================== //
@@ -78,6 +80,14 @@ const boutiquemanagement = {
       breadcrumbs: false
     },
 
+    {
+      id: 'boutique-portfolio',
+      title: 'Portfolio',
+      type: 'item',
+      url: '/boutique/portfolio',
+      icon: icons.IconPhoto,
+      breadcrumbs: false
+    },
     {
       id: 'boutique-enquiries',
       title: 'Enquiries',

@@ -7,7 +7,8 @@ import {
   IconTags,           // Categories
   IconSettings,       // Upgrade / Settings
   IconCalendarEvent,  // Schedules
-  IconMessageCircle   // Enquiries
+  IconMessageCircle,  // Enquiries
+  IconPhoto
 } from '@tabler/icons-react';
 
 // constants
@@ -19,7 +20,8 @@ const icons = {
   IconTags,
   IconSettings,
   IconCalendarEvent,
-  IconMessageCircle
+  IconMessageCircle,
+  IconPhoto
 };
 
 // ==============================|| ORNAMENTS MANAGEMENT MENU ||============================== //
@@ -79,6 +81,14 @@ const ornamentsmanagement = {
       breadcrumbs: false
     },
 
+    {
+      id: 'ornaments-portfolio',
+      title: 'Portfolio',
+      type: 'item',
+      url: '/ornaments/portfolio',
+      icon: icons.IconPhoto,
+      breadcrumbs: false
+    },
     {
       id: 'ornaments-enquiries',
       title: 'Enquiries',
