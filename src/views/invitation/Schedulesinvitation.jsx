@@ -34,7 +34,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
-
+import { Snackbar } from '@mui/material';
 const API_BASE_URL = 'https://api.bookmyevent.ae';
 
 function InvitationSchedules() {
@@ -47,6 +47,7 @@ function InvitationSchedules() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [successOpen, setSuccessOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(null);
     const [activeStep, setActiveStep] = useState(0);
 
@@ -336,7 +337,7 @@ const handleSubmit = async () => {
         const data = await response.json();
 
         if (data.success) {
-            alert('Booking created successfully!');
+setSuccessOpen(true);
             setOpenDialog(false);
             fetchBookings();
             resetForm();
@@ -503,6 +504,27 @@ const handleSubmit = async () => {
                     </Stack>
                 </DialogContent>
             </Dialog>
+
+<Snackbar
+    open={successOpen}
+    autoHideDuration={3000}
+    onClose={() => setSuccessOpen(false)}
+    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+>
+    <Alert
+        onClose={() => setSuccessOpen(false)}
+        severity="success"
+        variant="filled"
+        sx={{
+            borderRadius: '14px',
+            fontWeight: 600,
+            boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+            minWidth: '280px'   // 👈 ADD THIS
+        }}
+    >
+        🎉 Booking created successfully!
+    </Alert>
+</Snackbar>
         </Box>
     );
 }

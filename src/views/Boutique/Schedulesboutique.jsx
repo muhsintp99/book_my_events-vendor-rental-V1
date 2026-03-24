@@ -28,7 +28,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider
+  Divider,
+  Snackbar
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -71,6 +72,7 @@ function BoutiqueSchedules() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -332,7 +334,7 @@ function BoutiqueSchedules() {
       });
       const data = await response.json();
       if (data.success) {
-        alert('Booking created successfully!');
+        setSuccessOpen(true);
         setOpenDialog(false);
         fetchBookings();
         resetForm();
@@ -534,6 +536,26 @@ function BoutiqueSchedules() {
           </Stack>
         </DialogContent>
       </Dialog>
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={3000}
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSuccessOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{
+            borderRadius: '14px',
+            fontWeight: 600,
+            boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+            minWidth: '280px'
+          }}
+        >
+          🎉 Booking created successfully!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

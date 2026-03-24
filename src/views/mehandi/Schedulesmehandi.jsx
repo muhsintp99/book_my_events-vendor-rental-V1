@@ -22,7 +22,8 @@ import {
     Stepper,
     Step,
     StepLabel,
-    Fade
+    Fade,
+    Snackbar
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -48,6 +49,7 @@ function MehandiSchedules() {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(null);
     const [activeStep, setActiveStep] = useState(0);
+    const [successOpen, setSuccessOpen] = useState(false);
 
     // Store resolved moduleId in a ref so it persists reliably across renders
     const resolvedModuleIdRef = useRef('');
@@ -84,7 +86,6 @@ function MehandiSchedules() {
         additionalNotes: '',
         packageId: '',
         bookingDate: buildDateString(today.getFullYear(), today.getMonth(), today.getDate()),
-        timeSlot: [],
         paymentType: 'Cash',
     });
 
@@ -211,12 +212,9 @@ function MehandiSchedules() {
             const dayBookings = bookings.filter(b =>
                 b.bookingDate && String(b.bookingDate).split('T')[0] === targetStr
             );
-            const totalSlots = dayBookings.reduce(
-                (acc, b) => acc + (Array.isArray(b.timeSlot) ? b.timeSlot.length : 1), 0
-            );
+            const totalSlots = dayBookings.length;
             if (totalSlots === 0) status[day] = 'free';
-            else if (totalSlots >= 3) status[day] = 'booked';
-            else status[day] = 'available';
+            else status[day] = 'booked';
 
             const isPastMonth = year < todayYear || (year === todayYear && month < todayMonth);
             const isPastDay = isPastMonth || (month === todayMonth && year === todayYear && day < todayDate);
@@ -312,21 +310,14 @@ function MehandiSchedules() {
     const handleInputChange = (e) =>
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-    const handleTimeSlotChange = (slot) => {
-        setFormData(prev => ({
-            ...prev,
-            timeSlot: prev.timeSlot.includes(slot)
-                ? prev.timeSlot.filter(s => s !== slot)
-                : [...prev.timeSlot, slot]
-        }));
-    };
+
 
     // ─── Submit ───────────────────────────────────────────────────────────────────
     const handleSubmit = async () => {
         if (!formData.fullName.trim()) { setError('Please fill in Full Name'); return; }
         if (!formData.contactNumber.trim()) { setError('Please fill in Contact Number'); return; }
         if (!formData.packageId) { setError('Please select a Mehandi Package'); return; }
-        if (formData.timeSlot.length === 0) { setError('Please select at least one Time Slot'); return; }
+
 
         // If moduleId still not resolved, attempt one final fetch
         if (!resolvedModuleIdRef.current) {
@@ -352,7 +343,7 @@ function MehandiSchedules() {
                 emailAddress: formData.emailAddress || '',
                 address: formData.address || '',
                 bookingDate: formData.bookingDate,        // ✅ required by backend
-                timeSlot: formData.timeSlot,
+                timeSlot: [],
                 paymentType: formData.paymentType,
                 additionalNotes: formData.additionalNotes || '',
                 bookingType: 'Direct',                    // ✅ required by backend
@@ -368,7 +359,7 @@ function MehandiSchedules() {
             const data = await response.json();
 
             if (data.success) {
-                alert('Booking created successfully!');
+                setSuccessOpen(true);
                 setOpenDialog(false);
                 fetchBookings();
                 resetForm();
@@ -391,7 +382,6 @@ function MehandiSchedules() {
             additionalNotes: '',
             packageId: '',
             bookingDate: buildDateString(today.getFullYear(), today.getMonth(), today.getDate()),
-            timeSlot: [],
             paymentType: 'Cash',
         });
         setActiveStep(0);
@@ -422,14 +412,14 @@ function MehandiSchedules() {
 
     const handleCloseDialog = () => { setOpenDialog(false); setError(null); setActiveStep(0); };
 
-    const steps = ['Customer Info', 'Service Details', 'Schedule & Notes'];
-
     const isPastDaySelected = (() => {
         const isPastMonth = currentDate.getFullYear() < todayYear ||
             (currentDate.getFullYear() === todayYear && currentDate.getMonth() < todayMonth);
         return isPastMonth ||
             (currentDate.getMonth() === todayMonth && currentDate.getFullYear() === todayYear && selectedDate < todayDate);
     })();
+
+    const steps = ['Customer Info', 'Service Details', 'Notes'];
 
     return (
         <Box sx={{ width: '100%', p: { xs: '8px', md: '40px' }, bgcolor: '#fafafa', minHeight: '100vh' }}>
@@ -449,7 +439,7 @@ function MehandiSchedules() {
             {/* Legend */}
             <Box sx={{ bgcolor: '#fff', borderRadius: '12px', p: '24px', mb: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <Stack direction="row" justifyContent="center" spacing={3} flexWrap="wrap">
-                    {[['#ef5350', 'Fully Booked'], ['#ffd54f', 'Slots Available'], ['#66bb6a', 'Fully Free']].map(([color, label]) => (
+                    {[['#ef5350', 'Booked'], ['#66bb6a', 'Fully Free']].map(([color, label]) => (
                         <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: color }} />
                             <Typography color="#666">{label}</Typography>
@@ -498,16 +488,7 @@ function MehandiSchedules() {
                             <Paper sx={{ p: 3, borderRadius: '24px', position: 'relative', overflow: 'hidden', border: '1px solid #f0f0f0', boxShadow: '0 8px 20px rgba(0,0,0,0.02)' }}>
                                 <Box sx={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', bgcolor: '#ef5350' }} />
                                 <Stack direction="row" justifyContent="space-between" mb={2}>
-                                    <Chip
-                                        label={
-                                            Array.isArray(b.timeSlot)
-                                                ? b.timeSlot.map(s => typeof s === 'object' ? (s.label || s.name || s.time) : s).join(', ')
-                                                : (typeof b.timeSlot === 'object' ? (b.timeSlot.label || b.timeSlot.name || b.timeSlot.time) : (b.timeSlot || 'Full Day'))
-                                        }
-                                        size="small"
-                                        icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
-                                        sx={{ bgcolor: 'rgba(239, 83, 80, 0.1)', color: '#ef5350', fontWeight: 700 }}
-                                    />
+
                                     <IconButton size="small" onClick={() => handleDeleteBooking(b._id)} sx={{ color: '#ccc', '&:hover': { color: '#ef5350' } }} disabled={deleteLoading === b._id}>
                                         {deleteLoading === b._id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
                                     </IconButton>
@@ -602,24 +583,7 @@ function MehandiSchedules() {
                         {activeStep === 2 && (
                             <Fade in>
                                 <Box>
-                                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, color: '#ef5350' }}>Preferred Time Slots *</Typography>
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
-                                        {['Morning (9AM-12PM)', 'Afternoon (12PM-4PM)', 'Evening (4PM-8PM)', 'Night (8PM-12AM)'].map(slot => (
-                                            <Chip
-                                                key={slot} label={slot}
-                                                onClick={() => handleTimeSlotChange(slot)}
-                                                sx={{
-                                                    borderRadius: '12px', height: 45, px: 1.5, fontSize: '0.9rem', fontWeight: 600,
-                                                    border: '1px solid',
-                                                    borderColor: formData.timeSlot.includes(slot) ? '#ef5350' : 'rgba(0,0,0,0.1)',
-                                                    bgcolor: formData.timeSlot.includes(slot) ? '#ef5350' : '#fff',
-                                                    color: formData.timeSlot.includes(slot) ? '#fff' : '#666',
-                                                    transition: '0.3s',
-                                                    '&:hover': { bgcolor: formData.timeSlot.includes(slot) ? '#d32f2f' : 'rgba(239,83,80,0.05)' }
-                                                }}
-                                            />
-                                        ))}
-                                    </Box>
+
                                     <TextField
                                         fullWidth multiline rows={4}
                                         label="Special Instructions / Notes"
@@ -661,6 +625,26 @@ function MehandiSchedules() {
                     </Stack>
                 </DialogContent>
             </Dialog>
+            <Snackbar
+                open={successOpen}
+                autoHideDuration={3000}
+                onClose={() => setSuccessOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={() => setSuccessOpen(false)}
+                    severity="success"
+                    variant="filled"
+                    sx={{
+                        borderRadius: '14px',
+                        fontWeight: 600,
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                        minWidth: '280px'
+                    }}
+                >
+                    🎉 Booking created successfully!
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

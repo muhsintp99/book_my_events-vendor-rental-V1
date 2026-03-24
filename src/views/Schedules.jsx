@@ -26,7 +26,8 @@ import {
   StepLabel,
   Fade,
   Stack,
-  Paper
+  Paper,
+  Snackbar
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import CloseIcon from '@mui/icons-material/Close';
@@ -73,6 +74,7 @@ function BookingCalendar() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [successOpen, setSuccessOpen] = useState(false);
   const steps = ['Customer Info', 'Service Details', 'Schedule & Notes'];
 
   // Form state
@@ -559,7 +561,7 @@ function BookingCalendar() {
       const data = await response.json();
 
       if (data.success) {
-        alert('Booking created successfully!');
+        setSuccessOpen(true);
         handleCloseDialog();
         fetchBookings();
         resetForm();
@@ -1101,6 +1103,26 @@ function BookingCalendar() {
           </Stack>
         </DialogContent>
       </Dialog>
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={3000}
+        onClose={() => setSuccessOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSuccessOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{
+            borderRadius: '14px',
+            fontWeight: 600,
+            boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+            minWidth: '280px'
+          }}
+        >
+          🎉 Booking created successfully!
+        </Alert>
+      </Snackbar>
     </Box >
   );
 }
