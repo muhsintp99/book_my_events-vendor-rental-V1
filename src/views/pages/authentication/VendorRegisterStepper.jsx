@@ -1245,7 +1245,7 @@ export default function VendorRegisterStepper() {
                 : <>
                     <Grid container spacing={3} justifyContent="center">
                         {/* FREE PLAN */}
-                        <Grid item xs={12} md={8}>
+                        <Grid item xs={12} md={plans.length > 0 ? 6 : 8}>
                             <Card
                                 onClick={() => set('subscriptionPlan', 'free')}
                                 sx={{
@@ -1253,40 +1253,144 @@ export default function VendorRegisterStepper() {
                                     border: form.subscriptionPlan === 'free' ? '3px solid #4caf50' : '2px solid #e0e0e0',
                                     boxShadow: form.subscriptionPlan === 'free' ? '0 4px 20px rgba(76,175,80,0.2)' : '0 2px 8px rgba(0,0,0,0.08)',
                                     transition: 'all .25s',
-                                    '&:hover': { boxShadow: '0 6px 24px rgba(0,0,0,0.12)' }
+                                    '&:hover': { boxShadow: '0 6px 24px rgba(0,0,0,0.12)', transform: 'translateY(-4px)' }
                                 }}
                             >
                                 <CardContent sx={{ p: 3 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                        <Chip label="AVAILABLE PLAN" sx={{ bgcolor: '#4caf50', color: '#fff', fontWeight: 700, fontSize: 11 }} />
+                                        <Chip label="AVAILABLE PLAN" sx={{ bgcolor: form.subscriptionPlan === 'free' ? '#4caf50' : '#9e9e9e', color: '#fff', fontWeight: 700, fontSize: 11 }} />
                                         {form.subscriptionPlan === 'free' && <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 22 }} />}
                                     </Box>
                                     <Typography variant="h6" fontWeight={800} sx={{ color: '#555', mb: 0.5 }}>FREE</Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Basic access to get started on the platform</Typography>
-                                    <Typography variant="h4" fontWeight={900} sx={{ color: '#4caf50', mb: 2 }}>₹0</Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>Basic access to get started on the platform</Typography>
+                                    <Typography variant="h4" fontWeight={900} sx={{ color: form.subscriptionPlan === 'free' ? '#4caf50' : '#9e9e9e', mb: 2 }}>₹0</Typography>
                                     <Divider sx={{ mb: 2 }} />
-                                    <Stack spacing={1}>
-                                        {['Limited listings', 'Basic visibility', 'Standard support', 'Up to 5 packages'].map(f => (
+                                    <Stack spacing={1.2}>
+                                        {['Limited listings', 'Up to 5 packages', 'Standard visibility', 'Standard support'].map(f => (
                                             <Box key={f} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 18, flexShrink: 0 }} />
+                                                <CheckCircleIcon sx={{ color: form.subscriptionPlan === 'free' ? '#4caf50' : '#9e9e9e', fontSize: 18, flexShrink: 0 }} />
                                                 <Typography variant="body2" color="text.secondary">{f}</Typography>
                                             </Box>
                                         ))}
                                     </Stack>
-                                    <Button fullWidth sx={{ mt: 3, bgcolor: '#4caf50', color: '#fff', fontWeight: 700, borderRadius: 2, textTransform: 'none', py: 1.2, '&:hover': { bgcolor: '#388e3c' } }}>Continue with Free Plan</Button>
+                                    <Button fullWidth variant={form.subscriptionPlan === 'free' ? 'contained' : 'outlined'}
+                                        sx={{
+                                            mt: 3,
+                                            bgcolor: form.subscriptionPlan === 'free' ? '#4caf50' : 'transparent',
+                                            color: form.subscriptionPlan === 'free' ? '#fff' : '#4caf50',
+                                            borderColor: '#4caf50',
+                                            fontWeight: 700, borderRadius: 2, textTransform: 'none', py: 1.2,
+                                            '&:hover': { bgcolor: form.subscriptionPlan === 'free' ? '#388e3c' : alpha('#4caf50', 0.05), borderColor: '#388e3c' }
+                                        }}>
+                                        {form.subscriptionPlan === 'free' ? 'Selected' : 'Continue with Free'}
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </Grid>
+
+                        {/* PAID PLANS */}
+                        {plans.map((plan) => (
+                            <Grid item xs={12} md={6} key={plan._id}>
+                                <Card
+                                    onClick={() => set('subscriptionPlan', plan._id)}
+                                    sx={{
+                                        height: '100%', borderRadius: 4, cursor: 'pointer',
+                                        border: form.subscriptionPlan === plan._id ? `3px solid ${RED}` : '2px solid #e0e0e0',
+                                        boxShadow: form.subscriptionPlan === plan._id ? `0 4px 20px ${alpha(RED, 0.2)}` : '0 2px 8px rgba(0,0,0,0.08)',
+                                        transition: 'all .25s',
+                                        '&:hover': { boxShadow: '0 6px 24px rgba(0,0,0,0.12)', transform: 'translateY(-4px)' }
+                                    }}
+                                >
+                                    <CardContent sx={{ p: 3 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                            <Chip
+                                                icon={<WorkspacePremiumIcon sx={{ color: '#fff !important', fontSize: '16px !important' }} />}
+                                                label="PREMIUM"
+                                                sx={{ bgcolor: RED, color: '#fff', fontWeight: 700, fontSize: 11 }}
+                                            />
+                                            {form.subscriptionPlan === plan._id && <CheckCircleIcon sx={{ color: RED, fontSize: 22 }} />}
+                                        </Box>
+
+                                        <Typography variant="h6" fontWeight={800} sx={{ color: RED, mb: 0.5 }}>{plan.name}</Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
+                                            {plan.description || 'Professional features for growing businesses'}
+                                        </Typography>
+
+                                        {/* Launch Offer Badge */}
+                                        <Chip
+                                            label="🎉 Pre-Launch Offer"
+                                            size="small"
+                                            sx={{
+                                                bgcolor: '#fff3cd',
+                                                color: '#b45309',
+                                                fontWeight: 800,
+                                                fontSize: 10,
+                                                mb: 1.5
+                                            }}
+                                        />
+
+                                        {/* Price Section */}
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, mb: 2 }}>
+                                            <Typography
+                                                sx={{
+                                                    textDecoration: 'line-through',
+                                                    color: '#9ca3af',
+                                                    fontSize: 16,
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                ₹20,000
+                                            </Typography>
+                                            <Typography variant="h4" fontWeight={900} sx={{ color: RED }}>
+                                                ₹{plan.price}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">/ year</Typography>
+                                        </Box>
+
+                                        <Divider sx={{ mb: 2 }} />
+
+                                        <Stack spacing={1.2}>
+                                            {plan.features.slice(0, 4).map((f, i) => (
+                                                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <CheckCircleIcon sx={{ color: RED, fontSize: 18, flexShrink: 0 }} />
+                                                    <Typography variant="body2" color="text.secondary">{f}</Typography>
+                                                </Box>
+                                            ))}
+                                            {plan.features.length > 4 && (
+                                                <Typography variant="caption" sx={{ color: RED, fontWeight: 700, ml: 3.5 }}>
+                                                    + {plan.features.length - 4} more features
+                                                </Typography>
+                                            )}
+                                        </Stack>
+
+                                        <Button fullWidth variant={form.subscriptionPlan === plan._id ? 'contained' : 'outlined'}
+                                            sx={{
+                                                mt: 3,
+                                                bgcolor: form.subscriptionPlan === plan._id ? RED : 'transparent',
+                                                color: form.subscriptionPlan === plan._id ? '#fff' : RED,
+                                                borderColor: RED,
+                                                fontWeight: 800, borderRadius: 2, textTransform: 'none', py: 1.2,
+                                                '&:hover': { bgcolor: form.subscriptionPlan === plan._id ? RED_DARK : alpha(RED, 0.05), borderColor: RED_DARK }
+                                            }}>
+                                            {form.subscriptionPlan === plan._id ? 'Selected' : 'Upgrade to Premium'}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        ))}
                     </Grid>
 
-                    <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, background: '#f9faff', border: `1px solid ${alpha(RED, 0.15)}`, textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                            no paid plans available continue with free
-                        </Typography>
-                    </Box>
+                    {plans.length === 0 && (
+                        <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, background: '#f9faff', border: `1px solid ${alpha(RED, 0.15)}`, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                                no paid plans available continue with free
+                            </Typography>
+                        </Box>
+                    )}
                 </>
             }
         </Box>,
+
 
         /* STEP 5 – Media */
         <Box key={4} sx={{ animation: `${fadeUp} .35s ease` }}>
