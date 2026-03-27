@@ -325,6 +325,10 @@ const AddPhotographyPackage = () => {
     if (!description.trim()) return setError('Description required');
     if (!advanceBookingAmount) return setError('Advance booking amount required');
 
+    if (Number(advanceBookingAmount) > Number(price)) {
+      return setError('Advance booking amount cannot be greater than the price');
+    }
+
     const formData = new FormData();
 
     formData.append('module', PHOTOGRAPHY_MODULE_ID);

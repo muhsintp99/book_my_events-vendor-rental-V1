@@ -205,6 +205,9 @@ export default function AddEventproPackage() {
         if (!form.name.trim()) e.name = 'Required';
         if (!form.description.trim()) e.description = 'Required';
         if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
+        if (form.advance && +form.advance > +form.price) {
+            e.advance = 'Advance booking amount cannot be greater than the package price';
+        }
 
         if (!isEditMode && !imageFile) {
             e.image = 'Please upload a package image';
@@ -453,6 +456,25 @@ export default function AddEventproPackage() {
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </Box>
+                                <Box sx={{ flex: 1 }}>
+                                    <TextField
+                                        label="Advance Booking Amount *"
+                                        placeholder="0"
+                                        fullWidth
+                                        type="number"
+                                        value={form.advance}
+                                        onChange={(e) => set('advance', e.target.value)}
+                                        error={!!errors.advance}
+                                        helperText={errors.advance}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Typography sx={{ color: 'secondary.main', fontWeight: 700, fontSize: '17px' }}>₹</Typography>
                                                 </InputAdornment>
                                             )
                                         }}

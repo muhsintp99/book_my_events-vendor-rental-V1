@@ -1332,6 +1332,14 @@ const Createnew = () => {
         }
       }
 
+      if (advanceAmount && parseFloat(advanceAmount) > parseFloat(basicPackagePrice)) {
+        setToastMessage('Advance booking amount cannot be greater than the basic package price.');
+        setToastSeverity('error');
+        setOpenToast(true);
+        setLoading(false);
+        return;
+      }
+
       if (!thumbnailFile && !existingThumbnail && !isEdit) {
         setToastMessage('Please upload a featured image.');
         setToastSeverity('error');

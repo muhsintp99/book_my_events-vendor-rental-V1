@@ -205,7 +205,9 @@ export default function AddLightPackage() {
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
 
-    // if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+    if (form.advance && +form.advance > +form.price) {
+      e.advance = 'Advance booking amount cannot be greater than the package price';
+    }
 
     // ✅ Only require image in ADD mode
     if (!isEditMode && !imageFile) {
@@ -430,7 +432,7 @@ export default function AddLightPackage() {
                     }}
                   />
                 </Box>
-                {/* <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1 }}>
                   <TextField
                     label="Advance Booking Amount *"
                     placeholder="0"
@@ -448,7 +450,7 @@ export default function AddLightPackage() {
                       )
                     }}
                   />
-                </Box> */}
+                </Box>
               </Box>
             </Paper>
 

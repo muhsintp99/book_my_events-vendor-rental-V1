@@ -203,7 +203,9 @@ export default function AddMehandiPackage() {
     if (!form.name.trim()) e.name = 'Required';
     if (!form.description.trim()) e.description = 'Required';
     if (!form.price || +form.price <= 0) e.price = 'Enter a valid price';
-    if (form.advance === '' || +form.advance < 0) e.advance = 'Enter a valid amount';
+    if (form.advance && +form.advance > +form.price) {
+      e.advance = 'Advance booking amount cannot be greater than the package price';
+    }
 
     // if (selectedServices.length === 0) e.services = 'Please select at least one category';
 
